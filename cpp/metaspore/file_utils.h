@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "metaspore/debug.h"
-#include "metaspore/io.h"
-#include "metaspore/smart_array.h"
+#include <metaspore/debug.h>
+#include <metaspore/io.h>
+#include <metaspore/smart_array.h>
 #include <common/logger.h>
 
 namespace metaspore {

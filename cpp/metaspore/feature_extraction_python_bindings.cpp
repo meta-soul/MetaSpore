@@ -21,7 +21,6 @@
 #include <metaspore/index_batch.h>
 #include <metaspore/pybind_utils.h>
 #include <metaspore/stack_trace_utils.h>
-#include <spdlog/spdlog.h>
 #include <stdexcept>
 
 namespace py = pybind11;

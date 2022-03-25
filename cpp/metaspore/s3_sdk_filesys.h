@@ -23,7 +23,7 @@
 #ifndef DMLC_IO_S3_FILESYS_H_
 #define DMLC_IO_S3_FILESYS_H_
 
-#include "metaspore/filesys.h"
+#include <metaspore/filesys.h>
 #include <string>
 
 namespace metaspore {

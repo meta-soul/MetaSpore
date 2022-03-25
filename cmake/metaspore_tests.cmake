@@ -81,8 +81,8 @@ add_custom_target(py_grpc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/metaspore_pb2_
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py
-    COMMAND ${PYTHON_EXE} -m pip install --upgrade --force-reinstall ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
-    DEPENDS python_wheel testing_venv
+    COMMAND ${PYTHON_EXE} -m pip install --upgrade --force-reinstall --no-deps ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
+    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name} testing_venv
 )
 add_custom_target(metaspore_wheel_install ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py python_wheel)
 

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include "metaspore/s3_sdk_filesys.h"
+#include <metaspore/s3_sdk_filesys.h>
 
 #include <cstdlib>
 #include <fstream>

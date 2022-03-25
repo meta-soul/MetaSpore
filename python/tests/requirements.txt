@@ -7,3 +7,13 @@ xgboost
 tabulate
 torch
 pyspark
+numpy
+pandas
+nest_asyncio
+cloudpickle
+pyarrow
+PyYAML
+boto3
+python-consul
+findspark
+tabulate
