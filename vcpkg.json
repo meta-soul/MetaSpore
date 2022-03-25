@@ -1,0 +1,48 @@
+{
+    "name": "metaspore",
+    "version": "1.0.0",
+    "dependencies": [
+        "arrow",
+        "range-v3",
+        "boost-asio",
+        "boost-spirit",
+        {
+            "name": "asio-grpc",
+            "features": [
+                "boost-container"
+            ]
+        },
+        "protobuf",
+        "fmt",
+        "spdlog",
+        "mimalloc",
+        "gtest",
+        "gflags",
+        "benchmark",
+        "onnxruntime-cpu-default",
+        "xtensor",
+        "cppzmq",
+        "python3",
+        "pybind11",
+        "json11",
+        "dbg-macro",
+        "thrift",
+        {
+            "name": "aws-sdk-cpp",
+            "features": [
+                "s3"
+            ]
+        },
+        "concurrentqueue",
+        "zeromq",
+        "zlib"
+    ],
+    "overrides": [
+        {
+            "name": "python3",
+            "version": "3.8.3",
+            "port-version": 2
+        }
+    ],
+    "builtin-baseline": "a3df696929b28195b0d7a477ba6cd16dba48fa52"
+}

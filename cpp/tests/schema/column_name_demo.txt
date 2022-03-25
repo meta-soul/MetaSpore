@@ -1,0 +1,6 @@
+label
+user_age
+user_sex
+user_city
+item_category
+item_color

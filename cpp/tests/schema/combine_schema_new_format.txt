@@ -1,0 +1,10 @@
+# table: item_table
+
+# table: user_table
+
+# join
+item_table#user_table(user_id)=>output
+
+# combine
+campaign_id
+user_feature#campaign_feature
