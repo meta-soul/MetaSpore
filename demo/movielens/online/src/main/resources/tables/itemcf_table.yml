@@ -1,0 +1,10 @@
+tableName: "itemcf"
+collectionName: "itemcf"
+dbType: "mongodb"
+columns:
+  - colName: "queryid"
+    colType: "String"
+  - colName: "key"
+    colType: "String"
+  - colName: "value"
+    colType: "List"
