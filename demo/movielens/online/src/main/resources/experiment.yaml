@@ -1,0 +1,86 @@
+scene-config:
+  scenes:
+    - name: guess-you-like
+      layers:
+        - name: userModel
+          normalLayerArgs:
+            - experimentName: userModel.base
+              ratio: 1.0
+        - name: match
+          normalLayerArgs:
+            - experimentName: match.base
+              ratio: 0.0
+            - experimentName: match.multiple
+              ratio: 1.0
+        - name: rank
+          normalLayerArgs:
+            - experimentName: rank.base
+              ratio: 0.0
+            - experimentName: rank.wideDeep
+              ratio: 0.5
+            - experimentName: rank.lightGBM
+              ratio: 0.5
+        - name: summary
+          normalLayerArgs:
+            - experimentName: summary.base
+              ratio: 1.0
+        - name: diversify
+          normalLayerArgs:
+            - experimentName: diversify.base
+              ratio: 1.0
+
+  experiments:
+    - layerName: userModel
+      experimentName: userModel.base
+      experimentArgs:
+        modelName: userModel.base
+    - layerName: match
+      experimentName: match.base
+      experimentArgs:
+        modelName: match.base
+        matcherNames: [ItemCfMatcher]
+        maxReservation: 200
+        itemCfAlgoLevel: 3
+        itemCfMaxReservation: 200
+    - layerName: match
+      experimentName: match.multiple
+      experimentArgs:
+        modelName: match.multiple
+        matcherNames: [ItemCfMatcher, SwingMatcher, TwoTowersMatcher]
+        maxReservation: 300
+        itemCfAlgoLevel: 3
+        itemCfMaxReservation: 200
+        swingAlgoLevel: 3
+        swingMaxReservation: 200
+        twoTowersSimpleXModelName: two_towers_simplex
+        twoTowersSimpleXAlgoLevel: 3
+        twoTowersSimpleXMaxReservation: 200
+    - layerName: rank
+      experimentName: rank.base
+      experimentArgs:
+        modelName: rank.base
+        ranker: WideAndDeepRanker
+        maxReservation: 100
+    - layerName: rank
+      experimentName: rank.wideDeep
+      experimentArgs:
+        modelName: movie_lens_wdl
+        ranker: WideAndDeepRanker
+        maxReservation: 100
+        sortStrategyType: USE_RANK_MULTIPLY_MATCH
+        sortStrategyAlpha: 0.4
+        sortStrategyBeta: 0.6
+    - layerName: rank
+      experimentName: rank.lightGBM
+      experimentArgs:
+        modelName: lightgbm_test_model
+        ranker: LightGBMRanker
+        maxReservation: 100
+    - layerName: summary
+      experimentName: summary.base
+      experimentArgs:
+        modelName: summary.base
+    - layerName: diversify
+      experimentName: diversify.base
+      experimentArgs:
+        useDiversify: True

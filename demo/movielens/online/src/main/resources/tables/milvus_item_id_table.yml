@@ -1,0 +1,10 @@
+tableName: "milvus_item_id"
+collectionName: "milvus_item_id"
+dbType: "mongodb"
+columns:
+  - colName: "queryid"
+    colType: "String"
+  - colName: "milvus_id"
+    colType: "String"
+  - colName: "item_id"
+    colType: "String"
