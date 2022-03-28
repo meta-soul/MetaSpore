@@ -1,0 +1,64 @@
+## spark session
+app_name: 'SimpleX Demo'
+local: False
+worker_count: 2
+server_count: 2
+batch_size: 256
+worker_memory: '5G'
+server_memory: '5G'
+coordinator_memory: '5G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/train.parquet
+test_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/test.parquet
+item_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/item.parquet
+
+## model
+## two_tower_module: metaspore
+two_tower_module: python.two_tower_retrieval_milvus 
+two_tower_module_class: TwoTowerRetrievalModule
+two_tower_estimator_class: TwoTowerRetrievalEstimator
+
+## model configurations
+user_column_name: s3://dmetasoul-bucket/demo/movielens/schema/simplex/user_column_schema
+user_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/user_combine_schema
+interacted_items_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/interacted_items_combine_schema
+item_column_name: s3://dmetasoul-bucket/demo/movielens/schema/simplex/item_column_schema
+item_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/item_combine_schema
+itemdb_column_name: s3://dmetasoul-bucket/demo/movielens/schema/simplex/itemdb_column_name
+itemdb_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/itemdb_combine_schema
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/movielens/model/simplex/model_out/
+model_export_path: s3://dmetasoul-bucket/demo/movielens/model/simplex/model_export/
+milvus_item_id_path: s3://dmetasoul-bucket/demo/movielens/mango/milvus_item_id.parquet/
+model_version: '0.1'
+experiment_name: two_towers_simplex
+input_label_column_index: 0
+
+## model hyper params
+_negative_sample_count: 13
+_w: 3
+_m: 0.8
+vector_embedding_size: 32
+item_embedding_size: 32
+g: 0.8
+net_dropout: 0.0
+adam_learning_rate: 0.002
+ftrl_learning_rate: 0.02
+ftrl_smothing_rate: 1.0
+ftrl_l1_regularization: 1.0
+ftrl_l2_regularization: 1.0
+training_epoches: 1
+shuffle_training_dataset: False
+
+## milvus 
+milvus_description: 'simplex_demo'
+milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
+#milvus_host: '120.92.33.19'
+#milvus_host: '120.92.82.80'
+milvus_port: '19530'
+milvus_embedding_field: 'embedding_vector'
+milvus_index_type: 'IVF_FLAT'
+milvus_metric_type: 'IP'
+milvus_nlist: 1024
+milvus_nprobe: 128
