@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.dmetasoul.metaspore.serving";
+option java_outer_classname = "MetaSporeServingProto";
+option objc_class_prefix = "SPORE";
+option cc_enable_arenas = true;
+
+package metaspore.serving;
+
+service Predict {
+  rpc Predict(PredictRequest) returns (PredictReply) {}
+}
+
+message PredictRequest {
+  string                model_name = 1;
+  map<string, string>   parameters = 3;
+  map<string, bytes>    payload    = 5;
+}
+
+message PredictReply {
+  map<string, bytes>    payload    = 1;
+  map<string, string>   extras     = 3;
+}
