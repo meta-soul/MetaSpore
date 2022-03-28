@@ -24,6 +24,7 @@ import com.dmetasoul.metaspore.pipeline.ScenesFactory;
 import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
 import com.dmetasoul.metaspore.pipeline.annotation.LayerAnnotation;
 import com.dmetasoul.metaspore.pipeline.pojo.*;
+//import com.dmetasoul.metaspore.pipeline.utils.ApplicationContextGetBeanHelper;
 import lombok.Data;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.ApplicationContext;
@@ -133,6 +134,21 @@ public class ScenesFactoryImpl implements ScenesFactory {
         }
         return scenes;
     }
+
+//    private BaseExperiment getBeanFromCtxWithClassName(String experimentClassName) {
+//
+//        BaseExperiment experimentCls = (BaseExperiment) ApplicationContextGetBeanHelper.getBeanFromClassName(experimentClassName);
+//        return experimentCls;
+//
+//    }
+//
+//    private BaseExperiment getObjectFromReflectWithClassName(String experimentClassName) {
+//
+//        BaseExperiment experimentCls = (BaseExperiment) ApplicationContextGetBeanHelper.getBeanFromClassName(experimentClassName);
+//        return experimentCls;
+//
+//    }
+
 
     // TODO: 2022/3/16 增加上下层 input/output 类型校验
     private void checkInOutClassType(Class<?> a, Class<?> b) {

@@ -12,6 +12,7 @@
         <module>serving</module>
         <module>feature-extract</module>
         <module>experiment-pipeline</module>
+        <module>experiment-pipeline-example</module>
     </modules>
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
