@@ -1,14 +1,15 @@
 package com.dmetasoul.metaspore.example.controller;
 
-import com.dmetasoul.metaspore.example.layer.MyExperimentPojo;
-import com.dmetasoul.metaspore.example.layer.MyExperimentPojo2;
+import com.dmetasoul.metaspore.example.layer.FirstLayerPojo;
+import com.dmetasoul.metaspore.example.layer.SecondLayerPojo;
 import com.dmetasoul.metaspore.pipeline.Scene;
 import com.dmetasoul.metaspore.pipeline.ScenesFactory;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import com.dmetasoul.metaspore.pipeline.pojo.SceneConfig;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
 import org.springframework.util.Assert;
 
 import java.util.HashMap;
@@ -18,6 +19,21 @@ import java.util.Map;
 class DemoControllerTest {
     @Autowired
     private ScenesFactory scenes;
+
+    private FirstLayerPojo input;
+
+    private Context ctx;
+
+    private HashMap<String, String> specifiedLayerAndExperiment = new HashMap<>();
+
+    @BeforeEach
+    void setUp() {
+        input = new FirstLayerPojo("1");
+        ctx = new Context();
+        ctx.setCustomData("my-data");
+        specifiedLayerAndExperiment.put("recall", "RecallExperimentTwo");
+
+    }
 
     @Test
     void getSceneConfig() {
@@ -36,20 +52,30 @@ class DemoControllerTest {
 
     @Test
     void recommand() {
-        MyExperimentPojo input = new MyExperimentPojo();
-        input.setUserId("1");
-        MyExperimentPojo2 result = (MyExperimentPojo2) scenes.getScene("guess-you-like").run(input);
+        SecondLayerPojo result = (SecondLayerPojo) scenes.getScene("guess-you-like").run(input);
         System.out.println(result);
     }
 
     @Test
-    void debug() {
-        HashMap<String, String> specifiedLayerAndExperiment = new HashMap<>();
-        specifiedLayerAndExperiment.put("recall", "milvus2");
-        MyExperimentPojo input = new MyExperimentPojo();
-        input.setUserId("1");
-        MyExperimentPojo2 result = (MyExperimentPojo2) scenes.getScene("guess-you-like").runDebug(input, specifiedLayerAndExperiment);
+    void recommandWithContext() {
+        SecondLayerPojo result = (SecondLayerPojo) scenes.getScene("guess-you-like").run(input, ctx);
         System.out.println(result);
+        System.out.println("ctx.getCustomData(): " + ctx.getCustomData());
+        System.out.println(ctx.getLayerContexts());
+    }
+
+
+    @Test
+    void debug() {
+        SecondLayerPojo result = (SecondLayerPojo) scenes.getScene("guess-you-like").runDebug(input, specifiedLayerAndExperiment);
+        System.out.println(result);
+    }
+
+    @Test
+    void debugWithContext() {
+        SecondLayerPojo result = (SecondLayerPojo) scenes.getScene("guess-you-like").runDebug(input, ctx, specifiedLayerAndExperiment);
+        System.out.println(result);
+        System.out.println("ctx.getCustomData(): " + ctx.getCustomData());
 
     }
 }
