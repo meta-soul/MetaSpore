@@ -1,4 +1,59 @@
-# feature-extract
+# Feature Extract
+
+Feature Extract 是由 [DMetaSoul](https://www.dmetasoul.com/) 研发的特征代码自动生成框架。用户可以通过配置 YAML 文件来自定义特征表的结构，框架可以根据这个文件生成相应的 Spring Boot JPA Repository 代码文件，包含相关的访问数据库的 Query 接口，用户可以直接调用该接口进行数据库的访问。
+
+
+
+## Demo 示例
+
+完整示例：[Movielens Demo 示例链接](../../../../demo/movielens/online)
+
+
+
+## 框架介绍
+
+框架基于 spring boot 项目，通过 maven plugin 的方式引入。目前支持 mongoDB、mysql。
+
+- ### Table 定义
+
+resources/tables 目录下新建 item.yml。tableName、collectionName 分别代表数据库名和表名。dbType 表示选择 mongodb。columns 字段代表表的各个列。
+
+```yaml
+tableName: "item"
+collectionName: "item"
+dbType: "mongodb"
+columns:
+  - colName: "queryid"
+    colType: "String"
+  - colName: "movie_id"
+    colType: "String"
+  - colName: "title"
+    colType: "String"
+  - colName: "genre"
+    colType: "String"
+```
+
+
+
+- ### DB 连接
+
+  以 mongodb 为例，application.properties 下配置 DB 信息。其中 spring.data.mongodb.field-naming-strategy=org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy 是指从 DB 读出来的列名下划线转驼峰。
+
+```
+# mongodb
+spring.data.mongodb.host=localhost
+spring.data.mongodb.port=27017
+spring.data.mongodb.database="YOUR-DATABASE"
+spring.data.mongodb.username="YOUR-USERNAME"
+spring.data.mongodb.password="YOUR-PASSWORD"
+spring.jackson.default-property-inclusion=NON_NULL
+spring.data.mongodb.field-naming-strategy=org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
+spring.jackson.serialization.indent_output = true
+```
+
+
+
+- ### 项目引用
 
 1. 克隆、安装本插件
 
@@ -50,33 +105,8 @@
         </plugins>
    </build>
    ```
-3. resources/tables 目录下新建 item.yml, application.properties 下配置 DB 信息
    
-   ```yaml
-   tableName: "item"
-   collectionName: "item"
-   columns:
-     - colName: "queryid"
-       colType: "String"
-     - colName: "movie_id"
-       colType: "String"
-     - colName: "title"
-       colType: "String"
-     - colName: "genre"
-       colType: "String"
-   ```
    
-   ```shell
-   # mongodb
-   spring.data.mongodb.host=localhost
-   spring.data.mongodb.port=27017
-   spring.data.mongodb.database="YOUR-DATABASE"
-   spring.data.mongodb.username="YOUR-USERNAME"
-   spring.data.mongodb.password="YOUR-PASSWORD"
-   spring.jackson.default-property-inclusion=NON_NULL
-   spring.data.mongodb.field-naming-strategy=org.springframework.data.mapping.model.SnakeCaseFieldNamingStrategy
-   spring.jackson.serialization.indent_output = true
-   ```
 4. 执行 generate ，验证target/generated-sources 下是否产出相应 domain 和 repository, 然后进行 Test 测试
    ```shell
    // 生成 generated-sources 里面的代码
