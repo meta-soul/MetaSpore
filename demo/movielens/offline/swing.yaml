@@ -9,10 +9,10 @@ server_memory: '5G'
 coordinator_memory: '5G'
 
 ## datasets
-train_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/train.parquet
-test_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/test.parquet
-item_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/item.parquet
-swing_out_path: s3://dmetasoul-bucket/demo/movielens/mango/swing.parquet/
+train_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/item.parquet
+swing_out_path: ${MY_S3_BUCKET}/movielens/mango/swing.parquet/
 
 ## swing model configuration
 user_id_column_name: user_id

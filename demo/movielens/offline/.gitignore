@@ -1,0 +1,7 @@
+*.tar
+*.gz
+*.tar.gz
+*.zip
+.ipynb_checkpoints/
+python/__pycache__/
+**/nohup.out

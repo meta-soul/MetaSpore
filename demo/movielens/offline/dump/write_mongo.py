@@ -1,3 +1,19 @@
+#
+# Copyright 2022 DMetaSoul
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import argparse
 from pyspark.sql.types import *
 from pyspark.sql import SparkSession
@@ -12,8 +28,8 @@ if __name__ == '__main__':
     s3_file_name = args.origin
     mongo_table_name = args.dest
     query_id_col = args.queryid
-    mongodb_uri = "mongodb://jpa:Dmetasoul_123456@172.31.37.47:27017/jpa." + mongo_table_name
-    data_path = "s3://dmetasoul-bucket/demo/movielens/mango/" + s3_file_name + ".parquet/*"
+    mongodb_uri = "{MY_MONGO.GPA}" + mongo_table_name
+    data_path = "${MY_S3_BUCKET}/movielens/mango/" + s3_file_name + ".parquet/*"
     print("Debug --- data_path: %s, mongodb_uri: %s, query_id_col: %s" % (data_path, mongodb_uri, query_id_col))
 
     spark = SparkSession \

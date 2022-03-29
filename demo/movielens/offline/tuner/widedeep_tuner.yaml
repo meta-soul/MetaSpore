@@ -1,13 +1,13 @@
-app_name: Wide&Deep CTR Model Tuner
+cd app_name: Wide&Deep CTR Model Tuner
 num_experiment: 3
 model_name: widedeep
 local_result_path: './output'
-result_path: s3://dmetasoul-bucket/demo/tuner/model/movielens/widedeep/
-py_files: 'python.zip'
+result_path: ${MY_S3_BUCKET}/tuner/model/movielens/widedeep/
+py_files: './python.zip'
 
 dataset:
-    train: s3://dmetasoul-bucket/demo/movielens/rank/train.parquet
-    test: s3://dmetasoul-bucket/demo/movielens/rank/test.parquet
+    train: ${MY_S3_BUCKET}/movielens/rank/train.parquet
+    test: ${MY_S3_BUCKET}/movielens/rank/test.parquet
 
 common_param:
     local: False
@@ -16,11 +16,11 @@ common_param:
     worker_memory: '10G'
     server_memory: '10G'
     coordinator_memory: '10G'
-    column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/column_schema
-    combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/combine_column_schema
-    wide_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/wide_combine_column_schema
+    column_name_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/column_schema
+    combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/combine_column_schema
+    wide_combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/wide_combine_column_schema
     model_in_path: null
-    model_out_path: s3://dmetasoul-bucket/demo/tuner/model/movielens/widedeep/model_out/
+    model_out_path: ${MY_S3_BUCKET}/tuner/model/movielens/widedeep/model_out/
     model_export_path: null
     model_version: null
     experiment_name: null

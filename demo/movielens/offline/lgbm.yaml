@@ -1,4 +1,4 @@
-train_data_path: s3://dmetasoul-bucket/demo/movielens/rank/lgbm_train.parquet
-test_data_path: s3://dmetasoul-bucket/demo/movielens/rank/lgbm_test.parquet
-model_onnx_path: s3://dmetasoul-bucket/demo/movielens/model/lightgbm/onnx_out/lightgbm.onnx
+train_data_path: ${MY_S3_BUCKET}/movielens/rank/lgbm_train.parquet
+test_data_path: ${MY_S3_BUCKET}/movielens/rank/lgbm_test.parquet
+model_onnx_path: ${MY_S3_BUCKET}/movielens/model/lightgbm/onnx_out/lightgbm.onnx
 

@@ -9,28 +9,28 @@ server_memory: '5G'
 coordinator_memory: '5G'
 
 ## datasets
-train_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/train.parquet
-test_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/test.parquet
-item_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/item.parquet
+train_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/item.parquet
 
 ## model
 ## two_tower_module: metaspore
-two_tower_module: python.two_tower_retrieval_milvus 
+two_tower_module: python.algos.two_tower_retrieval_milvus 
 two_tower_module_class: TwoTowerRetrievalModule
 two_tower_estimator_class: TwoTowerRetrievalEstimator
 
 ## model configurations
-user_column_name: s3://dmetasoul-bucket/demo/movielens/schema/simplex/user_column_schema
-user_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/user_combine_schema
-interacted_items_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/interacted_items_combine_schema
-item_column_name: s3://dmetasoul-bucket/demo/movielens/schema/simplex/item_column_schema
-item_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/item_combine_schema
-itemdb_column_name: s3://dmetasoul-bucket/demo/movielens/schema/simplex/itemdb_column_name
-itemdb_combine_schema: s3://dmetasoul-bucket/demo/movielens/schema/simplex/itemdb_combine_schema
+user_column_name: ${MY_S3_BUCKET}/movielens/schema/simplex/user_column_schema
+user_combine_schema: ${MY_S3_BUCKET}/movielens/schema/simplex/user_combine_schema
+interacted_items_combine_schema: ${MY_S3_BUCKET}/movielens/schema/simplex/interacted_items_combine_schema
+item_column_name: ${MY_S3_BUCKET}/movielens/schema/simplex/item_column_schema
+item_combine_schema: ${MY_S3_BUCKET}/movielens/schema/simplex/item_combine_schema
+itemdb_column_name: ${MY_S3_BUCKET}/movielens/schema/simplex/itemdb_column_name
+itemdb_combine_schema: ${MY_S3_BUCKET}/movielens/schema/simplex/itemdb_combine_schema
 model_in_path: null
-model_out_path: s3://dmetasoul-bucket/demo/movielens/model/simplex/model_out/
-model_export_path: s3://dmetasoul-bucket/demo/movielens/model/simplex/model_export/
-milvus_item_id_path: s3://dmetasoul-bucket/demo/movielens/mango/milvus_item_id.parquet/
+model_out_path: ${MY_S3_BUCKET}/movielens/model/simplex/model_out/
+model_export_path: ${MY_S3_BUCKET}/movielens/model/simplex/model_export/
+milvus_item_id_path: ${MY_S3_BUCKET}/movielens/mango/milvus_item_id.parquet/
 model_version: '0.1'
 experiment_name: two_towers_simplex
 input_label_column_index: 0
