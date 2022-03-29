@@ -2,12 +2,15 @@
 
 MetaSpore 是一个一站式端到端的机器学习开发平台，提供从数据预处理、模型训练、离线实验、在线预测到在线实验分桶 ABTest 的全流程框架和开发接口。
 
+![MetaSpore 架构](docs/images/MetaSpore-arch-cn.png)
+
 ## 核心功能
 MetaSpore 具有如下几个特点：
 
 1. 一站式端到端开发，从离线模型训练到在线预测和分桶实验，全链路统一的开发体验；
-2. 深度学习训练框架，兼容 PyTorch 接口，支持分布式大规模稀疏特征学习，并与 PySpark 打通，无缝读取数据湖和数仓上的训练数据；
-3. 高性能在线预测服务，支持神经网络、决策树、Spark ML、SKLearn 等多种模型；支持 GPU、NPU 加速；
+2. 深度学习训练框架，兼容 PyTorch 生态，支持分布式大规模稀疏特征学习
+2. 训练框架与 PySpark 打通，无缝读取数据湖和数仓上的训练数据；
+3. 高性能在线预测服务，支持神经网络、决策树、Spark ML、SKLearn 等多种模型；支持异构计算推理加速；
 4. 在离线统一特征抽取框架，自动生成线上特征读取逻辑，统一特征抽取逻辑；
 5. 在线算法应用框架，提供模型预测、实验分桶切流、参数动态热加载和丰富的 Debug 功能；
 6. 丰富的行业算法示例和端到端完整链路解决方案。
@@ -36,7 +39,7 @@ pip install metaspore-1.0.0-cp38-cp38-linux_x86_64.whl
 
 关于使用上的问题，可以在 [GitHub Discussion](https://github.com/meta-soul/MetaSpore/discussions) 中发帖提问，也可以通过 [GitHub Issue](https://github.com/meta-soul/MetaSpore/issues) 反馈。
 
-## 邮箱
+### 邮箱
 可以通过 [opensource@dmetasoul.com](mailto:opensource@dmetasoul.com) 给我们发送邮件。
 
 ### 微信公众号
