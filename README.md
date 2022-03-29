@@ -2,6 +2,8 @@
 
 MetaSpore is a one-stop end-to-end machine learning development platform that provides a full-cycle framework and development interface for from data preprocessing, model training, offline experiments, online predictions to online experiment bucketization and ab-testing.
 
+MetaSpore is developed and opensourced by [DMetaSoul](https://github.com/meta-soul?type=source) team. You could also join our [slack user discussion space](https://join.slack.com/t/dmetasoul-user/shared_invite/zt-1681xagg3-4YouyW0Y4wfhPnvji~OwFg).
+
 ![MetaSpore Architecture](docs/images/MetaSpore-arch-en.png)
 
 ## Core Features
@@ -43,7 +45,7 @@ For questions about usage, you can post questions in [GitHub Discussion](https:/
 Email us at [opensource@dmetasoul.com](mailto:opensource@dmetasoul.com).
 
 ### Slack
-Join our user discussion slack channel: [MetaSpore User Discussion](https://join.slack.com/t/metasporeuser-jn65587/shared_invite/zt-1681xagg3-4YouyW0Y4wfhPnvji~OwFg)
+Join our user discussion slack channel: [MetaSpore User Discussion](https://join.slack.com/t/dmetasoul-user/shared_invite/zt-1681xagg3-4YouyW0Y4wfhPnvji~OwFg)
 
 ## Open source projects
 MetaSpore is a completely open source project released under the Apache License 2.0. Participation, feedback, and code contributions are welcome.
