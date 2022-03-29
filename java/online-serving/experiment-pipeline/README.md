@@ -5,54 +5,49 @@
    scene-config:
      scenes:
        - name: guess-you-like
-         sceneArgs:
-           sceneArgs1: sceneArgs1-value
-           sceneArgs2: sceneArgs2-value
+         extraSceneArgs:
+           extra-arg1: sceneArg1
+           extra-arg2: sceneArg2
          layers:
            - name: recall
              normalLayerArgs:
-               - experimentName: milvus
+               - experimentName: RecallExperimentOne
                  ratio: 1.0
-               - experimentName: milvus2
+               - experimentName: RecallExperimentTwo
                  ratio: 0
              extraLayerArgs:
-               extraLayerArgs1: extraLayerArgs1-value
-               extraLayerArgs2: extraLayerArgs2-value
+               extra-arg1: recallLayerArg1
            - name: rank
              normalLayerArgs:
-               - experimentName: milvus3
+               - experimentName: RankExperimentOne
+                 ratio: 1.0
+               - experimentName: RankExperimentTwo
                  ratio: 1.0
              extraLayerArgs:
-               extraLayerArgs1: extraLayerArgs1-value
-               extraLayerArgs2: extraLayerArgs2-value
-               extraLayerArgs3: extraLayerArgs3-value
+               extra-arg1: rankLayerArg1
      experiments:
        - layerName: recall
-         experimentName: milvus
-         experimentArgs:
-           modelName: TwoTower
-           extraArg1: milvus-value
+         experimentName: RecallExperimentOne
+         extraExperimentArgs:
+           modelName: RecallExperimentOneModel
+           extra-arg1: RecallExperimentOne-extra-arg1
        - layerName: recall
-         experimentName: milvus2
-         experimentArgs:
-           modelName: TwoTower2
-           extraArg1: milvus2-value
-           extraArg2: milvus2-value
-       - layerName: recall
-         experimentName: milvus4
-         experimentArgs:
-           modelName: TwoTower2
-           extraArg1: milvus4-value
-           extraArg2: milvus4-value
-           extraArg3: milvus4-value
-           extraArg4: milvus4-value
+         experimentName: RecallExperimentTwo
+         extraExperimentArgs:
+           modelName: RecallExperimentTwoModel
+           extra-arg1: RecallExperimentTwo-extra-arg1
        - layerName: rank
-         experimentName: milvus3
-         experimentArgs:
-           modelName: TwoTower3
-           extraArg1: milvus3-value
-           extraArg2: milvus3-value
-           extraArg3: milvus4-value
+         experimentName: RankExperimentOne
+         extraExperimentArgs:
+           modelName: RankExperimentOneModel
+           extra-arg1: RankExperimentOne-extra-arg1
+       - layerName: rank
+         experimentName: RankExperimentTwo
+         className: com.dmetasoul.metaspore.example.experiment.RankExperimentOne
+         extraExperimentArgs:
+           modelName: RankExperimentOneModel
+           extra-arg1: RankExperimentTwo-extra-arg1
+   
    ```
 3. 在自己的 spring boot 项目里 resources 目录下配置 consul 的配置文件
    ```yaml
