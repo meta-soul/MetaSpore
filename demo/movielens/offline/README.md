@@ -43,7 +43,7 @@ envsubst <input.yaml> output.yaml
   python write_mongo.py 
   ```
 
-### 2.swing
+### swing
 
 #### 1.Manually initialize a path.
  ```python
@@ -59,7 +59,7 @@ envsubst <input.yaml> output.yaml
   ``` 
 Notice: input.yaml can't ba same to output.yaml `
 
-### 3.simpleX  
+### simpleX  
 #### 1.Manually initialize a path.
  ```python
   export MY_S3_BUCKET='your swing bucket path' 
