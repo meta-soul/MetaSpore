@@ -24,13 +24,13 @@ MetaSpore has the following features:
 * [A MovieLens end-to-end recommender system](demo/movielens/online)
 
 ## Installation package download
-We provide a precompiled offline training installation package: [download link](). This package requires Python 3.8.
+We provide a precompiled offline training installation package: [download link](https://ks3-sgp.ksyuncs.com/dmetasoul-release-sg/releases/metaspore/metaspore-1.0.0%2B9591a50-cp38-cp38-linux_x86_64.whl). This package requires Python 3.8.
 
 After downloading, in the Python 3.8 environment, execute the installation through the command line:
 ```bash
 pip install pyspark
 pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
-pip install metaspore-1.0.0-cp38-cp38-linux_x86_64.whl
+pip install metaspore-1.0.0+9591a50-cp38-cp38-linux_x86_64.whl
 ```
 
 ## Compile the code

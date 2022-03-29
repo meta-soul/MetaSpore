@@ -22,13 +22,13 @@ MetaSpore 具有如下几个特点：
 * [一个 MovieLens 端到端推荐系统](demo/movielens/online)
 
 ## 安装包下载
-我们提供了一个预编译的离线训练安装包：[下载链接]()。 该安装包需要 Python 3.8.
+我们提供了一个预编译的离线训练安装包：[下载链接](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B9591a50-cp38-cp38-linux_x86_64.whl)。 该安装包依赖 Python 3.8.
 
 下载后在 Python 3.8 环境下，通过命令行执行安装：
 ```bash
 pip install pyspark
 pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
-pip install metaspore-1.0.0-cp38-cp38-linux_x86_64.whl
+pip install metaspore-1.0.0+9591a50-cp38-cp38-linux_x86_64.whl
 ```
 
 ## 编译代码
