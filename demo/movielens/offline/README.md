@@ -2,10 +2,13 @@
 
 ## Data preprocessing(fg_movielens.py)
 After we read the data from the original database, we process the data to be used by the ranking model
-
-#### 1.run the code
+1.Manually initialize a path.
+export MY_S3_BUCKET='your item_cf bucket path'
+envsubst <input.yaml> output.yaml
+2.run the code
 
 python fg_movielens.py -conf fg.yaml
+
 
 Data preprocessed will be saved to 'item_summary_mongo_dataset_out_path','item_fearture_mongo_dataset_out_path'and'user_mongo_dataset_out_path'.
  
