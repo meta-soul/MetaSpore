@@ -75,7 +75,7 @@ Notice: input.yaml can't ba same to output.yaml `
 
 ## Ranking model
 
-ranking model include widedeep and light_gbm presently. 
+ranking model include widedeep and light_gbm presently,The operation process is the same for both models,The code runs with the following command:. 
 #### 1.Manually initialize a path.
 ```python
    export MY_S3_BUCKET='your bucket path' 
