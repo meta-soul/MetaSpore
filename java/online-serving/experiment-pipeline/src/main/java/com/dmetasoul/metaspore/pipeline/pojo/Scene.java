@@ -27,6 +27,6 @@ import java.util.Map;
 @Component
 public class Scene {
     private String name;
-    private Map<String, Object> sceneArgs = new HashMap<>();
+    private Map<String, Object> extraSceneArgs = new HashMap<>();
     private List<Layer> layers;
 }

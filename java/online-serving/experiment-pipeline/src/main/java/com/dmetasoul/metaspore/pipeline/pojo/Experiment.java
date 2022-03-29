@@ -25,5 +25,6 @@ import java.util.Map;
 public class Experiment {
     private String layerName;
     private String experimentName;
-    private Map<String, Object> experimentArgs = new HashMap<>();
+    private String className;
+    private Map<String, Object> extraExperimentArgs = new HashMap<>();
 }
