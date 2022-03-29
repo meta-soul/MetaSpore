@@ -34,17 +34,22 @@ pip install metaspore-1.0.0-cp38-cp38-linux_x86_64.whl
 
 ## 问题反馈
 
-关于使用上的问题，可以在 [GitHub Discussion](https://github.com/meta-soul/MetaSpore/discussions) 中发帖提问，也可以通过 [GitHub Issue](https://github.com/meta-soul/MetaSpore/issues?q=) 反馈。
+关于使用上的问题，可以在 [GitHub Discussion](https://github.com/meta-soul/MetaSpore/discussions) 中发帖提问，也可以通过 [GitHub Issue](https://github.com/meta-soul/MetaSpore/issues) 反馈。
+
+## 邮箱
+可以通过 [opensource@dmetasoul.com](mailto:opensource@dmetasoul.com) 给我们发送邮件。
 
 ### 微信公众号
-欢迎关注元灵数智公众号，我们会定期推送关于 MetaSpore 的架构代码解读、端到端算法业务落地案例分享等文章：
+欢迎关注 <u>**元灵数智**</u> 公众号，我们会定期推送关于 MetaSpore 的架构代码解读、端到端算法业务落地案例分享等干货文章：
 
 ![元灵数智公众号](docs/images/%E5%85%83%E7%81%B5%E6%95%B0%E6%99%BA%E5%85%AC%E4%BC%97%E5%8F%B7.jpg)
 
 ### MetaSpore 开发者社区微信群
 欢迎扫码加入 MetaSpore 开发者社区微信群，随时交流 MetaSpore 开发相关的各类问题：
 
+![元灵数智 MetaSpore 交流群](docs/images/%E5%85%83%E7%81%B5%E6%95%B0%E6%99%BA%20MetaSpore%20%E4%BA%A4%E6%B5%81%E7%BE%A4.jpg)
 
+如果群二维码失效，请关注公众号后点击下方 "了解我们-用户交流" 获取最新微信群二维码。
 
 ## 开源项目
 MetaSpore 是一个完全开源的项目，以 Apache License 2.0 协议发布。欢迎参与使用、反馈和贡献代码。
