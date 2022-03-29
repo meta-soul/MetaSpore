@@ -125,9 +125,9 @@ target_compile_definitions(metaspore_shared PRIVATE _METASPORE_VERSION="${projec
 target_compile_definitions(metaspore_shared PRIVATE DBG_MACRO_NO_WARNING)
 target_include_directories(metaspore_shared PRIVATE ${PROJECT_SOURCE_DIR}/cpp)
 target_include_directories(metaspore_shared PRIVATE ${PROJECT_BINARY_DIR}/gen/thrift/cpp)
+target_link_options(metaspore_shared PRIVATE -static-libgcc -static-libstdc++)
 target_link_libraries(metaspore_shared PRIVATE
     metaspore-common
-    json11
     ${JSON11_LIBRARIES}
     pybind11::pybind11
     Python::Module
