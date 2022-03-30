@@ -84,11 +84,11 @@ spark-submit \
 ```
 
 ### 3.3 Two-Tower  
-SimpleX algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
+`SimpleX` algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
 ```python
 python simplex.py --conf simplex.yaml 
 ``` 
-After the training script is executed, the embedding vector of the movies has been stored into database of Milvus, which is configured in this 'simplex.yaml' file.
+After the training script is executed, the embedding vector of the movies has been stored into database of `Milvus`, which is configured in this `simplex.yaml` file.
 
 ## 4. Ranking model
 
