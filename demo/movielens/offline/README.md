@@ -1,4 +1,4 @@
-# Offline Models of MovieLens Recommender
+# Offline Models for MovieLens Recommender
 
 As we known, for one typical personalized recommender system, as depicted in the figure below, the offline work is mainly composed by data preprocessing, recall model developing, ranking model developing, etc. For example, in the recall stage, collaborative filtering or graph theory-based methods, or even neural network-based methods, may be used to match between users and candidate items. In the ranking and reranking stage, the final business indicators are generally modeled and ranking model directly. A lot of routine optimization work is focused on offline model iterations. Here we introduce how to develop the basic data preprocessing script, recall model and ranking model on our `MetaSpore` platform.
 
@@ -97,7 +97,7 @@ As we described previously, we can use `LightGBM` to solve the ranking problem. 
 ```shell
 python lgbm_model_train.py --conf lgbm.yaml
 ```
-A special note is needed here. After training the model, we using code below to transform the model into ONNX format for serving in NPS:
+A special note is needed here. After training the model, we using code below to transform the model into ONNX format for `MetaSpore Serving`:
 ```python
 def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> bytes:
     initial_types = [("input", FloatTensorType([-1, input_size]))]
