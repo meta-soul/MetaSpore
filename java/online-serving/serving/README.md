@@ -14,7 +14,7 @@ mvn install -DskipTests -Dmaven.test.skip=true
 ````xml
 <dependency>
     <groupId>com.dmetasoul</groupId>
-    <artifactId>metaspore-online-serving</artifactId>
+    <artifactId>serving</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>
 ````
