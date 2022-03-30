@@ -39,24 +39,33 @@ public class Column {
         this.colType = colType;
     }
 
+    @Override
     public boolean equals(final Object o) {
-        if (o == this) return true;
-        if (!(o instanceof Column)) return false;
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof Column)) {
+            return false;
+        }
         final Column other = (Column) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual((Object) this)) {
+            return false;
+        }
         final Object this$colName = this.getColName();
         final Object other$colName = other.getColName();
-        if (this$colName == null ? other$colName != null : !this$colName.equals(other$colName)) return false;
+        if (this$colName == null ? other$colName != null : !this$colName.equals(other$colName)) {
+            return false;
+        }
         final Object this$colType = this.getColType();
         final Object other$colType = other.getColType();
-        if (this$colType == null ? other$colType != null : !this$colType.equals(other$colType)) return false;
-        return true;
+        return this$colType == null ? other$colType == null : this$colType.equals(other$colType);
     }
 
     protected boolean canEqual(final Object other) {
         return other instanceof Column;
     }
 
+    @Override
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -67,6 +76,7 @@ public class Column {
         return result;
     }
 
+    @Override
     public String toString() {
         return "Column(colName=" + this.getColName() + ", colType=" + this.getColType() + ")";
     }

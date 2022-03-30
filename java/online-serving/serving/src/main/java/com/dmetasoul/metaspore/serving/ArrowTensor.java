@@ -128,7 +128,9 @@ public class ArrowTensor {
     }
 
     public long getSize() {
-        if (data == null) return 0;
+        if (data == null) {
+            return 0;
+        }
         long prod = 1;
         for (long l : shape) {
             prod *= l;
@@ -231,29 +233,33 @@ public class ArrowTensor {
     public FloatTensorAccessor getFloatData() {
         if (data != null) {
             return new FloatTensorAccessor(data.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer(), shape.length == 2 ? (int) shape[1] : 0);
-        } else
+        } else {
             return null;
+        }
     }
 
     public IntTensorAccessor getIntData() {
-        if (data != null)
+        if (data != null) {
             return new IntTensorAccessor(data.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer(), shape.length == 2 ? (int) shape[1] : 0);
-        else
+        } else {
             return null;
+        }
     }
 
     public DoubleTensorAccessor getDoubleData() {
-        if (data != null)
+        if (data != null) {
             return new DoubleTensorAccessor(data.order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer(), shape.length == 2 ? (int) shape[1] : 0);
-        else
+        } else {
             return null;
+        }
     }
 
     public LongTensorAccessor getLongData() {
-        if (data != null)
+        if (data != null) {
             return new LongTensorAccessor(data.order(ByteOrder.LITTLE_ENDIAN).asLongBuffer(), shape.length == 2 ? (int) shape[1] : 0);
-        else
+        } else {
             return null;
+        }
     }
 
     private final ArrowType type;

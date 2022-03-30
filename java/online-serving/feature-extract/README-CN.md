@@ -76,7 +76,7 @@ spring.jackson.serialization.indent_output = true
             </plugin>
             <!-- 引入 feature-extract 插件 -->
             <plugin>
-                <groupId>com.dmetasoul</groupId>
+                <groupId>com.dmetasoul.metaspore</groupId>
                 <artifactId>feature-extract</artifactId>
                 <version>1.0-SNAPSHOT</version>
                 <configuration>
@@ -110,7 +110,7 @@ spring.jackson.serialization.indent_output = true
 4. 执行 generate ，验证target/generated-sources 下是否产出相应 domain 和 repository, 然后进行 Test 测试
    ```shell
    // 生成 generated-sources 里面的代码
-   mvn com.dmetasoul:feature-extract:1.0-SNAPSHOT:generate
+   mvn com.dmetasoul.metaspore:feature-extract:1.0-SNAPSHOT:generate
    
    ```
 
