@@ -62,33 +62,43 @@ public class PackageInfo {
         this.controller = controller;
     }
 
+    @Override
     public boolean equals(final Object o) {
-        if (o == this) return true;
-        if (!(o instanceof PackageInfo)) return false;
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof PackageInfo)) {
+            return false;
+        }
         final PackageInfo other = (PackageInfo) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual((Object) this)) {
+            return false;
+        }
         final Object this$packageName = this.getPackageName();
         final Object other$packageName = other.getPackageName();
-        if (this$packageName == null ? other$packageName != null : !this$packageName.equals(other$packageName))
+        if (this$packageName == null ? other$packageName != null : !this$packageName.equals(other$packageName)) {
             return false;
+        }
         final Object this$domain = this.getDomain();
         final Object other$domain = other.getDomain();
-        if (this$domain == null ? other$domain != null : !this$domain.equals(other$domain)) return false;
+        if (this$domain == null ? other$domain != null : !this$domain.equals(other$domain)) {
+            return false;
+        }
         final Object this$repository = this.getRepository();
         final Object other$repository = other.getRepository();
-        if (this$repository == null ? other$repository != null : !this$repository.equals(other$repository))
+        if (this$repository == null ? other$repository != null : !this$repository.equals(other$repository)) {
             return false;
+        }
         final Object this$controller = this.getController();
         final Object other$controller = other.getController();
-        if (this$controller == null ? other$controller != null : !this$controller.equals(other$controller))
-            return false;
-        return true;
+        return this$controller == null ? other$controller == null : this$controller.equals(other$controller);
     }
 
     protected boolean canEqual(final Object other) {
         return other instanceof PackageInfo;
     }
 
+    @Override
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -103,6 +113,7 @@ public class PackageInfo {
         return result;
     }
 
+    @Override
     public String toString() {
         return "PackageInfo(packageName=" + this.getPackageName() + ", domain=" + this.getDomain() + ", repository=" + this.getRepository() + ", controller=" + this.getController() + ")";
     }

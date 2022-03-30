@@ -13,7 +13,7 @@ mvn install -DskipTests -Dmaven.test.skip=true
 ## 2. Introduce dependencies into the project
 ````xml
 <dependency>
-    <groupId>com.dmetasoul</groupId>
+    <groupId>com.dmetasoul.metaspore</groupId>
     <artifactId>serving</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>

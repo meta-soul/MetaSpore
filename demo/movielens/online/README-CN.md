@@ -24,7 +24,7 @@ mvn clean install
 安装完上述组件之后，我们需要运行自动生成特征访问API的代码，执行如下命令：
 ```shell
 cd MetaSpore/demo/movielens/online
-mvn com.dmetasoul:feature-extract:1.0-SNAPSHOT:generate
+mvn com.dmetasoul.metaspore:feature-extract:1.0-SNAPSHOT:generate
 ```
 最后，如果我们在 Intelli J IDEA 开发环境中，我们可以把目录 `target/generated-sources/feature/java` 标注成 `Generated Sources Root`。
 

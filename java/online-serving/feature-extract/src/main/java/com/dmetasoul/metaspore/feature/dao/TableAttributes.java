@@ -60,31 +60,43 @@ public class TableAttributes {
         this.columns = columns;
     }
 
+    @Override
     public boolean equals(final Object o) {
-        if (o == this) return true;
-        if (!(o instanceof TableAttributes)) return false;
+        if (o == this) {
+            return true;
+        }
+        if (!(o instanceof TableAttributes)) {
+            return false;
+        }
         final TableAttributes other = (TableAttributes) o;
-        if (!other.canEqual((Object) this)) return false;
+        if (!other.canEqual((Object) this)) {
+            return false;
+        }
         final Object this$dbType = this.getDbType();
         final Object other$dbType = other.getDbType();
-        if (this$dbType == null ? other$dbType != null : !this$dbType.equals(other$dbType)) return false;
+        if (this$dbType == null ? other$dbType != null : !this$dbType.equals(other$dbType)) {
+            return false;
+        }
         final Object this$tableName = this.getTableName();
         final Object other$tableName = other.getTableName();
-        if (this$tableName == null ? other$tableName != null : !this$tableName.equals(other$tableName)) return false;
+        if (this$tableName == null ? other$tableName != null : !this$tableName.equals(other$tableName)) {
+            return false;
+        }
         final Object this$collectionName = this.getCollectionName();
         final Object other$collectionName = other.getCollectionName();
-        if (this$collectionName == null ? other$collectionName != null : !this$collectionName.equals(other$collectionName))
+        if (this$collectionName == null ? other$collectionName != null : !this$collectionName.equals(other$collectionName)) {
             return false;
+        }
         final Object this$columns = this.getColumns();
         final Object other$columns = other.getColumns();
-        if (this$columns == null ? other$columns != null : !this$columns.equals(other$columns)) return false;
-        return true;
+        return this$columns == null ? other$columns == null : this$columns.equals(other$columns);
     }
 
     protected boolean canEqual(final Object other) {
         return other instanceof TableAttributes;
     }
 
+    @Override
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -99,6 +111,7 @@ public class TableAttributes {
         return result;
     }
 
+    @Override
     public String toString() {
         return "TableAttributes(dbType=" + this.getDbType() + ", tableName=" + this.getTableName() + ", collectionName=" + this.getCollectionName() + ", columns=" + this.getColumns() + ")";
     }

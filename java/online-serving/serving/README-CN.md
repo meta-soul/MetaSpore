@@ -13,7 +13,7 @@ mvn install -DskipTests -Dmaven.test.skip=true
 ## 2. 在项目中引入依赖
 ```xml
 <dependency>
-    <groupId>com.dmetasoul</groupId>
+    <groupId>com.dmetasoul.metaspore</groupId>
     <artifactId>serving</artifactId>
     <version>1.0-SNAPSHOT</version>
 </dependency>

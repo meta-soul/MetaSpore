@@ -108,7 +108,7 @@ The framework is based on the spring boot project and dynamically updates the ya
     ```
     ```xml
     <dependency>
-        <groupId>com.dmetasoul</groupId>
+        <groupId>com.dmetasoul.metaspore</groupId>
         <artifactId>experiment-pipeline</artifactId>
         <version>1.0-SNAPSHOT</version>
     </dependency>
