@@ -119,9 +119,6 @@ def read_dataset(train_data_path,test_data_path):
     return train,test
 
 if __name__=="__main__":
-    ## enviroment settings 
-    #os.environ['http_proxy'] = "http://172.31.37.47:8118" 
-    #os.environ['https_proxy'] = "http://172.31.37.47:8118" 
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
     args = parser.parse_args()
