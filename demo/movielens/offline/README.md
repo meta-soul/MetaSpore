@@ -1,8 +1,10 @@
-# Offline Models of MovieLens Recommender
+# Offline Models for MovieLens Recommender
 
-As we known, for one typical personalized recommender system, as depicted in the figure below, the offline work is mainly composed by data preprocessing, recall model developing, ranking model developing, etc. For example, in the recall stage, collaborative filtering or graph theory-based methods, or even neural network-based methods, may be used to match between users and candidate items. In the ranking and reranking stage, the final business indicators are generally modeled and ranking model directly. A lot of routine optimization work is focused on offline model iterations. Here we introduce how to develop the basic data preprocessing script, recall model and ranking model on our `MetaSpore` platform.
+As we known, for one typical personalized recommender system, as depicted in the figure below, the offline work is mainly composed by data preprocessing, recall model developing, ranking model developing, etc. For example, in the recall stage, collaborative filtering or graph theory-based methods, or even neural network-based methods, may be used to match between users and candidate items. In the ranking and reranking stage, the final business indicators are generally modeled and ranking model directly. Lots of optimization work is focused on offline model iterations. Here we introduce how to develop the basic data preprocessing script, recall model and ranking model on our `MetaSpore` platform. If you are Chinese developer, you may like to visit our [CN Doc](README-CN.md).
 
-<img width="1600" alt="image" src="https://user-images.githubusercontent.com/7464971/160760862-48b81b21-b729-4b34-b4fe-c83985474664.png">
+<p align="center">
+<img width="800" alt="image" src="https://user-images.githubusercontent.com/7464971/160760862-48b81b21-b729-4b34-b4fe-c83985474664.png">
+</p>
 
 In this demo project, we use [MoiveLens-1M](https://grouplens.org/datasets/movielens/1m/) to demonstrate our system. You can download this dataset from this their website and store these files onto your own cloud strorage.
 
@@ -51,7 +53,7 @@ In this stage, we mainly introduce the use of three offline recall algorithms, i
 
 
 ### 3.1 Item CF
-Firstlty, We can run the `Item CF` trainer script:
+Firstly, We can run the `Item CF` trainer script:
 ```python
 python item_cf.py --conf item_cf.yaml 
 ``` 
@@ -82,11 +84,11 @@ spark-submit \
 ```
 
 ### 3.3 Two-Tower  
-Simplex algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
+`SimpleX` algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
 ```python
 python simplex.py --conf simplex.yaml 
 ``` 
-After the training script is executed, the embedding vector of the movies has been stored into database of Milvus, which is configured in this 'simplex.yaml' file.
+After the training script is executed, the embedding vector of the movies has been stored into database of `Milvus`, which is configured in this `simplex.yaml` file.
 
 ## 4. Ranking model
 
@@ -97,7 +99,7 @@ As we described previously, we can use `LightGBM` to solve the ranking problem. 
 ```shell
 python lgbm_model_train.py --conf lgbm.yaml
 ```
-A special note is needed here. After training the model, we using code below to transform the model into ONNX format for serving in NPS:
+A special note is needed here. After training the model, we using code below to transform the model into ONNX format for `MetaSpore Serving`:
 ```python
 def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> bytes:
     initial_types = [("input", FloatTensorType([-1, input_size]))]
@@ -106,7 +108,7 @@ def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> byt
 ```
 
 ### 4.2 Neural Network Model
-In this section, we use Wide & Deep model to demonstrate the ability to train the neural network in `MetaSpore` in distributed clusters. We can run the trainer script as below:
+In this section, we use `Wide & Deep` model to demonstrate the ability to train the neural network in `MetaSpore` in distributed clusters. We can run the trainer script as below:
 ```shell
 python widedeep.py --conf widedeep.yaml
 ```
