@@ -9,7 +9,7 @@ with spark:
                                   behavior_column_name='_c3',
                                   behavior_filter_value='buy',
                                   cassandra_catalog='mycatalog',
-                                  cassandra_host_ip='172.17.0.5',
+                                  cassandra_host_ip='127.0.0.1',
                                   cassandra_port=9042,
                                   cassandra_db_name='testks',
                                   cassandra_table_name='recdb',
