@@ -108,7 +108,7 @@ def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> byt
 ```
 
 ### 4.2 Neural Network Model
-In this section, we use Wide & Deep model to demonstrate the ability to train the neural network in `MetaSpore` in distributed clusters. We can run the trainer script as below:
+In this section, we use `Wide & Deep` model to demonstrate the ability to train the neural network in `MetaSpore` in distributed clusters. We can run the trainer script as below:
 ```shell
 python widedeep.py --conf widedeep.yaml
 ```
