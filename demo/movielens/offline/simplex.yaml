@@ -54,8 +54,6 @@ shuffle_training_dataset: False
 ## milvus 
 milvus_description: 'simplex_demo'
 milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
-#milvus_host: '120.92.33.19'
-#milvus_host: '120.92.82.80'
 milvus_port: '19530'
 milvus_embedding_field: 'embedding_vector'
 milvus_index_type: 'IVF_FLAT'
