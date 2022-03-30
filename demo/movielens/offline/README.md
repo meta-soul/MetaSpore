@@ -1,6 +1,10 @@
 # Offline Models of MovieLens Recommender
 
-As we known, for one typical personalized recommender system, the offline work is mainly composed by data preprocessing, recall model developing, ranking model developing, etc. For example, in the recall stage, collaborative filtering or graph theory-based methods, or even neural network-based methods, may be used to match between users and candidate items. In the ranking and reranking stage, the final business indicators are generally modeled and ranking model directly. A lot of routine optimization work is focused on offline model iterations. Here we introduce how to develop the basic data preprocessing script, recall model and ranking model on our `MetaSpore` platform.
+As we known, for one typical personalized recommender system, as depicted in the figure below, the offline work is mainly composed by data preprocessing, recall model developing, ranking model developing, etc. For example, in the recall stage, collaborative filtering or graph theory-based methods, or even neural network-based methods, may be used to match between users and candidate items. In the ranking and reranking stage, the final business indicators are generally modeled and ranking model directly. A lot of routine optimization work is focused on offline model iterations. Here we introduce how to develop the basic data preprocessing script, recall model and ranking model on our `MetaSpore` platform.
+
+<img width="1600" alt="image" src="https://user-images.githubusercontent.com/7464971/160760862-48b81b21-b729-4b34-b4fe-c83985474664.png">
+
+In this demo project, we use [MoiveLens-1M](https://grouplens.org/datasets/movielens/1m/) to demonstrate our system. You can download this dataset from this their website and store these files onto your own cloud strorage.
 
 ## 1. Initialize the Configuration Files for Models
 Before we continue to dive into the offline models, we should firstly initialize the config files from their `YAML` template for substituting some variables. For example
@@ -47,7 +51,7 @@ In this stage, we mainly introduce the use of three offline recall algorithms, i
 
 
 ### 3.1 Item CF
-Firlty, We can run the `Item CF` trainer script:
+Firstlty, We can run the `Item CF` trainer script:
 ```python
 python item_cf.py --conf item_cf.yaml 
 ``` 
@@ -62,7 +66,7 @@ spark-submit \
 ```
 
 ### 3.2 Swing
-Firlty, We can run the `Swing` trainer script:
+Firstly, We can run the `Swing` trainer script:
 
 ```python
 python swing.py --conf swing.yaml 
@@ -78,7 +82,7 @@ spark-submit \
 ```
 
 ### 3.3 Two-Tower  
-Simplex algorithm is a simple but robust implementation of the two-tower model. Firlty, We can run the `SimpleX` trainer script:
+Simplex algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
 ```python
 python simplex.py --conf simplex.yaml 
 ``` 
