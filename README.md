@@ -21,6 +21,12 @@ MetaSpore has the following features:
 
 * [Offline Training Getting Started Tutorial](tutorials/metaspore-getting-started.ipynb)
 
+* [Online Algorithm Application (Java implementation)](java/online-serving/README.md)
+
+    * [Online Model Serving](java/online-serving/serving/README.md)
+    * [Online Feature Extraction](java/online-serving/feature-extract/README.md)
+    * [Online Experiment Pipeline](java/online-serving/experiment-pipeline/README.md)
+
 * [A MovieLens end-to-end recommender system](demo/movielens/online)
 
 ## Installation package download
