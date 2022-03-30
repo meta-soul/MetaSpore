@@ -7,13 +7,13 @@
 </p>
 
 ## 1. 安装 online-serving 组件
-首先， 我们需要使用 maven 来安装 [online-serving 组件](https://github.com/meta-soul/MetaSpore/tree/main/java/online-serving)：
+首先， 我们需要使用 maven 来安装 [online-serving 组件](../../../java/online-serving/README-CN.md)：
 
 1. `MetaSpore Serving` 用来做模型的实时推理，所有线上需要模型实时推理预测的工作都需要访问这个服务；
 
-2. `feature-extract` 是一个 maven 的插件，用来通过[特征描述文件](https://github.com/meta-soul/MetaSpore/tree/main/demo/movielens/online/src/main/resources/tables)，自动生成从 `MongoDB` 访问特征的API，更多信息可以[参考链接](https://github.com/meta-soul/MetaSpore/blob/main/java/online-serving/feature-extract/README.md)；
+2. `feature-extract` 是一个 maven 的插件，用来通过[特征描述文件](src/main/resources/tables)，自动生成从 `MongoDB` 访问特征的API，更多信息可以[参考链接](../../../java/online-serving/feature-extract/README-CN.md)；
 
-3. `experiment-pipeline` 是给 A/B 实验框架，能够帮助我们更方便的部署A/B实验，支持热部署等特性，更多信息可以[参考链接](https://github.com/meta-soul/MetaSpore/blob/main/java/online-serving/experiment-pipeline/README.md)。
+3. `experiment-pipeline` 是给 A/B 实验框架，能够帮助我们更方便的部署A/B实验，支持热部署等特性，更多信息可以[参考链接](../../../java/online-serving/experiment-pipeline/README-CN.md)。
 
 安装时，需要执行以下命令
 ```shell
@@ -30,7 +30,7 @@ mvn com.dmetasoul:feature-extract:1.0-SNAPSHOT:generate
 
 
 ## 2. 建立 application-dev.properties
-我们需要从模版文件[application-template.properties](https://github.com/meta-soul/MetaSpore/blob/main/demo/movielens/online/src/main/resources/application-template.properties) 创建一个 resources/**application-dev.properties** 文件，主要用来配置：
+我们需要从模版文件[application-template.properties](src/main/resources/application-template.properties) 创建一个 resources/**application-dev.properties** 文件，主要用来配置：
 1. `MongoDB` 服务的相关配置；
 2. `MetaSpore Serving` 服务的相关配置；
 3. `Milvus` 服务的相关配置；
@@ -41,8 +41,8 @@ mvn com.dmetasoul:feature-extract:1.0-SNAPSHOT:generate
 1. [下载并安装Consul](https://www.consul.io/downloads)，打开应用程序；
 2. 打开Consul的[链接](http://localhost:8500/ui/dc1/kv), 默认端口是`8500`，如果遇到问题，可以查看是否存在端口占用的情况。创建一个新的 Key/Value 字典对:
    1. Key 是 `config/test/scene-config`
-   2. 拷贝 [YAML 配置文件](https://github.com/meta-soul/MetaSpore/blob/main/demo/movielens/online/src/main/resources/experiment.yaml) 这个文件中的内容作为 Value. 
-   3. 在我们的Demo项目中，Consul 的[配置文件在这里](https://github.com/meta-soul/MetaSpore/blob/main/demo/movielens/online/src/main/resources/bootstrap.yml).
+   2. 拷贝 [YAML 配置文件](src/main/resources/experiment.yaml) 这个文件中的内容作为 Value. 
+   3. 在我们的Demo项目中，Consul 的[配置文件在这里](src/main/resources/bootstrap.yml).
 
 ## 4. 启动在线应用服务
 当以上的配置工作都完成之后，我们可以从 `MovielensRecommendApplication.java` 这里作为服务的入口，启动我们的在线应用并进行测试。举例来说，对于 `userId=10` 的用户，我们可以通过

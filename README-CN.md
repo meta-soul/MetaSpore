@@ -25,7 +25,9 @@ MetaSpore 具有如下几个特点：
     * [在线特征抽取](java/online-serving/feature-extract/README-CN.md)
     * [在线实验切流和 ABTest](java/online-serving/experiment-pipeline/README-CN.md)
 
-* [一个 MovieLens 端到端推荐系统](demo/movielens/online)
+* [一个 MovieLens 端到端推荐系统](demo/movielens)
+    * [离线模型](demo/movielens/offline/README-CN.md)
+    * [在线算法推荐系统（Java 实现）](demo/movielens/online/README-CN.md)
 
 ## 安装包下载
 我们提供了一个预编译的离线训练安装包：[下载链接](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B9591a50-cp38-cp38-linux_x86_64.whl)。 该安装包依赖 Python 3.8.
