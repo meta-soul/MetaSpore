@@ -84,7 +84,7 @@ spark-submit \
 ```
 
 ### 3.3 Two-Tower  
-Simplex algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
+SimpleX algorithm is a simple but robust implementation of the two-tower model. Firstly, We can run the `SimpleX` trainer script:
 ```python
 python simplex.py --conf simplex.yaml 
 ``` 
