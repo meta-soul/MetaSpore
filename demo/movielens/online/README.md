@@ -19,7 +19,7 @@ mvn clean install
 Then use feature-extract to generate MongoDB related files:
 ```
 cd MetaSpore/demo/movielens/online
-mvn com.dmetasoul:feature-extract:1.0-SNAPSHOT:generate
+mvn com.dmetasoul.metaspore:feature-extract:1.0-SNAPSHOT:generate
 ```
 Finally, mark directory(target/generated-sources/feature/java) as "Generated Sources Root" if you use IntelliJ IDEA.
 
