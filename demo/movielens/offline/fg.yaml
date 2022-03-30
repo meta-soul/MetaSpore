@@ -1,0 +1,19 @@
+num_negs: 100
+
+movies_path: ${MY_S3_BUCKET}/movielens/ml-1m/movies.dat
+ratings_path: ${MY_S3_BUCKET}/movielens/ml-1m/ratings.dat
+users_path: ${MY_S3_BUCKET}/movielens/ml-1m/users.dat
+imdb_path: ${MY_S3_BUCKET}/movielens/ml-25m/movie_ml_imdb.csv
+
+match_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/train.parquet
+match_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/test.parquet
+match_item_dataset_out_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/item.parquet
+
+rank_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/rank/train.parquet
+rank_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/rank/test.parquet
+rank_lgbm_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/rank/lgbm_train.parquet
+rank_lgbm_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/rank/lgbm_test.parquet
+
+item_summary_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/items.parquet
+item_fearture_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/item_feature.parquet
+user_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/users.parquetS

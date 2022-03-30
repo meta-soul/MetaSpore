@@ -1,0 +1,33 @@
+app_name: Swing Retrieval Model Tuner
+num_experiment: 3
+model_name: swing
+local_result_path: './output'
+result_path: s3://dmetasoul-bucket/demo/tuner/model/movielens/swing/
+py_files: '../python.zip'
+
+dataset:
+    train: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/train.parquet
+    test: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/test.parquet
+    item: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/item.parquet
+
+common_param:
+    local: False
+    worker_count: 2
+    server_count: 2
+    worker_memory: '7G'
+    server_memory: '7G'
+    coordinator_memory: '7G'
+    user_id_column_name: user_id
+    item_id_column_name: movie_id
+    last_item_col_name: last_movie
+    behavior_column_name: label
+    behavior_filter_value: '1'
+    key_column_name: key
+    value_column_name: value
+    max_recommendation_count: 20
+    swing_out_path: s3://dmetasoul-bucket/demo/tuner/model/movielens/swing/model_out/
+
+hyper_param:
+    use_plain_weight: False
+    smoothing_coefficient: [0.5, 1.0, 2.0]
+

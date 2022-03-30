@@ -1,0 +1,42 @@
+cd app_name: Wide&Deep CTR Model Tuner
+num_experiment: 3
+model_name: widedeep
+local_result_path: './output'
+result_path: ${MY_S3_BUCKET}/tuner/model/movielens/widedeep/
+py_files: './python.zip'
+
+dataset:
+    train: ${MY_S3_BUCKET}/movielens/rank/train.parquet
+    test: ${MY_S3_BUCKET}/movielens/rank/test.parquet
+
+common_param:
+    local: False
+    worker_count: 2
+    server_count: 2
+    worker_memory: '10G'
+    server_memory: '10G'
+    coordinator_memory: '10G'
+    column_name_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/column_schema
+    combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/combine_column_schema
+    wide_combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/wide_combine_column_schema
+    model_in_path: null
+    model_out_path: ${MY_S3_BUCKET}/tuner/model/movielens/widedeep/model_out/
+    model_export_path: null
+    model_version: null
+    experiment_name: null
+    input_label_column_index: 0
+    metric_update_interval: 500    
+
+hyper_param:
+    use_wide: [True, False]
+    batch_size: [256]
+    embedding_size: [10, 20]
+    deep_hidden_units: [[1024, 512, 256, 128, 1], [1024, 512, 1]]
+    adam_learning_rate: [0.00001, 0.0001, 0.001]
+    ftrl_learning_rate: 0.02
+    ftrl_smothing_rate: 1.0
+    ftrl_l1_regularization: 1.0
+    ftrl_l2_regularization: 1.0
+    training_epoches: [1, 2]
+    shuffle_training_dataset: True
+
