@@ -53,7 +53,7 @@ In this stage, we mainly introduce the use of three offline recall algorithms, i
 
 
 ### 3.1 Item CF
-Firstlty, We can run the `Item CF` trainer script:
+Firstly, We can run the `Item CF` trainer script:
 ```python
 python item_cf.py --conf item_cf.yaml 
 ``` 
