@@ -1,4 +1,10 @@
-# MovieLens Recommend Online Service
+# Online Service for MovieLens Recommender
+
+The overall online engineering framework is developed based on SpringBoot+K8S, and it is also convenient for everyone to deploy to their own servers. We can configure our developing environment according to the installation instructions below. In this demo, our online pipeline consists of several modules such as user modeling, recall, ranking, diversity and summary retrieval, as described in the figure below. When we follow the instructions to finish the last step, an end to end movie recommendation system will be presented completely.
+
+<img width="1688" alt="image" src="https://user-images.githubusercontent.com/7464971/160770284-26bd3885-4d47-4c00-9260-b3dc1aeb4263.png">
+
+
 
 ## 1. Install online-serving components
 You need to maven install [online-serving](https://github.com/meta-soul/MetaSpore/tree/main/java/online-serving) components 
@@ -20,7 +26,7 @@ Finally, mark directory(target/generated-sources/feature/java) as "Generated Sou
 ## 2. Create application-dev.properties
 You need to create resources/**application-dev.properties** from [application-template.properties](https://github.com/meta-soul/MetaSpore/blob/main/demo/movielens/online/src/main/resources/application-template.properties) and specify:
 1. MongoDB related configurations. 
-2. NPS related configurations.
+2. `MetaSpore Serving` related configurations.
 3. Milvus related configurations.
 4. (Just ignore mysql configurations. We don't use it in this demo but we support multi data sources.)
 
