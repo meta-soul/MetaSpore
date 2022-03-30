@@ -1,3 +1,28 @@
+# MetaSpore Model Serving Service Java Client Usage
+
+The Java client of the Serving service is based on the GRPC SpringBoot Starter package.
+
+## 1. Import dependencies
+First, the dependency of Serving Java Client is introduced into the Java project. At present, the maven library has not been released to the public service, you can first maven install to the local maven repository:
+```bash
+git clone https://github.com/meta-soul/MetaSpore.git
+cd MetaSpore/java/online-serving/serving
+mvn install -DskipTests -Dmaven.test.skip=true
+````
+
+## 2. Introduce dependencies into the project
+````xml
+<dependency>
+    <groupId>com.dmetasoul</groupId>
+    <artifactId>serving</artifactId>
+    <version>1.0-SNAPSHOT</version>
+</dependency>
+````
+
+## 3. Call the method
+In the SpringBoot project, you need to use the client controller, first inject GrpcClient, then you can build the FeatureTable, and call the serving service, refer to [XGBoostController.java](src/test/java/com/ dmetasoul/metaspore/serving/XGBoostController.java):
+
+```java
 package com.dmetasoul.metaspore.serving;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,3 +83,30 @@ public class XGBoostController {
         return new ObjectMapper().writeValueAsString(toJson);
     }
 }
+```
+
+## 4. Test method
+- You can write a main function to start Spring boot and call your own controller for testing. If you use the main method to test, you need to add the application.properties file in the resources directory to configure the initialization of GRPC:
+    ````ini
+    grpc.client.metaspore.negotiationType=PLAINTEXT
+    grpc.client.metaspore.address=static://172.31.37.47:50000
+    ````
+
+    In these configurations, metaspore is the service name annotated with @GrpcClient("metaspore") in the Java code above. The address can be configured as a static test service IP. In a production environment, it is usually configured as a service discovery method.
+- You can also call the controller directly in the JUnit test case through the SpringBootTest method:
+    ````java
+    package com.dmetasoul.metaspore.serving;
+
+    import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
+    import org.junit.jupiter.api.Test;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+    import org.springframework.boot.test.context.SpringBootTest;
+    import org.springframework.http.MediaType;
+    import org.springframework.test.context.ActiveProfiles;
+    import org.springframework.test.web.servlet.MockMvc;
+    import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+
+    import static org.hamcrest.Matchers.equalTo;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+    import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.stat

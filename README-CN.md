@@ -19,6 +19,12 @@ MetaSpore 具有如下几个特点：
 
 * [离线训练入门教程](tutorials/metaspore-getting-started.ipynb)
 
+* [在线算法应用框架 (Java 版)](java/online-serving/README-CN.md)
+
+    * [在线模型预测](java/online-serving/serving/README-CN.md)
+    * [在线特征抽取](java/online-serving/feature-extract/README-CN.md)
+    * [在线实验切流和 ABTest](java/online-serving/experiment-pipeline/README-CN.md)
+
 * [一个 MovieLens 端到端推荐系统](demo/movielens/online)
 
 ## 安装包下载
