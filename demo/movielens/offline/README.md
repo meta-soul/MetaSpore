@@ -115,7 +115,7 @@ python widedeep.py --conf widedeep.yaml
 After the execution of this script, the ONNX format of this nn model is automatically exported into s3 path `model_export_path`, which is configured in this `widedeep.yaml` file.
 
 ## 5. Tuner
-Moreover, for the model, such as `Item CF`, `Swing`, `Wide & Deep`, which developed in `MetaSpore`, we deliver an tuner lib to search a combination of hyperparamters of the model. Here, we can use the [Wide & Deep tuner configuration](https://github.com/meta-soul/MetaSpore/blob/sunkai/20220328_movielens_demo_offline/demo/movielens/offline/tuner/widedeep_tuner.yaml) as a demo to illustrate:
+Moreover, for the model, such as `Item CF`, `Swing`, `Wide & Deep`, which developed in `MetaSpore`, we deliver an tuner lib to search a combination of hyperparamters of the model. Here, we can use the [Wide & Deep tuner configuration](tuner/widedeep_tuner.yaml) as a demo to illustrate:
 ```YAML
 app_name: Wide&Deep CTR Model Tuner
 num_experiment: 3

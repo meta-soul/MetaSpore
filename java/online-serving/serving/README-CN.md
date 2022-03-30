@@ -89,7 +89,7 @@ public class XGBoostController {
 - 可以写一个 main 函数来启动 Spring boot 并调用自己的 controller 进行测试。如果用 main 方法测试，需要在 resources 目录下添加 application.properties 文件，配置 GRPC 的初始化：
     ```ini
     grpc.client.metaspore.negotiationType=PLAINTEXT
-    grpc.client.metaspore.address=static://172.31.37.47:50000
+    grpc.client.metaspore.address=static://127.0.0.1:50000
     ```
 
     这些配置中，metaspore 是上面 Java 代码中 @GrpcClient("metaspore") 注解的服务名。地址可以配成一个静态的测试服务IP。生产环境中通常会配置成服务发现的方式。

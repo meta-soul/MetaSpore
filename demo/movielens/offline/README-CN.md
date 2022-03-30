@@ -124,7 +124,7 @@ python widedeep.py --conf widedeep.yaml
 
 
 ## 5. Tuner
-最后，对于 `MetaSpore` 中开发的模型，如 `Item CF`，`Swing`，`Wide & Deep` 等，我们实现了一个轻量级的超参数搜索工具，我们这里以 [Wide & Deep tuner 配置](https://github.com/meta-soul/MetaSpore/blob/sunkai/20220328_movielens_demo_offline/demo/movielens/offline/tuner/widedeep_tuner.yaml)来说明如何使用：
+最后，对于 `MetaSpore` 中开发的模型，如 `Item CF`，`Swing`，`Wide & Deep` 等，我们实现了一个轻量级的超参数搜索工具，我们这里以 [Wide & Deep tuner 配置](tuner/widedeep_tuner.yaml)来说明如何使用：
 
 ```YAML
 app_name: Wide&Deep CTR Model Tuner

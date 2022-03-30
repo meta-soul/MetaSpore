@@ -27,7 +27,9 @@ MetaSpore has the following features:
     * [Online Feature Extraction](java/online-serving/feature-extract/README.md)
     * [Online Experiment Pipeline](java/online-serving/experiment-pipeline/README.md)
 
-* [A MovieLens end-to-end recommender system](demo/movielens/online)
+* [A MovieLens end-to-end recommender system demo](demo/movielens), including
+    * [Offline models](demo/movielens/offline)
+    * [Online algorithm application (Java implementation)](demo/movielens/online)
 
 ## Installation package download
 We provide a precompiled offline training installation package: [download link](https://ks3-sgp.ksyuncs.com/dmetasoul-release-sg/releases/metaspore/metaspore-1.0.0%2B9591a50-cp38-cp38-linux_x86_64.whl). This package requires Python 3.8.
