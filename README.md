@@ -1,3 +1,5 @@
+## [中文介绍](README-CN.md)
+
 # MetaSpore: One-stop machine learning development platform
 
 MetaSpore is a one-stop end-to-end machine learning development platform that provides a full-cycle framework and development interface for from data preprocessing, model training, offline experiments, online predictions to online experiment bucketization and ab-testing.
