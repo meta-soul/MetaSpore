@@ -40,5 +40,5 @@ You could modify Consul's Key/Value pair to dynamically change the online A/B te
 
 ## 4. Launch recommend online service
 You could run online service entry point (MovielensRecommendApplication.java) and test it now.
-For example: `curl http://localhost:8080/user/10` to get recommended movies for user with id 10.
+For example: `curl http://localhost:8080/user/10` to get recommended movies for user whose userId is equal to 10.
 
