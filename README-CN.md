@@ -2,7 +2,7 @@
 
 MetaSpore 是一个一站式端到端的机器学习开发平台，提供从数据预处理、模型训练、离线实验、在线预测到在线实验分桶 ABTest 的全流程框架和开发接口。
 
-![MetaSpore 架构](docs/images/MetaSpore-arch-cn.png)
+![MetaSpore 架构](docs/images/MetaSpore-arch-cn.jpg)
 
 MetaSpore 由[元灵数智](https://www.dmetasoul.com/)团队开发，欢迎关注我们的[公众号和微信交流群](#微信公众号)。
 
