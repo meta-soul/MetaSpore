@@ -1,12 +1,12 @@
 ## spark session
-app_name: 'ItemCF Demo/sunkai'
+app_name: 'ItemCF Demo'
 local: False
 worker_count: 4
 server_count: 4
 batch_size: 256
-worker_memory: '7G'
-server_memory: '7G'
-coordinator_memory: '7G'
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
 spark_sql_shuffle_partitions: 1000
 
 ## datasets
