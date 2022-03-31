@@ -91,6 +91,13 @@
                 <configuration>
                     <packageName>com.dmetasoul.metaspore.demo.movielens</packageName>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!-- 将 generated-sources 加入 root -->
             <plugin>
