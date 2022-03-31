@@ -82,6 +82,13 @@ The framework is based on the spring boot project and is introduced through the 
                 <configuration>
                     <packageName>"YOUR-SPRINGBOOTAPPLICATION-PACKAGE-NAME"</packageName>
                 </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <!-- add generated-sources to root -->
             <plugin>
@@ -107,13 +114,13 @@ The framework is based on the spring boot project and is introduced through the 
    ```
    
    
-4. Execute generate to verify whether the corresponding domain and repository are generated under target/generated-sources, and then perform the Test test
+4. The plugin is executed automatically during your spring boot compilation phase. Manual executing is also supported. Execute generate to verify whether the corresponding domain and repository are generated under target/generated-sources, and then perform the Test test
    ```shell
    // Generate the code in generated-sources
    mvn com.dmetasoul.metaspore:feature-extract:1.0-SNAPSHOT:generate
    ```
 
-5. If it is developed in idea, you can mark the automatically generated code as Generated Sources Root, which is convenient for jumping and debugging
+5. target/generated-sources/feature/java will be automatically added to the root path during your spring boot project compile phase. Manual addition is also supported. If it is developed in idea, you can mark the automatically generated code as Generated Sources Root, which is convenient for jumping and debugging
 
    Right click target/generated-sources/feature/java in idea, click "Mark Directory as" --> "Generated Sources Root".
    When the icon changes from red to blue, you can successfully jump to /debug/import/@Autowired

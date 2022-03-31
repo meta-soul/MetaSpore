@@ -31,7 +31,7 @@ import java.io.FileNotFoundException;
 
 import org.apache.maven.project.MavenProject;
 
-@Mojo(name = "generate", defaultPhase = LifecyclePhase.PACKAGE)
+@Mojo(name = "generate", defaultPhase = LifecyclePhase.GENERATE_SOURCES)
 public class GenerateProcessorMojo extends AbstractMojo {
 
     @Parameter(defaultValue = "${project}", readonly = true)
@@ -72,8 +72,8 @@ public class GenerateProcessorMojo extends AbstractMojo {
 
         File filesPath = ResourceUtils.getFile(tablesPath);
         if (!filesPath.exists()) {
-             getLog().info(filesPath.getPath());
-             getLog().info("table directory path error");
+            getLog().info(filesPath.getPath());
+            getLog().info("table directory path error");
         }
 
         File[] files = filesPath.listFiles();
