@@ -12,6 +12,7 @@
         <module>serving</module>
         <module>feature-extract</module>
         <module>experiment-pipeline</module>
+        <module>experiment-pipeline-example</module>
     </modules>
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -19,6 +20,7 @@
         <springframework.version>5.3.17</springframework.version>
         <spring-boot.version>2.6.5</spring-boot.version>
         <spring-cloud.version>3.1.1</spring-cloud.version>
+        <lombok.version>1.18.22</lombok.version>
     </properties>
 
 </project>

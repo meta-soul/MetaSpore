@@ -1,0 +1,59 @@
+scene-config:
+  scenes:
+    - name: guess-you-like
+      sceneArgs:
+        sceneArgs1: sceneArgs1-value
+        sceneArgs2: sceneArgs2-value
+      layers:
+        - name: recall
+          normalLayerArgs:
+            - experimentName: milvus
+              ratio: 1.0
+            - experimentName: milvus2
+              ratio: 0
+          extraLayerArgs:
+            extraLayerArgs1: extraLayerArgs1-value
+            extraLayerArgs2: extraLayerArgs2-value
+        - name: rank
+          normalLayerArgs:
+            - experimentName: milvus3
+              ratio: 1.0
+          extraLayerArgs:
+            extraLayerArgs1: extraLayerArgs1-value
+            extraLayerArgs2: extraLayerArgs2-value
+            extraLayerArgs3: extraLayerArgs3-value
+  experiments:
+    - layerName: recall
+      experimentName: milvus
+      experimentArgs:
+        modelName: TwoTower
+        extraArg1: milvus-value
+    - layerName: recall
+      experimentName: milvus2
+      experimentArgs:
+        modelName: TwoTower2
+        extraArg1: milvus2-value
+        extraArg2: milvus2-value
+    - layerName: recall
+      experimentName: milvus4
+      experimentArgs:
+        modelName: TwoTower2
+        extraArg1: milvus4-value
+        extraArg2: milvus4-value
+        extraArg3: milvus4-value
+        extraArg4: milvus4-value
+    - layerName: rank
+      experimentName: milvus3
+      experimentArgs:
+        modelName: TwoTower3
+        extraArg1: milvus3-value
+        extraArg2: milvus3-value
+        extraArg3: milvus4-value
+    - layerName: rank
+      experimentName: milvus-clone
+      className:
+      experimentArgs:
+        modelName: TwoTower3
+        extraArg1: milvus3-value
+        extraArg2: milvus3-value
+        extraArg3: milvus4-value

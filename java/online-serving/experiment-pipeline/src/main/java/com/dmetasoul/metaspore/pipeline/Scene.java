@@ -16,11 +16,17 @@
 
 package com.dmetasoul.metaspore.pipeline;
 
+import com.dmetasoul.metaspore.pipeline.impl.Context;
+
 import java.util.Map;
 
 public interface Scene {
     Object run(Object in);
 
+    Object run(Object in, Context ctx);
+
     Object runDebug(Object in, Map<String, String> specifiedLayerAndExperiment);
+
+    Object runDebug(Object in, Context ctx, Map<String, String> specifiedLayerAndExperiment);
 
 }

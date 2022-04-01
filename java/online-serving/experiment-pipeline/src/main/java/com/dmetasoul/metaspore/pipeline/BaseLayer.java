@@ -16,7 +16,7 @@
 
 package com.dmetasoul.metaspore.pipeline;
 
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import com.dmetasoul.metaspore.pipeline.pojo.LayerArgs;
 
 public interface BaseLayer<T> {

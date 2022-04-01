@@ -25,6 +25,7 @@ import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
 import com.dmetasoul.metaspore.pipeline.annotation.LayerAnnotation;
 import com.dmetasoul.metaspore.pipeline.pojo.*;
 import lombok.Data;
+import lombok.SneakyThrows;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.ApplicationContext;
 
@@ -51,7 +52,7 @@ public class ScenesFactoryImpl implements ScenesFactory {
     class LayerBean {
         private String layerName;
         private LayerArgs layerArgs;
-        private BaseLayer layerClass;
+        private BaseLayer layerBeanObject;
         private Class<?> inputClass;
         private Map<String, ExperimentBean> experimentBeans = new HashMap<>();
 
@@ -59,8 +60,8 @@ public class ScenesFactoryImpl implements ScenesFactory {
             return experimentBeans.get(experimentName);
         }
 
-        private void putExperiment(String expeirmentName, float ratio, BaseExperiment experimentCls, Map<String, Object> experimentArgs) {
-            experimentBeans.put(expeirmentName, new ExperimentBean(expeirmentName, ratio, experimentCls, experimentArgs));
+        private void putExperiment(String expeirmentName, float ratio, BaseExperiment experimentObject, Map<String, Object> experimentArgs) {
+            experimentBeans.put(expeirmentName, new ExperimentBean(expeirmentName, ratio, experimentObject, experimentArgs));
         }
     }
 
@@ -71,67 +72,134 @@ public class ScenesFactoryImpl implements ScenesFactory {
 
         private float ratio;
 
-        private BaseExperiment experimentCls;
+        private BaseExperiment experimentObject;
 
-        private Map<String, Object> experimentArgs;
+        private Map<String, Object> extraExperimentArgs;
 
-        public ExperimentBean(String experimentName, float ratio, BaseExperiment experimentCls, Map<String, Object> experimentArgs) {
+        public ExperimentBean(String experimentName, float ratio, BaseExperiment experimentObject, Map<String, Object> extraExperimentArgs) {
             this.experimentName = experimentName;
             this.ratio = ratio;
-            this.experimentCls = experimentCls;
-            this.experimentArgs = experimentArgs;
+            this.experimentObject = experimentObject;
+            this.extraExperimentArgs = extraExperimentArgs;
         }
     }
 
     private Map<String, Scene> initScenes(SceneConfig sceneConfig, ApplicationContext ctx) {
         HashMap<String, Scene> scenes = new HashMap<>();
-        Map<String, Object> layerBeanObjects = ctx.getBeansWithAnnotation(LayerAnnotation.class);
-        Map<String, Object> experimentBeanObjects = ctx.getBeansWithAnnotation(ExperimentAnnotation.class);
+        Map<String, Object> layerBeanMap = ctx.getBeansWithAnnotation(LayerAnnotation.class);
+        Map<String, Object> experimentBeanMap = ctx.getBeansWithAnnotation(ExperimentAnnotation.class);
         for (com.dmetasoul.metaspore.pipeline.pojo.Scene scene : sceneConfig.getScenes()) {
             String sceneName = scene.getName();
             // layers
             SceneImpl sceneImplBean = new SceneImpl();
-            sceneImplBean.setSceneArgs(scene.getSceneArgs());
+            Map<String, Object> extraSceneArgs = scene.getExtraSceneArgs();
+            sceneImplBean.setExtraSceneArgs(extraSceneArgs);
             for (Layer layer : scene.getLayers()) {
-                // add layer class
+                // layerInstance
                 String layerName = layer.getName();
-                LayerBean layerBean = new LayerBean();
-                Optional<Map.Entry<String, Object>> layerBeanObject = layerBeanObjects.entrySet().stream().filter(map -> ctx.findAnnotationOnBean(map.getKey(), LayerAnnotation.class).name().equals(layerName)).findFirst();
-                if (layerBeanObject.isPresent()) {
-                    String layerBeanName = layerBeanObject.get().getKey();
-                    BaseLayer layerCls = (BaseLayer) layerBeanObjects.get(layerBeanName);
-                    List<NormalLayerArgs> normalLayerArgsList = layer.getNormalLayerArgs();
-                    Map<String, Object> extraLayerArgs = layer.getExtraLayerArgs();
-                    LayerArgs layerArgs = new LayerArgs(normalLayerArgsList, extraLayerArgs);
-                    layerBean.setLayerName(layerName);
-                    layerBean.setLayerClass(layerCls);
-                    layerBean.setLayerArgs(layerArgs);
-                    // layer.intitialize()
-                    layerCls.intitialize(layerArgs);
-                    //
-                    for (NormalLayerArgs normalLayerArgs : normalLayerArgsList) {
-                        String experimentName = normalLayerArgs.getExperimentName();
-                        float ratio = normalLayerArgs.getRatio();
-                        // add experiment class
-                        Optional<Map.Entry<String, Object>> experimentBeanObject = experimentBeanObjects.entrySet().stream().filter(map -> ctx.findAnnotationOnBean(map.getKey(), ExperimentAnnotation.class).name().equals(experimentName)).findFirst();
-                        if (experimentBeanObject.isPresent()) {
-                            String experimentBeanName = experimentBeanObject.get().getKey();
-                            // TODO: 2022/3/25 增加 cloneFromClass
-                            BaseExperiment experimentCls = (BaseExperiment) experimentBeanObjects.get(experimentBeanName);
-                            // add experimentArgs
-                            Optional<Experiment> experimentConfig = sceneConfig.getExperiments().stream().filter(x -> x.getLayerName().equals(layerName) && x.getExperimentName().equals(experimentName)).findFirst();
-                            Map<String, Object> experimentArgs = experimentConfig.get().getExperimentArgs();
-                            // experiment initialize()
-                            experimentCls.initialize(experimentArgs);
-                            layerBean.putExperiment(experimentName, ratio, experimentCls, experimentArgs);
-                        }
-                    }
+                LayerBean layerInstance = new LayerBean();
+                BaseLayer layerBeanObject = getLayerBeanObject(layerName, layerBeanMap, ctx);
+                List<NormalLayerArgs> normalLayerArgsList = layer.getNormalLayerArgs();
+                // extraLayerArgs
+                Map<String, Object> extraLayerArgs = new HashMap<>();
+                extraLayerArgs.putAll(extraSceneArgs);
+                extraLayerArgs.putAll(layer.getExtraLayerArgs());
+
+                LayerArgs layerArgs = new LayerArgs(normalLayerArgsList, extraLayerArgs);
+                layerInstance.setLayerName(layerName);
+                layerInstance.setLayerBeanObject(layerBeanObject);
+                layerInstance.setLayerArgs(layerArgs);
+                // layer.intitialize()
+                layerBeanObject.intitialize(layerArgs);
+                for (NormalLayerArgs normalLayerArgs : normalLayerArgsList) {
+                    String experimentName = normalLayerArgs.getExperimentName();
+                    float ratio = normalLayerArgs.getRatio();
+                    // get experimentConfig
+                    Experiment experimentConfig = getExperimentConfig(layerName, experimentName);
+                    // experimentBeanObject
+                    BaseExperiment experimentBeanObject = getExperimentBeanObject(experimentName, experimentConfig, experimentBeanMap, ctx);
+                    // extraExperimentArgs
+                    Map<String, Object> extraExperimentArgs = new HashMap<>();
+                    extraExperimentArgs.putAll(extraLayerArgs);
+                    extraExperimentArgs.putAll(experimentConfig.getExtraExperimentArgs());
+                    experimentBeanObject.initialize(extraExperimentArgs);
+                    // experiment initialize()
+                    layerInstance.putExperiment(experimentName, ratio, experimentBeanObject, extraExperimentArgs);
                 }
-                sceneImplBean.add(layerBean);
+                sceneImplBean.add(layerInstance);
             }
             scenes.put(sceneName, sceneImplBean);
         }
         return scenes;
+    }
+
+
+    private Experiment getExperimentConfig(String layerName, String experimentName) {
+        Optional<Experiment> experimentConfig = sceneConfig.getExperiments().stream().filter(x -> x.getLayerName().equals(layerName) && x.getExperimentName().equals(experimentName)).findFirst();
+        if (experimentConfig.isPresent()) {
+            return experimentConfig.get();
+        } else {
+            throw new RuntimeException(String.format("experiment: %s of layer %s was not founded in experiment config, please check it again", experimentName, layerName));
+        }
+
+    }
+
+    private BaseLayer getLayerBeanObject(String layerName, Map<String, Object> layerBeanMap, ApplicationContext ctx) {
+        System.out.println("layerName: " + layerName);
+        System.out.println("layerBeanMap: " + layerBeanMap);
+
+        Optional<Map.Entry<String, Object>> layerBeanObject = layerBeanMap.entrySet().stream().filter(map -> ctx.findAnnotationOnBean(map.getKey(), LayerAnnotation.class).name().equals(layerName)).findFirst();
+
+        if (layerBeanObject.isPresent()) {
+            String layerBeanName = layerBeanObject.get().getKey();
+            return (BaseLayer) layerBeanMap.get(layerBeanName);
+        } else {
+            throw new RuntimeException(String.format("%s layer should be implemented by BaseLayer interface", layerName));
+
+        }
+    }
+
+//    private LayerBean getlayerInstance() {
+//        LayerBean layerInstance = new LayerBean();
+//        layerInstance.setLayerName(layerName);
+//        layerInstance.setLayerBeanObject(layerBeanObject);
+//        layerInstance.setLayerArgs(layerArgs);
+//    }
+
+    private BaseExperiment getExperimentBeanObject(String experimentName, Experiment experimentConfig, Map<String, Object> experimentBeanMap, ApplicationContext ctx) {
+        String classNameArg = experimentConfig.getClassName();
+
+        if (classNameArg == null) {
+            return getExperimentBeanObjectFromCtx(experimentName, experimentBeanMap, ctx);
+        } else if (checkClassNameArgAvailable(classNameArg)) {
+            return getExperimentBeanObjectFromReflect(classNameArg);
+        } else {
+            throw new RuntimeException(String.format("%s experiment init failed, please check experiment config or implemention of BaseExperiment interface", experimentName));
+        }
+    }
+
+    private BaseExperiment getExperimentBeanObjectFromCtx(String experimentName, Map<String, Object> experimentBeanMap, ApplicationContext ctx) {
+
+        Optional<Map.Entry<String, Object>> experimentBeanObject = experimentBeanMap.entrySet().stream().filter(map -> ctx.findAnnotationOnBean(map.getKey(), ExperimentAnnotation.class).name().equals(experimentName)).findFirst();
+        if (experimentBeanObject.isPresent()) {
+            String experimentBeanName = experimentBeanObject.get().getKey();
+            return (BaseExperiment) experimentBeanMap.get(experimentBeanName);
+        } else {
+            throw new RuntimeException(String.format("%s experiment should be implemented by BaseExperiment interface", experimentName));
+        }
+    }
+
+    @SneakyThrows
+    private BaseExperiment getExperimentBeanObjectFromReflect(String experimentClassName) {
+        BaseExperiment experimentInstance = null;
+        try {
+            Class<?> experimentClazz = Class.forName(experimentClassName);
+            experimentInstance = (BaseExperiment) experimentClazz.newInstance();
+            System.out.println(experimentInstance);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            e.printStackTrace();
+        }
+        return experimentInstance;
     }
 
     // TODO: 2022/3/16 增加上下层 input/output 类型校验
@@ -139,5 +207,11 @@ public class ScenesFactoryImpl implements ScenesFactory {
         if (a.isInstance(b)) {
         }
     }
+
+    // TODO: 2022/3/29 校验 classNameArg
+    private boolean checkClassNameArgAvailable(String classNameArg) {
+        return true;
+    }
+
 
 }

@@ -16,67 +16,63 @@ The framework is based on the spring boot project and dynamically updates the ya
 
 - ### Yaml Introduction
 
-  Use Yaml to define the order and structure of Scenes, Layers, Experiments. Each Request comes in and you can select a scene (Scene) for recommendation. Multi-layer sorting (layer) is called according to the top-to-bottom order, e.g. recall -> sort. Experiments describe various properties of the experiment, such as parameters. Create config/test/scene-config on consul, and copy and paste the following Yaml into it:
+  - Use Yaml to define the order and structure of Scenes, Layers, Experiments. Each Request comes in and you can select a scene (Scene) for recommendation. Multi-layer sorting (layer) is called according to the top-to-bottom order, e.g. recall -> sort. Experiments describe various properties of the experiment, such as parameters. Create config/test/scene-config on consul, and copy and paste the following Yaml into it:
+  - Support parameter overlay: User-defined parameters are overridden according to key, and in the order of extraSceneArgs -> extraLayerArgs -> extraExperimentArgs; if the underlying parameters do not exist, the upper parameters are used.
+  - Reflecting experiment examples against className is supported: if the experiment is configured with className (full classpath), it takes precedence to instantiate this class, and if not, it is instantiated according to the annotation name of the experiment.
 
-    ```yaml
-    scene-config:
-    scenes:
-        - name: guess-you-like
-        sceneArgs:
-            sceneArgs1: sceneArgs1-value
-            sceneArgs2: sceneArgs2-value
+```yaml
+scene-config:
+   scenes:
+      - name: guess-you-like
+        extraSceneArgs:
+           extra-arg1: sceneArg1
+           extra-arg2: sceneArg2
         layers:
-            - name: recall
-            normalLayerArgs:
-                - experimentName: milvus
-                ratio: 1.0
-                - experimentName: milvus2
-                ratio: 0
-            extraLayerArgs:
-                extraLayerArgs1: extraLayerArgs1-value
-                extraLayerArgs2: extraLayerArgs2-value
-            - name: rank
-            normalLayerArgs:
-                - experimentName: milvus3
-                ratio: 1.0
-            extraLayerArgs:
-                extraLayerArgs1: extraLayerArgs1-value
-                extraLayerArgs2: extraLayerArgs2-value
-                extraLayerArgs3: extraLayerArgs3-value
-    experiments:
-        - layerName: recall
-        experimentName: milvus
-        experimentArgs:
-            modelName: TwoTower
-            extraArg1: milvus-value
-        - layerName: recall
-        experimentName: milvus2
-        experimentArgs:
-            modelName: TwoTower2
-            extraArg1: milvus2-value
-            extraArg2: milvus2-value
-        - layerName: recall
-        experimentName: milvus4
-        experimentArgs:
-            modelName: TwoTower2
-            extraArg1: milvus4-value
-            extraArg2: milvus4-value
-            extraArg3: milvus4-value
-            extraArg4: milvus4-value
-        - layerName: rank
-        experimentName: milvus3
-        experimentArgs:
-            modelName: TwoTower3
-            extraArg1: milvus3-value
-            extraArg2: milvus3-value
-            extraArg3: milvus4-value
-    ```
+           - name: recall
+             normalLayerArgs:
+                - experimentName: RecallExperimentOne
+                  ratio: 1.0
+                - experimentName: RecallExperimentTwo
+                  ratio: 0
+             extraLayerArgs:
+                extra-arg1: recallLayerArg1
+           - name: rank
+             normalLayerArgs:
+                - experimentName: RankExperimentOne
+                  ratio: 1.0
+                - experimentName: RankExperimentTwo
+                  ratio: 1.0
+             extraLayerArgs:
+                extra-arg1: rankLayerArg1
+   experiments:
+      - layerName: recall
+        experimentName: RecallExperimentOne
+        extraExperimentArgs:
+           modelName: RecallExperimentOneModel
+           extra-arg1: RecallExperimentOne-extra-arg1
+      - layerName: recall
+        experimentName: RecallExperimentTwo
+        extraExperimentArgs:
+           modelName: RecallExperimentTwoModel
+           extra-arg1: RecallExperimentTwo-extra-arg1
+      - layerName: rank
+        experimentName: RankExperimentOne
+        extraExperimentArgs:
+           modelName: RankExperimentOneModel
+           extra-arg1: RankExperimentOne-extra-arg1
+      - layerName: rank
+        experimentName: RankExperimentTwo
+        className: com.dmetasoul.metaspore.example.experiment.RankExperimentOne
+        extraExperimentArgs:
+           modelName: RankExperimentOneModel
+           extra-arg1: RankExperimentTwo-extra-arg1
+```
 
 
 
 - ### consul configuration
 
-    In the spring boot project, the bootstrap.yml of consul needs to be configured and placed in the resources directory. Among them, prefix and defaultContext correspond to the directory on consul, and data-key is the key on consul. Copy the yaml file in the figure above to the value of consul. As shown below
+  In the spring boot project, the bootstrap.yml of consul needs to be configured and placed in the resources directory. Among them, prefix and defaultContext correspond to the directory on consul, and data-key is the key on consul. Copy the yaml file in the figure above to the value of consul. As shown below
 
     ```yaml
     spring:
@@ -100,7 +96,7 @@ The framework is based on the spring boot project and dynamically updates the ya
 
 - ### Import SDK
 
-    Install and reference this project in your own spring boot project pom
+  Install and reference this project in your own spring boot project pom
 
     ```shell
     cd experiment-pipeline

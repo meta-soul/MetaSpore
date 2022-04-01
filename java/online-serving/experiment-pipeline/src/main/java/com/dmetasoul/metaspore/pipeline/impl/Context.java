@@ -14,24 +14,38 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.pipeline.pojo;
+package com.dmetasoul.metaspore.pipeline.impl;
 
+import com.dmetasoul.metaspore.pipeline.pojo.LayerContext;
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Data
 public class Context {
 
     private List<LayerContext> layerContexts = new ArrayList<>();
 
-    public Map<String, Object> sceneArgs = new HashMap<>();
+    private Object customData;
 
-    public void add(LayerContext layerContext) {
+    protected void addLayerContext(LayerContext layerContext) {
         layerContexts.add(layerContext);
     }
+
+    protected List<LayerContext> getLayerContexts() {
+        return layerContexts;
+    }
+
+    public Object getCustomData() {
+        return customData;
+    }
+
+    public void setCustomData(Object customData) {
+        this.customData = customData;
+    }
+
 
 }

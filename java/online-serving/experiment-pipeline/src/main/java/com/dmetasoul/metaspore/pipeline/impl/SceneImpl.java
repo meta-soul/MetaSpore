@@ -19,7 +19,6 @@ package com.dmetasoul.metaspore.pipeline.impl;
 import com.dmetasoul.metaspore.pipeline.BaseExperiment;
 import com.dmetasoul.metaspore.pipeline.BaseLayer;
 import com.dmetasoul.metaspore.pipeline.Scene;
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
 import com.dmetasoul.metaspore.pipeline.pojo.LayerContext;
 import lombok.Data;
 
@@ -31,25 +30,39 @@ import java.util.Map;
 @Data
 public class SceneImpl implements Scene {
     private List<ScenesFactoryImpl.LayerBean> layers = new ArrayList<>();
-    private Map<String, Object> sceneArgs = new HashMap<>();
+    private Map<String, Object> extraSceneArgs = new HashMap<>();
 
     @Override
     public Object run(Object in) {
-        return execute(in, false, null);
+
+        Context ctx = new Context();
+        return run(in, ctx);
+    }
+
+    @Override
+    public Object run(Object in, Context ctx) {
+
+        return execute(in, false, ctx, null);
     }
 
     @Override
     public Object runDebug(Object in, Map<String, String> specifiedLayerAndExperiment) {
-        return execute(in, true, specifiedLayerAndExperiment);
+
+        Context ctx = new Context();
+        return runDebug(in, ctx, specifiedLayerAndExperiment);
+    }
+
+    @Override
+    public Object runDebug(Object in, Context ctx, Map<String, String> specifiedLayerAndExperiment) {
+        return execute(in, true, ctx, specifiedLayerAndExperiment);
     }
 
     public void add(ScenesFactoryImpl.LayerBean layerBean) {
         layers.add(layerBean);
     }
 
-    private Object execute(Object in, Boolean isDebugMode, Map<String, String> specifiedLayerAndExperiment) {
-        Context ctx = new Context();
-        ctx.setSceneArgs(sceneArgs);
+    private Object execute(Object in, Boolean isDebugMode, Context ctx, Map<String, String> specifiedLayerAndExperiment) {
+//        ctx.setExtraSceneArgs(extraSceneArgs);
         for (int i = 0; i < layers.size(); i++) {
             ScenesFactoryImpl.LayerBean layer = layers.get(i);
             LayerContext layerContext = new LayerContext();
@@ -63,7 +76,7 @@ public class SceneImpl implements Scene {
 
             layerContext.setLayerNum(i);
             layerContext.setLayerName(layerName);
-            BaseLayer layerClass = layer.getLayerClass();
+            BaseLayer layerClass = layer.getLayerBeanObject();
 
             // layer.split()
             String splitExperimentName = layerClass.split(ctx, layerContext.getInput());
@@ -71,14 +84,15 @@ public class SceneImpl implements Scene {
             if (isDebugMode) {
                 splitExperimentName = getDebugExperiment(layerName, specifiedLayerAndExperiment, splitExperimentName);
             }
+
             ScenesFactoryImpl.ExperimentBean splitExperimentBean = layer.getExperimentBean(splitExperimentName);
-            BaseExperiment experimentCls = splitExperimentBean.getExperimentCls();
+            BaseExperiment experimentObject = splitExperimentBean.getExperimentObject();
 
             // experiment run()
-            Object ouput = experimentCls.run(ctx, layerContext.getInput());
+            Object ouput = experimentObject.run(ctx, layerContext.getInput());
             layerContext.setSplitExperimentName(splitExperimentName);
             layerContext.setOutput(ouput);
-            ctx.add(layerContext);
+            ctx.addLayerContext(layerContext);
         }
         return ctx.getLayerContexts().get(ctx.getLayerContexts().size() - 1).getOutput();
     }
