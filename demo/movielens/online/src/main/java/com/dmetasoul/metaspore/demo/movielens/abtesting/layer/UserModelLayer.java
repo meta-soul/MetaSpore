@@ -19,7 +19,7 @@ package com.dmetasoul.metaspore.demo.movielens.abtesting.layer;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import com.dmetasoul.metaspore.pipeline.BaseLayer;
 import com.dmetasoul.metaspore.pipeline.annotation.LayerAnnotation;
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import com.dmetasoul.metaspore.pipeline.pojo.LayerArgs;
 import org.springframework.stereotype.Component;
 
