@@ -2,7 +2,7 @@
     "registries": [
         {
             "kind": "git",
-            "repository": "git@github.com:meta-soul/meta-vcpkg-registry.git",
+            "repository": "https://github.com/meta-soul/meta-vcpkg-registry.git",
             "baseline": "5de9b5586e2dd1743ca0846e9209752b0d68c1be",
             "packages": [
                 "onnxruntime-cpu-default"
