@@ -21,14 +21,6 @@ cd MetaSpore/java/online-serving
 mvn clean install 
 ```
 
-安装完上述组件之后，我们需要运行自动生成特征访问API的代码，执行如下命令：
-```shell
-cd MetaSpore/demo/movielens/online
-mvn com.dmetasoul.metaspore:feature-extract:1.0-SNAPSHOT:generate
-```
-最后，如果我们在 Intelli J IDEA 开发环境中，我们可以把目录 `target/generated-sources/feature/java` 标注成 `Generated Sources Root`。
-
-
 ## 2. 建立 application-dev.properties
 我们需要从模版文件[application-template.properties](src/main/resources/application-template.properties) 创建一个 resources/**application-dev.properties** 文件，主要用来配置：
 1. `MongoDB` 服务的相关配置；
