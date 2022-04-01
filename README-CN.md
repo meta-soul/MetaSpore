@@ -6,6 +6,9 @@ MetaSpore 是一个一站式端到端的机器学习开发平台，提供从数�
 
 MetaSpore 由[元灵数智](https://www.dmetasoul.com/)团队开发，欢迎关注我们的[公众号和微信交流群](#微信公众号)。
 
+相关介绍：
+* [基于新一代MetaSpore平台快速搭建工业级推荐系统](https://mp.weixin.qq.com/s/vy6aCSGrVNepD9uQZOy9Lg)
+
 ## 核心功能
 MetaSpore 具有如下几个特点：
 
