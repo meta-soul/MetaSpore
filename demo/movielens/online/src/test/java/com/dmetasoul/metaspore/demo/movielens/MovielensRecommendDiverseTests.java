@@ -16,7 +16,7 @@
 
 package com.dmetasoul.metaspore.demo.movielens;
 
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
+import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MMRDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import org.junit.jupiter.api.Test;
 
@@ -68,6 +68,7 @@ public class MovielensRecommendDiverseTests {
             peek.setId(movie_id.toString());
             peek.setGenre(movie_genre[r.nextInt(movie_genre.length)]);
             peek.setTitle(movie_title[r.nextInt(movie_title.length)]);
+            peek.setFinalRankingScore(r.nextDouble()*3+2);
             peek.setMovieAvgRating(r.nextDouble() * 5);
             input.add(peek);
         }
@@ -87,12 +88,12 @@ public class MovielensRecommendDiverseTests {
 
     @Test
     public void testDiverse() {
-        SimpleDiversifier diversfier = new SimpleDiversifier();
+        MMRDiversifier diversfier = new MMRDiversifier();
         for (int i = 0; i < 10; i++) {
             System.out.println("第" + (i + 1) + "轮测试");
             List<ItemModel> input = getInput();
             System.out.println(input);
-            List temp = diversfier.diverse(input, 4, 4);
+            List temp = diversfier.diverse(input, 4, 4,0.7);
             System.out.println(temp);
 
         }
