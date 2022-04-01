@@ -35,7 +35,7 @@ public class Context {
         layerContexts.add(layerContext);
     }
 
-    public List<LayerContext> getLayerContexts() {
+    protected List<LayerContext> getLayerContexts() {
         return layerContexts;
     }
 

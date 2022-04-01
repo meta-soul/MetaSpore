@@ -61,7 +61,6 @@ class DemoControllerTest {
         SecondLayerPojo result = (SecondLayerPojo) scenes.getScene("guess-you-like").run(input, ctx);
         System.out.println(result);
         System.out.println("ctx.getCustomData(): " + ctx.getCustomData());
-        System.out.println(ctx.getLayerContexts());
     }
 
 
@@ -76,6 +75,5 @@ class DemoControllerTest {
         SecondLayerPojo result = (SecondLayerPojo) scenes.getScene("guess-you-like").runDebug(input, ctx, specifiedLayerAndExperiment);
         System.out.println(result);
         System.out.println("ctx.getCustomData(): " + ctx.getCustomData());
-
     }
 }
