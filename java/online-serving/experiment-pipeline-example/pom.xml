@@ -3,48 +3,41 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.dmetasoul</groupId>
+        <groupId>com.dmetasoul.metaspore</groupId>
         <artifactId>metaspore-online-serving</artifactId>
         <version>1.0-SNAPSHOT</version>
-
-        <!--        <groupId>org.springframework.boot</groupId>-->
-        <!--        <artifactId>spring-boot-starter-parent</artifactId>-->
-        <!--        <version>2.6.4</version>-->
-        <!--        <relativePath/> &lt;!&ndash; lookup parent from repository &ndash;&gt;-->
     </parent>
-    <groupId>com.dmetasoul</groupId>
     <artifactId>experiment-pipeline-example</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>experiment-pipeline-example</name>
     <description>experiment-pipeline-example</description>
-    <properties>
-        <java.version>11</java.version>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+            <version>${spring-boot.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <version>${spring-boot.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.dmetasoul</groupId>
+            <groupId>com.dmetasoul.metaspore</groupId>
             <artifactId>experiment-pipeline</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-bootstrap</artifactId>
-            <version>3.1.1</version>
+            <version>${spring-cloud.version}</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
