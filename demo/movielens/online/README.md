@@ -16,12 +16,6 @@ before launching our online recommend service.
 cd MetaSpore/java/online-serving
 mvn clean install 
 ```
-Then use feature-extract to generate MongoDB related files:
-```
-cd MetaSpore/demo/movielens/online
-mvn com.dmetasoul.metaspore:feature-extract:1.0-SNAPSHOT:generate
-```
-Finally, mark directory(target/generated-sources/feature/java) as "Generated Sources Root" if you use IntelliJ IDEA.
 
 ## 2. Create application-dev.properties
 You need to create resources/**application-dev.properties** from [application-template.properties](src/main/resources/application-template.properties) and specify:
