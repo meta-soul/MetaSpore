@@ -32,11 +32,11 @@ scene-config:
   experiments:
     - layerName: userModel
       experimentName: userModel.base
-      experimentArgs:
+      extraExperimentArgs:
         modelName: userModel.base
     - layerName: match
       experimentName: match.base
-      experimentArgs:
+      extraExperimentArgs:
         modelName: match.base
         matcherNames: [ItemCfMatcher]
         maxReservation: 200
@@ -44,7 +44,7 @@ scene-config:
         itemCfMaxReservation: 200
     - layerName: match
       experimentName: match.multiple
-      experimentArgs:
+      extraExperimentArgs:
         modelName: match.multiple
         matcherNames: [ItemCfMatcher, SwingMatcher, TwoTowersMatcher]
         maxReservation: 300
@@ -57,13 +57,13 @@ scene-config:
         twoTowersSimpleXMaxReservation: 200
     - layerName: rank
       experimentName: rank.base
-      experimentArgs:
+      extraExperimentArgs:
         modelName: rank.base
         ranker: WideAndDeepRanker
         maxReservation: 100
     - layerName: rank
       experimentName: rank.wideDeep
-      experimentArgs:
+      extraExperimentArgs:
         modelName: movie_lens_wdl
         ranker: WideAndDeepRanker
         maxReservation: 100
@@ -72,15 +72,15 @@ scene-config:
         sortStrategyBeta: 0.6
     - layerName: rank
       experimentName: rank.lightGBM
-      experimentArgs:
+      extraExperimentArgs:
         modelName: lightgbm_test_model
         ranker: LightGBMRanker
         maxReservation: 100
     - layerName: summary
       experimentName: summary.base
-      experimentArgs:
+      extraExperimentArgs:
         modelName: summary.base
     - layerName: diversify
       experimentName: diversify.base
-      experimentArgs:
+      extraExperimentArgs:
         useDiversify: True
