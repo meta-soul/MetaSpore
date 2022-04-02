@@ -14,17 +14,25 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.demo.movielens.diversify;
+package com.dmetasoul.metaspore.demo.movielens.model;
 
-import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
-import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+public class DiverdifierContext {
+    private String diversifierName;
+    private double lamada;
 
-import java.util.List;
+    public void setDiversifierName(String diversifierName) {
+        this.diversifierName = diversifierName;
+    }
 
-public interface DiversifierService {
-    List<ItemModel> diverse(DiverdifierContext diverdifierContext,
-                            List<ItemModel> itemModels,
-                            Integer window,
-                            Integer tolerance
-                            );
+    public void setLamada(double lamada) {
+        this.lamada = lamada;
+    }
+
+    public String getDiversifierName() {
+        return diversifierName;
+    }
+
+    public double getLamada() {
+        return lamada;
+    }
 }

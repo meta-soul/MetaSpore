@@ -18,7 +18,7 @@ package com.dmetasoul.metaspore.demo.movielens.diversify.impl;
 
 import com.dmetasoul.metaspore.demo.movielens.diversify.DiversifierService;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.DiverseProvider;
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
+import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ import java.util.*;
 
 @Service
 public class DiversifyServiceImpl implements DiversifierService {
-    public static final List<String> DIVERSIFIER_NAMES = List.of("SimpleDiversifier");
+    public static final String DIVERSIFIER_NAMES = "SimpleDiversifier";
 
     private final DiverseProvider diverseProvider;
 
@@ -35,12 +35,17 @@ public class DiversifyServiceImpl implements DiversifierService {
     }
 
     @Override
-    public List<ItemModel> diverse(List<ItemModel> itemModels, Integer window, Integer tolerance) {
+    public List<ItemModel> diverse(DiverdifierContext diverdifierContext,List<ItemModel> itemModels,
+                                   Integer window, Integer tolerance) {
+
+        if(diverdifierContext.getDiversifierName()==null){
+            diverdifierContext.setDiversifierName(DIVERSIFIER_NAMES);
+        }
+        String diversifierMethod=diverdifierContext.getDiversifierName();
         List<ItemModel> finalItemModelDiverse = new ArrayList<>();
 
-        for (Diversifier m : diverseProvider.getDiversifiers(DIVERSIFIER_NAMES)) {
-            finalItemModelDiverse = m.diverse(itemModels, window, tolerance);
-        }
+        finalItemModelDiverse = diverseProvider.getDiversifiers(diversifierMethod).diverse(diverdifierContext,itemModels, window, tolerance);
+
         return finalItemModelDiverse;
     }
 }

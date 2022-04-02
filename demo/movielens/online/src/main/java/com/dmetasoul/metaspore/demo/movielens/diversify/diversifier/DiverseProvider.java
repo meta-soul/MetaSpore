@@ -35,14 +35,11 @@ public class DiverseProvider {
         return diversifierMap.get(name.toLowerCase());
     }
 
-    public Collection<Diversifier> getDiversifiers(Collection<String> names) {
+    public Diversifier getDiversifiers(String names) {
         if (names == null) {
-            return Collections.emptyList();
+            return null;
         }
         ArrayList<Diversifier> diversifiers = new ArrayList<>();
-        for (String name : names) {
-            diversifiers.add(getDiversifier(name));
-        }
-        return diversifiers;
+        return getDiversifier(names);
     }
 }

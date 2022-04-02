@@ -48,8 +48,8 @@ public class ItemModel {
         originalRankingScoreMap = new HashMap<>();
     }
 
-    public void setGenreList() {
-        this.genreList = Arrays.asList(this.getGenre().split(SEQUENCE_FEATURE_SPLITTER));
+    public void setGenreList(String genre) {
+        this.genreList = Arrays.asList(genre.split(SEQUENCE_FEATURE_SPLITTER));
     }
 
     public List<String> getGenreList() {
@@ -76,7 +76,9 @@ public class ItemModel {
     }
 
     public void setGenre(String genre) {
+        this.setGenreList(genre);
         this.genre = genre;
+
     }
 
     public String getImdbUrl() {
@@ -162,6 +164,7 @@ public class ItemModel {
     public void fillSummary(Item item) {
         this.title = item.getTitle();
         this.genre = item.getGenre();
+        this.setGenreList(this.genre);
         this.imdbUrl = item.getImdbUrl();
     }
 

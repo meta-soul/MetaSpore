@@ -18,6 +18,7 @@ package com.dmetasoul.metaspore.demo.movielens;
 
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MaximalMarginalRelevanceDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
+import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import org.junit.jupiter.api.Test;
 
@@ -75,7 +76,6 @@ public class MovielensRecommendDiverseTests {
             peek.setTitle(movie_title[r.nextInt(movie_title.length)]);
             peek.setFinalRankingScore(r.nextDouble()*3+2);
             peek.setMovieAvgRating(r.nextDouble() * 5);
-            peek.setGenreList();
             input.add(peek);
         }
         Collections.sort(input, new Comparator<ItemModel>() {
@@ -101,10 +101,12 @@ public class MovielensRecommendDiverseTests {
             for (int j = 0; j < input.size(); j++) {
                 System.out.print(input.get(j).getGenre()+" ");
             }
+            DiverdifierContext diverdifierContext=new DiverdifierContext();
+            diverdifierContext.setLamada(0.7);
             System.out.println();
             System.out.println("=============================================================================================" +
                     "===========================================================================================");
-            List<ItemModel> temp = diversfier.diverse(input, 4, 4);
+            List<ItemModel> temp = diversfier.diverse(diverdifierContext,input, 4, 4);
             for (int j = 0; j < temp.size(); j++) {
                 System.out.print(temp.get(j).getGenre()+" ");
             }

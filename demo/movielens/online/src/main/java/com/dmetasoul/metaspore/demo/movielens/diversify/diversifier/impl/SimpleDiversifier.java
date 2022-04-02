@@ -16,18 +16,21 @@
 
 package com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl;
 
-import com.google.common.collect.Lists;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
+import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import java.util.*;
 
 @Service
 public class SimpleDiversifier implements Diversifier {
+    public static final String DIVERSIFIER_NAME="SimpleDiersifier";
 
-    public List<ItemModel> diverse(List<ItemModel> itemmodels, Integer window, Integer tolerance) {
+    public List<ItemModel> diverse(DiverdifierContext diverdifierContext,
+                                   List<ItemModel> itemmodels,
+                                   Integer window,
+                                   Integer tolerance) {
         LinkedList<ItemModel> itemLinked = new LinkedList(itemmodels);
         List<ItemModel> diverseResult = new ArrayList<>();
         //compute count of genre
@@ -35,7 +38,7 @@ public class SimpleDiversifier implements Diversifier {
         if (window == null || window > genreCount) {
             window = genreCount;
         }
-        HashMap<String, Integer> keys = new HashMap<>();
+        HashMap<String, Integer> genreInWindow = new HashMap<>();
         int stepCount = 0;
         while (!itemLinked.isEmpty()) {
             int slide = 0;
@@ -46,14 +49,14 @@ public class SimpleDiversifier implements Diversifier {
 
             if (stepCount != 0) {
                 String genreUseless = diverseResult.get(stepCount - 1).getGenre();
-                keys.put(genreUseless, keys.get(genreUseless) - 1);
-                if (keys.get(diverseResult.get(stepCount - 1).getGenre()) == 0) {
-                    keys.remove(diverseResult.get(stepCount - 1).getGenre());
+                genreInWindow.put(genreUseless, genreInWindow.get(genreUseless) - 1);
+                if (genreInWindow.get(diverseResult.get(stepCount - 1).getGenre()) == 0) {
+                    genreInWindow.remove(diverseResult.get(stepCount - 1).getGenre());
                 }
             }
             while (slide < window) {
                 ItemModel te = itemLinked.peek();
-                if (keys.containsKey(te.getGenre())) {
+                if (genreInWindow.containsKey(te.getGenre())) {
                     int toleranceTemp = window - slide;
                     ItemModel itemStart = new ItemModel();
                     Iterator<ItemModel> itemModelIterator = itemLinked.iterator();
@@ -67,25 +70,25 @@ public class SimpleDiversifier implements Diversifier {
                     int startFound = window - slide;
 
                     while (startFound < Math.min(tolerance + window - slide, itemLinked.size())
-                            && keys.containsKey(itemStart.getGenre())
+                            && genreInWindow.containsKey(itemStart.getGenre())
                             && itemModelIterator.hasNext()) {
                         startFound++;
                         itemStart = itemModelIterator.next();
                     }
                     if (toleranceTemp == itemLinked.size() || toleranceTemp == tolerance + window - slide) {
                         diverseResult.add(itemLinked.peek());
-                        keys.put(itemLinked.peek().getGenre(), keys.get(itemLinked.peek().getGenre()) + 1);
+                        genreInWindow.put(itemLinked.peek().getGenre(), genreInWindow.get(itemLinked.peek().getGenre()) + 1);
                         itemLinked.remove();
                         slide++;
                         continue;
                     }
                     String targetGenre = itemStart.getGenre();
-                    int value = keys.containsKey(targetGenre) ? keys.get(targetGenre) + 1 : 1;
+                    int value = genreInWindow.containsKey(targetGenre) ? genreInWindow.get(targetGenre) + 1 : 1;
                     diverseResult.add(itemStart);
-                    keys.put(targetGenre, value);
+                    genreInWindow.put(targetGenre, value);
                     itemModelIterator.remove();
                 } else {
-                    keys.put(te.getGenre(), 1);
+                    genreInWindow.put(te.getGenre(), 1);
                     diverseResult.add(te);
                     itemLinked.remove();
                 }
