@@ -16,7 +16,7 @@
 
 package com.dmetasoul.metaspore.demo.movielens;
 
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MMRDiversifier;
+import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MaximalMarginalRelevanceDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import org.junit.jupiter.api.Test;
 
@@ -27,14 +27,18 @@ public class MovielensRecommendDiverseTests {
             "Drama",
             "Comedy",
             "Horror",
-            "Documentary",
-            "Thriller",
+            "Horroru\001Comedy",
+            "Documentaryu\001Thriller",
+            "Documentaryu\001Comedy",
+            "Dramau\001Comedy",
+//            "Documentary",
+//            "Thriller",
 //                "War",
 //                "Sci-Fi",
 //                "Animation",
 //                "Children's",
 //                "Drama|Mystery",
-            "Animation|Children's"};
+            "Animationu\001Children's"};
     String[] movie_title = {
             "Man of Her Dreams",
             "Garden of Finz",
@@ -66,10 +70,11 @@ public class MovielensRecommendDiverseTests {
             Integer movie_id = r.nextInt(1000);
             ItemModel peek = new ItemModel();
             peek.setId(movie_id.toString());
-            peek.setGenre(movie_genre[r.nextInt(movie_genre.length)]);
+            peek.setGenre(movie_genre[Math.min(movie_genre.length-1,r.nextInt(Math.max(1,movie_genre.length-1)))]);//
             peek.setTitle(movie_title[r.nextInt(movie_title.length)]);
             peek.setFinalRankingScore(r.nextDouble()*3+2);
             peek.setMovieAvgRating(r.nextDouble() * 5);
+            peek.setGenreList();
             input.add(peek);
         }
         Collections.sort(input, new Comparator<ItemModel>() {
@@ -88,7 +93,7 @@ public class MovielensRecommendDiverseTests {
 
     @Test
     public void testDiverse() {
-        MMRDiversifier diversfier = new MMRDiversifier();
+        MaximalMarginalRelevanceDiversifier diversfier = new MaximalMarginalRelevanceDiversifier();
         for (int i = 0; i < 10; i++) {
             System.out.println("第" + (i + 1) + "轮测试");
             List<ItemModel> input = getInput();

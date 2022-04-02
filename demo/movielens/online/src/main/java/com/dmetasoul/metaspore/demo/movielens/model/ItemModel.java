@@ -18,14 +18,19 @@ package com.dmetasoul.metaspore.demo.movielens.model;
 
 import com.dmetasoul.metaspore.demo.movielens.domain.Item;
 import com.dmetasoul.metaspore.demo.movielens.domain.ItemFeature;
+import edu.emory.mathcs.backport.java.util.Arrays;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
+
+import static com.dmetasoul.metaspore.demo.movielens.common.Constants.SEQUENCE_FEATURE_SPLITTER;
 
 public class ItemModel {
     private String id;
     private String title;
     private String genre;
+    private List<String> genreList;
     private String imdbUrl;
     private Double genreGreaterThanThreeRate;
     private Double genreMovieAvgRating;
@@ -43,6 +48,13 @@ public class ItemModel {
         originalRankingScoreMap = new HashMap<>();
     }
 
+    public void setGenreList() {
+        this.genreList = Arrays.asList(this.getGenre().split(SEQUENCE_FEATURE_SPLITTER));
+    }
+
+    public List<String> getGenreList() {
+        return genreList;
+    }
     public String getId() {
         return id;
     }
