@@ -16,9 +16,12 @@
 package com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl;
 
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+import org.springframework.data.annotation.Reference;
 
 import java.util.*;
+
 public class MaximalMarginalRelevanceDiversifier {
+    @Reference
     public static List<ItemModel> diverse(List<ItemModel> itemModels,
                                           Integer window,
                                           Integer tolerance,
