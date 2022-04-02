@@ -8,6 +8,7 @@ MetaSpore 由[元灵数智](https://www.dmetasoul.com/)团队开发，欢迎关�
 
 相关介绍：
 * [基于新一代MetaSpore平台快速搭建工业级推荐系统](https://mp.weixin.qq.com/s/vy6aCSGrVNepD9uQZOy9Lg)
+* [新一代一站式机器学习平台MetaSpore的设计理念](https://mp.weixin.qq.com/s/uiqvpQ4VHAlL6V3dgzDwig)
 
 ## 核心功能
 MetaSpore 具有如下几个特点：
