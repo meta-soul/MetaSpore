@@ -27,63 +27,84 @@ import java.util.*;
 @Service
 public class SimpleDiversifier implements Diversifier {
 
-    public List<ItemModel> diverse(List<ItemModel> itemModels, Integer window, Integer tolerance) {
-        if (CollectionUtils.isEmpty(itemModels)) {
-            return itemModels;
-        }
-        if (itemModels instanceof ArrayList) {
-            itemModels = Lists.newArrayList(itemModels);
-        }
-        if (window == null || window > groupByType(itemModels).size()) {
-            window = groupByType(itemModels).size();
+    public List<ItemModel> diverse(List<ItemModel> itemmodels, Integer window, Integer tolerance) {
+        LinkedList<ItemModel> itemLinked = new LinkedList(itemmodels);
+        List<ItemModel> diverseResult = new ArrayList<>();
+        //compute count of genre
+        int genreCount = groupByType(itemmodels).size();
+        if (window == null || window > genreCount) {
+            window = genreCount;
         }
         HashMap<String, Integer> keys = new HashMap<>();
-        for (int i = 0; i < itemModels.size() - window; i++) {
-            List<ItemModel> subList = itemModels.subList(i, i + window);
+        int stepCount = 0;
+        while (!itemLinked.isEmpty()) {
+            int slide = 0;
 
-            if (i >= 1) {
-                String movie_genre = itemModels.get(i - 1).getGenre();
-                keys.put(movie_genre, keys.get(itemModels.get(i - 1).getGenre()) - 1);
-                if (keys.get(itemModels.get(i - 1).getGenre()) == 0) keys.remove(itemModels.get(i - 1).getGenre());
+            if (itemLinked.size() != itemmodels.size()) {
+                slide = window - 1;
             }
-            //int j = window + 1;
-            int m = 0;
-            if (i > 0) {
-                m = window - 1;
-            }
-            for (; m < window; m++) {
-                ItemModel item = subList.get(m);
-                if (keys.containsKey(item.getGenre())) {
-                    int findTarget = i + window;
-                    while (findTarget < Math.min(itemModels.size(),
-                            i + window + tolerance) && keys.containsKey(itemModels.get(findTarget).getGenre())) {
-                        findTarget++;
-                    }
-                    if (findTarget == Math.min(itemModels.size(), i + window + tolerance)) {
-                        findTarget = i + window;
-                    }
-                    itemModels.set(i + m, itemModels.get(findTarget));
-                    itemModels.set(findTarget, item);
-                    int value = keys.containsKey(itemModels.get(i + m).getGenre()) ? keys.get(itemModels.get(i + m).getGenre()) + 1 : 1;
-                    keys.put(itemModels.get(i + m).getGenre(), value);
-                } else {
-                    keys.put(item.getGenre(), 1);
+
+            if (stepCount != 0) {
+                String genreUseless = diverseResult.get(stepCount - 1).getGenre();
+                keys.put(genreUseless, keys.get(genreUseless) - 1);
+                if (keys.get(diverseResult.get(stepCount - 1).getGenre()) == 0) {
+                    keys.remove(diverseResult.get(stepCount - 1).getGenre());
                 }
             }
+            while (slide < window) {
+                ItemModel te = itemLinked.peek();
+                if (keys.containsKey(te.getGenre())) {
+                    int toleranceTemp = window - slide;
+                    ItemModel itemStart = new ItemModel();
+                    Iterator<ItemModel> itemModelIterator = itemLinked.iterator();
+                    if (itemModelIterator.hasNext()) {
+                        itemStart = itemModelIterator.next();
+                    }
+                    while (toleranceTemp > 0 && itemModelIterator.hasNext()) {
+                        itemStart = itemModelIterator.next();
+                        toleranceTemp--;
+                    }
+                    int startFound = window - slide;
+
+                    while (startFound < Math.min(tolerance + window - slide, itemLinked.size())
+                            && keys.containsKey(itemStart.getGenre())
+                            && itemModelIterator.hasNext()) {
+                        startFound++;
+                        itemStart = itemModelIterator.next();
+                    }
+                    if (toleranceTemp == itemLinked.size() || toleranceTemp == tolerance + window - slide) {
+                        diverseResult.add(itemLinked.peek());
+                        keys.put(itemLinked.peek().getGenre(), keys.get(itemLinked.peek().getGenre()) + 1);
+                        itemLinked.remove();
+                        slide++;
+                        continue;
+                    }
+                    String targetGenre = itemStart.getGenre();
+                    int value = keys.containsKey(targetGenre) ? keys.get(targetGenre) + 1 : 1;
+                    diverseResult.add(itemStart);
+                    keys.put(targetGenre, value);
+                    itemModelIterator.remove();
+                } else {
+                    keys.put(te.getGenre(), 1);
+                    diverseResult.add(te);
+                    itemLinked.remove();
+                }
+                slide++;
+            }
+            stepCount++;
         }
-        return itemModels;
+        return diverseResult;
     }
 
-    public static HashSet<String> groupByType(List<ItemModel> numbers) {
-        HashSet<String> hashset = new HashSet<>();
-        Map<String, List<ItemModel>> map = new HashMap<>();
+    public static Map<String, Integer> groupByType(List<ItemModel> numbers) {
+        Map<String, Integer> map = new HashMap<>();
         for (ItemModel item : numbers) {
             if (map.containsKey(item.getGenre())) {
                 continue;
             } else {
-                hashset.add(item.getGenre());
+                map.put(item.getGenre(), 1);
             }
         }
-        return hashset;
+        return map;
     }
 }

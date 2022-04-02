@@ -17,6 +17,7 @@
 package com.dmetasoul.metaspore.demo.movielens;
 
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MaximalMarginalRelevanceDiversifier;
+import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import org.junit.jupiter.api.Test;
 
@@ -93,13 +94,21 @@ public class MovielensRecommendDiverseTests {
 
     @Test
     public void testDiverse() {
-        MaximalMarginalRelevanceDiversifier diversfier = new MaximalMarginalRelevanceDiversifier();
-        for (int i = 0; i < 10; i++) {
+        SimpleDiversifier diversfier = new SimpleDiversifier();
+        for (int i = 0; i < 100; i++) {
             System.out.println("第" + (i + 1) + "轮测试");
             List<ItemModel> input = getInput();
-            System.out.println(input);
-            List temp = diversfier.diverse(input, 4, 4,0.7);
-            System.out.println(temp);
+            for (int j = 0; j < input.size(); j++) {
+                System.out.print(input.get(j).getGenre()+" ");
+            }
+            System.out.println();
+            System.out.println("=============================================================================================" +
+                    "===========================================================================================");
+            List<ItemModel> temp = diversfier.diverse(input, 4, 4);
+            for (int j = 0; j < temp.size(); j++) {
+                System.out.print(temp.get(j).getGenre()+" ");
+            }
+            System.out.println();
 
         }
     }
