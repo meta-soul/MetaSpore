@@ -6,7 +6,7 @@
 <img width="800" alt="image" src="https://user-images.githubusercontent.com/7464971/160760862-48b81b21-b729-4b34-b4fe-c83985474664.png">
 </p>
 
-在这个Demo的项目里，我们使用 [MoiveLens-1M](https://grouplens.org/datasets/movielens/1m/) 这个数据集来演示。此外，为了给每个电影一个真实的IMDB超链接，我们使用了另外一个 [github项目](https://github.com/jennyzhang0215/MovieLens-IMDB) 中处理好的数据 [ml-25m-imdb](https://drive.google.com/file/d/1fz8WjLy0_UYioFbMirYrjhM00EYnCaWP/view) 。您可以从上面提供的网址中下载项目所需要的数据，并存储在您的云端 S3 存储上。
+在这个Demo的项目里，我们使用 [MoiveLens-1M](https://grouplens.org/datasets/movielens/1m/) 这个数据集来演示。此外，为了给每个电影一个真实的IMDB超链接，我们使用了另外一个 [github项目](https://github.com/jennyzhang0215/MovieLens-IMDB) 中处理好的数据 [ml-25m-imdb](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/movielens/ml-25m/ml-25m-imdb.zip) 。您可以从上面提供的网址中下载项目所需要的数据，并存储在您的云端 S3 存储上。
 
 
 ## 1. 初始化模型配置文件
