@@ -6,7 +6,7 @@ As we known, for one typical personalized recommender system, as depicted in the
 <img width="800" alt="image" src="https://user-images.githubusercontent.com/7464971/160760862-48b81b21-b729-4b34-b4fe-c83985474664.png">
 </p>
 
-In this demo project, we use [MoiveLens-1M](https://grouplens.org/datasets/movielens/1m/) to demonstrate our system. You can download this dataset from this their website and store these files onto your own cloud strorage.
+In this demo project, we use [MoiveLens-1M](https://grouplens.org/datasets/movielens/1m/) to demonstrate our system. In addition, we use [ml-25m-imdb](https://drive.google.com/file/d/1fz8WjLy0_UYioFbMirYrjhM00EYnCaWP/view) processed by [another github project](https://github.com/jennyzhang0215/MovieLens-IMDB) to give every movie a real IMDB hyperlink. You can download these datasets from the provided urls and store these files onto your own cloud strorage. 
 
 ## 1. Initialize the Configuration Files for Models
 Before we continue to dive into the offline models, we should firstly initialize the config files from their `YAML` template for substituting some variables. For example
