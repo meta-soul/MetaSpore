@@ -24,15 +24,15 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class MaximalMarginalRelevanceDiversifier {
+public class MaximalMarginalRelevanceDiversifier implements Diversifier{
     public static final String DIVERSIFIER_NAME = "MMRDiersifier";
     public static final double LAMADA = 0.7;
 
     @Reference
-    public static List<ItemModel> diverse(DiverdifierContext diverdifierContext,
-                                          List<ItemModel> itemModels,
-                                          Integer window,
-                                          Integer tolerance
+    public List<ItemModel> diverse(DiverdifierContext diverdifierContext,
+                                   List<ItemModel> itemModels,
+                                   Integer window,
+                                   Integer tolerance
     ) {
         Double lamada = diverdifierContext.getLamada();
         if (lamada == null) {
