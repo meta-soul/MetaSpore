@@ -16,13 +16,13 @@
 
 package com.dmetasoul.metaspore.demo.movielens.diversify;
 
-import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 
 import java.util.List;
 
 public interface DiversifierService {
-    List<ItemModel> diverse(DiverdifierContext diverdifierContext,
+    List<ItemModel> diverse(RecommendContext recommendContext,
                             List<ItemModel> itemModels,
                             Integer window,
                             Integer tolerance

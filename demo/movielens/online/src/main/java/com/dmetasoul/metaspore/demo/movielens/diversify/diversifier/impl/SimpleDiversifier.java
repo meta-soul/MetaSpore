@@ -17,8 +17,8 @@
 package com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl;
 
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
-import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -27,7 +27,7 @@ import java.util.*;
 public class SimpleDiversifier implements Diversifier {
     public static final String DIVERSIFIER_NAME="SimpleDiersifier";
 
-    public List<ItemModel> diverse(DiverdifierContext diverdifierContext,
+    public List<ItemModel> diverse(RecommendContext recommendContext,
                                    List<ItemModel> itemmodels,
                                    Integer window,
                                    Integer tolerance) {

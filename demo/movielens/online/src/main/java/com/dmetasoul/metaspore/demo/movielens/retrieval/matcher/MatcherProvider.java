@@ -29,7 +29,6 @@ public class MatcherProvider {
         this.matcherMap = new HashMap<>();
         matchers.forEach(x -> matcherMap.put(x.getClass().getSimpleName(), x));
     }
-
     public Matcher getMatcher(String name) {
         return matcherMap.get(name);
     }

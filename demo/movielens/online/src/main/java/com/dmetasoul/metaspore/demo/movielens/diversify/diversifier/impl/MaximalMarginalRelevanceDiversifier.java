@@ -16,8 +16,8 @@
 package com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl;
 
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
-import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.springframework.data.annotation.Reference;
 import org.springframework.stereotype.Service;
 
@@ -29,12 +29,12 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier{
     public static final double LAMADA = 0.7;
 
     @Reference
-    public List<ItemModel> diverse(DiverdifierContext diverdifierContext,
+    public List<ItemModel> diverse(RecommendContext recommendContext,
                                    List<ItemModel> itemModels,
                                    Integer window,
                                    Integer tolerance
     ) {
-        Double lamada = diverdifierContext.getLamada();
+        Double lamada = recommendContext.getLamada();
         if (lamada == null) {
             lamada = LAMADA;
         }

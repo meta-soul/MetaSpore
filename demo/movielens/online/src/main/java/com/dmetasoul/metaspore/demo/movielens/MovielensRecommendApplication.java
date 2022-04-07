@@ -21,8 +21,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 
-//@SpringBootApplication(exclude = MongoAutoConfiguration.class)
-@SpringBootApplication(scanBasePackages = {"com.dmetasoul.metaspore"}, exclude = {DataSourceAutoConfiguration.class, MongoAutoConfiguration.class})
+@SpringBootApplication(scanBasePackages = {"com.dmetasoul.metaspore"}, exclude = {DataSourceAutoConfiguration.class})
 public class MovielensRecommendApplication {
 
     public static void main(String[] args) {

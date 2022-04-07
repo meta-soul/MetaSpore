@@ -16,10 +16,9 @@
 
 package com.dmetasoul.metaspore.demo.movielens;
 
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MaximalMarginalRelevanceDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
-import com.dmetasoul.metaspore.demo.movielens.model.DiverdifierContext;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -101,12 +100,12 @@ public class MovielensRecommendDiverseTests {
             for (int j = 0; j < input.size(); j++) {
                 System.out.print(input.get(j).getGenre()+" ");
             }
-            DiverdifierContext diverdifierContext=new DiverdifierContext();
-            diverdifierContext.setLamada(0.7);
+            RecommendContext recommendContext =new RecommendContext();
+            recommendContext.setLamada(0.7);
             System.out.println();
             System.out.println("=============================================================================================" +
                     "===========================================================================================");
-            List<ItemModel> temp = diversfier.diverse(diverdifierContext,input, 4, 4);
+            List<ItemModel> temp = diversfier.diverse(recommendContext,input, 4, 4);
             for (int j = 0; j < temp.size(); j++) {
                 System.out.print(temp.get(j).getGenre()+" ");
             }
