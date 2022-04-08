@@ -32,13 +32,15 @@ import java.util.Map;
 @Component
 
 public class DiversifyExperiment implements BaseExperiment<RecommendResult, RecommendResult> {
-    private final DiversifierService diversifierService;
+    protected final DiversifierService diversifierService;
 
     protected boolean useDiversify = true;
 
     protected int window;
 
     protected int tolerance;
+
+    protected double lamada;
 
     protected RecommendContext recommendContext=new RecommendContext();
 
