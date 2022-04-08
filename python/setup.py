@@ -20,6 +20,7 @@
 #   https://stackoverflow.com/questions/42585210/extending-setuptools-extension-to-use-cmake-in-setup-py
 #
 
+import os
 from setuptools import setup
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
@@ -34,7 +35,6 @@ class metaspore_build_ext(build_ext):
             self.build_metaspore(ext)
 
     def get_metaspore_so_path(self):
-        import os
         key = '_METASPORE_SO'
         path = os.environ.get(key)
         if path is None:
@@ -51,9 +51,13 @@ class metaspore_build_ext(build_ext):
         metaspore_so_path = self.get_metaspore_so_path()
         ext_so_path = self.get_ext_fullpath(ext.name)
         shutil.copy(metaspore_so_path, ext_so_path)
+        metaspore_so_dir = os.path.dirname(os.path.realpath(metaspore_so_path))
+        ext_so_dir = os.path.dirname(os.path.realpath(ext_so_path))
+        so_names = ['libstdc++.so.6', 'libgcc_s.so.1']
+        for so_name in so_names:
+            shutil.copy(os.path.join(metaspore_so_dir, so_name), os.path.join(ext_so_dir, so_name))
 
 def get_metaspore_version():
-    import os
     key = '_METASPORE_VERSION'
     metaspore_version = os.environ.get(key)
     if metaspore_version is None:
