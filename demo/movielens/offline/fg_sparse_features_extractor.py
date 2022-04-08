@@ -17,7 +17,7 @@
 from pyspark.sql import functions as F
 from functools import reduce
 
-def generate_spare_features(dataset, max_len=10, sep=u'\u0001'):
+def generate_sparse_features(dataset, max_len=10, sep=u'\u0001'):
     def get_recent_items(kv_pairs, max_len=max_len):
         #def get_genre_union_set(genres):
         #    result_set = set()
