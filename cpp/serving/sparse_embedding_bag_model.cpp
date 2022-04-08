@@ -42,7 +42,7 @@ awaitable_status SparseEmbeddingBagModel::load(std::string dir_path) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,
-        [=]() -> awaitable_status {
+        [this, dir_path]() -> awaitable_status {
             auto status = co_await context_->ort_model_.load(dir_path);
             if (!status.ok()) {
                 spdlog::error("Cannot load embedding bag ort model from {}", dir_path);

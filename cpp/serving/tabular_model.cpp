@@ -60,7 +60,7 @@ TabularModel::~TabularModel() = default;
 awaitable_status TabularModel::load(std::string dir_path) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [&]() -> awaitable_status {
+        [this, dir_path]() -> awaitable_status {
             // load a ctr model
             // 1. find all subdirs prefixed with "sparse_" and load fe/lookup models in them
             fs::path root_dir(dir_path);
