@@ -36,7 +36,7 @@ MetaSpore 具有如下几个特点：
     * [在线算法推荐系统（Java 实现）](demo/movielens/online/README-CN.md)
 
 ## 安装包下载
-我们提供了一个预编译的离线训练安装包：[下载链接](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B9591a50-cp38-cp38-linux_x86_64.whl)。 该安装包依赖 Python 3.8.
+我们提供了一个预编译的离线训练安装包：[下载链接](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B295d07c-cp38-cp38-linux_x86_64.whl)。 该安装包依赖 Python 3.8.
 
 运行 MetaSpore 离线训练，还需要 PySpark 和 PyTorch。可以通过 `pip` 命令进行安装：
 ```bash
