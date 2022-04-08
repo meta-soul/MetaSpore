@@ -21,7 +21,7 @@ public class MMRDiversifyExperiment extends DiversifyExperiment{
     @Override
     public void initialize(Map<String,Object> map){
         super.initialize(map);
-        recommendContext.setLamada(0.7);
+        recommendContext.setLamada(this.lamada);
         recommendContext.setDiversifierName("MMRDiersifier");
     }
 
