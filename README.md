@@ -41,7 +41,7 @@ After downloading, in the Python 3.8 environment, execute the installation throu
 ```bash
 pip install pyspark
 pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
-pip install metaspore-1.0.0+9591a50-cp38-cp38-linux_x86_64.whl
+pip install metaspore-1.0.0+295d07c-cp38-cp38-linux_x86_64.whl
 ```
 
 ## Compile the code

@@ -42,7 +42,7 @@ MetaSpore 具有如下几个特点：
 ```bash
 pip install pyspark
 pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
-pip install metaspore-1.0.0+9591a50-cp38-cp38-linux_x86_64.whl
+pip install metaspore-1.0.0+295d07c-cp38-cp38-linux_x86_64.whl
 ```
 
 Spark 官方打包的 PySpark，没有包含 hadoop-cloud 的 jar 包，无法访问 S3 等云存储。我们提供了一个打包好 S3 客户端的 [PySpark 安装包](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2-py2.py3-none-any.whl)，可以从这里下载后安装：
