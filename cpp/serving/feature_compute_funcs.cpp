@@ -1,3 +1,19 @@
+//
+// Copyright 2022 DMetaSoul
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
 #include <common/hash_utils.h>
 #include <serving/arrow_helpers.h>
 #include <serving/feature_compute_funcs.h>
@@ -24,22 +40,6 @@ arrow::Status StringBKDRHashKernelString(cp::KernelContext *ctx, const cp::ExecB
         if (elem.has_value()) {
             if (elem->empty()) {
                 // empty string is treated as null
-//
-// Copyright 2022 DMetaSoul
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-
                 ARROW_RETURN_NOT_OK(builder.AppendNull());
             } else {
                 uint64_t hash = BKDRHash(elem->data(), elem->length(), 0);

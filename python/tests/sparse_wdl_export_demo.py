@@ -69,6 +69,7 @@ emb_names = []
 for name, mod in module.named_children():
     if isinstance(mod, ms.embedding.EmbeddingOperator):
         emb_names.append(name)
+        mod.export_sparse_embedding_bag('emb_output', 'emb')
 
 from torch.fx import Tracer, GraphModule 
 

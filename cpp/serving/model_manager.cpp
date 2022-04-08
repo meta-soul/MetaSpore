@@ -37,7 +37,7 @@ void ModelManager::init(const std::string &dir_path) {
         if (dir_entry.is_directory()) {
             boost::asio::co_spawn(
                 Threadpools::get_background_threadpool(),
-                [=]() -> awaitable<void> {
+                [this, dir_entry]() -> awaitable<void> {
                     auto sub_dir = dir_entry.path();
                     auto name = dir_entry.path().filename();
                     spdlog::info("Try to load model from {} with name {} during init", sub_dir,
@@ -58,7 +58,7 @@ void ModelManager::init(const std::string &dir_path) {
 awaitable_status ModelManager::load(const std::string &dir_path, const std::string &name) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [=]() -> awaitable_status {
+        [this, dir_path, name]() -> awaitable_status {
             TabularModel model;
             auto status = co_await model.load(dir_path);
             if (!status.ok()) {

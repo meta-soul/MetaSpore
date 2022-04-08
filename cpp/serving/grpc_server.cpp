@@ -132,7 +132,7 @@ template <class Handler> struct CoSpawner {
 awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<PredictReply> &writer,
                               const status &s) {
     co_await agrpc::finish_with_error(
-        writer, grpc::Status(static_cast<grpc::StatusCode>(s.code()), (std::string)s.message()),
+        writer, grpc::Status(static_cast<grpc::StatusCode>(s.code()), s.ToString()),
         boost::asio::use_awaitable);
 }
 
