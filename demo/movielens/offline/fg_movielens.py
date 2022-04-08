@@ -22,7 +22,7 @@ from pyspark.sql.types import StructType, StructField, IntegerType, FloatType, L
 from functools import reduce
 
 from fg_gbm_features_extractor import generate_gbm_features
-from fg_sparse_features_extractor import generate_spare_features
+from fg_sparse_features_extractor import generate_sparse_features
 from fg_neg_sampler import negative_sampling_train_dataset
 
 def load_config(path):
@@ -31,8 +31,9 @@ def load_config(path):
         params = yaml.load(stream, Loader=yaml.FullLoader)
         print('Debug -- load config: ', params)
     return params
-
+import subprocess
 def init_spark():
+    subprocess.run(['zip', '-r', './python.zip', 'fg_neg_sampler.py', 'fg_sparse_features_extractor.py', 'fg_gbm_features_extractor.py' ], cwd='./')
     spark = (SparkSession.builder
         .appName('Demo -- movielens')
         .config("spark.executor.memory","10G")
@@ -294,7 +295,7 @@ if __name__=="__main__":
     gbm_features = generate_gbm_features(spark, users, movies, ratings)
     merged_dataset = merge_dataset(users, movies, ratings)
 
-    fg_dataset = generate_spare_features(merged_dataset)
+    fg_dataset = generate_sparse_features(merged_dataset)
     train_fg_dataset, test_fg_dataset = split_train_test(fg_dataset)
     train_neg_sample = negative_sampling_train_dataset(spark, train_fg_dataset, num_negs)
     

@@ -16,4 +16,4 @@ rank_lgbm_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/rank/lgbm_test.parque
 
 item_summary_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/items.parquet
 item_fearture_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/item_feature.parquet
-user_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/users.parquetS
+user_mongo_dataset_out_path: ${MY_S3_BUCKET}/movielens/mango/users.parquet
