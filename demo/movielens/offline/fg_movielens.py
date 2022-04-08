@@ -16,6 +16,7 @@
 
 import yaml
 import argparse
+import subprocess
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, IntegerType, FloatType, LongType, StringType
@@ -31,7 +32,7 @@ def load_config(path):
         params = yaml.load(stream, Loader=yaml.FullLoader)
         print('Debug -- load config: ', params)
     return params
-import subprocess
+
 def init_spark():
     subprocess.run(['zip', '-r', './python.zip', 'fg_neg_sampler.py', 'fg_sparse_features_extractor.py', 'fg_gbm_features_extractor.py' ], cwd='./')
     spark = (SparkSession.builder
