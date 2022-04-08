@@ -14,13 +14,14 @@ import java.util.Map;
 @Component
 
 public class MMRDiversifyExperiment extends DiversifyExperiment{
-
+    protected double lamada;
     public MMRDiversifyExperiment(DiversifierService diversifierService) {
         super(diversifierService);
     }
     @Override
     public void initialize(Map<String,Object> map){
         super.initialize(map);
+        this.lamada= (double) map.getOrDefault("lamada",0.7);
         recommendContext.setLamada(this.lamada);
         recommendContext.setDiversifierName("MMRDiersifier");
     }
