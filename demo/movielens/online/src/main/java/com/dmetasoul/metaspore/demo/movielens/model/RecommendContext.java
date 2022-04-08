@@ -84,7 +84,6 @@ public class RecommendContext {
         this.userId = userId;
     }
 
-    public RecommendContext(){};
     public RecommendContext(String userId, PayloadParam payloadParam) {
         this.userId = userId;
         this.useDebug = payloadParam.useDebug;

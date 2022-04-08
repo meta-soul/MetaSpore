@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.demo.movielens;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
+import com.dmetasoul.metaspore.demo.movielens.model.RecommendResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -100,7 +101,9 @@ public class MovielensRecommendDiverseTests {
             for (int j = 0; j < input.size(); j++) {
                 System.out.print(input.get(j).getGenre()+" ");
             }
-            RecommendContext recommendContext =new RecommendContext();
+            RecommendResult recommendResult=new RecommendResult();
+            RecommendContext recommendContext = recommendResult.getRecommendContext();
+            //RecommendContext recommendContext =new RecommendContext();
             recommendContext.setLamada(0.7);
             System.out.println();
             System.out.println("=============================================================================================" +
