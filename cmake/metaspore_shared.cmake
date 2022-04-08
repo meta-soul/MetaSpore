@@ -120,12 +120,14 @@ add_library(metaspore_shared SHARED
 )
 set_target_properties(metaspore_shared PROPERTIES PREFIX "")
 set_target_properties(metaspore_shared PROPERTIES OUTPUT_NAME _metaspore)
+set_target_properties(metaspore_shared PROPERTIES
+        BUILD_WITH_INSTALL_RPATH FALSE
+        LINK_FLAGS "-Wl,-rpath,$ORIGIN/")
 target_compile_definitions(metaspore_shared PRIVATE DMLC_USE_S3=1)
 target_compile_definitions(metaspore_shared PRIVATE _METASPORE_VERSION="${project_version}")
 target_compile_definitions(metaspore_shared PRIVATE DBG_MACRO_NO_WARNING)
 target_include_directories(metaspore_shared PRIVATE ${PROJECT_SOURCE_DIR}/cpp)
 target_include_directories(metaspore_shared PRIVATE ${PROJECT_BINARY_DIR}/gen/thrift/cpp)
-target_link_options(metaspore_shared PRIVATE -static-libgcc -static-libstdc++)
 target_link_libraries(metaspore_shared PRIVATE
     metaspore-common
     ${JSON11_LIBRARIES}
@@ -137,4 +139,12 @@ target_link_libraries(metaspore_shared PRIVATE
     Boost::headers
     thrift::thrift
     zmq::libzmq
+)
+
+add_custom_command(TARGET metaspore_shared
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+    /lib/x86_64-linux-gnu/libstdc++.so.6 ${CMAKE_BINARY_DIR}/
+    COMMAND ${CMAKE_COMMAND} -E copy
+    /lib/x86_64-linux-gnu/libgcc_s.so.1 ${CMAKE_BINARY_DIR}/
 )
