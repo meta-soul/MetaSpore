@@ -2,7 +2,7 @@ import os
 import kfp
 import sys
 # using a loop to check the /metaspore/algos/components
-for module in os.listdir(os.getcwd() + "/metaspore/algos/components"):
+for module in os.listdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '../algos/components')):
     # just select the .py file, eg: WideDeep.py
     if module == '__init__.py' or module[-3:] != '.py':
         continue
