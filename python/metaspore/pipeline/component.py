@@ -37,13 +37,7 @@ def to_component_func(
             user_argo_para_dic = dic["user_argo_parameter"]
 
             func(exp_obj_for_runner,**user_argo_para_dic)
-
-        print("creating ",kwargs["component_name"])
-        kfp.components.func_to_container_op(
-            func= component_func,
-            base_image = 'hub.kce.ksyun.com/dmetasoul/spark:dmetasoul-v1.2.2-test',
-            output_component_file= 'kubeflow_components/' + kwargs['component_name'],
-            use_code_pickling= True
-        )
+        component_func.component_name = kwargs["component_name"]
+        component_func.is_decorated = True
         return component_func
     return decorated_func

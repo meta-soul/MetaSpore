@@ -37,11 +37,13 @@ class metaspore_build_component(install_lib):
         # dst_dir eg: build/bdist.linux-x86_64/wheel/metaspore/kubeflow_components
         
         # create dir
-        if not os.path.exists(src_dir):
-            os.mkdir(src_dir)
-        if not os.path.exists(dst_dir):
-            os.mkdir(dst_dir)
-        
+        if os.path.exists(src_dir):
+            shutil.rmtree(src_dir)
+        if os.path.exists(dst_dir):
+            shutil.rmtree(dst_dir)
+        os.mkdir(src_dir)
+        os.mkdir(dst_dir)
+
         # generate the yaml file
         sys.path.insert(0,self.install_dir) # go to the install_dir
         import metaspore.kubeflow.export_builtin_component
