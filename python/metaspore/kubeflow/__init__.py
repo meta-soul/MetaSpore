@@ -1,0 +1,1 @@
+from .component_loader import load_component
