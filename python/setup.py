@@ -36,7 +36,7 @@ class metaspore_build_component(install_lib):
         dst_dir = os.path.join(self.install_dir, 'metaspore' , src_dir)
         # dst_dir eg: build/bdist.linux-x86_64/wheel/metaspore/kubeflow_components
         
-        # create dir
+        # delete before create
         if os.path.exists(src_dir):
             shutil.rmtree(src_dir)
         if os.path.exists(dst_dir):
