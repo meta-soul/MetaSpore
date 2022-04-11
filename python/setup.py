@@ -20,9 +20,35 @@
 #   https://stackoverflow.com/questions/42585210/extending-setuptools-extension-to-use-cmake-in-setup-py
 #
 
+import os
 from setuptools import setup
 from setuptools import Extension
 from setuptools.command.build_ext import build_ext
+
+from setuptools.command.install_lib import install_lib
+class metaspore_build_component(install_lib):
+    def run(self):
+        super().run()
+        import sys
+        import shutil
+        
+        src_dir = "kubeflow_components"
+        dst_dir = os.path.join(self.install_dir, 'metaspore' , src_dir)
+        # dst_dir eg: build/bdist.linux-x86_64/wheel/metaspore/kubeflow_components
+        
+        # create dir
+        if not os.path.exists(src_dir):
+            os.mkdir(src_dir)
+        if not os.path.exists(dst_dir):
+            os.mkdir(dst_dir)
+        
+        # generate the yaml file
+        sys.path.insert(0,self.install_dir) # go to the install_dir
+        import metaspore.kubeflow.export_builtin_component
+       
+        # copy to dst dir
+        for filename in os.listdir(src_dir):
+            shutil.copy(os.path.join(src_dir, filename), dst_dir)
 
 class MetaSporeExtension(Extension):
     def __init__(self, name):
@@ -51,9 +77,13 @@ class metaspore_build_ext(build_ext):
         metaspore_so_path = self.get_metaspore_so_path()
         ext_so_path = self.get_ext_fullpath(ext.name)
         shutil.copy(metaspore_so_path, ext_so_path)
+        metaspore_so_dir = os.path.dirname(os.path.realpath(metaspore_so_path))
+        ext_so_dir = os.path.dirname(os.path.realpath(ext_so_path))
+        so_names = ['libstdc++.so.6', 'libgcc_s.so.1']
+        for so_name in so_names:
+            shutil.copy(os.path.join(metaspore_so_dir, so_name), os.path.join(ext_so_dir, so_name))
 
 def get_metaspore_version():
-    import os
     key = '_METASPORE_VERSION'
     metaspore_version = os.environ.get(key)
     if metaspore_version is None:
@@ -65,9 +95,14 @@ def get_metaspore_version():
 setup(name='metaspore',
       version=get_metaspore_version(),
       description="MetaSpore AI platform.",
-      packages=['metaspore', 'metaspore.nn', 'metaspore.compat', 'metaspore.compat.ps', 'ps'],
+      packages=['metaspore', 'metaspore.nn','metaspore.kubeflow', 'metaspore.pipeline','metaspore.algos',
+        'metaspore.algos.components','metaspore.algos.runners','metaspore.algos.models',
+        'metaspore.compat', 'metaspore.compat.ps', 'ps'],
       ext_modules=[MetaSporeExtension('metaspore/_metaspore')],
-      cmdclass={ 'build_ext': metaspore_build_ext },
+      cmdclass={
+          'build_ext': metaspore_build_ext,
+          'install_lib': metaspore_build_component
+       },
       classifiers=[
           "Programming Language :: Python :: 3",
           "License :: OSI Approved :: Apache Software License",

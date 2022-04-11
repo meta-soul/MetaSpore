@@ -36,6 +36,9 @@ class PyTorchAgent(Agent):
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.model = None
+        # new
+        self.model_name = None
+
         self.trainer = None
         self.is_training_mode = None
         self.validation_result = None
@@ -322,6 +325,9 @@ class PyTorchLauncher(PSLauncher):
         self.model_export_path = None
         self.model_version = None
         self.experiment_name = None
+        # new
+        self.model_name = None
+
         self.training_epoches = None
         self.shuffle_training_dataset = None
         self.max_sparse_feature_age = None
@@ -339,6 +345,9 @@ class PyTorchLauncher(PSLauncher):
 
     def _get_agent_class(self):
         return self.agent_class
+
+    def _get_agent_object(self):
+        return self.agent_object
 
     def _initialize_agent(self, agent):
         agent.module = self.module
@@ -358,6 +367,9 @@ class PyTorchLauncher(PSLauncher):
         self._agent_attributes['model_export_path'] = self.model_export_path
         self._agent_attributes['model_version'] = self.model_version
         self._agent_attributes['experiment_name'] = self.experiment_name
+        # new
+        self._agent_attributes['model_name'] = self.model_name
+
         self._agent_attributes['training_epoches'] = self.training_epoches
         self._agent_attributes['shuffle_training_dataset'] = self.shuffle_training_dataset
         self._agent_attributes['max_sparse_feature_age'] = self.max_sparse_feature_age
@@ -379,13 +391,16 @@ class PyTorchHelperMixin(object):
     def __init__(self,
                  module=None,
                  updater=None,
-                 worker_count=100,
-                 server_count=100,
+                 worker_count=1,
+                 server_count=1,
                  agent_class=None,
                  model_in_path=None,
                  model_out_path=None,
                  model_export_path=None,
                  model_version=None,
+                 # new
+                 model_name = None,
+
                  experiment_name=None,
                  training_epoches=1,
                  shuffle_training_dataset=False,
@@ -411,6 +426,9 @@ class PyTorchHelperMixin(object):
         self.model_out_path = model_out_path
         self.model_export_path = model_export_path
         self.model_version = model_version
+        # new
+        self.model_name = model_name
+
         self.experiment_name = experiment_name
         self.training_epoches = training_epoches
         self.shuffle_training_dataset = shuffle_training_dataset
@@ -457,6 +475,10 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"model_version must be string; {self.model_version!r} is invalid")
         if self.experiment_name is not None and not isinstance(self.experiment_name, str):
             raise TypeError(f"experiment_name must be string; {self.experiment_name!r} is invalid")
+        # new
+        if self.model_name is not None and not isinstance(self.model_name, str):
+            raise TypeError(f"model_name must be string; {self.model_name!r} is invalid")
+
         if not isinstance(self.training_epoches, int) or self.training_epoches <= 0:
             raise TypeError(f"training_epoches must be positive integer; {self.training_epoches!r} is invalid")
         if not isinstance(self.max_sparse_feature_age, int) or self.max_sparse_feature_age <= 0:
@@ -506,7 +528,7 @@ class PyTorchHelperMixin(object):
 
     def _create_launcher(self, dataset, is_training_mode):
         self._check_properties()
-        launcher = self._get_launcher_class()()
+        launcher = self._get_launcher_class()() 
         launcher.module = self.module
         launcher.updater = self._get_updater_object()
         launcher.dataset = dataset
@@ -519,6 +541,9 @@ class PyTorchHelperMixin(object):
         launcher.model_export_path = self.model_export_path
         launcher.model_version = self.model_version
         launcher.experiment_name = self.experiment_name
+        # new
+        launcher.model_name = self.model_name
+
         launcher.training_epoches = self.training_epoches
         launcher.shuffle_training_dataset = self.shuffle_training_dataset
         launcher.max_sparse_feature_age = self.max_sparse_feature_age
@@ -546,6 +571,9 @@ class PyTorchHelperMixin(object):
         args['model_export_path'] = self.model_export_path
         args['model_version'] = self.model_version
         args['experiment_name'] = self.experiment_name
+        # new
+        args['model_name'] = self.model_name
+
         args['metric_update_interval'] = self.metric_update_interval
         args['consul_host'] = self.consul_host
         args['consul_port'] = self.consul_port
@@ -581,19 +609,17 @@ class PyTorchModel(PyTorchHelperMixin, pyspark.ml.base.Model):
         if util_cmd is None:
             util_cmd = 'aws s3 cp --recursive'
         data = {
-            'name': self.experiment_name,
-            'service': self.experiment_name + '-service',
-            'path': self.model_export_path,
+            'name': self.model_name,
             'version': self.model_version,
-            'util_cmd': util_cmd,
+            'path': self.model_export_path,
         }
-        string = json.dumps(data, separators=(',', ': '), indent=4)
+        string = json.dumps(data, separators=(',', ': '), indent=4) 
         consul_client = consul.Consul(host=self.consul_host, port=self.consul_port)
         index, response = consul_client.kv.get(self.consul_endpoint_prefix, keys=True)
         if response is None:
             consul_client.kv.put(self.consul_endpoint_prefix + '/', value=None)
             print("init consul endpoint dir: %s" % self.consul_endpoint_prefix)
-        endpoint = '%s/%s' % (self.consul_endpoint_prefix, self.experiment_name)
+        endpoint = '%s/%s/%s' % (self.consul_endpoint_prefix, self.experiment_name, self.model_name)
         consul_path = f'{self.consul_host}:{self.consul_port}/{endpoint}'
         try:
             consul_client.kv.put(endpoint, string)
@@ -604,7 +630,7 @@ class PyTorchModel(PyTorchHelperMixin, pyspark.ml.base.Model):
 
 class PyTorchEstimator(PyTorchHelperMixin, pyspark.ml.base.Estimator):
     def _check_properties(self):
-        super()._check_properties()
+        super()._check_properties() # check illegal input
         if self.model_out_path is None:
             # ``model_out_path`` must be specified otherwise an instance of PyTorchModel
             # does not known where to load the model from. This is due to the approach
@@ -620,11 +646,14 @@ class PyTorchEstimator(PyTorchHelperMixin, pyspark.ml.base.Estimator):
             delete_dir(self.model_export_path)
 
     def _fit(self, dataset):
-        self._clear_output()
+        self._clear_output()    
         launcher = self._create_launcher(dataset, True)
         launcher.launch()
         module = launcher.agent_object.module
         module.eval()
         model = self._create_model(module)
         self.final_metric = launcher.agent_object._metric
+
+        model.publish()
+        
         return model
