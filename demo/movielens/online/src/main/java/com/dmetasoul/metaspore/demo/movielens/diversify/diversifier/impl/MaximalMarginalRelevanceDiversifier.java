@@ -45,16 +45,16 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             window = genreCount;
         }
 
-        //label the visited
+        // label the visited
         HashMap<ItemModel, Integer> itemVisited = new HashMap<>();
         for (int i = 0; i < itemModels.size(); i++) {
             itemVisited.put(itemModels.get(i), 0);
         }
-        //compute the genre in the window
+        // compute the genre in the window
         HashMap<String, Integer> genreInWindow = new HashMap();
         HashMap<String, Integer> genreSplitedInWindow = new HashMap<>();
 
-        //start diverse
+        // start diverse
         for (int i = 0; i < itemModels.size(); i++) {
             //compute the count of genre in window
             int genreInWindowNum = 0;
@@ -72,10 +72,9 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                     if (itemVisited.get(itemModels.get(startFound)) != 0) {
                         continue;
                     }
-                    //compute rate
-                    //MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
-                    //SimScore:itemModel's final simscore
-                    //sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
+                    // MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
+                    // SimScore:itemModel's final simscore
+                    // sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
                     double rankingScore = itemModels.get(startFound).getFinalRankingScore() * lambda;
                     double simScore = getSimScore(itemModels.get(startFound), genreSplitedInWindow) * (1 - lambda);
                     if ((rankingScore - simScore) > maxMMR) {
@@ -84,15 +83,15 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                     }
                 }
                 String minGenre = itemModels.get(maxIndex).getGenre();
-                int defaults = genreInWindow.containsKey(minGenre) ? genreInWindow.get(minGenre) + 1 : 1;
-                genreInWindow.put(minGenre, defaults);
-                //renew genreSplitedWindow;
+                int defaultcount = genreInWindow.containsKey(minGenre) ? genreInWindow.get(minGenre) + 1 : 1;
+                genreInWindow.put(minGenre, defaultcount);
+                // renew genreSplitedWindow;
                 List<String> genreList = itemModels.get(maxIndex).getGenreList();
                 for (String genre : genreList) {
                     int value = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
                     genreSplitedInWindow.put(genre, value);
                 }
-                //exchange location
+                // exchange location
                 ItemModel needDiverse = itemModels.get(maxIndex);
                 itemVisited.put(itemModels.get(maxIndex), 1);
                 for (int j = maxIndex; j > i; j--) {
@@ -128,21 +127,21 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         return itemModels;
     }
 
-    //simScore=intersection/And set
+    // simScore={A\cup B}/{A\cup B}
     public static Double getSimScore(ItemModel item, HashMap<String, Integer> itemInWindow) {
         List<String> itemGenre = item.getGenreList();
         double intersection = 0;
         double differentSet = 0;
         for (String i : itemInWindow.keySet()) {
-            intersection += itemInWindow.get(i);
+            differentSet += itemInWindow.get(i);
         }
         for (String i : itemGenre) {
             if (itemInWindow.containsKey(i)) {
-                differentSet += itemInWindow.get(i);
-                intersection -= itemInWindow.get(i);
+                differentSet -= itemInWindow.get(i);
+                intersection += itemInWindow.get(i);
             }
         }
-        return differentSet / (intersection + itemGenre.size());
+        return intersection / (differentSet + itemGenre.size());
     }
 
     public static Map<String, List<ItemModel>> groupByType(List<ItemModel> numbers) {
