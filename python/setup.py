@@ -62,7 +62,6 @@ class metaspore_build_ext(build_ext):
             self.build_metaspore(ext)
 
     def get_metaspore_so_path(self):
-        import os
         key = '_METASPORE_SO'
         path = os.environ.get(key)
         if path is None:

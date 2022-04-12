@@ -49,7 +49,7 @@ awaitable_status SparseLookupModel::load(std::string dir_path) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,
-        [=]() -> awaitable_status {
+        [this, dir_path]() -> awaitable_status {
             std::filesystem::path p(dir_path);
             if (!std::filesystem::is_directory(p)) {
                 co_return absl::NotFoundError(

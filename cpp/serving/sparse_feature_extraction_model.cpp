@@ -48,7 +48,7 @@ SparseFeatureExtractionModel::~SparseFeatureExtractionModel() = default;
 awaitable_status SparseFeatureExtractionModel::load(std::string dir_path) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [=]() -> awaitable_status {
+        [this, dir_path]() -> awaitable_status {
             std::filesystem::path p(dir_path);
             std::filesystem::path schema_file = p / "combine_schema.txt";
             if (!std::filesystem::is_regular_file(schema_file)) {

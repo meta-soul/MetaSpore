@@ -8,6 +8,7 @@ MetaSpore 由[元灵数智](https://www.dmetasoul.com/)团队开发，欢迎关�
 
 相关介绍：
 * [基于新一代MetaSpore平台快速搭建工业级推荐系统](https://mp.weixin.qq.com/s/vy6aCSGrVNepD9uQZOy9Lg)
+* [新一代一站式机器学习平台MetaSpore的设计理念](https://mp.weixin.qq.com/s/uiqvpQ4VHAlL6V3dgzDwig)
 
 ## 核心功能
 MetaSpore 具有如下几个特点：
@@ -35,14 +36,21 @@ MetaSpore 具有如下几个特点：
     * [在线算法推荐系统（Java 实现）](demo/movielens/online/README-CN.md)
 
 ## 安装包下载
-我们提供了一个预编译的离线训练安装包：[下载链接](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B9591a50-cp38-cp38-linux_x86_64.whl)。 该安装包依赖 Python 3.8.
+我们提供了一个预编译的离线训练安装包：[下载链接](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B295d07c-cp38-cp38-linux_x86_64.whl)。 该安装包依赖 Python 3.8.
 
-下载后在 Python 3.8 环境下，通过命令行执行安装：
+运行 MetaSpore 离线训练，还需要 PySpark 和 PyTorch。可以通过 `pip` 命令进行安装：
 ```bash
 pip install pyspark
 pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
-pip install metaspore-1.0.0+9591a50-cp38-cp38-linux_x86_64.whl
+pip install metaspore-1.0.0+295d07c-cp38-cp38-linux_x86_64.whl
 ```
+
+Spark 官方打包的 PySpark，没有包含 hadoop-cloud 的 jar 包，无法访问 S3 等云存储。我们提供了一个打包好 S3 客户端的 [PySpark 安装包](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2-py2.py3-none-any.whl)，可以从这里下载后安装：
+```bash
+pip install pyspark-3.1.2-py2.py3-none-any.whl
+```
+
+关于如何设置 S3 等云存储的访问，请参考 [配置 MetaSpore 离线训练 S3 访问权限](docs/s3-access-cn.md)
 
 ## 编译代码
 

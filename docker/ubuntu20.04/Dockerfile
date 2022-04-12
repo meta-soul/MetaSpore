@@ -39,10 +39,10 @@ RUN pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simpl
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev
 
-RUN python -m pip install --upgrade pip setuptools wheel &&
-    python -m pip install --upgrade numpy==1.20.3 &&
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    python -m pip install --upgrade numpy==1.20.3 && \
     pip3 install torch==1.11.0+cpu torchvision==0.12.0+cpu torchaudio==0.11.0+cpu \
-     -f https://download.pytorch.org/whl/cpu/torch_stable.html &&
-    python -m pip install --upgrade faiss-cpu &&
-    python -m pip install --upgrade awscli awscli-plugin-endpoint &&
+     -f https://download.pytorch.org/whl/cpu/torch_stable.html && \
+    python -m pip install --upgrade faiss-cpu && \
+    python -m pip install --upgrade awscli awscli-plugin-endpoint && \
     echo OK: python
