@@ -22,7 +22,7 @@ import com.dmetasoul.metaspore.demo.movielens.model.RecommendResult;
 import com.dmetasoul.metaspore.demo.movielens.model.UserModel;
 import com.dmetasoul.metaspore.demo.movielens.ranking.RankingService;
 import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;

@@ -22,8 +22,7 @@ import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendResult;
 import com.dmetasoul.metaspore.pipeline.BaseExperiment;
 import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
-//import com.dmetasoul.metaspore.pipeline.impl.Context;
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

@@ -16,7 +16,7 @@
 
 package com.dmetasoul.metaspore.demo.movielens.abtesting.experiment.match;
 
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import com.google.common.collect.Lists;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;

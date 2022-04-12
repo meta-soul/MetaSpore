@@ -22,7 +22,7 @@ import com.dmetasoul.metaspore.demo.movielens.abtesting.layer.bucketizer.SHA256L
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendResult;
 import com.dmetasoul.metaspore.pipeline.BaseLayer;
 import com.dmetasoul.metaspore.pipeline.annotation.LayerAnnotation;
-import com.dmetasoul.metaspore.pipeline.pojo.Context;
+import com.dmetasoul.metaspore.pipeline.impl.Context;
 import com.dmetasoul.metaspore.pipeline.pojo.LayerArgs;
 import org.springframework.stereotype.Component;
 
