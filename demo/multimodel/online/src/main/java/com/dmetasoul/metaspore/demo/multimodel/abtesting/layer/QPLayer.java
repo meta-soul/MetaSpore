@@ -19,7 +19,6 @@ package com.dmetasoul.metaspore.demo.multimodel.abtesting.layer;
 import com.dmetasoul.metaspore.demo.multimodel.abtesting.layer.bucketizer.LayerBucketizer;
 import com.dmetasoul.metaspore.demo.multimodel.abtesting.layer.bucketizer.RandomLayerBucketizer;
 import com.dmetasoul.metaspore.demo.multimodel.abtesting.layer.bucketizer.SHA256LayerBucketizer;
-import com.dmetasoul.metaspore.demo.multimodel.model.SearchContext;
 import com.dmetasoul.metaspore.demo.multimodel.model.SearchResult;
 import com.dmetasoul.metaspore.pipeline.BaseLayer;
 import com.dmetasoul.metaspore.pipeline.annotation.LayerAnnotation;
