@@ -36,18 +36,18 @@ public class DiversifyServiceImpl implements DiversifierService {
                                    List<ItemModel> itemModels,
                                    Integer window,
                                    Integer tolerance) {
-        List<Diversifier> diversifierList=new ArrayList<>();
-        SimpleDiversifier t=new SimpleDiversifier();
+        List<Diversifier> diversifierList = new ArrayList<>();
+        SimpleDiversifier t = new SimpleDiversifier();
         diversifierList.add(t);
-        MaximalMarginalRelevanceDiversifier d=new MaximalMarginalRelevanceDiversifier();
+        MaximalMarginalRelevanceDiversifier d = new MaximalMarginalRelevanceDiversifier();
         diversifierList.add(d);
-        DiverseProvider diverseProvider=new DiverseProvider(diversifierList);
+        DiverseProvider diverseProvider = new DiverseProvider(diversifierList);
 
-        if(recommendContext.getDiversifierName()==null){
+        if (recommendContext.getDiversifierName() == null) {
             recommendContext.setDiversifierName(DIVERSIFIER_NAMES);
         }
-        String diversifierMethod=recommendContext.getDiversifierName().toLowerCase();
-        List<ItemModel> finalItemModelDiverse = diverseProvider.getDiversifiers(diversifierMethod).diverse(recommendContext,itemModels, window, tolerance);
+        String diversifierMethod = recommendContext.getDiversifierName().toLowerCase();
+        List<ItemModel> finalItemModelDiverse = diverseProvider.getDiversifiers(diversifierMethod).diverse(recommendContext, itemModels, window, tolerance);
         return finalItemModelDiverse;
     }
 }

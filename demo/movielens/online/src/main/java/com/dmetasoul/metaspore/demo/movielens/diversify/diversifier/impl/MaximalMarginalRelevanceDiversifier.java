@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 @Service
-public class MaximalMarginalRelevanceDiversifier implements Diversifier{
+public class MaximalMarginalRelevanceDiversifier implements Diversifier {
     public static final String DIVERSIFIER_NAME = "MMRDiersifier";
     public static final double LAMADA = 0.7;
 
