@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      config:
+        enabled: true
+        prefix: config
+        defaultContext: test
+        data-key: multimodel-config
+        format: YAML
+        watch:
+          wait-time: 1
+          delay: 1000
+        fail-fast: true
