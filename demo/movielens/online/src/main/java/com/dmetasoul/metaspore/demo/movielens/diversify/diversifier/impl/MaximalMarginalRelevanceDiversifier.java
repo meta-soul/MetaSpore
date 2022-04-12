@@ -69,9 +69,6 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 double maxMMR = Double.MIN_VALUE;
 
                 for (int startFound = i; startFound < Math.min(i + tolerance, itemModels.size()); startFound++) {
-                    if (itemVisited.get(itemModels.get(startFound)) != 0) {
-                        continue;
-                    }
                     // MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
                     // SimScore:itemModel's final simscore
                     // sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
