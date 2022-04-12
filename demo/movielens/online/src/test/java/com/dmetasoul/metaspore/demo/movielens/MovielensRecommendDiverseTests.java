@@ -104,7 +104,7 @@ public class MovielensRecommendDiverseTests {
                 System.out.print(input.get(j).getGenre()+" ");
             }
             RecommendContext recommendContext = new RecommendContext("0");
-            recommendContext.setLamada(0.7);
+            recommendContext.setLambda(0.7);
             System.out.println();
             System.out.println("=============================================================================================" +
                     "===========================================================================================");

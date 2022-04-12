@@ -31,7 +31,7 @@ import java.util.Map;
 @Component
 
 public class MMRDiversifyExperiment extends DiversifyExperiment {
-    protected int lamada;
+    protected int lambda;
 
     public MMRDiversifyExperiment(DiversifierService diversifierService) {
         super(diversifierService);
@@ -52,7 +52,7 @@ public class MMRDiversifyExperiment extends DiversifyExperiment {
         }
         RecommendContext recommendContext = recommendResult.getRecommendContext();
         recommendContext.setDiversifierName(this.diversifyMethod);
-        recommendContext.setLamada(this.lamada);
+        recommendContext.setLambda(this.lambda);
         recommendContext.setDiversifierName(diversifyMethod);
         List<ItemModel> diverseItemModels = diversifierService.diverse(recommendContext, itemModel, this.window, this.tolerance);
         recommendResult.setRecommendItemModels(diverseItemModels);

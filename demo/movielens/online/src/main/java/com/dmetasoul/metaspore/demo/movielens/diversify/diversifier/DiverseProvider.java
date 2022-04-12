@@ -33,7 +33,7 @@ public class DiverseProvider {
 
     public Diversifier getDiversifiers(String name) {
         if (name == null) {
-            return null;
+            return diversifierMap.get("simplediersifier");
         }
         return diversifierMap.get(name.toLowerCase());
     }

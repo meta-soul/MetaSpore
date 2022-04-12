@@ -18,9 +18,6 @@ package com.dmetasoul.metaspore.demo.movielens.diversify.impl;
 
 import com.dmetasoul.metaspore.demo.movielens.diversify.DiversifierService;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.DiverseProvider;
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MaximalMarginalRelevanceDiversifier;
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.springframework.stereotype.Service;
@@ -31,22 +28,20 @@ import java.util.*;
 public class DiversifyServiceImpl implements DiversifierService {
     public static final String DIVERSIFIER_NAMES = "SimpleDiversifier";
 
+    private final DiverseProvider diverseProvider;
+
+    public DiversifyServiceImpl(DiverseProvider diverseProvider) {
+        this.diverseProvider = diverseProvider;
+    }
     @Override
     public List<ItemModel> diverse(RecommendContext recommendContext,
                                    List<ItemModel> itemModels,
                                    Integer window,
                                    Integer tolerance) {
-        List<Diversifier> diversifierList = new ArrayList<>();
-        SimpleDiversifier t = new SimpleDiversifier();
-        diversifierList.add(t);
-        MaximalMarginalRelevanceDiversifier d = new MaximalMarginalRelevanceDiversifier();
-        diversifierList.add(d);
-        DiverseProvider diverseProvider = new DiverseProvider(diversifierList);
-
         if (recommendContext.getDiversifierName() == null) {
             recommendContext.setDiversifierName(DIVERSIFIER_NAMES);
         }
-        String diversifierMethod = recommendContext.getDiversifierName().toLowerCase();
+        String diversifierMethod = recommendContext.getDiversifierName();
         List<ItemModel> finalItemModelDiverse = diverseProvider.getDiversifiers(diversifierMethod).diverse(recommendContext, itemModels, window, tolerance);
         return finalItemModelDiverse;
     }

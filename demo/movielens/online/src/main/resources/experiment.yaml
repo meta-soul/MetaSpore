@@ -92,6 +92,6 @@ scene-config:
       experimentName: diversify.MMR
       extraExperimentArgs:
         useDiversify: True
-        lamada: 0.7
+        lambda: 0.7
         window: 5
         tolerance: 5

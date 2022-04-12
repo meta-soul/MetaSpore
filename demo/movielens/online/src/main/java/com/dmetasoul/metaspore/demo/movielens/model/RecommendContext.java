@@ -60,21 +60,21 @@ public class RecommendContext {
         return diversifierName;
     }
 
-    public double getLamada() {
-        return lamada;
+    public double getLambda() {
+        return lambda;
     }
 
     public void setDiversifierName(String diversifierName) {
         this.diversifierName = diversifierName;
     }
 
-    public void setLamada(double lamada) {
-        this.lamada = lamada;
+    public void setLambda(double lambda) {
+        this.lambda = lambda;
     }
 
     private  String diversifierName;
 
-    private double lamada;
+    private double lambda;
 
     private boolean useDebug = false;
 

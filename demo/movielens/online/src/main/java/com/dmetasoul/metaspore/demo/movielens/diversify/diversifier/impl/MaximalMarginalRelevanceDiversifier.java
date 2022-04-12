@@ -18,25 +18,27 @@ package com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
-import org.springframework.data.annotation.Reference;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+// References:
+// * https://dl.acm.org/doi/10.1145/290941.291025
+
 @Service
 public class MaximalMarginalRelevanceDiversifier implements Diversifier {
-    public static final String DIVERSIFIER_NAME = "MMRDiersifier";
-    public static final double LAMADA = 0.7;
+    public static final String DIVERSIFIER_NAME = "MaximalMarginalRelevanceDiversifier";
+    public static final double LAMBDA = 0.7;
 
-    @Reference
+
     public List<ItemModel> diverse(RecommendContext recommendContext,
                                    List<ItemModel> itemModels,
                                    Integer window,
                                    Integer tolerance
     ) {
-        Double lamada = recommendContext.getLamada();
-        if (lamada == null) {
-            lamada = LAMADA;
+        Double lambda = recommendContext.getLambda();
+        if (lambda == null) {
+            lambda = LAMBDA;
         }
         int genreCount = groupByType(itemModels).size();
         if (window == null || window > genreCount) {
@@ -54,7 +56,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
 
         //start diverse
         for (int i = 0; i < itemModels.size(); i++) {
-            //copmpute the count of genre in window
+            //compute the count of genre in window
             int genreInWindowNum = 0;
             if (!genreInWindow.isEmpty()) {
                 for (String genre : genreInWindow.keySet()) {
@@ -70,9 +72,12 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                     if (itemVisited.get(itemModels.get(startFound)) != 0) {
                         continue;
                     }
-                    //comput rate
-                    double rankingScore = itemModels.get(startFound).getFinalRankingScore() * lamada;
-                    double simScore = getSimScore(itemModels.get(startFound), genreSplitedInWindow) * (1 - lamada);
+                    //compute rate
+                    //MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
+                    //SimScore:itemModel's final simscore
+                    //sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
+                    double rankingScore = itemModels.get(startFound).getFinalRankingScore() * lambda;
+                    double simScore = getSimScore(itemModels.get(startFound), genreSplitedInWindow) * (1 - lambda);
                     if ((rankingScore - simScore) > maxMMR) {
                         maxIndex = startFound;
                         maxMMR = rankingScore - simScore;
@@ -123,21 +128,21 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         return itemModels;
     }
 
+    //simScore=intersection/And set
     public static Double getSimScore(ItemModel item, HashMap<String, Integer> itemInWindow) {
-        HashSet<String> genreSet = new HashSet<>();
         List<String> itemGenre = item.getGenreList();
         double intersection = 0;
-        double differenSet = 0;
+        double differentSet = 0;
         for (String i : itemInWindow.keySet()) {
             intersection += itemInWindow.get(i);
         }
         for (String i : itemGenre) {
             if (itemInWindow.containsKey(i)) {
-                differenSet += itemInWindow.get(i);
+                differentSet += itemInWindow.get(i);
                 intersection -= itemInWindow.get(i);
             }
         }
-        return differenSet / (intersection + itemGenre.size());
+        return differentSet / (intersection + itemGenre.size());
     }
 
     public static Map<String, List<ItemModel>> groupByType(List<ItemModel> numbers) {
