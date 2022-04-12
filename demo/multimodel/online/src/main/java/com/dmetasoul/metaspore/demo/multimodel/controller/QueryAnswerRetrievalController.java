@@ -33,7 +33,7 @@ public class QueryAnswerRetrievalController {
     @Autowired
     private ScenesFactory scenes;
 
-    @PostMapping(value="/user/{userId}")
+    @PostMapping(value="qa/user/{userId}")
     public SearchResult search(@PathVariable("userId") String userId,
                                @RequestBody PayloadParam payloadParam) throws IOException {
         System.out.println("Multi-Model Retrieval, scene getScenesConfig: " + scenes.getSceneConfig());

@@ -1,4 +1,4 @@
-multimodel-config:
+scene-config:
   scenes:
     - name: queryAnswer
       layers:
@@ -9,11 +9,11 @@ multimodel-config:
         - name: match
           normalLayerArgs:
             - experimentName: match.base
-              ratio: 0.0
+              ratio: 1.0
         - name: rank
           normalLayerArgs:
             - experimentName: rank.base
-              ratio: 0.0
+              ratio: 1.0
         - name: summary
           normalLayerArgs:
             - experimentName: summary.base
