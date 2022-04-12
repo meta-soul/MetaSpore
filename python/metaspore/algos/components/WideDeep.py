@@ -6,5 +6,5 @@ import  metaspore as ms
     component_name = "WideDeep"
 )
 def WideDeep_Experiment(experiment,**kwargs):
-    from ..runners.WideDeep import experiment_run_me
-    experiment_run_me(experiment,**kwargs)
+    import metaspore.algos.runners.WideDeep as WideDeep
+    WideDeep.experiment_run_me(experiment,**kwargs)

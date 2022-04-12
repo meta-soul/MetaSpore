@@ -3,6 +3,7 @@ import kfp
 
 comp1 = ms.kubeflow.load_component("WideDeep")
 
+comp1.component_spec.implementation.container.image = 'hub.kce.ksyun.com/dmetasoul/spark:dmetasoul-v1.2.2-test'
 pipeline_conf = kfp.dsl.PipelineConf()
 pipeline_conf.set_image_pull_policy('Always')
 

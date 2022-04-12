@@ -17,7 +17,6 @@ for module in os.listdir(os.path.join(os.path.dirname(os.path.abspath(__file__))
             # use the .component_name attributes
             kfp.components.func_to_container_op(
                 func = func,
-                base_image = 'hub.kce.ksyun.com/dmetasoul/spark:dmetasoul-v1.2.2-test',
                 output_component_file= 'kubeflow_components/' + func.component_name + '.yaml',
                 use_code_pickling= True
             )
