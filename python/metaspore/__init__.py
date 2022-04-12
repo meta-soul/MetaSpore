@@ -103,7 +103,6 @@ from . import patching_pickle
 from . import demo
 from . import kubeflow
 from . import pipeline
-from . import algos
 
 patching_pickle._patch_lookup_module_and_qualname()
 patching_pickle._patch_getsourcelines()
