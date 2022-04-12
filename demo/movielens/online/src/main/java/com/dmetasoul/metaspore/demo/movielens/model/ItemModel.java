@@ -77,7 +77,6 @@ public class ItemModel {
     }
 
     public void setGenre(String genre) {
-        this.setGenreList(genre);
         this.genre = genre;
 
     }

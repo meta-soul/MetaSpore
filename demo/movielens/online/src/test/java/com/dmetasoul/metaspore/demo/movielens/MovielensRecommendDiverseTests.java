@@ -21,6 +21,7 @@ import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.junit.jupiter.api.Test;
 
+import javax.print.DocFlavor;
 import java.util.*;
 
 public class MovielensRecommendDiverseTests {
@@ -71,7 +72,9 @@ public class MovielensRecommendDiverseTests {
             Integer movie_id = r.nextInt(1000);
             ItemModel peek = new ItemModel();
             peek.setId(movie_id.toString());
-            peek.setGenre(movie_genre[Math.min(movie_genre.length-1,r.nextInt(Math.max(1,movie_genre.length-1)))]);//
+            String genre=movie_genre[Math.min(movie_genre.length-1,r.nextInt(Math.max(1,movie_genre.length-1)))];
+            peek.setGenre(genre);
+            peek.setGenreList(genre);
             peek.setTitle(movie_title[r.nextInt(movie_title.length)]);
             peek.setFinalRankingScore(r.nextDouble()*3+2);
             peek.setMovieAvgRating(r.nextDouble() * 5);
@@ -100,7 +103,7 @@ public class MovielensRecommendDiverseTests {
             for (int j = 0; j < input.size(); j++) {
                 System.out.print(input.get(j).getGenre()+" ");
             }
-            RecommendContext recommendContext =new RecommendContext("0");
+            RecommendContext recommendContext = new RecommendContext("0");
             recommendContext.setLamada(0.7);
             System.out.println();
             System.out.println("=============================================================================================" +
