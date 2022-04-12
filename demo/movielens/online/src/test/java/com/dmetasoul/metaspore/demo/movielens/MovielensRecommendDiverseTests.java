@@ -100,7 +100,7 @@ public class MovielensRecommendDiverseTests {
             for (int j = 0; j < input.size(); j++) {
                 System.out.print(input.get(j).getGenre()+" ");
             }
-            RecommendContext recommendContext =new RecommendContext();
+            RecommendContext recommendContext =new RecommendContext("0");
             recommendContext.setLamada(0.7);
             System.out.println();
             System.out.println("=============================================================================================" +

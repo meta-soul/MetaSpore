@@ -18,8 +18,8 @@ package com.dmetasoul.metaspore.demo.movielens.model;
 
 import com.dmetasoul.metaspore.demo.movielens.domain.Item;
 import com.dmetasoul.metaspore.demo.movielens.domain.ItemFeature;
-import edu.emory.mathcs.backport.java.util.Arrays;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -55,6 +55,7 @@ public class ItemModel {
     public List<String> getGenreList() {
         return genreList;
     }
+
     public String getId() {
         return id;
     }

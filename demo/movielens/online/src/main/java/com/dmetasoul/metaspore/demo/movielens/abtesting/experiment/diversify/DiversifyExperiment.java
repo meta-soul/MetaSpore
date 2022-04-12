@@ -40,7 +40,7 @@ public class DiversifyExperiment implements BaseExperiment<RecommendResult, Reco
 
     protected int tolerance;
 
-    protected RecommendContext recommendContext=new RecommendContext();
+    protected String diversifyMethod;
 
     public DiversifyExperiment(DiversifierService diversifierService) {
         this.diversifierService = diversifierService;
@@ -51,12 +51,11 @@ public class DiversifyExperiment implements BaseExperiment<RecommendResult, Reco
         this.useDiversify = (Boolean) map.getOrDefault("useDiversify", Boolean.TRUE);
         this.window = (int) map.getOrDefault("window", 4);
         this.tolerance = (int) map.getOrDefault("tolerance", 4);
-        this.recommendContext = recommendContext;
-        recommendContext.setDiversifierName((String) map.getOrDefault("diverisifier", "SimpleDiversifier"));
+        this.diversifyMethod = (String) map.getOrDefault("diverisifier", "SimpleDiversifier");
         System.out.println("diversify.base initialize, useDiversify:" + this.useDiversify
                 + ", window:" + this.window
                 + ", tolerance:" + this.tolerance
-                + ",diverdifierMethod:" + this.recommendContext.getDiversifierName());
+                + ",diverdifierMethod:" + this.diversifyMethod);
     }
 
     @Override
@@ -66,6 +65,8 @@ public class DiversifyExperiment implements BaseExperiment<RecommendResult, Reco
             System.out.println("diversify.base experiment, turn off diversify");
             return recommendResult;
         }
+        RecommendContext recommendContext = recommendResult.getRecommendContext();
+        recommendContext.setDiversifierName(this.diversifyMethod);
         List<ItemModel> diverseItemModels = diversifierService.diverse(recommendContext, itemModel, this.window, this.tolerance);
 
         recommendResult.setRecommendItemModels(diverseItemModels);
