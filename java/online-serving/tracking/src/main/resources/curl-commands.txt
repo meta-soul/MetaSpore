@@ -1,0 +1,4 @@
+curl -i \
+-d '{"requestId":"aaa","topic":"default-kafka-topic","customData":{"requestId":"aaa"}}' \
+-H "Content-Type: application/json" \
+-X POST http://localhost:8080/v1/tracking

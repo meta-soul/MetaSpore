@@ -13,6 +13,7 @@
         <module>feature-extract</module>
         <module>experiment-pipeline</module>
         <module>experiment-pipeline-example</module>
+        <module>tracking</module>
     </modules>
 
     <parent>
