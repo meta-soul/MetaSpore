@@ -19,7 +19,7 @@ package com.dmetasoul.metaspore.demo.movielens.model;
 import com.dmetasoul.metaspore.demo.movielens.common.Constants;
 import com.dmetasoul.metaspore.demo.movielens.domain.Item;
 import com.dmetasoul.metaspore.demo.movielens.domain.ItemFeature;
-import org.codehaus.plexus.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -46,11 +46,11 @@ public class ItemModel {
     }
 
     public void setGenreList(String genre) {
-        if(StringUtils.isEmpty(genre)){
-            this.genreList=new ArrayList<String>();
-            return;
+        if (StringUtils.isEmpty(genre)) {
+            this.genreList = new ArrayList<String>();
+        } else {
+            this.genreList = Arrays.asList(genre.split(Constants.SEQUENCE_FEATURE_SPLITTER));
         }
-        this.genreList = Arrays.asList(genre.split(Constants.SEQUENCE_FEATURE_SPLITTER));
     }
 
     public List<String> getGenreList() {
