@@ -48,7 +48,7 @@ SparseFeatureExtractionModel::~SparseFeatureExtractionModel() = default;
 awaitable_status SparseFeatureExtractionModel::load(std::string dir_path) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [this, dir_path]() -> awaitable_status {
+        [this, &dir_path]() -> awaitable_status {
             std::filesystem::path p(dir_path);
             std::filesystem::path schema_file = p / "combine_schema.txt";
             if (!std::filesystem::is_regular_file(schema_file)) {
@@ -73,19 +73,21 @@ awaitable_status SparseFeatureExtractionModel::load(std::string dir_path) {
 
 awaitable_result<std::unique_ptr<SparseFeatureExtractionModelOutput>>
 SparseFeatureExtractionModel::do_predict(std::unique_ptr<FeatureExtractionModelInput> input) {
+    ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(auto ctx, context_->exec.start_plan());
     for (const auto &[name, batch] : input->feature_tables) {
-        CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(context_->exec.set_input_schema(name, batch->schema()));
+        CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(
+            context_->exec.set_input_schema(ctx, name, batch->schema()));
     }
 
-    CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(context_->exec.build_plan());
+    CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(context_->exec.build_plan(ctx));
 
     for (const auto &[name, batch] : input->feature_tables) {
-        CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(context_->exec.feed_input(name, batch));
+        CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(context_->exec.feed_input(ctx, name, batch));
     }
 
-    Defer _([&] { (void)context_->exec.finish_plan(); });
+    Defer _([&] { (void)context_->exec.finish_plan(ctx); });
 
-    CO_ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(auto output_result, context_->exec.execute());
+    CO_ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(auto output_result, context_->exec.execute(ctx));
 
     auto output = std::make_unique<SparseFeatureExtractionModelOutput>();
     output->values = output_result;

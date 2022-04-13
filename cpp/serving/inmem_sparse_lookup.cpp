@@ -35,7 +35,7 @@ using namespace std::string_literals;
 awaitable_status InMemorySparseLookupSource::load(const std::string &dir) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [this, dir]() -> awaitable_status {
+        [this, &dir]() -> awaitable_status {
             size_t file_count = FileSystemHelpers::count_dat_files(dir);
             if (file_count == 0) {
                 co_return absl::InvalidArgumentError(

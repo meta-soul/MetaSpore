@@ -50,6 +50,15 @@ class OrtModelContext {
     std::vector<std::string> output_names_s_;
     std::vector<const char *> input_names_;
     std::vector<const char *> output_names_;
+
+    ~OrtModelContext() {
+        for (auto p : input_names_) {
+            ::free((void *)p);
+        }
+        for (auto p : output_names_) {
+            ::free((void *)p);
+        }
+    }
 };
 
 OrtModel::OrtModel() : context_(std::make_unique<OrtModelContext>()) {}
@@ -63,7 +72,7 @@ awaitable_status OrtModel::load(std::string dir_path) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,
-        [this, dir_path]() -> awaitable_status {
+        [this, &dir_path]() -> awaitable_status {
             auto dir = std::filesystem::path(dir_path);
             if (!std::filesystem::is_directory(dir)) {
                 co_return absl::InvalidArgumentError(

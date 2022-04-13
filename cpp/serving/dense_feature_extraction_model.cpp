@@ -47,7 +47,7 @@ DenseFeatureExtractionModel::~DenseFeatureExtractionModel() = default;
 awaitable_status DenseFeatureExtractionModel::load(std::string dir_path) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [this, dir_path]() -> awaitable_status {
+        [this, &dir_path]() -> awaitable_status {
             namespace fs = std::filesystem;
             for (const auto &entry : fs::directory_iterator(dir_path)) {
                 if (entry.is_regular_file() && entry.path().filename() == "dense_schema.txt") {

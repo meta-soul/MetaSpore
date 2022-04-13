@@ -68,8 +68,7 @@ template <typename Model> class ModelBaseCRTP : public ModelBase {
         auto &tp = Threadpools::get_compute_threadpool();
         auto result = co_await boost::asio::co_spawn(
             tp,
-            [input = std::move(input),
-             this]() mutable -> awaitable_result<std::unique_ptr<OutputType>> {
+            [&input, this]() mutable -> awaitable_result<std::unique_ptr<OutputType>> {
                 InputType *model_input = dynamic_cast<InputType *>(input.get());
                 if (model_input == nullptr) {
                     auto p = input.get(); // to avoid evaluation in typeid warning

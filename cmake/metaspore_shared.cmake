@@ -143,8 +143,8 @@ target_link_libraries(metaspore_shared PRIVATE
 
 add_custom_command(TARGET metaspore_shared
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-    /lib/x86_64-linux-gnu/libstdc++.so.6 ${CMAKE_BINARY_DIR}/
-    COMMAND ${CMAKE_COMMAND} -E copy
-    /lib/x86_64-linux-gnu/libgcc_s.so.1 ${CMAKE_BINARY_DIR}/
+    COMMAND ldd ${CMAKE_CURRENT_BINARY_DIR}/_metaspore.so | 
+            egrep -v 'linux-vdso|ld-linux-x86-64|libpthread|libdl|libm|libc|${CMAKE_CURRENT_BINARY_DIR}' |
+            cut -f 3 -d ' ' |
+            xargs -L 1 -I so_file cp so_file ${CMAKE_CURRENT_BINARY_DIR}/
 )

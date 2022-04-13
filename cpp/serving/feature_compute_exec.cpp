@@ -40,24 +40,32 @@ using namespace std::string_literals;
 using channel_type =
     boost::asio::experimental::concurrent_channel<void(boost::system::error_code, cp::ExecBatch)>;
 
-class FeatureComputeContext {
+class MSSourceNodeOptions : public cp::SourceNodeOptions {
   public:
-    struct InputSource {
-        arrow::PushGenerator<arrow::util::optional<cp::ExecBatch>> input_queue;
-        std::shared_ptr<cp::Declaration> decl;
+    MSSourceNodeOptions(
+        const std::string &name_, std::shared_ptr<arrow::Schema> output_schema,
+        std::function<arrow::Future<arrow::util::optional<cp::ExecBatch>>()> generator)
+        : cp::SourceNodeOptions(output_schema, generator), name(name_) {}
+    std::string name;
+};
 
-        InputSource(std::shared_ptr<arrow::Schema> schema)
-            : input_queue(), decl(std::make_shared<cp::Declaration>(
-                                 "source", cp::SourceNodeOptions{schema, input_queue})) {}
-    };
-
-    std::unordered_map<std::string, InputSource> name_source_map_;
+class FeatureComputeExecContext {
+  public:
+    std::unordered_map<std::string, std::shared_ptr<MSSourceNodeOptions>> name_source_map_;
+    std::unordered_map<std::string, arrow::PushGenerator<arrow::util::optional<cp::ExecBatch>>>
+        name_gen_map_;
+    std::shared_ptr<cp::Declaration> root_decl_;
     cp::ExecNode *root_node_{nullptr};
     cp::ExecNode *root_before_sink_node_{nullptr};
-    std::shared_ptr<cp::Declaration> root_decl_;
     channel_type channel_{Threadpools::get_compute_threadpool(), 10};
     arrow::Future<> sink_future_{arrow::Future<>::Make()};
     std::shared_ptr<cp::ExecPlan> plan_;
+};
+
+class FeatureComputeContext {
+  public:
+    std::unordered_map<std::string, cp::Declaration> name_source_map_;
+    std::shared_ptr<cp::Declaration> root_decl_;
 };
 
 FeatureComputeExec::FeatureComputeExec() { context_ = std::make_unique<FeatureComputeContext>(); }
@@ -70,49 +78,13 @@ status FeatureComputeExec::add_source(const std::string &name) {
     if (name.empty()) {
         return absl::InvalidArgumentError("FeatureComputeExec input name cannot be empty");
     }
-    auto pair =
-        context_->name_source_map_.emplace(name, FeatureComputeContext::InputSource(nullptr));
-    if (!pair.second) {
+    if (context_->name_source_map_.find(name) != context_->name_source_map_.end()) {
         return absl::AlreadyExistsError(fmt::format("Input source {} already exists", name));
     }
-    context_->root_decl_ = pair.first->second.decl;
+    auto pair = context_->name_source_map_.emplace(
+        name, cp::Declaration{"source", MSSourceNodeOptions{name, nullptr, nullptr}});
+    context_->root_decl_ = std::make_shared<cp::Declaration>(pair.first->second);
     return absl::OkStatus();
-}
-
-status FeatureComputeExec::feed_input(const std::string &source_name,
-                                      std::shared_ptr<arrow::RecordBatch> batch) {
-    auto source = context_->name_source_map_.find(source_name);
-    if (source == context_->name_source_map_.end()) {
-        return absl::NotFoundError(
-            fmt::format("FeatureComputeExec feed_input with non-exist name {}", source_name));
-    }
-    cp::ExecBatch exec_batch(*batch);
-    source->second.input_queue.producer().Push(
-        arrow::util::make_optional<cp::ExecBatch>(std::move(exec_batch)));
-    return absl::OkStatus();
-}
-
-status FeatureComputeExec::set_input_schema(const std::string &source_name,
-                                            std::shared_ptr<arrow::Schema> schema) {
-    auto find = context_->name_source_map_.find(source_name);
-    if (find == context_->name_source_map_.end()) {
-        return absl::NotFoundError(
-            fmt::format("Cannot find {} when set_input_schema", source_name));
-    }
-    auto source_option =
-        std::static_pointer_cast<cp::SourceNodeOptions>(find->second.decl->options);
-    source_option->output_schema = schema;
-    return absl::OkStatus();
-}
-
-awaitable_result<std::shared_ptr<arrow::RecordBatch>> FeatureComputeExec::execute() {
-    finish_join(context_->root_node_);
-    cp::ExecBatch exec_batch =
-        co_await context_->channel_.async_receive(boost::asio::use_awaitable);
-    ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(
-        auto rb_result,
-        exec_batch.ToRecordBatch(context_->root_before_sink_node_->output_schema()));
-    co_return rb_result;
 }
 
 status FeatureComputeExec::add_join_plan(const std::string &left_source_name,
@@ -138,10 +110,10 @@ status FeatureComputeExec::add_join_plan(const std::string &left_source_name,
         right_key_names | ranges::views::transform([](const std::string &name) {
             return arrow::FieldRef(name);
         }) | ranges::to<std::vector>()};
-    cp::Declaration join("hashjoin",
-                         {cp::Declaration::Input(*left_source->second.decl),
-                          cp::Declaration::Input(*right_source->second.decl)},
-                         join_opts, "join_node");
+    cp::Declaration join(
+        "hashjoin",
+        {cp::Declaration::Input(left_source->second), cp::Declaration::Input(right_source->second)},
+        join_opts, "join_node");
     context_->root_decl_ = std::make_shared<cp::Declaration>(std::move(join));
     return absl::OkStatus();
 }
@@ -154,6 +126,64 @@ status FeatureComputeExec::add_projection(std::vector<arrow::compute::Expression
     return absl::OkStatus();
 }
 
+static void find_source_node(std::shared_ptr<FeatureComputeExecContext> &ctx,
+                             cp::Declaration &decl) {
+    if (decl.factory_name == "source") {
+        auto source_option = std::static_pointer_cast<MSSourceNodeOptions>(decl.options);
+        ctx->name_source_map_.emplace(source_option->name, source_option);
+    }
+    for (auto &input : decl.inputs) {
+        find_source_node(ctx, arrow::util::get<cp::Declaration>(input));
+    }
+}
+
+result<std::shared_ptr<FeatureComputeExecContext>> FeatureComputeExec::start_plan() {
+    auto ctx = std::make_shared<FeatureComputeExecContext>();
+    ctx->root_decl_ = std::make_shared<cp::Declaration>(*context_->root_decl_);
+    find_source_node(ctx, *ctx->root_decl_);
+    return ctx;
+}
+
+status FeatureComputeExec::set_input_schema(std::shared_ptr<FeatureComputeExecContext> &ctx,
+                                            const std::string &source_name,
+                                            std::shared_ptr<arrow::Schema> schema) {
+    auto find = ctx->name_source_map_.find(source_name);
+    if (find == ctx->name_source_map_.end()) {
+        return absl::NotFoundError(
+            fmt::format("FeatureComputeExec set_input_schema with non-exist name {}", source_name));
+    }
+
+    // set schema when the first input arrived
+    auto source_option = find->second;
+    source_option->output_schema = schema;
+    auto pair = ctx->name_gen_map_.emplace(
+        source_name, arrow::PushGenerator<arrow::util::optional<cp::ExecBatch>>{});
+    source_option->generator = pair.first->second;
+    return absl::OkStatus();
+}
+
+status FeatureComputeExec::feed_input(std::shared_ptr<FeatureComputeExecContext> &ctx,
+                                      const std::string &source_name,
+                                      std::shared_ptr<arrow::RecordBatch> batch) {
+    auto source = ctx->name_gen_map_.find(source_name);
+    if (source == ctx->name_gen_map_.end()) {
+        return absl::NotFoundError(
+            fmt::format("FeatureComputeExec feed_input with non-exist name {}", source_name));
+    }
+    cp::ExecBatch exec_batch(*batch);
+    source->second.producer().Push(
+        arrow::util::make_optional<cp::ExecBatch>(std::move(exec_batch)));
+    return absl::OkStatus();
+}
+
+awaitable_result<std::shared_ptr<arrow::RecordBatch>>
+FeatureComputeExec::execute(std::shared_ptr<FeatureComputeExecContext> &ctx) {
+    finish_join(ctx->root_node_);
+    cp::ExecBatch exec_batch = co_await ctx->channel_.async_receive(boost::asio::use_awaitable);
+    ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(
+        auto rb_result, exec_batch.ToRecordBatch(ctx->root_before_sink_node_->output_schema()));
+    co_return rb_result;
+}
 struct SinkConsumer : public cp::SinkNodeConsumer {
 
     SinkConsumer(std::shared_ptr<arrow::Schema> schema, channel_type &ch, arrow::Future<> fut)
@@ -175,41 +205,39 @@ struct SinkConsumer : public cp::SinkNodeConsumer {
     arrow::Future<> fut_;
 };
 
-status FeatureComputeExec::build_plan() {
+status FeatureComputeExec::build_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) {
     ASSIGN_RESULT_OR_RETURN_NOT_OK(auto plan, cp::ExecPlan::Make());
     // create sink reader
     ASSIGN_RESULT_OR_RETURN_NOT_OK(auto root_result, context_->root_decl_->AddToPlan(plan.get()));
-    context_->root_before_sink_node_ = root_result;
+    ctx->root_before_sink_node_ = root_result;
     ASSIGN_RESULT_OR_RETURN_NOT_OK(
         auto sink_result,
-        cp::MakeExecNode(
-            "consuming_sink", plan.get(), {root_result},
-            cp::ConsumingSinkNodeOptions{std::make_shared<SinkConsumer>(
-                root_result->output_schema(), context_->channel_, context_->sink_future_)}));
-    context_->root_node_ = sink_result;
+        cp::MakeExecNode("consuming_sink", plan.get(), {root_result},
+                         cp::ConsumingSinkNodeOptions{std::make_shared<SinkConsumer>(
+                             root_result->output_schema(), ctx->channel_, ctx->sink_future_)}));
+    ctx->root_node_ = sink_result;
 
     // validate the ExecPlan
     CALL_AND_RETURN_IF_STATUS_NOT_OK(plan->Validate());
     SPDLOG_DEBUG("FeatureComputeExec created plan {}", plan->ToString());
     // start the ExecPlan
     CALL_AND_RETURN_IF_STATUS_NOT_OK(plan->StartProducing());
-    context_->plan_ = plan;
+    ctx->plan_ = plan;
     return absl::OkStatus();
 }
 
-status FeatureComputeExec::finish_plan() {
-    for (auto &[name, queue] : context_->name_source_map_) {
+status FeatureComputeExec::finish_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) {
+    for (auto &[name, queue] : ctx->name_gen_map_) {
         // to trigger arrow source node finish its async future loop
-        queue.input_queue.producer().Push(
-            arrow::IterationTraits<arrow::util::optional<cp::ExecBatch>>::End());
+        queue.producer().Push(arrow::IterationTraits<arrow::util::optional<cp::ExecBatch>>::End());
     }
     // context_->plan_->StopProducing();
-    context_->sink_future_.MarkFinished();
-    context_->sink_future_ = arrow::Future<>::Make();
-    context_->root_before_sink_node_ = nullptr;
-    context_->root_node_ = nullptr;
-    auto plan = context_->plan_;
-    context_->plan_.reset();
+    ctx->sink_future_.MarkFinished();
+    ctx->sink_future_ = arrow::Future<>::Make();
+    ctx->root_before_sink_node_ = nullptr;
+    ctx->root_node_ = nullptr;
+    auto plan = ctx->plan_;
+    ctx->plan_.reset();
     return ArrowStatusToAbsl::arrow_status_to_absl(plan->finished().status());
 }
 

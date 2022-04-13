@@ -58,7 +58,7 @@ void ModelManager::init(const std::string &dir_path) {
 awaitable_status ModelManager::load(const std::string &dir_path, const std::string &name) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [this, dir_path, name]() -> awaitable_status {
+        [this, &dir_path, &name]() -> awaitable_status {
             TabularModel model;
             auto status = co_await model.load(dir_path);
             if (!status.ok()) {

@@ -28,6 +28,7 @@
 namespace metaspore::serving {
 
 class FeatureComputeContext;
+class FeatureComputeExecContext;
 
 class FeatureComputeExec {
   public:
@@ -44,15 +45,20 @@ class FeatureComputeExec {
 
     status add_projection(std::vector<arrow::compute::Expression> expressions);
 
-    status feed_input(const std::string &source_name, std::shared_ptr<arrow::RecordBatch> batch);
+    result<std::shared_ptr<FeatureComputeExecContext>> start_plan();
 
-    status set_input_schema(const std::string &source_name, std::shared_ptr<arrow::Schema> schema);
+    status set_input_schema(std::shared_ptr<FeatureComputeExecContext> &ctx,
+                            const std::string &source_name, std::shared_ptr<arrow::Schema> schema);
 
-    awaitable_result<std::shared_ptr<arrow::RecordBatch>> execute();
+    status build_plan(std::shared_ptr<FeatureComputeExecContext> &ctx);
 
-    status build_plan();
+    status feed_input(std::shared_ptr<FeatureComputeExecContext> &ctx,
+                      const std::string &source_name, std::shared_ptr<arrow::RecordBatch> batch);
 
-    status finish_plan();
+    awaitable_result<std::shared_ptr<arrow::RecordBatch>>
+    execute(std::shared_ptr<FeatureComputeExecContext> &ctx);
+
+    status finish_plan(std::shared_ptr<FeatureComputeExecContext> &ctx);
 
     std::vector<std::string> get_input_names() const;
 
