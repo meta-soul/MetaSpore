@@ -89,7 +89,7 @@
                 <artifactId>feature-extract</artifactId>
                 <version>1.0-SNAPSHOT</version>
                 <configuration>
-                    <packageName>com.dmetasoul.metaspore.demo.movielens</packageName>
+                    <packageName>com.dmetasoul.metaspore.demo.multimodel</packageName>
                 </configuration>
                 <executions>
                     <execution>
