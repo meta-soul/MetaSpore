@@ -70,27 +70,31 @@ TEST(SchemaParserTestSuite, NewSchemaParseTest) {
 
         auto status = FeatureSchemaParser::parse("schema/combine_schema_new_format.txt", exec);
 
-        ASSERT_STATUS_OK_COROUTINE(status);
-        status = exec.set_input_schema(user_table, user_schema);
-        ASSERT_STATUS_OK_COROUTINE(status);
-        status = exec.set_input_schema(item_table, item_schema);
+        auto ctx = exec.start_plan();
+        status = ctx.status();
         ASSERT_STATUS_OK_COROUTINE(status);
 
-        status = exec.build_plan();
+        ASSERT_STATUS_OK_COROUTINE(status);
+        status = exec.set_input_schema(*ctx, user_table, user_schema);
+        ASSERT_STATUS_OK_COROUTINE(status);
+        status = exec.set_input_schema(*ctx, item_table, item_schema);
+        ASSERT_STATUS_OK_COROUTINE(status);
+
+        status = exec.build_plan(*ctx);
         ASSERT_STATUS_OK_COROUTINE(status);
         // feed left table, item
-        status = exec.feed_input(item_table, item_batch);
+        status = exec.feed_input(*ctx, item_table, item_batch);
         ASSERT_STATUS_OK_COROUTINE(status);
         // feed right table, user
-        status = exec.feed_input(user_table, user_batch);
+        status = exec.feed_input(*ctx, user_table, user_batch);
         ASSERT_STATUS_OK_COROUTINE(status);
-        auto output_result = co_await exec.execute();
+        auto output_result = co_await exec.execute(*ctx);
         status = output_result.status();
         ASSERT_STATUS_OK_COROUTINE(status);
 
         auto record_batch = *output_result;
         fmt::print("output batch1: {}\n", record_batch->ToString());
-        status = exec.finish_plan();
+        status = exec.finish_plan(*ctx);
         ASSERT_STATUS_OK_COROUTINE(status);
         co_return;
     };
@@ -127,22 +131,26 @@ TEST(SchemaParserTestSuite, OldSchemaParseTest) {
 
         auto status = FeatureSchemaParser::parse("schema/combine_schema_old_format.txt", exec);
 
-        ASSERT_STATUS_OK_COROUTINE(status);
-        status = exec.set_input_schema(table, joined_schema);
+        auto ctx = exec.start_plan();
+        status = ctx.status();
         ASSERT_STATUS_OK_COROUTINE(status);
 
-        status = exec.build_plan();
+        ASSERT_STATUS_OK_COROUTINE(status);
+        status = exec.set_input_schema(*ctx, table, joined_schema);
+        ASSERT_STATUS_OK_COROUTINE(status);
+
+        status = exec.build_plan(*ctx);
         ASSERT_STATUS_OK_COROUTINE(status);
         // feed table, joined
-        status = exec.feed_input(table, joined_batch);
+        status = exec.feed_input(*ctx, table, joined_batch);
         ASSERT_STATUS_OK_COROUTINE(status);
-        auto output_result = co_await exec.execute();
+        auto output_result = co_await exec.execute(*ctx);
         status = output_result.status();
         ASSERT_STATUS_OK_COROUTINE(status);
 
         auto record_batch = *output_result;
         fmt::print("output batch1: {}\n", record_batch->ToString());
-        status = exec.finish_plan();
+        status = exec.finish_plan(*ctx);
         ASSERT_STATUS_OK_COROUTINE(status);
         co_return;
     };

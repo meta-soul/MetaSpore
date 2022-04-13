@@ -15,7 +15,12 @@
         "protobuf",
         "fmt",
         "spdlog",
-        "mimalloc",
+        {
+            "name": "mimalloc",
+            "features": [
+                "override"
+            ]
+        },
         "gtest",
         "gflags",
         "benchmark",
