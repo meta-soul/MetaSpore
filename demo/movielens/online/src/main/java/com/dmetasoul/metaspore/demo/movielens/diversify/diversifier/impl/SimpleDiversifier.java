@@ -28,10 +28,7 @@ import java.util.*;
 public class SimpleDiversifier implements Diversifier {
     public static final String DIVERSIFIER_NAME = "SimpleDiersifier";
 
-    public List<ItemModel> diverse(RecommendContext recommendContext,
-                                   List<ItemModel> itemmodels,
-                                   Integer window,
-                                   Integer tolerance) {
+    public List<ItemModel> diverse(RecommendContext recommendContext, List<ItemModel> itemmodels, Integer window, Integer tolerance) {
         LinkedList<ItemModel> itemLinked = new LinkedList(itemmodels);
         List<ItemModel> diverseResult = new ArrayList<>();
         //compute count of genre

@@ -22,6 +22,6 @@ import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import java.util.List;
 
 public interface Diversifier {
-    List<ItemModel> diverse(RecommendContext recommendContext,List<ItemModel> itemModels,Integer window,Integer tolerance);
+    List<ItemModel> diverse(RecommendContext recommendContext, List<ItemModel> itemModels, Integer window, Integer tolerance);
 
 }
