@@ -16,13 +16,12 @@
 
 package com.dmetasoul.metaspore.demo.movielens.model;
 
+import com.dmetasoul.metaspore.demo.movielens.common.Constants;
 import com.dmetasoul.metaspore.demo.movielens.domain.Item;
 import com.dmetasoul.metaspore.demo.movielens.domain.ItemFeature;
 import org.codehaus.plexus.util.StringUtils;
 
 import java.util.*;
-
-import static com.dmetasoul.metaspore.demo.movielens.common.Constants.SEQUENCE_FEATURE_SPLITTER;
 
 public class ItemModel {
     private String id;
@@ -51,7 +50,7 @@ public class ItemModel {
             this.genreList=new ArrayList<String>();
             return;
         }
-        this.genreList = Arrays.asList(genre.split(SEQUENCE_FEATURE_SPLITTER));
+        this.genreList = Arrays.asList(genre.split(Constants.SEQUENCE_FEATURE_SPLITTER));
     }
 
     public List<String> getGenreList() {
@@ -80,7 +79,6 @@ public class ItemModel {
 
     public void setGenre(String genre) {
         this.genre = genre;
-
     }
 
     public String getImdbUrl() {
