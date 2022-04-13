@@ -21,7 +21,6 @@ import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.junit.jupiter.api.Test;
 
-import javax.print.DocFlavor;
 import java.util.*;
 
 public class MovielensRecommendDiverseTests {
@@ -44,7 +43,7 @@ public class MovielensRecommendDiverseTests {
     String[] movie_title = {
             "Man of Her Dreams",
             "Garden of Finz",
-            "Blue Angel","",
+            "Blue Angel",
             "Sixth Man",
             "Make Them Die",
             "Poison Ivy",

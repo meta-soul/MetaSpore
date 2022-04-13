@@ -35,10 +35,7 @@ public class DiversifyServiceImpl implements DiversifierService {
         this.diverseProvider = diverseProvider;
     }
     @Override
-    public List<ItemModel> diverse(RecommendContext recommendContext,
-                                   List<ItemModel> itemModels,
-                                   Integer window,
-                                   Integer tolerance) {
+    public List<ItemModel> diverse(RecommendContext recommendContext, List<ItemModel> itemModels, Integer window, Integer tolerance) {
         Diversifier diversifier=diverseProvider.getDiversifier(recommendContext.getDiversifierName());
         if (diversifier == null) {
             diversifier=diverseProvider.getDiversifier(DEFAULT_DIVERSIFIER_NAME);

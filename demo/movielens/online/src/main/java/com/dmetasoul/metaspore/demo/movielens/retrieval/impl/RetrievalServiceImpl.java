@@ -41,8 +41,7 @@ public class RetrievalServiceImpl implements RetrievalService {
     }
 
     @Override
-    public List<ItemModel> match(RecommendContext recommendContext,
-                                 UserModel userModel) throws IOException {
+    public List<ItemModel> match(RecommendContext recommendContext, UserModel userModel) throws IOException {
         List<String> matcherNames = recommendContext.getMatcherNames();
         if (matcherNames == null || matcherNames.size() == 0) {
             matcherNames = DEFAULT_MATCHER_NAMES;
@@ -53,7 +52,7 @@ public class RetrievalServiceImpl implements RetrievalService {
         }
 
         List<ItemModel> itemModels = new ArrayList<>();
-        
+
         for (Matcher m : matcherProvider.getMatchers(matcherNames)) {
             itemModels.addAll(m.match(recommendContext, userModel));
         }

@@ -20,14 +20,13 @@ import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.springframework.stereotype.Service;
+import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Utils;
 
 import java.util.*;
 
-import static com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Utils.groupByType;
-
 @Service
 public class SimpleDiversifier implements Diversifier {
-    public static final String DIVERSIFIER_NAME="SimpleDiersifier";
+    public static final String DIVERSIFIER_NAME = "SimpleDiersifier";
 
     public List<ItemModel> diverse(RecommendContext recommendContext,
                                    List<ItemModel> itemmodels,
@@ -36,7 +35,7 @@ public class SimpleDiversifier implements Diversifier {
         LinkedList<ItemModel> itemLinked = new LinkedList(itemmodels);
         List<ItemModel> diverseResult = new ArrayList<>();
         //compute count of genre
-        int genreCount = groupByType(itemmodels).size();
+        int genreCount = Utils.groupByType(itemmodels).size();
         if (window == null || window > genreCount) {
             window = genreCount;
         }
