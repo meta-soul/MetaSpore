@@ -31,10 +31,18 @@ public class DiverseProvider {
         diversifiers.forEach(x -> diversifierMap.put(x.getClass().getSimpleName().toLowerCase(), x));
     }
 
-    public Diversifier getDiversifiers(String name) {
-        if (name == null) {
-            return diversifierMap.get("simplediersifier");
-        }
+    public Diversifier getDiversifier(String name) {
         return diversifierMap.get(name.toLowerCase());
+    }
+
+    public Collection<Diversifier> getDiversifiers(Collection<String> names) {
+        if (names == null) {
+            return Collections.emptyList();
+        }
+        ArrayList<Diversifier> diversifiers = new ArrayList<>();
+        for (String name : names) {
+            diversifiers.add(getDiversifier(name));
+        }
+        return diversifiers;
     }
 }

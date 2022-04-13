@@ -29,7 +29,6 @@ import java.util.Map;
 
 @ExperimentAnnotation(name = "diversify.MMR")
 @Component
-
 public class MMRDiversifyExperiment extends DiversifyExperiment {
     protected int lambda;
 

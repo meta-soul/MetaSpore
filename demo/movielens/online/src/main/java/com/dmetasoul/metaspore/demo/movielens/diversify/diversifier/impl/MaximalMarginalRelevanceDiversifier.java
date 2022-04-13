@@ -22,13 +22,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Utils.groupByType;
+
 // References:
-// * https://dl.acm.org/doi/10.1145/290941.291025
+// * The Use of MMR, Diversity-Based Reranking for Reordering Documents and Producing Summaries
 
 @Service
 public class MaximalMarginalRelevanceDiversifier implements Diversifier {
-    public static final String DIVERSIFIER_NAME = "MaximalMarginalRelevanceDiversifier";
-    public static final double LAMBDA = 0.7;
+    public static final String ALGO_NAME = "MaximalMarginalRelevanceDiversifier";
+    public static final double  DEFAULT_LAMBDA = 0.7;
 
 
     public List<ItemModel> diverse(RecommendContext recommendContext,
@@ -38,7 +40,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
     ) {
         Double lambda = recommendContext.getLambda();
         if (lambda == null) {
-            lambda = LAMBDA;
+            lambda = DEFAULT_LAMBDA;
         }
         int genreCount = groupByType(itemModels).size();
         if (window == null || window > genreCount) {
@@ -72,6 +74,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                     // MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
                     // SimScore:itemModel's final simscore
                     // sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
+
                     double rankingScore = itemModels.get(startFound).getFinalRankingScore() * lambda;
                     double simScore = getSimScore(itemModels.get(startFound), genreSplitedInWindow) * (1 - lambda);
                     if ((rankingScore - simScore) > maxMMR) {
@@ -124,7 +127,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         return itemModels;
     }
 
-    // simScore={A\cup B}/{A\cup B}
+    // simScore= \frac{A \cup B}{A \cup B}
     public static Double getSimScore(ItemModel item, HashMap<String, Integer> itemInWindow) {
         List<String> itemGenre = item.getGenreList();
         double intersection = 0;
@@ -139,20 +142,6 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             }
         }
         return intersection / (differentSet + itemGenre.size());
-    }
-
-    public static Map<String, List<ItemModel>> groupByType(List<ItemModel> numbers) {
-        Map<String, List<ItemModel>> map = new HashMap<>();
-        for (ItemModel item : numbers) {
-            if (map.containsKey(item.getGenre())) {
-                map.get(item.getGenre()).add(item);
-            } else {
-                List<ItemModel> ls = new ArrayList<>();
-                ls.add(item);
-                map.put(item.getGenre(), ls);
-            }
-        }
-        return map;
     }
 }
 

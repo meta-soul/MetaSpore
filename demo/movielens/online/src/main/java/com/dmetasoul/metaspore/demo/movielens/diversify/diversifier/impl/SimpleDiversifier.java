@@ -23,6 +23,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+import static com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Utils.groupByType;
+
 @Service
 public class SimpleDiversifier implements Diversifier {
     public static final String DIVERSIFIER_NAME="SimpleDiersifier";
@@ -97,17 +99,5 @@ public class SimpleDiversifier implements Diversifier {
             stepCount++;
         }
         return diverseResult;
-    }
-
-    public static Map<String, Integer> groupByType(List<ItemModel> numbers) {
-        Map<String, Integer> map = new HashMap<>();
-        for (ItemModel item : numbers) {
-            if (map.containsKey(item.getGenre())) {
-                continue;
-            } else {
-                map.put(item.getGenre(), 1);
-            }
-        }
-        return map;
     }
 }

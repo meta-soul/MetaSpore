@@ -29,10 +29,10 @@ public class MovielensRecommendDiverseTests {
             "Drama",
             "Comedy",
             "Horror",
-            "Horroru\001Comedy",
-            "Documentaryu\001Thriller",
-            "Documentaryu\001Comedy",
-            "Dramau\001Comedy",
+            "Horror\u0001Comedy",
+            "Documentary\u0001Thriller",
+            "Documentary\u0001Comedy",
+            "Drama\u0001Comedy",
 //            "Documentary",
 //            "Thriller",
 //                "War",
@@ -40,11 +40,11 @@ public class MovielensRecommendDiverseTests {
 //                "Animation",
 //                "Children's",
 //                "Drama|Mystery",
-            "Animationu\001Children's"};
+            "Animation\u0001Children's"};
     String[] movie_title = {
             "Man of Her Dreams",
             "Garden of Finz",
-            "Blue Angel",
+            "Blue Angel","",
             "Sixth Man",
             "Make Them Die",
             "Poison Ivy",

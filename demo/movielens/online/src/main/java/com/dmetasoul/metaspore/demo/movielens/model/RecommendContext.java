@@ -56,6 +56,14 @@ public class RecommendContext {
 
     private String wideAndDeepModelName;
 
+    private  String diversifierName;
+
+    private double lambda;
+
+    private boolean useDebug = false;
+
+    private boolean useDiversify = false;
+
     public String getDiversifierName() {
         return diversifierName;
     }
@@ -71,14 +79,6 @@ public class RecommendContext {
     public void setLambda(double lambda) {
         this.lambda = lambda;
     }
-
-    private  String diversifierName;
-
-    private double lambda;
-
-    private boolean useDebug = false;
-
-    private boolean useDiversify = false;
 
     public RecommendContext(String userId) {
         this.userId = userId;
