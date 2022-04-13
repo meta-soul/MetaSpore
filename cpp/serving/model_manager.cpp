@@ -15,9 +15,9 @@
 //
 
 #include <common/logger.h>
+#include <serving/feature_extraction_model_input.h>
 #include <serving/model_manager.h>
 #include <serving/ort_model.h>
-#include <serving/sparse_feature_extraction_model.h>
 #include <serving/tabular_model.h>
 #include <serving/threadpool.h>
 
@@ -40,12 +40,13 @@ void ModelManager::init(const std::string &dir_path) {
                 [this, dir_entry]() -> awaitable<void> {
                     auto sub_dir = dir_entry.path();
                     auto name = dir_entry.path().filename();
-                    spdlog::info("Try to load model from {} with name {} during init", sub_dir,
-                                 name);
+                    spdlog::info("ModelManager: Try to load model from {} with name {} during init",
+                                 sub_dir, name);
                     auto s = co_await load(dir_entry.path(), dir_entry.path().filename());
                     if (!s.ok()) {
-                        spdlog::info("Load model from {} during init failed {}, ignored", sub_dir,
-                                     s);
+                        spdlog::info(
+                            "ModelManager: Load model from {} during init failed {}, ignored",
+                            sub_dir, s);
                     }
                 },
                 boost::asio::detached);
@@ -59,22 +60,51 @@ awaitable_status ModelManager::load(const std::string &dir_path, const std::stri
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
         [this, &dir_path, &name]() -> awaitable_status {
-            TabularModel model;
-            auto status = co_await model.load(dir_path);
+            // load order: tabular, ort
+            auto load_tabular_fn = [this, &dir_path, &name]() -> awaitable_status {
+                TabularModel model;
+                auto status = co_await model.load(dir_path);
+                if (!status.ok()) {
+                    spdlog::error("ModelManager: Cannot load TabularModel {} from {}: {}", name,
+                                  dir_path, status);
+                    co_return status;
+                }
+                auto runner = std::make_shared<GrpcTabularModelRunner>();
+                runner->model = std::make_unique<TabularModel>(std::move(model));
+                runner->input_conveter =
+                    std::make_unique<GrpcRequestToFEConverter>(runner->model->input_names());
+                runner->output_conveter =
+                    std::make_unique<OrtToGrpcReplyConverter>(runner->model->output_names());
+                spdlog::info("ModelManager: Loaded TabularModel {} from {}", name, dir_path);
+                std::unique_lock wl(mu_);
+                models_[name] = runner;
+                co_return absl::OkStatus();
+            };
+            auto load_ort_fn = [this, &dir_path, &name]() -> awaitable_status {
+                OrtModel model;
+                auto status = co_await model.load(dir_path);
+                if (!status.ok()) {
+                    spdlog::error("ModelManager: Cannot load OrtModel {} from {}: {}", name,
+                                  dir_path, status);
+                    co_return status;
+                }
+                auto runner = std::make_shared<GrpcOrtModelRunner>();
+                runner->model = std::make_unique<OrtModel>(std::move(model));
+                runner->input_conveter =
+                    std::make_unique<GrpcRequestToOrtConverter>(runner->model->input_names());
+                runner->output_conveter =
+                    std::make_unique<OrtToGrpcReplyConverter>(runner->model->output_names());
+                spdlog::info("ModelManager: Loaded OrtModel {} from {}", name, dir_path);
+                std::unique_lock wl(mu_);
+                models_[name] = runner;
+                co_return absl::OkStatus();
+            };
+
+            auto status = co_await load_tabular_fn();
             if (!status.ok()) {
-                spdlog::error("Cannot load TabularModel {} from {}: {}", name, dir_path, status);
-                co_return status;
+                status = co_await load_ort_fn();
             }
-            auto runner = std::make_shared<GrpcTabularModelRunner>();
-            runner->model = std::make_unique<TabularModel>(std::move(model));
-            runner->input_conveter =
-                std::make_unique<GrpcRequestToFEConverter>(runner->model->input_names());
-            runner->output_conveter =
-                std::make_unique<OrtToGrpcReplyConverter>(runner->model->output_names());
-            spdlog::info("Loaded model {} from {}", name, dir_path);
-            std::unique_lock wl(mu_);
-            models_[name] = runner;
-            co_return absl::OkStatus();
+            co_return status;
         },
         boost::asio::use_awaitable);
     co_return s;

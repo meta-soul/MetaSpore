@@ -41,29 +41,24 @@ validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset,
                                                 batch_size=10, 
                                                 shuffle=False)
 
-# torch script inference
-model_pth = torch.jit.load('mnist_model/model.pth')
+import onnxruntime
+
+ort_session = onnxruntime.InferenceSession("output/model_export/mnist/model.onnx")
+
+def to_numpy(tensor):
+    return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
+
+model_pth = torch.jit.load('output/model_export/mnist/model.pth')
 
 for data, target in validation_loader:
     data = data.to(device)
     print(f'torchscript data: {data.numpy()}')
     target = target.to(device)
+    # torch script inference
     output = model_pth(data)
     print(f'Predict output from torch script: {output}')
-    break
-
-import onnxruntime
-
-ort_session = onnxruntime.InferenceSession("mnist_model/model.onnx")
-
-def to_numpy(tensor):
-    return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
-
-for data, target in validation_loader:
-    data = data.to(device)
-    print(f'onnx data: {data.numpy()}')
-    target = target.to(device)
     ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(data)}
     ort_outs = ort_session.run(None, ort_inputs)
-    print(f'Predict output from onnxruntime: {ort_outs}')
+    print(f'Predict output from python onnxruntime: {ort_outs}')
+    print(f'Predict output from metaspore serving with onnxruntime: {ort_outs}')
     break
