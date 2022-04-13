@@ -19,7 +19,7 @@ import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.springframework.stereotype.Service;
-import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Utils;
+import com.dmetasoul.metaspore.demo.movielens.diversify.Utils;
 
 import java.util.*;
 
