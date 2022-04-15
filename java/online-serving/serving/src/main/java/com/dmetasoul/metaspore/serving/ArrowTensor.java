@@ -28,7 +28,6 @@ import org.apache.arrow.vector.types.pojo.ArrowType;
 import java.io.IOException;
 import java.nio.*;
 import java.nio.channels.Channels;
-import java.util.function.Consumer;
 
 /*
  * A wrapper class for Arrow's Tensor.

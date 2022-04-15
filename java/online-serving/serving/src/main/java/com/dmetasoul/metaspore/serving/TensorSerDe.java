@@ -21,9 +21,9 @@ import java.io.IOException;
 import com.google.protobuf.ByteString;
 
 public class TensorSerDe {
-    public static void serializeTo(String name, ArrowTensor tensor, PredictRequest.Builder request) throws IOException {
+    public static void serializeTo(String name, ArrowTensor tensor, PredictRequest.Builder builder) throws IOException {
         ByteString payload = ArrowTensor.writeToByteString(tensor);
-        request.putPayload(name, payload);
+        builder.putPayload(name, payload);
     }
 
     public static ArrowTensor deserializeFrom(String name, PredictReply response) throws IOException {
