@@ -1,5 +1,5 @@
 Debug -- Ctr Demo Wide&Deep
-Debug--load config: {'app_name': 'WideDeep Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 60, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': 's3://dmetasoul-bucket/demo/movielens/rank/train.parquet', 'test_path': 's3://dmetasoul-bucket/demo/movielens/rank/test.parquet', 'column_name_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema', 'combine_schema_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema', 'wide_combine_schema_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema', 'model_in_path': None, 'model_out_path': 's3://dmetasoul-bucket/demo/movielens/model/widedeep/model_out/ml_1m/', 'model_export_path': 's3://dmetasoul-bucket/demo/movielens/model/widedeep/model_export/ml_1m/', 'model_version': '0.1', 'experiment_name': 'movie_lens_wdl_1m', 'input_label_column_index': 0, 'embedding_size': 10, 'net_dropout': 0.0, 'adam_learning_rate': 1e-05, 'ftrl_alpha': 0.02, 'ftrl_beta': 1.0, 'ftrl_l1': 1.0, 'ftrl_l2': 1.0, 'dnn_hidden_units': [1024, 512, 256, 128]}
+Debug--load config: {'app_name': 'WideDeep Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 60, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': '${MY_S3_BUCKET}/movielens/rank/train.parquet', 'test_path': '${MY_S3_BUCKET}/movielens/rank/test.parquet', 'column_name_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema', 'combine_schema_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema', 'wide_combine_schema_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema', 'model_in_path': None, 'model_out_path': '${MY_S3_BUCKET}/movielens/model/widedeep/model_out/ml_1m/', 'model_export_path': '${MY_S3_BUCKET}/movielens/model/widedeep/model_export/ml_1m/', 'model_version': '0.1', 'experiment_name': 'movie_lens_wdl_1m', 'input_label_column_index': 0, 'embedding_size': 10, 'net_dropout': 0.0, 'adam_learning_rate': 1e-05, 'ftrl_alpha': 0.02, 'ftrl_beta': 1.0, 'ftrl_l1': 1.0, 'ftrl_l2': 1.0, 'dnn_hidden_units': [1024, 512, 256, 128]}
 updating: python/ (stored 0%)
 updating: python/xdeepfm_net.py (deflated 76%)
 updating: python/cf_retrieval.py (deflated 80%)
@@ -115,51 +115,51 @@ Debug -- train dataset negative count: 162643
 Debug -- test dataset count: 4646                                                                                                                           
 Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
 [WARN] 2022-04-13 07:12:23.232 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 07:12:23.232] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema, read_only: true
+[2022-04-13 07:12:23.232] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema, read_only: true
 
-[2022-04-13 07:12:23.256] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema with total length: 117
+[2022-04-13 07:12:23.256] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with total length: 117
 
-[2022-04-13 07:12:23.260] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema with size 117 at position 0 larger than total size: 117, change size to 117
+[2022-04-13 07:12:23.260] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with size 117 at position 0 larger than total size: 117, change size to 117
 
-[2022-04-13 07:12:23.302] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+[2022-04-13 07:12:23.302] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
 
-[2022-04-13 07:12:23.303] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+[2022-04-13 07:12:23.303] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
 
 [WARN] 2022-04-13 07:12:23.303 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 07:12:23.303] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema, read_only: true
+[2022-04-13 07:12:23.303] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema, read_only: true
 
-[2022-04-13 07:12:23.324] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema with total length: 17
+[2022-04-13 07:12:23.324] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema with total length: 17
 
-[2022-04-13 07:12:23.327] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
+[2022-04-13 07:12:23.327] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
 
-[2022-04-13 07:12:23.370] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema reached end 17
+[2022-04-13 07:12:23.370] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema reached end 17
 
-[2022-04-13 07:12:23.371] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema reached end 17
+[2022-04-13 07:12:23.371] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema reached end 17
 
-loaded combine schema from column name file 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema' and combine schema file 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema'
+loaded combine schema from column name file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema' and combine schema file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema'
 [WARN] 2022-04-13 07:12:23.425 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 07:12:23.425] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema, read_only: true
+[2022-04-13 07:12:23.425] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema, read_only: true
 
-[2022-04-13 07:12:23.449] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema with total length: 117
+[2022-04-13 07:12:23.449] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with total length: 117
 
-[2022-04-13 07:12:23.449] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema with size 117 at position 0 larger than total size: 117, change size to 117
+[2022-04-13 07:12:23.449] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with size 117 at position 0 larger than total size: 117, change size to 117
 
-[2022-04-13 07:12:23.496] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+[2022-04-13 07:12:23.496] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
 
-[2022-04-13 07:12:23.496] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+[2022-04-13 07:12:23.496] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
 
 [WARN] 2022-04-13 07:12:23.496 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 07:12:23.497] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema, read_only: true
+[2022-04-13 07:12:23.497] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema, read_only: true
 
-[2022-04-13 07:12:23.516] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema with total length: 17
+[2022-04-13 07:12:23.516] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema with total length: 17
 
-[2022-04-13 07:12:23.516] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
+[2022-04-13 07:12:23.516] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
 
-[2022-04-13 07:12:23.559] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema reached end 17
+[2022-04-13 07:12:23.559] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema reached end 17
 
-[2022-04-13 07:12:23.560] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema reached end 17
+[2022-04-13 07:12:23.560] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema reached end 17
 
-loaded combine schema from column name file 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema' and combine schema file 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema'
+loaded combine schema from column name file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema' and combine schema file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema'
 [2022-04-13 07:12:25.883] [info] PS job with coordinator address 10.0.1.219:44425 started.
 [2022-04-13 07:12:25.883] [info] PSRunner::RunPS: pid: 30434, tid: 30691, thread: 0x7fea4143b700
 [2022-04-13 07:12:25.883] [info] PSRunner::RunPSCoordinator: pid: 30434, tid: 30691, thread: 0x7fea4143b700

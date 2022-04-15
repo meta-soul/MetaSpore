@@ -1,5 +1,5 @@
 Debug -- Ctr Demo Wide&Deep
-Debug--load config: {'app_name': 'WideDeep Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 50, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': 's3://dmetasoul-bucket/demo/criteo_x1/train_5.parquet', 'test_path': 's3://dmetasoul-bucket/demo/criteo_x1/test_1.parquet', 'column_name_path': 's3://dmetasoul-bucket/demo/schema/column_name_demo.txt', 'combine_schema_path': 's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt', 'wide_combine_schema_path': 's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt', 'model_in_path': None, 'model_out_path': 's3://dmetasoul-bucket/demo/movielens/model/widedeep/model_out/criteo_d5/', 'model_export_path': 's3://dmetasoul-bucket/demo/movielens/model/widedeep/model_export/criteo_d5/', 'model_version': '0.1', 'experiment_name': 'criteo_wdl_d5', 'input_label_column_index': 0, 'embedding_size': 10, 'net_dropout': 0.0, 'adam_learning_rate': 1e-05, 'ftrl_l1': 1.0, 'ftrl_l2': 120.0, 'ftrl_alpha': 0.01, 'ftrl_beta': 1.0, 'dnn_hidden_units': [1024, 512, 256, 128]}
+Debug--load config: {'app_name': 'WideDeep Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 50, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': '${MY_S3_BUCKET}/criteo_x1/train_5.parquet', 'test_path': '${MY_S3_BUCKET}/criteo_x1/test_1.parquet', 'column_name_path': '${MY_S3_BUCKET}/schema/column_name_demo.txt', 'combine_schema_path': '${MY_S3_BUCKET}/schema/combine_schema_demo.txt', 'wide_combine_schema_path': '${MY_S3_BUCKET}/schema/combine_schema_demo.txt', 'model_in_path': None, 'model_out_path': '${MY_S3_BUCKET}/movielens/model/widedeep/model_out/criteo_d5/', 'model_export_path': '${MY_S3_BUCKET}/movielens/model/widedeep/model_export/criteo_d5/', 'model_version': '0.1', 'experiment_name': 'criteo_wdl_d5', 'input_label_column_index': 0, 'embedding_size': 10, 'net_dropout': 0.0, 'adam_learning_rate': 1e-05, 'ftrl_l1': 1.0, 'ftrl_l2': 120.0, 'ftrl_alpha': 0.01, 'ftrl_beta': 1.0, 'dnn_hidden_units': [1024, 512, 256, 128]}
 updating: python/ (stored 0%)
 updating: python/xdeepfm_net.py (deflated 76%)
 updating: python/cf_retrieval.py (deflated 80%)
@@ -116,51 +116,51 @@ Debug -- train dataset negative count: 896498
 Debug -- test dataset count: 195974                                                                                                                         
 Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
 [WARN] 2022-04-13 08:25:56.815 STSAssumeRoleWithWebIdentityCredentialsProvider [140361532090176] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 08:25:56.815] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt, read_only: true
+[2022-04-13 08:25:56.815] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/schema/column_name_demo.txt, read_only: true
 
-[2022-04-13 08:25:56.836] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with total length: 943
+[2022-04-13 08:25:56.836] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/schema/column_name_demo.txt with total length: 943
 
-[2022-04-13 08:25:56.840] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with size 943 at position 0 larger than total size: 943, change size to 943
+[2022-04-13 08:25:56.840] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/schema/column_name_demo.txt with size 943 at position 0 larger than total size: 943, change size to 943
 
-[2022-04-13 08:25:56.904] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+[2022-04-13 08:25:56.904] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/column_name_demo.txt reached end 943
 
-[2022-04-13 08:25:56.904] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+[2022-04-13 08:25:56.904] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/column_name_demo.txt reached end 943
 
 [WARN] 2022-04-13 08:25:56.905 STSAssumeRoleWithWebIdentityCredentialsProvider [140361532090176] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 08:25:56.905] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt, read_only: true
+[2022-04-13 08:25:56.905] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/schema/combine_schema_demo.txt, read_only: true
 
-[2022-04-13 08:25:56.933] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with total length: 930
+[2022-04-13 08:25:56.933] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/schema/combine_schema_demo.txt with total length: 930
 
-[2022-04-13 08:25:56.936] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with size 930 at position 0 larger than total size: 930, change size to 930
+[2022-04-13 08:25:56.936] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/schema/combine_schema_demo.txt with size 930 at position 0 larger than total size: 930, change size to 930
 
-[2022-04-13 08:25:57.073] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+[2022-04-13 08:25:57.073] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/combine_schema_demo.txt reached end 930
 
-[2022-04-13 08:25:57.073] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+[2022-04-13 08:25:57.073] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/combine_schema_demo.txt reached end 930
 
-loaded combine schema from column name file 's3://dmetasoul-bucket/demo/schema/column_name_demo.txt' and combine schema file 's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt'
+loaded combine schema from column name file '${MY_S3_BUCKET}/schema/column_name_demo.txt' and combine schema file '${MY_S3_BUCKET}/schema/combine_schema_demo.txt'
 [WARN] 2022-04-13 08:25:57.178 STSAssumeRoleWithWebIdentityCredentialsProvider [140361532090176] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 08:25:57.178] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt, read_only: true
+[2022-04-13 08:25:57.178] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/schema/column_name_demo.txt, read_only: true
 
-[2022-04-13 08:25:57.208] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with total length: 943
+[2022-04-13 08:25:57.208] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/schema/column_name_demo.txt with total length: 943
 
-[2022-04-13 08:25:57.208] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with size 943 at position 0 larger than total size: 943, change size to 943
+[2022-04-13 08:25:57.208] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/schema/column_name_demo.txt with size 943 at position 0 larger than total size: 943, change size to 943
 
-[2022-04-13 08:25:57.292] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+[2022-04-13 08:25:57.292] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/column_name_demo.txt reached end 943
 
-[2022-04-13 08:25:57.292] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+[2022-04-13 08:25:57.292] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/column_name_demo.txt reached end 943
 
 [WARN] 2022-04-13 08:25:57.292 STSAssumeRoleWithWebIdentityCredentialsProvider [140361532090176] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-13 08:25:57.292] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt, read_only: true
+[2022-04-13 08:25:57.292] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/schema/combine_schema_demo.txt, read_only: true
 
-[2022-04-13 08:25:57.311] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with total length: 930
+[2022-04-13 08:25:57.311] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/schema/combine_schema_demo.txt with total length: 930
 
-[2022-04-13 08:25:57.311] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with size 930 at position 0 larger than total size: 930, change size to 930
+[2022-04-13 08:25:57.311] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/schema/combine_schema_demo.txt with size 930 at position 0 larger than total size: 930, change size to 930
 
-[2022-04-13 08:25:57.368] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+[2022-04-13 08:25:57.368] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/combine_schema_demo.txt reached end 930
 
-[2022-04-13 08:25:57.368] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+[2022-04-13 08:25:57.368] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/schema/combine_schema_demo.txt reached end 930
 
-loaded combine schema from column name file 's3://dmetasoul-bucket/demo/schema/column_name_demo.txt' and combine schema file 's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt'
+loaded combine schema from column name file '${MY_S3_BUCKET}/schema/column_name_demo.txt' and combine schema file '${MY_S3_BUCKET}/schema/combine_schema_demo.txt'
 [2022-04-13 08:25:59.298] [info] PS job with coordinator address 10.0.1.219:49455 started.
 [2022-04-13 08:25:59.298] [info] PSRunner::RunPS: pid: 31695, tid: 31941, thread: 0x7fa8277fe700
 [2022-04-13 08:25:59.298] [info] PSRunner::RunPSCoordinator: pid: 31695, tid: 31941, thread: 0x7fa8277fe700

@@ -41,7 +41,7 @@ def transform_number(x):
 ```
 Moreover, we use the training data of the first 5 days provided by the competition as the training set, and the test data provided by the first day as the test set.
 
-We will update the code of this part as soon as possible.
+We will update the related code as soon as possible.
 
 ### Initialize the configuration files for models
 First, upload the [schema](schema) to you S3 storage.
