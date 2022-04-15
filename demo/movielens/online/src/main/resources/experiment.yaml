@@ -27,7 +27,9 @@ scene-config:
         - name: diversify
           normalLayerArgs:
             - experimentName: diversify.base
-              ratio: 1.0
+              ratio: 0.5
+            - experimentName: diversify.MMR
+              ratio: 0.5
 
   experiments:
     - layerName: userModel
@@ -84,3 +86,12 @@ scene-config:
       experimentName: diversify.base
       extraExperimentArgs:
         useDiversify: True
+        window: 4
+        tolerance: 4
+    - layerName: diversify
+      experimentName: diversify.MMR
+      extraExperimentArgs:
+        useDiversify: True
+        lambda: 0.7
+        window: 5
+        tolerance: 5

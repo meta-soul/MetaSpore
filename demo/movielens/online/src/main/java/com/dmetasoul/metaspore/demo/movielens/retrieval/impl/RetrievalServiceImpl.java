@@ -52,7 +52,7 @@ public class RetrievalServiceImpl implements RetrievalService {
         }
 
         List<ItemModel> itemModels = new ArrayList<>();
-        
+
         for (Matcher m : matcherProvider.getMatchers(matcherNames)) {
             itemModels.addAll(m.match(recommendContext, userModel));
         }

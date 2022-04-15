@@ -56,9 +56,29 @@ public class RecommendContext {
 
     private String wideAndDeepModelName;
 
+    private  String diversifierName;
+
+    private double lambda;
+
     private boolean useDebug = false;
 
     private boolean useDiversify = false;
+
+    public String getDiversifierName() {
+        return diversifierName;
+    }
+
+    public double getLambda() {
+        return lambda;
+    }
+
+    public void setDiversifierName(String diversifierName) {
+        this.diversifierName = diversifierName;
+    }
+
+    public void setLambda(double lambda) {
+        this.lambda = lambda;
+    }
 
     public RecommendContext(String userId) {
         this.userId = userId;

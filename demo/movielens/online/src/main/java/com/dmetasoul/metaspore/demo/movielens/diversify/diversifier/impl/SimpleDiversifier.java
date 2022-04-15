@@ -16,74 +16,84 @@
 
 package com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl;
 
-import com.google.common.collect.Lists;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.Diversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
+import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import com.dmetasoul.metaspore.demo.movielens.diversify.Utils;
 
 import java.util.*;
 
 @Service
 public class SimpleDiversifier implements Diversifier {
+    public static final String DIVERSIFIER_NAME = "SimpleDiersifier";
 
-    public List<ItemModel> diverse(List<ItemModel> itemModels, Integer window, Integer tolerance) {
-        if (CollectionUtils.isEmpty(itemModels)) {
-            return itemModels;
+    public List<ItemModel> diverse(RecommendContext recommendContext, List<ItemModel> itemmodels, Integer window, Integer tolerance) {
+        LinkedList<ItemModel> itemLinked = new LinkedList(itemmodels);
+        List<ItemModel> diverseResult = new ArrayList<>();
+        //compute count of genre
+        int genreCount = Utils.groupByType(itemmodels).size();
+        if (window == null || window > genreCount) {
+            window = genreCount;
         }
-        if (itemModels instanceof ArrayList) {
-            itemModels = Lists.newArrayList(itemModels);
-        }
-        if (window == null || window > groupByType(itemModels).size()) {
-            window = groupByType(itemModels).size();
-        }
-        HashMap<String, Integer> keys = new HashMap<>();
-        for (int i = 0; i < itemModels.size() - window; i++) {
-            List<ItemModel> subList = itemModels.subList(i, i + window);
+        HashMap<String, Integer> genreInWindow = new HashMap<>();
+        int stepCount = 0;
+        while (!itemLinked.isEmpty()) {
+            int slide = 0;
 
-            if (i >= 1) {
-                String movie_genre = itemModels.get(i - 1).getGenre();
-                keys.put(movie_genre, keys.get(itemModels.get(i - 1).getGenre()) - 1);
-                if (keys.get(itemModels.get(i - 1).getGenre()) == 0) keys.remove(itemModels.get(i - 1).getGenre());
+            if (itemLinked.size() != itemmodels.size()) {
+                slide = window - 1;
             }
-            //int j = window + 1;
-            int m = 0;
-            if (i > 0) {
-                m = window - 1;
-            }
-            for (; m < window; m++) {
-                ItemModel item = subList.get(m);
-                if (keys.containsKey(item.getGenre())) {
-                    int findTarget = i + window;
-                    while (findTarget < Math.min(itemModels.size(),
-                            i + window + tolerance) && keys.containsKey(itemModels.get(findTarget).getGenre())) {
-                        findTarget++;
-                    }
-                    if (findTarget == Math.min(itemModels.size(), i + window + tolerance)) {
-                        findTarget = i + window;
-                    }
-                    itemModels.set(i + m, itemModels.get(findTarget));
-                    itemModels.set(findTarget, item);
-                    int value = keys.containsKey(itemModels.get(i + m).getGenre()) ? keys.get(itemModels.get(i + m).getGenre()) + 1 : 1;
-                    keys.put(itemModels.get(i + m).getGenre(), value);
-                } else {
-                    keys.put(item.getGenre(), 1);
+
+            if (stepCount != 0) {
+                String genreUseless = diverseResult.get(stepCount - 1).getGenre();
+                genreInWindow.put(genreUseless, genreInWindow.get(genreUseless) - 1);
+                if (genreInWindow.get(diverseResult.get(stepCount - 1).getGenre()) == 0) {
+                    genreInWindow.remove(diverseResult.get(stepCount - 1).getGenre());
                 }
             }
-        }
-        return itemModels;
-    }
+            while (slide < window) {
+                ItemModel te = itemLinked.peek();
+                if (genreInWindow.containsKey(te.getGenre())) {
+                    int toleranceTemp = window - slide;
+                    ItemModel itemStart = new ItemModel();
+                    Iterator<ItemModel> itemModelIterator = itemLinked.iterator();
+                    if (itemModelIterator.hasNext()) {
+                        itemStart = itemModelIterator.next();
+                    }
+                    while (toleranceTemp > 0 && itemModelIterator.hasNext()) {
+                        itemStart = itemModelIterator.next();
+                        toleranceTemp--;
+                    }
+                    int startFound = window - slide;
 
-    public static HashSet<String> groupByType(List<ItemModel> numbers) {
-        HashSet<String> hashset = new HashSet<>();
-        Map<String, List<ItemModel>> map = new HashMap<>();
-        for (ItemModel item : numbers) {
-            if (map.containsKey(item.getGenre())) {
-                continue;
-            } else {
-                hashset.add(item.getGenre());
+                    while (startFound < Math.min(tolerance + window - slide, itemLinked.size())
+                            && genreInWindow.containsKey(itemStart.getGenre())
+                            && itemModelIterator.hasNext()) {
+                        startFound++;
+                        itemStart = itemModelIterator.next();
+                    }
+                    if (toleranceTemp == itemLinked.size() || toleranceTemp == tolerance + window - slide) {
+                        diverseResult.add(itemLinked.peek());
+                        genreInWindow.put(itemLinked.peek().getGenre(), genreInWindow.get(itemLinked.peek().getGenre()) + 1);
+                        itemLinked.remove();
+                        slide++;
+                        continue;
+                    }
+                    String targetGenre = itemStart.getGenre();
+                    int value = genreInWindow.containsKey(targetGenre) ? genreInWindow.get(targetGenre) + 1 : 1;
+                    diverseResult.add(itemStart);
+                    genreInWindow.put(targetGenre, value);
+                    itemModelIterator.remove();
+                } else {
+                    genreInWindow.put(te.getGenre(), 1);
+                    diverseResult.add(te);
+                    itemLinked.remove();
+                }
+                slide++;
             }
+            stepCount++;
         }
-        return hashset;
+        return diverseResult;
     }
 }

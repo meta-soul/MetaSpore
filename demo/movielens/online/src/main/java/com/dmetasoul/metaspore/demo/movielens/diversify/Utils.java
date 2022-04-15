@@ -13,14 +13,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-
 package com.dmetasoul.metaspore.demo.movielens.diversify;
 
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
-import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-public interface DiversifierService {
-    List<ItemModel> diverse(RecommendContext recommendContext,List<ItemModel> itemModels,Integer window, Integer tolerance);
+public class Utils {
+    public static Map<String, List<ItemModel>> groupByType(List<ItemModel> numbers) {
+        Map<String, List<ItemModel>> map = new HashMap<>();
+        for (ItemModel item : numbers) {
+            if (map.containsKey(item.getGenre())) {
+                map.get(item.getGenre()).add(item);
+            } else {
+                List<ItemModel> genreItemList = new ArrayList<>();
+                genreItemList.add(item);
+                map.put(item.getGenre(), genreItemList);
+            }
+        }
+        return map;
+    }
 }
