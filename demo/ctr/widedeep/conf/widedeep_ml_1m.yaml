@@ -1,0 +1,35 @@
+## spark session
+app_name: 'WideDeep Demo'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 60
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/movielens/rank/train.parquet
+test_path: s3://dmetasoul-bucket/demo/movielens/rank/test.parquet
+
+## model configurations
+column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema
+combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema
+wide_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/movielens/model/widedeep/model_out/ml_1m/
+model_export_path: s3://dmetasoul-bucket/demo/movielens/model/widedeep/model_export/ml_1m/
+model_version: '0.1'
+experiment_name: movie_lens_wdl_1m
+input_label_column_index: 0
+
+## model hyper params
+embedding_size: 10
+net_dropout: 0.0
+adam_learning_rate: 0.00001
+ftrl_alpha: 0.02
+ftrl_beta: 1.0
+ftrl_l1: 1.0
+ftrl_l2: 1.0
+dnn_hidden_units: [1024,512,256,128]

@@ -1,0 +1,46 @@
+## spark session
+app_name: 'CTR Demo DeepFM'
+local: False
+worker_count: 2
+server_count: 2
+batch_size: 50
+worker_memory: '5G'
+server_memory: '5G'
+coordinator_memory: '5G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/movielens/rank/train.parquet
+test_path: s3://dmetasoul-bucket/demo/movielens/rank/test.parquet
+
+## model configurations
+wide_column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema
+wide_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema
+deep_column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema
+deep_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/movielens/model/deepfm/model_out/ml_1m/
+model_export_path: s3://dmetasoul-bucket/demo/movielens/model/deepfm/model_export/ml_1m/
+model_version: '0.1'
+experiment_name: movie_lens_dfm_1m
+input_label_column_index: 0
+metric_update_interval: 100
+
+## model hyper params
+use_wide: True
+use_dnn: True
+use_fm: True
+wide_embedding_dim: 10
+deep_embedding_dim: 10
+adam_learning_rate: 0.0001
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.5
+ftrl_beta: 1.0
+dnn_hidden_units: [1024, 1024, 1024]
+sparse_init_var: 0.01
+dnn_hidden_activations: ReLU
+use_bias: True
+batch_norm: True
+net_dropout: 0
+net_regularizer: null
