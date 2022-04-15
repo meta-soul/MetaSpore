@@ -23,8 +23,8 @@ import argparse
 import sys 
 from operator import itemgetter
 
-sys.path.append('../../') 
-from python.deepfm_net import DeepFM
+sys.path.append('../../../')
+from python.algos.deepfm_net import DeepFM
 
 def load_config(path):
     params=dict()
@@ -34,7 +34,7 @@ def load_config(path):
     return params
 
 def init_spark():
-    subprocess.run(['zip', '-r', 'demo/ctr/python.zip', 'python'], cwd='../../')
+    subprocess.run(['zip', '-r', 'demo/ctr/deepfm/python.zip', 'python'], cwd='../../../')
     spark_confs={
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",

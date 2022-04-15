@@ -23,8 +23,8 @@ import argparse
 import sys 
 from operator import itemgetter
 
-sys.path.append('../../') 
-from python.dcn_net import DCN
+sys.path.append('../../../') 
+from python.algos.dcn_net import DCN
 
 def load_config(path):
     params=dict()
@@ -34,7 +34,7 @@ def load_config(path):
     return params
 
 def init_spark():
-    subprocess.run(['zip', '-r', 'demo/ctr/python.zip', 'python'], cwd='../../')
+    subprocess.run(['zip', '-r', 'demo/ctr/dcn/python.zip', 'python'], cwd='../../../')
     spark_confs={
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
