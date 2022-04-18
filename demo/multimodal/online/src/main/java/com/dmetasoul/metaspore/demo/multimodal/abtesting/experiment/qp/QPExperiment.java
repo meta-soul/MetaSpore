@@ -34,7 +34,7 @@ public class QPExperiment implements BaseExperiment<SearchResult, SearchResult> 
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
-        System.out.println("qp.base experiment, userModel:" + in.getSearchQuery());
+        System.out.println("qp.base experiment, userModel:" + in.getSearchContext().getUserId() + ", Query:" + in.getSearchQuery());
         return in;
     }
 }

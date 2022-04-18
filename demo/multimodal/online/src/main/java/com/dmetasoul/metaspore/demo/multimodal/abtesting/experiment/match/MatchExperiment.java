@@ -34,7 +34,7 @@ public class MatchExperiment implements BaseExperiment<SearchResult, SearchResul
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
-        System.out.println("match.base experiment, match:" + in.getSearchQuery());
+        System.out.println("match.base experiment, Query:" + in.getSearchQuery());
         return in;
     }
 }

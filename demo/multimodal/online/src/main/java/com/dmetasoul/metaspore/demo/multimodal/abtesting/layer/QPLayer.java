@@ -51,7 +51,7 @@ public class QPLayer implements BaseLayer<SearchResult> {
     public String split(Context ctx, SearchResult in) {
         String returnExp = bucketizer.toBucket(in.getSearchContext());
         // TODO we should avoid to reference the experiment name explicitly
-        System.out.printf("layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
+        System.out.printf("QP layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
         return returnExp;
     }
 }

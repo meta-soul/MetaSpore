@@ -28,13 +28,13 @@ import org.springframework.stereotype.Component;
 public class SummaryLayer implements BaseLayer<SearchResult> {
     @Override
     public void intitialize(LayerArgs layerArgs) {
-        System.out.println("summary layer, args:" + layerArgs);
+        System.out.println("Summary layer, args:" + layerArgs);
     }
 
     @Override
     public String split(Context ctx, SearchResult in) {
         String returnExp = "summary.base";
-        System.out.printf("layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
+        System.out.printf("Summary layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
         return returnExp;
     }
 }

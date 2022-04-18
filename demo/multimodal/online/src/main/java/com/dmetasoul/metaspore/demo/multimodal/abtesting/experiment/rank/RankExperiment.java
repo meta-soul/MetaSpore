@@ -35,7 +35,7 @@ public class RankExperiment implements BaseExperiment<SearchResult, SearchResult
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
-        System.out.println("rank.base experiment, match:" + in.getSearchQuery());
+        System.out.println("rank.base experiment, Query:" + in.getSearchQuery());
         return in;
     }
 }

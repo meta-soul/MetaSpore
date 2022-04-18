@@ -36,8 +36,9 @@ public class QuestionAnswerRetrievalController {
     @PostMapping(value="qa/user/{userId}")
     public SearchResult search(@PathVariable("userId") String userId,
                                @RequestBody PayloadParam payloadParam) throws IOException {
-        System.out.println("Multi-Model Retrieval, scene getScenesConfig: " + scenes.getSceneConfig());
-        System.out.println("Multi-Model Retrieval, userId:" + userId + "request payload parameter:" + payloadParam);
+        System.out.println("Multi-Modal Retrieval, scene getScenesConfig: " + scenes.getSceneConfig());
+        System.out.println("Multi-Modal Retrieval, userId:" + userId + ", request payload parameter:" + payloadParam);
+
         if (payloadParam != null && payloadParam.useDebug) {
             return (SearchResult) scenes.getScene("questionAnswer").runDebug(
                     new SearchResult(payloadParam.query, new SearchContext(userId)),
