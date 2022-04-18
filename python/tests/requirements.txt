@@ -16,4 +16,3 @@ PyYAML
 boto3
 python-consul
 findspark
-tabulate

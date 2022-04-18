@@ -32,11 +32,9 @@ with grpc.insecure_channel('0.0.0.0:50051') as channel:
     with pa.ipc.new_file(sink, rb.schema) as writer:
         writer.write_batch(rb)
     payload_map = {"input": sink.getvalue().to_pybytes()}
-    request = metaspore_pb2.PredictRequest(model_name="xgboost_model", payload=payload_map)
+    request = metaspore_pb2.PredictRequest(model_name="xgboost", payload=payload_map)
     reply = stub.Predict(request)
     for name in reply.payload:
-        print(f'reply tensor {name}, buffer len: {len(reply.payload[name])}')
-        print(f'payload hex: {reply.payload[name].hex()}')
         with pa.BufferReader(reply.payload[name]) as reader:
             tensor = pa.ipc.read_tensor(reader)
             print(f'Tensor: {tensor.to_numpy()}')

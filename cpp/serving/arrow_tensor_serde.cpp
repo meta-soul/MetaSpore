@@ -24,6 +24,18 @@
 
 namespace metaspore::serving {
 
+result<std::shared_ptr<arrow::Tensor>>
+ArrowTensorSerde::deserialize_from(const std::string &name, PredictRequest &request) {
+    auto find = request.payload().find(name);
+    if (find == request.payload().end()) {
+        return absl::NotFoundError(fmt::format("Cannot find input {} from request", name));
+    }
+    const std::string &buffer = find->second;
+    arrow::io::BufferReader reader((const uint8_t *) buffer.data(), (int64_t) buffer.size());
+    ASSIGN_RESULT_OR_RETURN_NOT_OK(auto tensor, arrow::ipc::ReadTensor(&reader));
+    return tensor;
+}
+
 status ArrowTensorSerde::serialize_to(const std::string &name, const arrow::Tensor &tensor,
                                       PredictReply &reply) {
     ASSIGN_RESULT_OR_RETURN_NOT_OK(auto buffer_stream_result,

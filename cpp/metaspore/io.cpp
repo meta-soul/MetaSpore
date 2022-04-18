@@ -25,6 +25,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <filesystem>
+
 namespace metaspore {
 
 FileSystem *FileSystem::GetInstance(const URI &path) {
@@ -167,32 +169,12 @@ std::string StreamReadAll(const std::string &url) {
     return result;
 }
 
+namespace fs = std::filesystem;
+
 void MakeLocalDirectories(const std::string &path, mode_t mode) {
     if (path.empty())
         return;
-    std::string buf = path;
-    char *dir_path = const_cast<char *>(buf.c_str());
-    char *p = dir_path;
-    do {
-        p = strchr(++p, '/');
-        if (p)
-            *p = '\0';
-        if (mkdir(dir_path, mode) == -1 && errno != EEXIST) {
-            std::string serr;
-            serr.append("Fail to make directory '");
-            serr.append(dir_path);
-            serr.append("'. errno [");
-            serr.append(std::to_string(errno));
-            serr.append("]: ");
-            serr.append(strerror(errno));
-            serr.append("\n\n");
-            serr.append(GetStackTrace());
-            spdlog::error(serr);
-            throw std::runtime_error(serr);
-        }
-        if (p)
-            *p = '/';
-    } while (p);
+    fs::create_directories(fs::path(path));
 }
 
 void EnsureLocalDirectory(const std::string &dir_path) {

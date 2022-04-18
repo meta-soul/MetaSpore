@@ -79,8 +79,8 @@ class WideDeep(torch.nn.Module):
 
 module = WideDeep()
 
-model_out_path = S3_ROOT_DIR + 'output/wdl/model_out/'
-model_export_path = S3_ROOT_DIR + 'output/wdl/model_export/'
+model_out_path = S3_ROOT_DIR + 'output/model_out/'
+model_export_path = S3_ROOT_DIR + 'output/model_export/'
 estimator = ms.PyTorchEstimator(module=module,
                                 worker_count=1,
                                 server_count=1,

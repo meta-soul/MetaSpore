@@ -614,10 +614,11 @@ class PyTorchEstimator(PyTorchHelperMixin, pyspark.ml.base.Estimator):
             raise RuntimeError("model_out_path of estimator must be specified")
 
     def _clear_output(self):
+        import os
         if self.model_out_path is not None:
-            delete_dir(self.model_out_path)
+            delete_dir(os.path.join(self.model_out_path, self.experiment_name))
         if self.model_export_path is not None:
-            delete_dir(self.model_export_path)
+            delete_dir(os.path.join(self.model_export_path, self.experiment_name))
 
     def _fit(self, dataset):
         self._clear_output()

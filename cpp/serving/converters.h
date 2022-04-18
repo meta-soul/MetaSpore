@@ -84,6 +84,7 @@ template <typename Conv> class ConverterCRTP : public Converter {
 
 class GrpcRequestOutput;
 class FeatureExtractionModelInput;
+class OrtModelInput;
 
 class GrpcRequestToFEConverter : public ConverterCRTP<GrpcRequestToFEConverter> {
   public:
@@ -92,6 +93,15 @@ class GrpcRequestToFEConverter : public ConverterCRTP<GrpcRequestToFEConverter> 
     using ConverterCRTP<GrpcRequestToFEConverter>::ConverterCRTP;
 
     status convert(std::unique_ptr<GrpcRequestOutput> from, FeatureExtractionModelInput *to);
+};
+
+class GrpcRequestToOrtConverter : public ConverterCRTP<GrpcRequestToOrtConverter> {
+  public:
+    using InputType = GrpcRequestOutput;
+    using OutputType = OrtModelInput;
+    using ConverterCRTP<GrpcRequestToOrtConverter>::ConverterCRTP;
+
+    status convert(std::unique_ptr<GrpcRequestOutput> from, OrtModelInput *to);
 };
 
 class SparseFeatureExtractionModelOutput;
@@ -106,8 +116,6 @@ class SparseFEToLookupConverter : public ConverterCRTP<SparseFEToLookupConverter
     status convert(std::unique_ptr<SparseFeatureExtractionModelOutput> from,
                    SparseLookupModelInput *to);
 };
-
-class OrtModelInput;
 
 class DenseFeatureExtractionModelOutput;
 

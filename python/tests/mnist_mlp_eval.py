@@ -41,29 +41,46 @@ validation_loader = torch.utils.data.DataLoader(dataset=validation_dataset,
                                                 batch_size=10, 
                                                 shuffle=False)
 
-# torch script inference
-model_pth = torch.jit.load('mnist_model/model.pth')
-
-for data, target in validation_loader:
-    data = data.to(device)
-    print(f'torchscript data: {data.numpy()}')
-    target = target.to(device)
-    output = model_pth(data)
-    print(f'Predict output from torch script: {output}')
-    break
-
 import onnxruntime
 
-ort_session = onnxruntime.InferenceSession("mnist_model/model.onnx")
+ort_session = onnxruntime.InferenceSession("output/model_export/mnist/model.onnx")
 
 def to_numpy(tensor):
     return tensor.detach().cpu().numpy() if tensor.requires_grad else tensor.cpu().numpy()
 
+model_pth = torch.jit.load('output/model_export/mnist/model.pth')
+
 for data, target in validation_loader:
     data = data.to(device)
-    print(f'onnx data: {data.numpy()}')
+    numpy_input = to_numpy(data)
+    print(f'torchscript data: {numpy_input}')
     target = target.to(device)
-    ort_inputs = {ort_session.get_inputs()[0].name: to_numpy(data)}
+    # torch script inference
+    output = model_pth(data)
+    print(f'Predict output from torch script: {output}')
+
+    # onnx runtime inference
+    ort_inputs = {ort_session.get_inputs()[0].name: numpy_input}
     ort_outs = ort_session.run(None, ort_inputs)
-    print(f'Predict output from onnxruntime: {ort_outs}')
+    print(f'Predict output from python onnxruntime: {ort_outs}')
+
+    # metaspore serving inference
+    import pyarrow as pa
+    t = pa.Tensor.from_numpy(numpy_input)
+    sink = pa.BufferOutputStream()
+    buffer = pa.ipc.write_tensor(t, sink)
+    payload_map = {"input": sink.getvalue().to_pybytes()}
+
+    import grpc
+    import metaspore_pb2
+    import metaspore_pb2_grpc
+
+    with grpc.insecure_channel('0.0.0.0:50051') as channel:
+        stub = metaspore_pb2_grpc.PredictStub(channel)
+        request = metaspore_pb2.PredictRequest(model_name="mnist", payload=payload_map)
+        reply = stub.Predict(request)
+        for name in reply.payload:
+            with pa.BufferReader(reply.payload[name]) as reader:
+                tensor = pa.ipc.read_tensor(reader)
+                print(f'Predict output from metaspore serving with onnxruntime, name {name}: {tensor.to_numpy()}')
     break

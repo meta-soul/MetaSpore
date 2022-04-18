@@ -18,6 +18,11 @@ find_package(GTest CONFIG REQUIRED)
 enable_testing()
 
 add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/cpp/tests/data/MNIST/raw/t10k-images-idx3-ubyte
+    COMMAND find . -type f -name '*.gz' -exec sh -c 'file=$$1\; [ -e "\$\${file%.gz}" ] || gunzip -k "\$\${file}";' find-sh {} \\\;
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cpp/tests/data/MNIST/raw
+)
+add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/data
     COMMAND ${CMAKE_COMMAND} -E create_symlink 
     ${CMAKE_SOURCE_DIR}/cpp/tests/data ${CMAKE_BINARY_DIR}/data)
@@ -26,7 +31,9 @@ add_custom_command(
     COMMAND ${CMAKE_COMMAND} -E create_symlink 
     ${CMAKE_SOURCE_DIR}/cpp/tests/schema ${CMAKE_BINARY_DIR}/schema)
 add_custom_target(copy_files ALL
-    DEPENDS ${CMAKE_BINARY_DIR}/data ${CMAKE_BINARY_DIR}/schema
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/cpp/tests/data/MNIST/raw/t10k-images-idx3-ubyte
+            ${CMAKE_BINARY_DIR}/data
+            ${CMAKE_BINARY_DIR}/schema
 )
 
 if(BUILD_SERVING_BIN)

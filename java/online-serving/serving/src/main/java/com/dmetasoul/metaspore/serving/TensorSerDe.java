@@ -16,12 +16,14 @@
 
 package com.dmetasoul.metaspore.serving;
 
-import org.apache.arrow.flatbuf.Tensor;
-
 import java.io.IOException;
 
+import com.google.protobuf.ByteString;
+
 public class TensorSerDe {
-    public static void serializeTo(String name, Tensor tensor, PredictRequest request) {
+    public static void serializeTo(String name, ArrowTensor tensor, PredictRequest.Builder builder) throws IOException {
+        ByteString payload = ArrowTensor.writeToByteString(tensor);
+        builder.putPayload(name, payload);
     }
 
     public static ArrowTensor deserializeFrom(String name, PredictReply response) throws IOException {

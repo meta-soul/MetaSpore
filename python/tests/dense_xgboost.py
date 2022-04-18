@@ -16,6 +16,8 @@
 
 import xgboost as xgb
 import numpy as np
+import pathlib
+import os
 
 data = np.random.rand(5, 10).astype('f')  # 5 entities, each contains 10 features
 label = np.random.randint(2, size=5)  # binary target
@@ -28,24 +30,23 @@ param['eval_metric'] = 'auc'
 num_round = 10
 bst = xgb.train(param, dtrain, num_round, )
 
-# dump model
-bst.dump_model('dump.raw.txt')
-# dump model with feature map
-# bst.dump_model('dump.raw.txt', 'featmap.txt')
-
 from onnxmltools import convert_xgboost
 from onnxconverter_common.data_types import FloatTensorType
 
 initial_types = [('input', FloatTensorType(shape=[-1, 10]))]
 xgboost_onnx_model = convert_xgboost(bst, initial_types=initial_types, target_opset=14)
 
-with open("xgboost.onnx", "wb") as f:
+output_dir = "output/model_export/xgboost/"
+
+pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+with open(os.path.join(output_dir, 'model.onnx'), "wb") as f:
     f.write(xgboost_onnx_model.SerializeToString())
 
 import onnxruntime as ort
 test_data = np.random.rand(1, 10).astype('f')
 print(f'Test data: {test_data}')
-ort_sess = ort.InferenceSession('xgboost.onnx')
+ort_sess = ort.InferenceSession(os.path.join(output_dir, 'model.onnx'))
 outputs = ort_sess.run(None, {'input': test_data})
 
 # Print Result 

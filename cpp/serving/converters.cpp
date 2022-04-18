@@ -28,6 +28,38 @@
 
 namespace metaspore::serving {
 
+template <typename T> Ort::Value Converter::arrow_to_ort_tensor(const arrow::Tensor &arrow_tensor) {
+    const auto &shape = arrow_tensor.shape();
+    const T *data = (const T *)arrow_tensor.raw_data();
+    Ort::Value ort_tensor = Ort::Value::CreateTensor<T>(
+        Ort::AllocatorWithDefaultOptions().GetInfo(), const_cast<T *>(data),
+        (size_t)arrow_tensor.size(), shape.data(), shape.size());
+    return ort_tensor;
+}
+
+template Ort::Value Converter::arrow_to_ort_tensor<float>(const arrow::Tensor &arrow_tensor);
+template Ort::Value Converter::arrow_to_ort_tensor<int32_t>(const arrow::Tensor &arrow_tensor);
+template Ort::Value Converter::arrow_to_ort_tensor<int64_t>(const arrow::Tensor &arrow_tensor);
+template Ort::Value Converter::arrow_to_ort_tensor<double>(const arrow::Tensor &arrow_tensor);
+
+// specialized with no static type
+template <> Ort::Value Converter::arrow_to_ort_tensor<void>(const arrow::Tensor &arrow_tensor) {
+    auto type = arrow_tensor.type();
+    switch (type->id()) {
+    case arrow::Type::DOUBLE:
+        return arrow_to_ort_tensor<double>(arrow_tensor);
+    case arrow::Type::FLOAT:
+        return arrow_to_ort_tensor<float>(arrow_tensor);
+    case arrow::Type::INT32:
+        return arrow_to_ort_tensor<int32_t>(arrow_tensor);
+    case arrow::Type::INT64:
+        return arrow_to_ort_tensor<int64_t>(arrow_tensor);
+    default:
+        throw std::runtime_error(fmt::format(
+            "Cannot convert unsupported arrow tensor with type to onnx", type->ToString()));
+    }
+}
+
 status GrpcRequestToFEConverter::convert(std::unique_ptr<GrpcRequestOutput> from,
                                          FeatureExtractionModelInput *to) {
     for (const auto &name : names_) {
@@ -35,6 +67,19 @@ status GrpcRequestToFEConverter::convert(std::unique_ptr<GrpcRequestOutput> from
             auto r, ArrowRecordBatchSerde::deserialize_from(name, from->request));
         to->feature_tables.emplace(name, r);
     }
+    return absl::OkStatus();
+}
+
+status GrpcRequestToOrtConverter::convert(std::unique_ptr<GrpcRequestOutput> from,
+                                          OrtModelInput *to) {
+    for (const auto &name : names_) {
+        ASSIGN_RESULT_OR_RETURN_NOT_OK(auto r,
+                                       ArrowTensorSerde::deserialize_from(name, from->request));
+        to->inputs.emplace(name, OrtModelInput::Value{.value = arrow_to_ort_tensor<void>(*r)});
+    }
+    // move from to the first element to hold all memories
+    if (!to->inputs.empty())
+        to->inputs.begin()->second.holder = std::move(from);
     return absl::OkStatus();
 }
 
@@ -124,20 +169,6 @@ Converter::ort_to_arrow_tensor(const Ort::Value &ort_tensor) {
     }
     return *arrow_tensor_result;
 }
-
-template <typename T> Ort::Value Converter::arrow_to_ort_tensor(const arrow::Tensor &arrow_tensor) {
-    const auto &shape = arrow_tensor.shape();
-    const T *data = (const T *)arrow_tensor.raw_data();
-    Ort::Value ort_tensor = Ort::Value::CreateTensor<T>(
-        Ort::AllocatorWithDefaultOptions().GetInfo(), const_cast<T *>(data),
-        (size_t)arrow_tensor.size(), shape.data(), shape.size());
-    return ort_tensor;
-}
-
-template Ort::Value Converter::arrow_to_ort_tensor<float>(const arrow::Tensor &arrow_tensor);
-template Ort::Value Converter::arrow_to_ort_tensor<int32_t>(const arrow::Tensor &arrow_tensor);
-template Ort::Value Converter::arrow_to_ort_tensor<int64_t>(const arrow::Tensor &arrow_tensor);
-template Ort::Value Converter::arrow_to_ort_tensor<double>(const arrow::Tensor &arrow_tensor);
 
 status OrtToGrpcReplyConverter::convert(std::unique_ptr<OrtModelOutput> from, GrpcReplyInput *to) {
     // serialize ort tensor to grpc bytes

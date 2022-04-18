@@ -20,8 +20,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision import datasets, transforms
-
-import numpy as np
+import pathlib
+import os
 
 if torch.cuda.is_available():
     device = torch.device('cuda')
@@ -34,7 +34,7 @@ batch_size = 32
 
 train_dataset = datasets.MNIST('./data', 
                                train=True, 
-                               download=True, 
+                               download=False, 
                                transform=transforms.ToTensor())
 
 validation_dataset = datasets.MNIST('./data', 
@@ -116,6 +116,10 @@ for epoch in range(1, epochs + 1):
 # save to onnx
 model.eval()
 torch_script = torch.jit.script(model)
-torch_script.save('mnist_model/model.pth')
+
+output_dir = 'output/model_export/mnist/'
+pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+
+torch_script.save(os.path.join(output_dir, 'model.pth'))
 x = torch.randn(10, 1, 28, 28)
-torch.onnx.export(torch_script, x, "mnist_model/model.onnx", input_names=["input"], output_names=["output"], verbose=True)
+torch.onnx.export(torch_script, x, os.path.join(output_dir, "model.onnx"), input_names=["input"], output_names=["output"], verbose=True)
