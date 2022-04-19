@@ -4,41 +4,41 @@ scene-config:
       layers:
         - name: qp
           normalLayerArgs:
-            - experimentName: qp.base
+            - experimentName: qp.qa.base
               ratio: 1.0
         - name: match
           normalLayerArgs:
-            - experimentName: match.base
+            - experimentName: match.qa.base
               ratio: 1.0
         - name: rank
           normalLayerArgs:
-            - experimentName: rank.base
+            - experimentName: rank.qa.base
               ratio: 1.0
         - name: summary
           normalLayerArgs:
-            - experimentName: summary.base
+            - experimentName: summary.qa.base
               ratio: 1.0
 
   experiments:
     - layerName: qp
-      experimentName: qp.base
+      experimentName: qp.qa.base
       extraExperimentArgs:
         modelName: nlp_tokenizer
     - layerName: match
-      experimentName: match.base
+      experimentName: match.qa.base
       extraExperimentArgs:
         modelName: sentence_bert
         matcherNames: [TwoTowersMatcher]
         maxReservation: 200
         itemCfAlgoLevel: 1
     - layerName: rank
-      experimentName: rank.base
+      experimentName: rank.qa.base
       extraExperimentArgs:
         modelName: multimodal_deepfm
         ranker: DeepFMRanker
         maxReservation: 100
     - layerName: summary
-      experimentName: summary.base
+      experimentName: summary.qa.base
       extraExperimentArgs:
         modelName: summary.base
 

@@ -23,6 +23,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -41,6 +43,13 @@ public class MultiModalRetrievalMilvusTests {
     public void testQueryMilvusByEmbedding() {
         System.out.println("Test query Milvus Service by embeddings:");
         MilvusService service = context.getBean(MilvusService.class);
+
+        Map<String, String> args = new HashMap<>();
+        args.put("collectionName", "baike_qa_demo");
+        args.put("outFields", "id");
+        args.put("vectorField", "question_emb");
+        service.setMilvusArgs(args);
+
         // List<List<Float>> vectors = generateFloatVectors(3, 768);
         List<List<Float>> vectors = generateFloatVectors();
         Map<Integer, List<SearchResultsWrapper.IDScore>> result = service.findByEmbeddingVectors(vectors, 5);

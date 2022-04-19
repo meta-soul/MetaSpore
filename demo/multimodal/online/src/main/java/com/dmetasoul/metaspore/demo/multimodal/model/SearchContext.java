@@ -16,8 +16,21 @@
 
 package com.dmetasoul.metaspore.demo.multimodal.model;
 
+
+import com.google.protobuf.ByteString;
+
+import java.util.Map;
+
 public class SearchContext {
     private String userId;
+
+    private String qpQueryEmbeddingModelName;
+
+    private String qpQueryProcessorModelName;
+
+    private String matchEmbeddingModelName;
+
+    private Map<String, ByteString> qpResults;
 
     public SearchContext() {
 
@@ -34,6 +47,22 @@ public class SearchContext {
     public void setUserId(String userId) {
         this.userId = userId;
     }
+
+    public String getQpQueryEmbeddingModelName() { return qpQueryEmbeddingModelName; }
+
+    public void setQpQueryEmbeddingModelName(String modelName) { this.qpQueryEmbeddingModelName = modelName; }
+
+    public String getQpQueryProcessorModelName() { return qpQueryProcessorModelName; }
+
+    public void setQpQueryProcessorModelName(String processorName) { this.qpQueryProcessorModelName = processorName; }
+
+    public Map<String, ByteString> getQpResults() { return qpResults; }
+
+    public void setQpResults(Map<String, ByteString> qpResults) { this.qpResults = qpResults; }
+
+    public String getMatchEmbeddingModelName() { return matchEmbeddingModelName; }
+
+    public void setMatchEmbeddingModelName(String modelName) { this.matchEmbeddingModelName = modelName; }
 
     @Override
     public String toString() {

@@ -27,6 +27,7 @@ import io.milvus.param.dml.SearchParam;
 import io.milvus.response.SearchResultsWrapper;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,24 +36,37 @@ public class MilvusServiceImpl implements MilvusService {
 
     private final MilvusServiceClient milvusClient;
 
-    private final String collectionName;
-
-    private final String outFields;
-
-    private final String vectorField;
-
-    private final String searchParams;
-
-    private final MetricType metricType; // inner product is default
+    private Map<String, Object> milvusArgs;
 
     public MilvusServiceImpl(MilvusServiceClient milvusClient) {
         // Hard code those params for now.
-        this.collectionName = "baike_qa_demo";
-        this.outFields = "id";
-        this.vectorField = "question_emb";
-        this.searchParams = "{\"nprobe\":128}";
-        this.metricType = MetricType.IP;
+        this.milvusArgs = new HashMap<>();
+        this.milvusArgs.put("collectionName", "baike_qa_demo");
+        this.milvusArgs.put("outFields", "id");
+        this.milvusArgs.put("vectorField", "question_emb");
+        this.milvusArgs.put("searchParams", "{\"nprobe\":128}");
+        this.milvusArgs.put("metricType", MetricType.IP); // inner product is default
         this.milvusClient = milvusClient;
+    }
+
+    @Override
+    public Map<String, String> getMilvusArgs() {
+        List<String> names = List.of("collectionName", "outFields", "vectorField", "searchParams", "metricType");
+        Map<String, String> args = new HashMap<>();
+        for (String name : names) {
+            args.put(name, (String) this.milvusArgs.get(name));
+        }
+        return args;
+    }
+
+    @Override
+    public void setMilvusArgs(Map<String, String> args) {
+        List<String> names = List.of("collectionName", "outFields", "vectorField", "searchParams");
+        for (String name : names) {
+            if (this.milvusArgs.containsKey(name) && args.containsKey(name)) {
+                this.milvusArgs.put(name, args.get(name));
+            }
+        }
     }
 
     @Override
@@ -62,16 +76,22 @@ public class MilvusServiceImpl implements MilvusService {
 
     @Override
     public Map<Integer, List<SearchResultsWrapper.IDScore>> findByEmbeddingVectors(List<List<Float>> vectors, int topK, long timeout) {
-        List<String> outFields = Collections.singletonList(this.outFields);
+        String collectionName = (String) this.milvusArgs.get("collectionName");
+        String fields = (String) this.milvusArgs.get("outFields");
+        String vectorField = (String) this.milvusArgs.get("vectorField");
+        String params = (String) this.milvusArgs.get("searchParams");
+        MetricType metricType = (MetricType) this.milvusArgs.get("metricType");
+
+        List<String> outFields = Collections.singletonList(fields);
         SearchParam searchParam = SearchParam.newBuilder()
-                .withCollectionName(this.collectionName)
-                .withMetricType(this.metricType)
+                .withCollectionName(collectionName)
+                .withMetricType(metricType)
                 .withOutFields(outFields)
                 .withTopK(topK)
                 .withVectors(vectors)
-                .withVectorFieldName(this.vectorField)
+                .withVectorFieldName(vectorField)
                 .withExpr("")
-                .withParams(this.searchParams)
+                .withParams(params)
                 .withGuaranteeTimestamp(timeout)
                 .build();
 

@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 
 public interface MilvusService {
+    Map<String, String> getMilvusArgs();
+    void setMilvusArgs(Map<String, String> args);
     Map<Integer, List<SearchResultsWrapper.IDScore>> findByEmbeddingVectors(List<List<Float>> vectors, int topK);
     Map<Integer, List<SearchResultsWrapper.IDScore>> findByEmbeddingVectors(List<List<Float>> vectors, int topK, long timeout);
 }

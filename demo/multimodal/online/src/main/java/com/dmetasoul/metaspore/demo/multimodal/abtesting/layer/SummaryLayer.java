@@ -16,6 +16,9 @@
 
 package com.dmetasoul.metaspore.demo.multimodal.abtesting.layer;
 
+import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.LayerBucketizer;
+import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.RandomLayerBucketizer;
+import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.SHA256LayerBucketizer;
 import com.dmetasoul.metaspore.demo.multimodal.model.SearchResult;
 import com.dmetasoul.metaspore.pipeline.BaseLayer;
 import com.dmetasoul.metaspore.pipeline.annotation.LayerAnnotation;
@@ -23,17 +26,30 @@ import com.dmetasoul.metaspore.pipeline.impl.Context;
 import com.dmetasoul.metaspore.pipeline.pojo.LayerArgs;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+
 @LayerAnnotation(name = "summary")
 @Component
 public class SummaryLayer implements BaseLayer<SearchResult> {
+    private LayerBucketizer bucketizer;
+
     @Override
     public void intitialize(LayerArgs layerArgs) {
         System.out.println("Summary layer, args:" + layerArgs);
+        Map<String, Object> extraArgs = layerArgs.getExtraLayerArgs();
+        String bucketizer = (String) extraArgs.getOrDefault("bucketizer", "sha256");
+        switch (bucketizer.toLowerCase()) {
+            case "random":
+                this.bucketizer = new RandomLayerBucketizer(layerArgs);
+                break;
+            default:
+                this.bucketizer = new SHA256LayerBucketizer(layerArgs);
+        }
     }
 
     @Override
     public String split(Context ctx, SearchResult in) {
-        String returnExp = "summary.base";
+        String returnExp = bucketizer.toBucket(in.getSearchContext());
         System.out.printf("Summary layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
         return returnExp;
     }

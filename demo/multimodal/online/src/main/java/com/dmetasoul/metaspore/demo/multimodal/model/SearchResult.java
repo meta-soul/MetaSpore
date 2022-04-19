@@ -16,6 +16,10 @@
 
 package com.dmetasoul.metaspore.demo.multimodal.model;
 
+import com.dmetasoul.metaspore.demo.multimodal.model.QueryModel;
+import com.dmetasoul.metaspore.demo.multimodal.model.ItemModel;
+import java.util.List;
+
 public class SearchResult {
     private String searchQuery;
 
@@ -23,11 +27,22 @@ public class SearchResult {
 
     private SearchContext searchContext;
 
+    private QueryModel queryModel;
+
+    private List<ItemModel> searchItemModels;
+
     public SearchResult() {
     }
 
     public SearchResult(String searchQuery, SearchContext searchContext) {
         this.searchQuery = searchQuery;
+        this.searchContext = searchContext;
+        this.queryModel = new QueryModel();
+        this.queryModel.setQuery(searchQuery);
+    }
+
+    public SearchResult(QueryModel queryModel, SearchContext searchContext) {
+        this.queryModel = queryModel;
         this.searchContext = searchContext;
     }
 
@@ -55,12 +70,21 @@ public class SearchResult {
         this.searchContext = searchContext;
     }
 
+    public QueryModel getQueryModel() { return queryModel; }
+
+    public void setQueryModel(QueryModel queryModel) { this.queryModel = queryModel; }
+
+    public List<ItemModel> getSearchItemModels() { return searchItemModels; }
+
+    public void setSearchItemModels(List<ItemModel> searchItemModels) { this.searchItemModels = searchItemModels; }
+
     @Override
     public String toString() {
         return "SearchResult{" +
-                "searchQuery='" + searchQuery + '\'' +
+                "searchQueryModel='" + queryModel + '\'' +
                 ", searchResult='" + searchResult + '\'' +
                 ", searchContext=" + searchContext +
+                ", searchItemModels=" + searchItemModels + '\'' +
                 '}';
     }
 }

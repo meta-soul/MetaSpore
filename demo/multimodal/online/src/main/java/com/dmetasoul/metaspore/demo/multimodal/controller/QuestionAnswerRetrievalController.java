@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.demo.multimodal.controller;
 import com.dmetasoul.metaspore.demo.multimodal.model.SearchResult;
 import com.dmetasoul.metaspore.demo.multimodal.model.request.PayloadParam;
 import com.dmetasoul.metaspore.demo.multimodal.model.SearchContext;
+import com.dmetasoul.metaspore.demo.multimodal.model.QueryModel;
 import com.dmetasoul.metaspore.pipeline.ScenesFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
