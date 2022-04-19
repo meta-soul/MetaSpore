@@ -1,3 +1,5 @@
+## [中文介绍](README-CN.md)
+
 # CTR Demo
 
 Click-through rate (CTR) is the ratio of users who click on a specific link to the number of total users who view a page,
@@ -25,9 +27,9 @@ We are continuously adding models:
 ## How to run
 
 ### Data preprocessing and feature generation
-For MovieLens dataset, we just use user_id and movie_id of as model's features for now.
+For MovieLens dataset, we just use `user_id` and `movie_id` of as model's features for now.
 
-For Criteo dataset, we normalize numerical values by transforming from a value z to log(z) if z > 2, which is proposed by the winner of Criteo Competition.
+For Criteo dataset, we normalize numerical values by transforming from a value `z` to `log(z)` if `z > 2`, which is proposed by the winner of Criteo Competition.
 ```python
 import numpy as np
 def transform_number(x):
