@@ -7,10 +7,10 @@ In this demo, we will implement the most effective CTR models, and give the benc
 ## Model list
 We are continuously adding models:
 
-|   Model   |            Train script             |                     Net implement                      |                                                       Paper                                                       |
-|:---------:|:-----------------------------------:|:------------------------------------------------------:|:-----------------------------------------------------------------------------------------------------------------:|
-| Wide&Deep | [widedeep.py](widedeep/widedeep.py) | [widedeep_net.py](../../python/algos/widedeep_net.py)  |        [Wide & Deep Learning for Recommender Systems](https://dl.acm.org/doi/pdf/10.1145/2988450.2988454)         |
-|  DeepFM   |    [deepfm.py](deepfm/deepfm.py)    |   [deepfm_net.py](../../python/algos/deepfm_net.py)    |  [DeepFM: A Factorization-Machine based Neural Network for CTR Prediction](https://arxiv.org/pdf/1703.04247.pdf)  |
+|   Model   |            Train script             |                     Net implement                      | Paper                                                                                                             |
+|:---------:|:-----------------------------------:|:------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------|
+| Wide&Deep | [widedeep.py](widedeep/widedeep.py) | [widedeep_net.py](../../python/algos/widedeep_net.py)  | [Wide & Deep Learning for Recommender Systems](https://dl.acm.org/doi/pdf/10.1145/2988450.2988454)                |
+|  DeepFM   |    [deepfm.py](deepfm/deepfm.py)    |   [deepfm_net.py](../../python/algos/deepfm_net.py)    | [DeepFM: A Factorization-Machine based Neural Network for CTR Prediction](https://arxiv.org/pdf/1703.04247.pdf)   |
 |    DCN    |        [dcn.py](dcn/dcn.py)         |      [dcn_net.py](../../python/algos/dcn_net.py)       | [DeepAndCross: Deep & Cross Network for Ad Click Predictions](https://dl.acm.org/doi/pdf/10.1145/3124749.3124754) |
 
 

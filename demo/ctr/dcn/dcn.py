@@ -38,8 +38,6 @@ def init_spark():
     spark_confs={
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
-        # "spark.ui.showConsoleProgress": "false",
-        #"spark.kubernetes.executor.deleteOnTermination":"false",
     }
     spark_session = ms.spark.get_session(local=local,
                                         app_name=app_name,
