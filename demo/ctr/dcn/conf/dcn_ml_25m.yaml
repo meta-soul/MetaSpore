@@ -1,0 +1,45 @@
+## spark session
+app_name: 'CTR Demo Deep&Cross'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 256
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+
+## datasets
+train_path: ${MY_S3_BUCKET}/movielens/feature_generation/rank/25m/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/feature_generation/rank/25m/test.parquet
+
+## model configurations
+wide_column_name_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema
+wide_combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema
+deep_column_name_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema
+deep_combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema
+
+model_in_path: null
+model_out_path: ${MY_S3_BUCKET}/movielens/model/dcn/model_out/ml_25m/
+model_export_path: ${MY_S3_BUCKET}/movielens/model/dcn/model_export/ml_25m/
+model_version: '0.1'
+experiment_name: movie_lens_dcn_25m
+input_label_column_index: 0
+metric_update_interval: 100
+
+## model hyper params
+use_wide: True
+wide_embedding_dim: 16
+deep_embedding_dim: 16
+adam_learning_rate: 0.00001
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.01
+ftrl_beta: 1.0
+crossing_layers: 3
+dnn_hidden_units: [1024, 1024, 512, 512, 512]
+sparse_init_var: 0.01
+dnn_activations: ReLU
+use_bias: True
+batch_norm: False
+net_dropout: null
+net_regularizer: null

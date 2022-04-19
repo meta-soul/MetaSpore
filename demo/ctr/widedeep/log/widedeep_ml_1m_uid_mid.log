@@ -1,0 +1,489 @@
+Debug -- Ctr Demo Wide&Deep
+Debug--load config: {'app_name': 'WideDeep Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 60, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': '${MY_S3_BUCKET}/movielens/rank/train.parquet', 'test_path': '${MY_S3_BUCKET}/movielens/rank/test.parquet', 'column_name_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema', 'combine_schema_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema', 'wide_combine_schema_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema', 'model_in_path': None, 'model_out_path': '${MY_S3_BUCKET}/movielens/model/widedeep/model_out/ml_1m/', 'model_export_path': '${MY_S3_BUCKET}/movielens/model/widedeep/model_export/ml_1m/', 'model_version': '0.1', 'experiment_name': 'movie_lens_wdl_1m', 'input_label_column_index': 0, 'embedding_size': 10, 'net_dropout': 0.0, 'adam_learning_rate': 1e-05, 'ftrl_alpha': 0.02, 'ftrl_beta': 1.0, 'ftrl_l1': 1.0, 'ftrl_l2': 1.0, 'dnn_hidden_units': [1024, 512, 256, 128]}
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.spark.unsafe.Platform (file:/opt/spark/jars/spark-unsafe_2.12-3.1.2.jar) to constructor java.nio.DirectByteBuffer(long,int)
+WARNING: Please consider reporting this to the maintainers of org.apache.spark.unsafe.Platform
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+22/04/13 07:11:33 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+Debug -- spark init
+Debug -- version: 3.1.2
+Debug -- applicaitonId: spark-application-1649833895421
+Debug -- uiWebUrl: http://jupyter.my.nginx.test/hub/user-redirect/proxy/4040/jobs/
+Debug -- match train dataset sample:                                                                                                                        
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+                              
+|label|user_id|gender|age|occupation|  zip|movie_id|    recent_movie_ids|               genre|last_movie|          last_genre|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+
+|    1|   5289|     M| 45|         2|94102|    1124|11612352268694...|               Drama|      3478|               Drama|
+|    0|   3771|     M| 25|         1|14982|    2462|19801976245629...|              Horror|      1655|              Horror|
+|    1|   3491|     M| 25|        16|28542|    2358|2279891978442...|               Drama|      2252|        ComedyDrama|
+|    1|   2304|     M| 45|        12|94103|     848|16821245161928...|               Drama|        25|       DramaRomance|
+|    0|    546|     F| 25|         0|37211|    1249|25391617109211...|            Thriller|      3751|AnimationChildre...|
+|    1|     62|     F| 35|         3|98105|    1235|31423423202112...|              Comedy|      1193|               Drama|
+|    0|   5996|     F| 25|         0|87114|    2950|30884632573686...|AdventureDramaR...|      1381|ComedyMusicalRo...|
+|    1|    715|     M| 18|         0|53715|    1079|36831199381111...|              Comedy|      2917|      CrimeThriller|
+|    1|   2733|     M| 45|        17|94002|    1244|27321299292511...|ComedyDramaRomance|       527|           DramaWar|
+|    1|   1160|     M| 18|        14|07017|    2840|26862394361734...|            Thriller|      2700|    AnimationComedy|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+
+only showing top 10 rows
+
+Debug--match train test dataset sample:
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+                              
+|label|user_id|gender|age|occupation|  zip|movie_id|    recent_movie_ids|               genre|last_movie|          last_genre|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+
+|    1|   2271|     M| 50|        14|13210|    3578|89919451069903...|        ActionDrama|      3384|              Action|
+|    1|   1304|     M| 25|        14|97203|    1073|24671617338636...|AdventureChildre...|      2174|      ComedyFantasy|
+|    1|   4892|     M| 25|        12|55405|    3464|43515443354261...|     Sci-FiThriller|       692|ActionSci-FiThr...|
+|    1|   3682|     F| 50|         1|10706|    2064|23522133122034...|  ComedyDocumentary|      2478|      ComedyWestern|
+|    1|   2767|     M| 25|         0|99163|    1909|25422901625317...|MysterySci-FiTh...|      1589| CrimeDramaMystery|
+|    1|   2694|     M| 18|         4|90024|    3301|53213201690177...|        ComedyCrime|      3785|       ComedyHorror|
+|    1|   3485|     M| 25|         0|94121|    1927|90412885931254...|                 War|      1293|               Drama|
+|    0|   2127|     M| 18|         4|12309|    2719|36414051023121...|     HorrorThriller|      1438|     ActionThriller|
+|    1|   4240|     M| 35|        17|55330|    2414|11293072287232...|ActionAdventure...|      2161|AdventureChildre...|
+|    1|   5097|     M| 56|        16|19131|    1222|39489991019316...|    ActionDramaWar|       382|        DramaHorror|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+
+only showing top 10 rows
+
+Debug -- train dataset positive count: 571725                                                                                                               
+Debug -- train dataset negative count: 162643                                                                                                               
+Debug -- test dataset count: 4646                                                                                                                           
+Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
+[WARN] 2022-04-13 07:12:23.232 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-04-13 07:12:23.232] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema, read_only: true
+
+[2022-04-13 07:12:23.256] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with total length: 117
+
+[2022-04-13 07:12:23.260] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with size 117 at position 0 larger than total size: 117, change size to 117
+
+[2022-04-13 07:12:23.302] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+
+[2022-04-13 07:12:23.303] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+
+[WARN] 2022-04-13 07:12:23.303 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-04-13 07:12:23.303] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema, read_only: true
+
+[2022-04-13 07:12:23.324] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema with total length: 17
+
+[2022-04-13 07:12:23.327] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
+
+[2022-04-13 07:12:23.370] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema reached end 17
+
+[2022-04-13 07:12:23.371] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema reached end 17
+
+loaded combine schema from column name file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema' and combine schema file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/wide_combine_column_schema'
+[WARN] 2022-04-13 07:12:23.425 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-04-13 07:12:23.425] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema, read_only: true
+
+[2022-04-13 07:12:23.449] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with total length: 117
+
+[2022-04-13 07:12:23.449] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema with size 117 at position 0 larger than total size: 117, change size to 117
+
+[2022-04-13 07:12:23.496] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+
+[2022-04-13 07:12:23.496] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema reached end 117
+
+[WARN] 2022-04-13 07:12:23.496 STSAssumeRoleWithWebIdentityCredentialsProvider [140645024565056] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-04-13 07:12:23.497] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema, read_only: true
+
+[2022-04-13 07:12:23.516] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema with total length: 17
+
+[2022-04-13 07:12:23.516] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
+
+[2022-04-13 07:12:23.559] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema reached end 17
+
+[2022-04-13 07:12:23.560] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema reached end 17
+
+loaded combine schema from column name file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/column_schema' and combine schema file '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_1m/combine_column_schema'
+[2022-04-13 07:12:25.883] [info] PS job with coordinator address 10.0.1.219:44425 started.
+[2022-04-13 07:12:25.883] [info] PSRunner::RunPS: pid: 30434, tid: 30691, thread: 0x7fea4143b700
+[2022-04-13 07:12:25.883] [info] PSRunner::RunPSCoordinator: pid: 30434, tid: 30691, thread: 0x7fea4143b700
+[2022-04-13 07:12:25.885] [info] ActorProcess::Receiving: Coordinator pid: 30434, tid: 30694, thread: 0x7fea237fe700
+[2022-04-13 07:12:26.852] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.                                              (0 + 4) / 4]
+PS Coordinator node C[0]:9 is ready.
+2022-04-13 07:12:31.128 -- auc: 0.5159461161084011, Δauc: 0.5159461161084011, pcoc: 0.9070678996998812, Δpcoc: 0.9070678996998812, #instance: 6000 + 4) / 8]
+2022-04-13 07:12:31.137 -- auc: 0.5240760259406854, Δauc: 0.5321270314294734, pcoc: 0.9066028629847467, Δpcoc: 0.9061367245242176, #instance: 12000
+2022-04-13 07:12:31.187 -- auc: 0.5285252197001733, Δauc: 0.5374003844415011, pcoc: 0.9099971225697213, Δpcoc: 0.9167892946234254, #instance: 18000
+2022-04-13 07:12:31.238 -- auc: 0.5337288297832601, Δauc: 0.5500319219051031, pcoc: 0.9123785780589879, Δpcoc: 0.9194842133867952, #instance: 24000
+2022-04-13 07:12:33.988 -- auc: 0.5927833133897888, Δauc: 0.7771225612668317, pcoc: 0.9308070907887724, Δpcoc: 1.0043630927136586, #instance: 30000
+2022-04-13 07:12:34.045 -- auc: 0.6327909251584306, Δauc: 0.792089575161324, pcoc: 0.9430487171102377, Δpcoc: 1.0041780737734107, #instance: 36000
+2022-04-13 07:12:34.100 -- auc: 0.657943056008679, Δauc: 0.7824344267146324, pcoc: 0.9510351948414942, Δpcoc: 0.9988411418780774, #instance: 42000
+2022-04-13 07:12:34.150 -- auc: 0.6753371070479148, Δauc: 0.7743714478916778, pcoc: 0.9577100258016791, Δpcoc: 1.004319498523655, #instance: 48000
+2022-04-13 07:12:36.915 -- auc: 0.6946904534032754, Δauc: 0.814935991732946, pcoc: 0.962134704195433, Δpcoc: 0.9972607711714009, #instance: 54000
+2022-04-13 07:12:36.970 -- auc: 0.7091345649150602, Δauc: 0.8173807350474553, pcoc: 0.9666172285844008, Δpcoc: 1.0070292654725694, #instance: 60000
+2022-04-13 07:12:37.061 -- auc: 0.7220943681966698, Δauc: 0.8258048913043479, pcoc: 0.9705066029761896, Δpcoc: 1.0099347131148628, #instance: 66000
+2022-04-13 07:12:37.075 -- auc: 0.732706918747754, Δauc: 0.8246556316437728, pcoc: 0.9726668494843367, Δpcoc: 0.9961994348777854, #instance: 72000
+2022-04-13 07:12:39.750 -- auc: 0.741682263486751, Δauc: 0.8324898971196728, pcoc: 0.9751455606461044, Δpcoc: 1.0048343633941716, #instance: 78000
+2022-04-13 07:12:39.805 -- auc: 0.7497018668954174, Δauc: 0.833322420278576, pcoc: 0.9775655740698108, Δpcoc: 1.009393897321489, #instance: 84000
+2022-04-13 07:12:39.917 -- auc: 0.7557735460597137, Δauc: 0.8278290707917894, pcoc: 0.9790372323226787, Δpcoc: 0.9996806501855028, #instance: 90000
+2022-04-13 07:12:40.158 -- auc: 0.7612535842873871, Δauc: 0.8331164188015068, pcoc: 0.9802762224336825, Δpcoc: 0.9987400294163935, #instance: 96000
+2022-04-13 07:12:42.589 -- auc: 0.7676183585410986, Δauc: 0.8541141381766382, pcoc: 0.9816022222457051, Δpcoc: 1.002724719251323, #instance: 102000
+2022-04-13 07:12:42.672 -- auc: 0.772939211035933, Δauc: 0.8491251003285268, pcoc: 0.9825701212636541, Δpcoc: 0.9990867353476713, #instance: 108000
+2022-04-13 07:12:42.778 -- auc: 0.7777133776983252, Δauc: 0.8516318523819579, pcoc: 0.9834520530022295, Δpcoc: 0.999217240706734, #instance: 114000
+2022-04-13 07:12:43.095 -- auc: 0.7815402046775318, Δauc: 0.8455971138224128, pcoc: 0.9843742682866979, Δpcoc: 1.0019088317622131, #instance: 120000
+2022-04-13 07:12:45.424 -- auc: 0.7861359218741849, Δauc: 0.8636455872720333, pcoc: 0.984939347334418, Δpcoc: 0.9962146821087354, #instance: 126000
+2022-04-13 07:12:45.501 -- auc: 0.7891712866566842, Δauc: 0.8465726141375023, pcoc: 0.9855244633681474, Δpcoc: 0.9977533135222737, #instance: 132000
+2022-04-13 07:12:45.683 -- auc: 0.7921353584594896, Δauc: 0.8484079456135902, pcoc: 0.9863061826901242, Δpcoc: 1.0035880762955238, #instance: 138000
+2022-04-13 07:12:45.966 -- auc: 0.7948949353826602, Δauc: 0.8502894158668698, pcoc: 0.9870541110185838, Δpcoc: 1.0043704849009225, #instance: 144000
+2022-04-13 07:12:48.178 -- auc: 0.7982109019489566, Δauc: 0.8684799888213456, pcoc: 0.9872748957276861, Δpcoc: 0.9924880622282344, #instance: 150000
+2022-04-13 07:12:48.284 -- auc: 0.8002184781460895, Δauc: 0.8443422018366236, pcoc: 0.9878235093431034, Δpcoc: 1.0015549854231065, #instance: 156000
+2022-04-13 07:12:48.501 -- auc: 0.8023782984742732, Δauc: 0.8521158458253988, pcoc: 0.988300806050441, Δpcoc: 1.0007539670750072, #instance: 162000
+2022-04-13 07:12:48.877 -- auc: 0.8044020699528458, Δauc: 0.8524931080984892, pcoc: 0.9889802770864303, Δpcoc: 1.0073286184984336, #instance: 168000
+2022-04-13 07:12:50.935 -- auc: 0.8063326499499484, Δauc: 0.8544470385822437, pcoc: 0.9891465315296153, Δpcoc: 0.9937953176884459, #instance: 174000
+2022-04-13 07:12:51.069 -- auc: 0.8080051437079363, Δauc: 0.8524407031122156, pcoc: 0.9893824631376655, Δpcoc: 0.9962345636177719, #instance: 180000
+2022-04-13 07:12:51.328 -- auc: 0.8096446800048234, Δauc: 0.8547530930055202, pcoc: 0.9900000941745634, Δpcoc: 1.0086394926233713, #instance: 186000
+2022-04-13 07:12:51.775 -- auc: 0.8115453366422081, Δauc: 0.863030574586692, pcoc: 0.9901956760225719, Δpcoc: 0.9962402258906434, #instance: 192000
+2022-04-13 07:12:53.795 -- auc: 0.8131411520093751, Δauc: 0.8606556719322932, pcoc: 0.9907100976930605, Δpcoc: 1.0071651939666906, #instance: 198000
+2022-04-13 07:12:53.963 -- auc: 0.8146009784563732, Δauc: 0.8579975928788476, pcoc: 0.9909038095060423, Δpcoc: 0.9972140651220692, #instance: 204000
+2022-04-13 07:12:54.216 -- auc: 0.8160095909916765, Δauc: 0.8602722807823764, pcoc: 0.9912457634862097, Δpcoc: 1.0027709571765409, #instance: 210000
+2022-04-13 07:12:54.684 -- auc: 0.8174500064200572, Δauc: 0.8625105104608051, pcoc: 0.991269238220706, Δpcoc: 0.9920813148304567, #instance: 216000
+2022-04-13 07:12:56.673 -- auc: 0.8189287475045601, Δauc: 0.8658028100160999, pcoc: 0.9917261525236292, Δpcoc: 1.008330633752201, #instance: 222000
+2022-04-13 07:12:56.850 -- auc: 0.8201924268585665, Δauc: 0.8630263560399929, pcoc: 0.9919225259038201, Δpcoc: 0.9991814027251217, #instance: 228000
+2022-04-13 07:12:57.095 -- auc: 0.8213327909376482, Δauc: 0.8614480526798796, pcoc: 0.9922373885527698, Δpcoc: 1.0041910445154096, #instance: 234000
+2022-04-13 07:12:57.572 -- auc: 0.8224711182966549, Δauc: 0.8631186227915308, pcoc: 0.9924138875628435, Δpcoc: 0.9993192073581706, #instance: 240000
+2022-04-13 07:12:59.503 -- auc: 0.8236873604814228, Δauc: 0.8677301708865431, pcoc: 0.9923426023812014, Δpcoc: 0.9895193945167425, #instance: 246000
+2022-04-13 07:12:59.759 -- auc: 0.8250643744474587, Δauc: 0.8759040441397221, pcoc: 0.9923529053392075, Δpcoc: 0.9927710734235062, #instance: 252000
+2022-04-13 07:12:59.959 -- auc: 0.8259380770114695, Δauc: 0.860244916765637, pcoc: 0.9927841324275813, Δpcoc: 1.0109840508041135, #instance: 258000
+2022-04-13 07:13:00.566 -- auc: 0.8268959472633742, Δauc: 0.864515165496897, pcoc: 0.9929099266564453, Δpcoc: 0.9982789752332265, #instance: 264000
+2022-04-13 07:13:02.356 -- auc: 0.8276776882222394, Δauc: 0.8601179188927619, pcoc: 0.9930478866755083, Δpcoc: 0.9990626330892894, #instance: 270000
+2022-04-13 07:13:02.695 -- auc: 0.8285372698745266, Δauc: 0.8634141653288502, pcoc: 0.9930630893851752, Δpcoc: 0.993743696523683, #instance: 276000
+2022-04-13 07:13:02.901 -- auc: 0.8292030447181784, Δauc: 0.8574365359861638, pcoc: 0.9933225899552982, Δpcoc: 1.0053508389752437, #instance: 282000
+2022-04-13 07:13:03.529 -- auc: 0.8300342930318035, Δauc: 0.8662574481910055, pcoc: 0.9933959950403423, Δpcoc: 0.9968005728454525, #instance: 288000
+2022-04-13 07:13:05.260 -- auc: 0.8308252522552089, Δauc: 0.8659844228570923, pcoc: 0.993704578910592, Δpcoc: 1.008631541186692, #instance: 294000
+2022-04-13 07:13:05.642 -- auc: 0.8315620875048169, Δauc: 0.8651061260553068, pcoc: 0.9937999547781402, Δpcoc: 0.998468597372934, #instance: 300000
+2022-04-13 07:13:05.822 -- auc: 0.8324210510212842, Δauc: 0.8721347442165166, pcoc: 0.9937435899496335, Δpcoc: 0.9909685433338282, #instance: 306000
+2022-04-13 07:13:06.448 -- auc: 0.8330135579305223, Δauc: 0.8616878799971904, pcoc: 0.9940606002151333, Δpcoc: 1.0103317446504219, #instance: 312000
+2022-04-13 07:13:08.081 -- auc: 0.8338213021945177, Δauc: 0.8724140197874057, pcoc: 0.9940492267147645, Δpcoc: 0.9934608067763222, #instance: 318000
+2022-04-13 07:13:08.526 -- auc: 0.8343886166713352, Δauc: 0.8627575433825434, pcoc: 0.9942147123774542, Δpcoc: 1.002967878488394, #instance: 324000
+2022-04-13 07:13:08.693 -- auc: 0.8349875303548673, Δauc: 0.8649779201850759, pcoc: 0.9943983636575857, Δpcoc: 1.004374904004043, #instance: 330000
+2022-04-13 07:13:09.358 -- auc: 0.8355715744402779, Δauc: 0.8656292423108567, pcoc: 0.9944902069581543, Δpcoc: 0.9995505718753247, #instance: 336000
+2022-04-13 07:13:10.957 -- auc: 0.8363281898144801, Δauc: 0.8752255846272383, pcoc: 0.9946001287148809, Δpcoc: 1.0007546175166795, #instance: 342000
+2022-04-13 07:13:11.451 -- auc: 0.8369026362084911, Δauc: 0.8677078463415007, pcoc: 0.9947746494741182, Δpcoc: 1.0048107807310231, #instance: 348000
+2022-04-13 07:13:11.589 -- auc: 0.8376484572540053, Δauc: 0.8769776363767366, pcoc: 0.9946930912911319, Δpcoc: 0.9899612490499541, #instance: 354000
+2022-04-13 07:13:12.297 -- auc: 0.8382604049780601, Δauc: 0.8717148574296666, pcoc: 0.9948686845685447, Δpcoc: 1.005289892141596, #instance: 360000
+2022-04-13 07:13:14.072 -- auc: 0.8387705295609851, Δauc: 0.8676799040937554, pcoc: 0.9950939022939835, Δpcoc: 1.0087295286542581, #instance: 366000 4) / 8]
+2022-04-13 07:13:14.674 -- auc: 0.8394078350242804, Δauc: 0.8754937592158003, pcoc: 0.9952182321109978, Δpcoc: 1.0028256193783132, #instance: 371999
+2022-04-13 07:13:14.759 -- auc: 0.840066870161078, Δauc: 0.877529116552457, pcoc: 0.9953004224270001, Δpcoc: 1.0004603875174698, #instance: 377942
+2022-04-13 07:13:15.108 -- auc: 0.840476193162897, Δauc: 0.865249388732271, pcoc: 0.9953231630239536, Δpcoc: 0.9967464058893495, #instance: 383942
+2022-04-13 07:13:16.978 -- auc: 0.8409779802973185, Δauc: 0.87085619310029, pcoc: 0.9953769502113049, Δpcoc: 0.9988021655419163, #instance: 389942
+2022-04-13 07:13:17.569 -- auc: 0.8414423876563389, Δauc: 0.8701020794616541, pcoc: 0.9954857703042769, Δpcoc: 1.0025213498843648, #instance: 395942
+2022-04-13 07:13:17.616 -- auc: 0.8419572921961403, Δauc: 0.8734862456165853, pcoc: 0.9955236656544342, Δpcoc: 0.9980164014000246, #instance: 401942
+2022-04-13 07:13:18.399 -- auc: 0.8422455572603554, Δauc: 0.8611459008676219, pcoc: 0.9955360113964326, Δpcoc: 0.9963550328955544, #instance: 407923 4) / 8]
+2022-04-13 07:13:19.777 -- auc: 0.8427499683536985, Δauc: 0.8746411764858903, pcoc: 0.9955328169086216, Δpcoc: 0.9953164598640728, #instance: 413923
+2022-04-13 07:13:20.404 -- auc: 0.8432327263266739, Δauc: 0.8740662701340041, pcoc: 0.9955410209196676, Δpcoc: 0.9961065570666436, #instance: 419923
+2022-04-13 07:13:20.424 -- auc: 0.8436287361852944, Δauc: 0.8699700377814873, pcoc: 0.9957315447428887, Δpcoc: 1.0091417306050672, #instance: 425923
+2022-04-13 07:13:21.275 -- auc: 0.8441444606174315, Δauc: 0.8784539144143669, pcoc: 0.9957456330449105, Δpcoc: 0.996736825220856, #instance: 431923
+2022-04-13 07:13:22.627 -- auc: 0.8447311558757922, Δauc: 0.883375678628178, pcoc: 0.9957105827917261, Δpcoc: 0.9932137869172177, #instance: 437923
+2022-04-13 07:13:23.237 -- auc: 0.8451157094782249, Δauc: 0.872043637467802, pcoc: 0.9957751726396139, Δpcoc: 1.0004927774934351, #instance: 443923
+2022-04-13 07:13:23.257 -- auc: 0.8455889295452343, Δauc: 0.8780608066215737, pcoc: 0.9958934350849438, Δpcoc: 1.0046796331299037, #instance: 449923
+2022-04-13 07:13:24.193 -- auc: 0.8458868045164387, Δauc: 0.8674762707920237, pcoc: 0.9959935849417194, Δpcoc: 1.0034859578663444, #instance: 455923
+2022-04-13 07:13:25.452 -- auc: 0.8463013053536268, Δauc: 0.8759843115888452, pcoc: 0.9960194038580601, Δpcoc: 0.9979771958587261, #instance: 461923
+2022-04-13 07:13:26.086 -- auc: 0.846450007926577, Δauc: 0.8577640621787007, pcoc: 0.9960067441319429, Δpcoc: 0.9950337093032866, #instance: 467923
+2022-04-13 07:13:26.103 -- auc: 0.8468131437498356, Δauc: 0.8737370192075478, pcoc: 0.9960306599686944, Δpcoc: 0.997896351293527, #instance: 473923
+2022-04-13 07:13:27.027 -- auc: 0.8470223314728218, Δauc: 0.8634354397623247, pcoc: 0.9960624714340033, Δpcoc: 0.9985577508705814, #instance: 479923
+2022-04-13 07:13:28.282 -- auc: 0.8471995875052827, Δauc: 0.8615294856353534, pcoc: 0.9960834918322545, Δpcoc: 0.9977590435600932, #instance: 485923
+2022-04-13 07:13:28.956 -- auc: 0.8476592405381891, Δauc: 0.8815121613669639, pcoc: 0.9961033655564557, Δpcoc: 0.9977125375601966, #instance: 491923
+2022-04-13 07:13:28.967 -- auc: 0.8480804082880404, Δauc: 0.8796742929703669, pcoc: 0.9962413351918635, Δpcoc: 1.0076164060043356, #instance: 497923
+2022-04-13 07:13:29.934 -- auc: 0.8483347757169841, Δauc: 0.8690638132563658, pcoc: 0.9963157338812697, Δpcoc: 1.002471026731158, #instance: 503923
+2022-04-13 07:13:31.112 -- auc: 0.8485388407321846, Δauc: 0.8652656293233939, pcoc: 0.9963428337092979, Δpcoc: 0.9986100723494344, #instance: 509923
+2022-04-13 07:13:31.821 -- auc: 0.8488318272554218, Δauc: 0.8721987147979456, pcoc: 0.9963950208178449, Δpcoc: 1.000855153970969, #instance: 515923
+2022-04-13 07:13:31.830 -- auc: 0.8490479319785712, Δauc: 0.8664037901138569, pcoc: 0.9964779705243199, Δpcoc: 1.0036270748875833, #instance: 521923
+2022-04-13 07:13:32.815 -- auc: 0.8493519230991095, Δauc: 0.8742356897567584, pcoc: 0.9965165847630787, Δpcoc: 0.9998595380356426, #instance: 527923
+2022-04-13 07:13:33.948 -- auc: 0.8494885571318541, Δauc: 0.8610924653129497, pcoc: 0.996584883169221, Δpcoc: 1.0026122101799722, #instance: 533923
+2022-04-13 07:13:34.627 -- auc: 0.8497315117992631, Δauc: 0.8695886306068819, pcoc: 0.9966056770318173, Δpcoc: 0.998457154719062, #instance: 539923
+2022-04-13 07:13:34.636 -- auc: 0.8500397032549816, Δauc: 0.8756537075365112, pcoc: 0.9965642462393814, Δpcoc: 0.9928576495196368, #instance: 545923
+2022-04-13 07:13:35.710 -- auc: 0.8502967118224884, Δauc: 0.8722633947545073, pcoc: 0.996597356405176, Δpcoc: 0.9996274818773547, #instance: 551923
+2022-04-13 07:13:36.772 -- auc: 0.8505640306631393, Δauc: 0.8737158185060463, pcoc: 0.9966003959921506, Δpcoc: 0.9968786723165752, #instance: 557923
+2022-04-13 07:13:37.489 -- auc: 0.8508741559741121, Δauc: 0.878570249445003, pcoc: 0.9966175770223084, Δpcoc: 0.9982138145061719, #instance: 563923
+2022-04-13 07:13:37.518 -- auc: 0.8512058007661304, Δauc: 0.87980461099407, pcoc: 0.9967459187713873, Δpcoc: 1.0090292703616899, #instance: 569923
+2022-04-13 07:13:38.727 -- auc: 0.851451028231341, Δauc: 0.87346339043691, pcoc: 0.9967947081680225, Δpcoc: 1.0014272159614783, #instance: 575923
+2022-04-13 07:13:39.645 -- auc: 0.851731159991088, Δauc: 0.8770925170933156, pcoc: 0.9967807008622142, Δpcoc: 0.9954464209163318, #instance: 581923
+2022-04-13 07:13:40.361 -- auc: 0.8520514531153017, Δauc: 0.8815732050596115, pcoc: 0.9967299188688475, Δpcoc: 0.9918728039841977, #instance: 587923
+2022-04-13 07:13:40.417 -- auc: 0.8523308552128801, Δauc: 0.8782350047821188, pcoc: 0.9967765033506567, Δpcoc: 1.0013151345392013, #instance: 593923
+2022-04-13 07:13:41.741 -- auc: 0.8526015555475742, Δauc: 0.8781140698900387, pcoc: 0.9968716389931415, Δpcoc: 1.0063404299147236, #instance: 599923
+2022-04-13 07:13:42.510 -- auc: 0.8528652923941744, Δauc: 0.877110655747246, pcoc: 0.9969558699031518, Δpcoc: 1.0055119281593783, #instance: 605923
+2022-04-13 07:13:43.217 -- auc: 0.8531527570399394, Δauc: 0.8804829927615143, pcoc: 0.9969391791627592, Δpcoc: 0.9952494780904745, #instance: 611923
+2022-04-13 07:13:43.271 -- auc: 0.8533875902763257, Δauc: 0.8763216891645238, pcoc: 0.996952477674334, Δpcoc: 0.9983100229038119, #instance: 617923
+2022-04-13 07:13:44.657 -- auc: 0.8537133452891824, Δauc: 0.8852139932993109, pcoc: 0.9970608116704368, Δpcoc: 1.008295553823719, #instance: 623923
+2022-04-13 07:13:45.293 -- auc: 0.8539262946197568, Δauc: 0.8747758960122322, pcoc: 0.9971061931790675, Δpcoc: 1.0018394835547673, #instance: 629923
+2022-04-13 07:13:46.055 -- auc: 0.8541240820999572, Δauc: 0.8735628174812269, pcoc: 0.9970973363072752, Δpcoc: 0.9961700838514111, #instance: 635923
+2022-04-13 07:13:46.076 -- auc: 0.8543168591354255, Δauc: 0.8738822294810589, pcoc: 0.9970930439099192, Δpcoc: 0.9966376174226933, #instance: 641923
+2022-04-13 07:13:47.527 -- auc: 0.8544788885407423, Δauc: 0.8709601792929194, pcoc: 0.9971516098918737, Δpcoc: 1.0034933856869055, #instance: 647923
+2022-04-13 07:13:48.150 -- auc: 0.8547676487415163, Δauc: 0.8843015348116462, pcoc: 0.9971534852848492, Δpcoc: 0.9973554171424559, #instance: 653923
+2022-04-13 07:13:48.908 -- auc: 0.8549670838226295, Δauc: 0.8758702617160234, pcoc: 0.9971920672741418, Δpcoc: 1.0013966120379152, #instance: 659923
+2022-04-13 07:13:48.931 -- auc: 0.8552203776490407, Δauc: 0.8813274964640577, pcoc: 0.9972448845712063, Δpcoc: 1.0030898546566485, #instance: 665923
+2022-04-13 07:13:50.386 -- auc: 0.8554164820894992, Δauc: 0.8762143758838714, pcoc: 0.9972502922741067, Δpcoc: 0.9978457990410933, #instance: 671923
+2022-04-13 07:13:51.007 -- auc: 0.8557003642174439, Δauc: 0.8853169474069824, pcoc: 0.9972630872449908, Δpcoc: 0.9986970753135379, #instance: 677923
+2022-04-13 07:13:51.759 -- auc: 0.855929658894619, Δauc: 0.8805510845460998, pcoc: 0.9972362642257524, Δpcoc: 0.9942136312839492, #instance: 683923
+2022-04-13 07:13:51.984 -- auc: 0.8561298652578139, Δauc: 0.8778591034569295, pcoc: 0.9973311595270725, Δpcoc: 1.0082667338383662, #instance: 689923
+2022-04-13 07:13:53.306 -- auc: 0.8563120417806491, Δauc: 0.8765984002704733, pcoc: 0.997384302879732, Δpcoc: 1.0034863119429187, #instance: 695923
+2022-04-13 07:13:53.822 -- auc: 0.8564716221680282, Δauc: 0.874421479589521, pcoc: 0.9973640814584869, Δpcoc: 0.9950408781826307, #instance: 701923
+2022-04-13 07:13:54.639 -- auc: 0.8566676112449929, Δauc: 0.8791250633572923, pcoc: 0.9973521212281676, Δpcoc: 0.9959684190622912, #instance: 707923
+2022-04-13 07:13:54.885 -- auc: 0.8568632621443546, Δauc: 0.8787277414075286, pcoc: 0.9973832588363464, Δpcoc: 1.0010345475217128, #instance: 713923
+2022-04-13 07:13:56.225 -- auc: 0.8571005571223526, Δauc: 0.8833591553010782, pcoc: 0.9973797506552604, Δpcoc: 0.9969635343602525, #instance: 719923
+2022-04-13 07:13:56.629 -- auc: 0.8572829855628492, Δauc: 0.878471813787214, pcoc: 0.9974318485578582, Δpcoc: 1.0036862860095657, #instance: 725923+ 2) / 8]
+2022-04-13 07:13:57.022 -- auc: 0.8572945124654983, Δauc: 0.8868847202180535, pcoc: 0.9974270118180151, Δpcoc: 0.985592912285875, #instance: 726208         
+2022-04-13 07:13:57.031 -- auc: 0.8573382779152404, Δauc: 0.8815775832703899, pcoc: 0.9974313076073884, Δpcoc: 0.9999853870219362, #instance: 727443
+2022-04-13 07:13:57.057 -- auc: 0.8574967095325328, Δauc: 0.8902439768526531, pcoc: 0.9974581224149471, Δpcoc: 1.0037260366479965, #instance: 730610
+2022-04-13 07:13:57.065 -- auc: 0.8576293848923753, Δauc: 0.8819151786450347, pcoc: 0.9974677277070046, Δpcoc: 0.999332383712404, #instance: 734368
+[2022-04-13 07:14:04.545] [info] C[0]:9 has stopped.                                                                                                        
+[2022-04-13 07:14:04.547] [info] PS job with coordinator address 10.0.1.219:44425 stopped.
+Debug -- model output:
+2022-04-13 07:13:58         80 dnn.dnn.0.bias__dense_data.dat
+2022-04-13 07:13:58        441 dnn.dnn.0.bias__dense_meta.json
+2022-04-13 07:13:58        160 dnn.dnn.0.bias__dense_state.dat
+2022-04-13 07:14:02         80 dnn.dnn.0.running_mean__dense_data.dat
+2022-04-13 07:14:02        369 dnn.dnn.0.running_mean__dense_meta.json
+2022-04-13 07:14:02         80 dnn.dnn.0.running_var__dense_data.dat
+2022-04-13 07:14:02        368 dnn.dnn.0.running_var__dense_meta.json
+2022-04-13 07:13:58         80 dnn.dnn.0.weight__dense_data.dat
+2022-04-13 07:13:57        443 dnn.dnn.0.weight__dense_meta.json
+2022-04-13 07:13:58        160 dnn.dnn.0.weight__dense_state.dat
+2022-04-13 07:13:59       4096 dnn.dnn.1.bias__dense_data.dat
+2022-04-13 07:13:58        449 dnn.dnn.1.bias__dense_meta.json
+2022-04-13 07:13:59       8192 dnn.dnn.1.bias__dense_state.dat
+2022-04-13 07:13:58      81920 dnn.dnn.1.weight__dense_data.dat
+2022-04-13 07:13:58        453 dnn.dnn.1.weight__dense_meta.json
+2022-04-13 07:13:58     163840 dnn.dnn.1.weight__dense_state.dat
+2022-04-13 07:14:00       2048 dnn.dnn.3.bias__dense_data.dat
+2022-04-13 07:14:00        447 dnn.dnn.3.bias__dense_meta.json
+2022-04-13 07:14:00       4096 dnn.dnn.3.bias__dense_state.dat
+2022-04-13 07:13:59    2097152 dnn.dnn.3.weight__dense_data.dat
+2022-04-13 07:13:59        455 dnn.dnn.3.weight__dense_meta.json
+2022-04-13 07:13:59    4194304 dnn.dnn.3.weight__dense_state.dat
+2022-04-13 07:14:00       1024 dnn.dnn.5.bias__dense_data.dat
+2022-04-13 07:14:00        447 dnn.dnn.5.bias__dense_meta.json
+2022-04-13 07:14:01       2048 dnn.dnn.5.bias__dense_state.dat
+2022-04-13 07:14:00     524288 dnn.dnn.5.weight__dense_data.dat
+2022-04-13 07:14:00        454 dnn.dnn.5.weight__dense_meta.json
+2022-04-13 07:14:00    1048576 dnn.dnn.5.weight__dense_state.dat
+2022-04-13 07:14:01        512 dnn.dnn.7.bias__dense_data.dat
+2022-04-13 07:14:01        447 dnn.dnn.7.bias__dense_meta.json
+2022-04-13 07:14:01       1024 dnn.dnn.7.bias__dense_state.dat
+2022-04-13 07:14:01     131072 dnn.dnn.7.weight__dense_data.dat
+2022-04-13 07:14:01        453 dnn.dnn.7.weight__dense_meta.json
+2022-04-13 07:14:01     262144 dnn.dnn.7.weight__dense_state.dat
+2022-04-13 07:14:02          4 dnn.dnn.9.bias__dense_data.dat
+2022-04-13 07:14:02        443 dnn.dnn.9.bias__dense_meta.json
+2022-04-13 07:14:02          8 dnn.dnn.9.bias__dense_state.dat
+2022-04-13 07:14:01        512 dnn.dnn.9.weight__dense_data.dat
+2022-04-13 07:14:01        449 dnn.dnn.9.weight__dense_meta.json
+2022-04-13 07:14:01       1024 dnn.dnn.9.weight__dense_state.dat
+2022-04-13 07:13:57     347232 dnn_sparse__sparse_0.dat
+2022-04-13 07:13:57     344648 dnn_sparse__sparse_1.dat
+2022-04-13 07:13:57     346144 dnn_sparse__sparse_2.dat
+2022-04-13 07:13:57     348048 dnn_sparse__sparse_3.dat
+2022-04-13 07:13:57        509 dnn_sparse__sparse_meta.json
+2022-04-13 07:13:57     347232 lr_sparse__sparse_0.dat
+2022-04-13 07:13:57     344648 lr_sparse__sparse_1.dat
+2022-04-13 07:13:57     346144 lr_sparse__sparse_2.dat
+2022-04-13 07:13:57     348048 lr_sparse__sparse_3.dat
+2022-04-13 07:13:57        508 lr_sparse__sparse_meta.json
+
+
+[2022-04-13 07:14:05.067] [info] PS job with coordinator address 10.0.1.219:34787 started.
+[2022-04-13 07:14:05.067] [info] PSRunner::RunPS: pid: 30434, tid: 30787, thread: 0x7fea16a49700
+[2022-04-13 07:14:05.067] [info] PSRunner::RunPSCoordinator: pid: 30434, tid: 30787, thread: 0x7fea16a49700
+[2022-04-13 07:14:05.069] [info] ActorProcess::Receiving: Coordinator pid: 30434, tid: 30790, thread: 0x7fea237fe700
+[2022-04-13 07:14:05.103] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+PS Coordinator node C[0]:9 is ready.
+2022-04-13 07:14:09.926 -- auc: 0.8797084704938286, Δauc: 0.8797084704938286, pcoc: 1.0081627213949793, Δpcoc: 1.0081627213949793, #instance: 6000 + 4) / 8]
+2022-04-13 07:14:10.310 -- auc: 0.8809415407849724, Δauc: 0.8823262949255056, pcoc: 1.0039291525107108, Δpcoc: 0.9997200446493131, #instance: 12000
+2022-04-13 07:14:10.375 -- auc: 0.8823721646932567, Δauc: 0.8852627333704624, pcoc: 1.0024457999003888, Δpcoc: 0.9994685517902033, #instance: 18000
+2022-04-13 07:14:10.383 -- auc: 0.8818360486630262, Δauc: 0.8801089006744534, pcoc: 1.0013758081424895, Δpcoc: 0.9981754600439914, #instance: 24000
+2022-04-13 07:14:10.424 -- auc: 0.8813717557673286, Δauc: 0.8793985872926579, pcoc: 1.001065922160264, Δpcoc: 0.9998254460431908, #instance: 30000
+2022-04-13 07:14:10.877 -- auc: 0.8823432675459885, Δauc: 0.8869480590062112, pcoc: 1.0015710020249995, Δpcoc: 1.0041275845403257, #instance: 36000
+2022-04-13 07:14:11.017 -- auc: 0.8831797619319848, Δauc: 0.8881681970246993, pcoc: 1.001292259466199, Δpcoc: 0.9996250656631974, #instance: 42000
+2022-04-13 07:14:11.029 -- auc: 0.8823264558865981, Δauc: 0.876292628080032, pcoc: 1.0017247024450018, Δpcoc: 1.004742345924443, #instance: 48000
+2022-04-13 07:14:11.050 -- auc: 0.8824178562197194, Δauc: 0.88313285891388, pcoc: 1.001318523603729, Δpcoc: 0.9980821393031379, #instance: 54000
+2022-04-13 07:14:11.379 -- auc: 0.8822765955034446, Δauc: 0.880960421132315, pcoc: 1.001549864527983, Δpcoc: 1.0036165364366343, #instance: 60000
+2022-04-13 07:14:11.469 -- auc: 0.8829461231922875, Δauc: 0.8895220325028637, pcoc: 1.0018275794285862, Δpcoc: 1.0046052056079877, #instance: 66000
+2022-04-13 07:14:11.529 -- auc: 0.8830950476071004, Δauc: 0.884802592730009, pcoc: 1.0012123383507026, Δpcoc: 0.9945012844807042, #instance: 72000
+2022-04-13 07:14:11.648 -- auc: 0.8838893151824789, Δauc: 0.8936920953521195, pcoc: 1.0008374433733132, Δpcoc: 0.9963798360725222, #instance: 78000
+2022-04-13 07:14:11.984 -- auc: 0.8845607559786501, Δauc: 0.8933140842573934, pcoc: 1.0010325041667636, Δpcoc: 1.0035711839609567, #instance: 84000
+2022-04-13 07:14:12.176 -- auc: 0.8842874096959797, Δauc: 0.8804497644328373, pcoc: 1.0009410546127007, Δpcoc: 0.9996569250496159, #instance: 90000
+2022-04-13 07:14:12.234 -- auc: 0.8840487353110671, Δauc: 0.8804462172562026, pcoc: 1.0012496407230163, Δpcoc: 1.0058705029702033, #instance: 96000
+2022-04-13 07:14:12.274 -- auc: 0.8840189058388294, Δauc: 0.8835407125538793, pcoc: 1.0016193131752271, Δpcoc: 1.0076040277878444, #instance: 102000
+2022-04-13 07:14:12.492 -- auc: 0.8841631662734284, Δauc: 0.886654219452576, pcoc: 1.0018390521337277, Δpcoc: 1.0055974376713888, #instance: 108000
+2022-04-13 07:14:12.628 -- auc: 0.8848333324133075, Δauc: 0.8968338837088837, pcoc: 1.0018057290261666, Δpcoc: 1.0012087683392386, #instance: 114000
+2022-04-13 07:14:12.669 -- auc: 0.8854126397360005, Δauc: 0.8963485573726898, pcoc: 1.0015958457850438, Δpcoc: 0.9976362007251685, #instance: 120000
+2022-04-13 07:14:12.891 -- auc: 0.8854538389576836, Δauc: 0.8861668606444103, pcoc: 1.0015186176334745, Δpcoc: 0.9999682163334653, #instance: 126000
+2022-04-13 07:14:13.119 -- auc: 0.8855060222318342, Δauc: 0.8866921053019707, pcoc: 1.0016636289730294, Δpcoc: 1.0047073740654369, #instance: 132000
+2022-04-13 07:14:13.197 -- auc: 0.8860489355455692, Δauc: 0.8980916979132283, pcoc: 1.0013546288651833, Δpcoc: 0.9945743516699909, #instance: 138000
+2022-04-13 07:14:13.249 -- auc: 0.8863619655375535, Δauc: 0.893395505831643, pcoc: 1.0013222858306015, Δpcoc: 1.0005751338498345, #instance: 144000
+2022-04-13 07:14:13.364 -- auc: 0.8861825093561206, Δauc: 0.8817832613903893, pcoc: 1.0012412985678854, Δpcoc: 0.9993077708960191, #instance: 150000
+2022-04-13 07:14:13.565 -- auc: 0.8863536874150779, Δauc: 0.8907826072068207, pcoc: 1.0009691698793477, Δpcoc: 0.9941885330617887, #instance: 156000
+2022-04-13 07:14:13.691 -- auc: 0.8863267998829069, Δauc: 0.8857141221215604, pcoc: 1.000933374251892, Δpcoc: 0.999999868656862, #instance: 162000
+2022-04-13 07:14:13.773 -- auc: 0.8864521921321442, Δauc: 0.8898751276778502, pcoc: 1.000568232714383, Δpcoc: 0.9908685102376199, #instance: 168000
+2022-04-13 07:14:13.957 -- auc: 0.886329162434806, Δauc: 0.8829223667884811, pcoc: 1.0006363841985393, Δpcoc: 1.002546791152004, #instance: 174000
+2022-04-13 07:14:14.078 -- auc: 0.8862849751569738, Δauc: 0.8851108187030517, pcoc: 1.000845576135524, Δpcoc: 1.0069489257878341, #instance: 180000
+2022-04-13 07:14:14.104 -- auc: 0.886287608945561, Δauc: 0.8866757978019068, pcoc: 1.0003741039058853, Δpcoc: 0.9864032430163885, #instance: 186000
+2022-04-13 07:14:14.244 -- auc: 0.8863334952736897, Δauc: 0.8877391828932587, pcoc: 1.000212262418526, Δpcoc: 0.9952005144104148, #instance: 192000
+2022-04-13 07:14:14.513 -- auc: 0.8864130701079986, Δauc: 0.8889421835368597, pcoc: 1.0001441576847843, Δpcoc: 0.9979609738510499, #instance: 198000
+2022-04-13 07:14:14.623 -- auc: 0.886578718073018, Δauc: 0.8921134793461285, pcoc: 1.000108285811872, Δpcoc: 0.9989212206732045, #instance: 204000
+2022-04-13 07:14:14.870 -- auc: 0.8866955516213653, Δauc: 0.8907097107734727, pcoc: 1.0000169575123117, Δpcoc: 0.9969391452898761, #instance: 210000
+2022-04-13 07:14:14.896 -- auc: 0.8867101392249742, Δauc: 0.8872727850474009, pcoc: 1.0000757453540008, Δpcoc: 1.0021336475326512, #instance: 216000
+2022-04-13 07:14:14.962 -- auc: 0.8868405201931491, Δauc: 0.8917176827239234, pcoc: 0.9998809200135141, Δpcoc: 0.9929537509625023, #instance: 222000
+2022-04-13 07:14:15.139 -- auc: 0.8869226194963101, Δauc: 0.8899950124492151, pcoc: 0.9997315803018718, Δpcoc: 0.9942479671087229, #instance: 228000
+2022-04-13 07:14:15.260 -- auc: 0.8869435959453265, Δauc: 0.8877541820289482, pcoc: 0.9998152154986142, Δpcoc: 1.0029914725260765, #instance: 234000
+2022-04-13 07:14:15.335 -- auc: 0.8870707012683628, Δauc: 0.8917589596144817, pcoc: 0.9999175827715043, Δpcoc: 1.003948169586954, #instance: 240000
+2022-04-13 07:14:15.516 -- auc: 0.8871120819746231, Δauc: 0.8887681731094331, pcoc: 0.9997938518400349, Δpcoc: 0.9948486417978682, #instance: 246000
+2022-04-13 07:14:15.524 -- auc: 0.8871921301167005, Δauc: 0.8904720953408425, pcoc: 0.999645547593584, Δpcoc: 0.9936482379714169, #instance: 252000
+2022-04-13 07:14:15.873 -- auc: 0.8872778723004496, Δauc: 0.8912472549272902, pcoc: 0.999392837748704, Δpcoc: 0.9888785099942736, #instance: 258000
+2022-04-13 07:14:15.898 -- auc: 0.8875420029407486, Δauc: 0.8992490190036495, pcoc: 0.9991730326703465, Δpcoc: 0.9898119195315814, #instance: 264000
+2022-04-13 07:14:16.028 -- auc: 0.8874665673430078, Δauc: 0.884110954621278, pcoc: 0.9993141471480662, Δpcoc: 1.005561830257193, #instance: 270000
+2022-04-13 07:14:16.143 -- auc: 0.8873935002009705, Δauc: 0.8841163970304935, pcoc: 0.9994964559998948, Δpcoc: 1.0077431743445258, #instance: 276000
+2022-04-13 07:14:16.344 -- auc: 0.8873443226631815, Δauc: 0.8850501582632069, pcoc: 0.9994532335097409, Δpcoc: 0.9974828439516972, #instance: 282000
+2022-04-13 07:14:16.521 -- auc: 0.887356880189132, Δauc: 0.8879887254326716, pcoc: 0.9993896977266006, Δpcoc: 0.9963986369378063, #instance: 288000
+2022-04-13 07:14:16.646 -- auc: 0.8873689222708636, Δauc: 0.888042732742167, pcoc: 0.9992645357961132, Δpcoc: 0.9932869001413341, #instance: 294000
+2022-04-13 07:14:16.810 -- auc: 0.8872592820799653, Δauc: 0.882043079005454, pcoc: 0.9993782983973754, Δpcoc: 1.0049958976116682, #instance: 300000
+2022-04-13 07:14:17.001 -- auc: 0.8873313576737478, Δauc: 0.8909630012050469, pcoc: 0.9995012243791541, Δpcoc: 1.0056942374633209, #instance: 306000
+2022-04-13 07:14:17.094 -- auc: 0.887415660713798, Δauc: 0.8916934069985323, pcoc: 0.9995418210185322, Δpcoc: 1.0016240822965858, #instance: 312000
+2022-04-13 07:14:17.163 -- auc: 0.8874951472337381, Δauc: 0.8916241671942797, pcoc: 0.9994363635577866, Δpcoc: 0.9939595925588612, #instance: 318000
+2022-04-13 07:14:17.402 -- auc: 0.8876596725698771, Δauc: 0.8969313391343063, pcoc: 0.9991938115775554, Δpcoc: 0.986538807785697, #instance: 324000
+2022-04-13 07:14:17.473 -- auc: 0.887838752564105, Δauc: 0.8978010114896929, pcoc: 0.9990662923259621, Δpcoc: 0.9922161939350351, #instance: 330000
+2022-04-13 07:14:17.490 -- auc: 0.8878447351666054, Δauc: 0.8882872667324527, pcoc: 0.9989351157468981, Δpcoc: 0.9917634872235151, #instance: 336000
+2022-04-13 07:14:17.576 -- auc: 0.8879172957660812, Δauc: 0.89191126003626, pcoc: 0.9989033863512896, Δpcoc: 0.9971301673823951, #instance: 342000
+2022-04-13 07:14:17.859 -- auc: 0.8878624527926517, Δauc: 0.8847992818405882, pcoc: 0.9989182550123368, Δpcoc: 0.999770809241777, #instance: 348000
+2022-04-13 07:14:18.068 -- auc: 0.8879410751194016, Δauc: 0.8924278471506384, pcoc: 0.9988814831754336, Δpcoc: 0.996749110253509, #instance: 354000
+2022-04-13 07:14:18.104 -- auc: 0.8879772104258525, Δauc: 0.8900211916785672, pcoc: 0.9989795727976378, Δpcoc: 1.0048183104110655, #instance: 360000
+2022-04-13 07:14:18.320 -- auc: 0.888120259734582, Δauc: 0.8967334944198697, pcoc: 0.9988296054217117, Δpcoc: 0.9898287357176688, #instance: 366000+ 4) / 8]
+2022-04-13 07:14:18.448 -- auc: 0.8880559116353283, Δauc: 0.8839822537377956, pcoc: 0.9986984508318761, Δpcoc: 0.9907736420176219, #instance: 371981 4) / 8]
+2022-04-13 07:14:18.917 -- auc: 0.8880122289250263, Δauc: 0.8851880029873873, pcoc: 0.9987314350551718, Δpcoc: 1.0007888632876665, #instance: 377981 4) / 8]
+2022-04-13 07:14:18.982 -- auc: 0.8880633982212691, Δauc: 0.8912350809578851, pcoc: 0.9988056235763271, Δpcoc: 1.0035226474396735, #instance: 383981
+2022-04-13 07:14:19.067 -- auc: 0.8881499490738088, Δauc: 0.8938974466393106, pcoc: 0.9987461573705111, Δpcoc: 0.9949263740180385, #instance: 389924
+2022-04-13 07:14:19.185 -- auc: 0.8882356521883786, Δauc: 0.8937872900284551, pcoc: 0.9987489970149587, Δpcoc: 0.9989335653893722, #instance: 395923
+2022-04-13 07:14:19.424 -- auc: 0.8882372597840609, Δauc: 0.888371406390893, pcoc: 0.9986697109418896, Δpcoc: 0.9934616080735239, #instance: 401923
+2022-04-13 07:14:19.432 -- auc: 0.888374374251285, Δauc: 0.897510702793074, pcoc: 0.9986354510805384, Δpcoc: 0.9963478210514357, #instance: 407923
+2022-04-13 07:14:19.529 -- auc: 0.8885021046695272, Δauc: 0.8970568475162518, pcoc: 0.9986815401272789, Δpcoc: 1.001840186741757, #instance: 413923
+2022-04-13 07:14:19.779 -- auc: 0.8885927527848101, Δauc: 0.8948256088456256, pcoc: 0.9986563400798887, Δpcoc: 0.9969246485127524, #instance: 419923
+2022-04-13 07:14:19.884 -- auc: 0.8887363669051678, Δauc: 0.8988100379090811, pcoc: 0.9988270518236485, Δpcoc: 1.0108699860337125, #instance: 425923
+2022-04-13 07:14:19.953 -- auc: 0.8887833847876193, Δauc: 0.892149634120328, pcoc: 0.9987702259260403, Δpcoc: 0.9947522907126886, #instance: 431923
+2022-04-13 07:14:20.068 -- auc: 0.888858817557178, Δauc: 0.8944661680049566, pcoc: 0.9986908496079645, Δpcoc: 0.9930196520879342, #instance: 437923
+2022-04-13 07:14:20.374 -- auc: 0.8889508234048265, Δauc: 0.8955455893226011, pcoc: 0.9986657524824335, Δpcoc: 0.9968236591362111, #instance: 443923
+2022-04-13 07:14:20.445 -- auc: 0.8889745534211131, Δauc: 0.8907394171156127, pcoc: 0.9986363099785318, Δpcoc: 0.9964742289592812, #instance: 449923
+2022-04-13 07:14:20.584 -- auc: 0.8891393214569392, Δauc: 0.9016807633739407, pcoc: 0.9985729934810973, Δpcoc: 0.9938750703456039, #instance: 455923
+2022-04-13 07:14:20.713 -- auc: 0.8890992530261113, Δauc: 0.8861690448635682, pcoc: 0.9986106719001246, Δpcoc: 1.0014700425698355, #instance: 461923
+2022-04-13 07:14:20.887 -- auc: 0.8892044856614566, Δauc: 0.8972158989147561, pcoc: 0.9985890456553576, Δpcoc: 0.9969287142602935, #instance: 467923
+2022-04-13 07:14:20.922 -- auc: 0.8891894081505023, Δauc: 0.8879810560377296, pcoc: 0.9986070531044279, Δpcoc: 1.0000030921859724, #instance: 473923
+2022-04-13 07:14:21.058 -- auc: 0.8893328921339057, Δauc: 0.9005531693865431, pcoc: 0.9985782911759421, Δpcoc: 0.996311057355001, #instance: 479923
+2022-04-13 07:14:21.090 -- auc: 0.8893495962617423, Δauc: 0.8908674098262788, pcoc: 0.998515215244732, Δpcoc: 0.9934659923563274, #instance: 485923
+2022-04-13 07:14:21.520 -- auc: 0.8894863550634993, Δauc: 0.9005043122620172, pcoc: 0.998436037771342, Δpcoc: 0.9920118292232402, #instance: 491923
+2022-04-13 07:14:21.545 -- auc: 0.8895554841498576, Δauc: 0.8951152906187283, pcoc: 0.9984972172532276, Δpcoc: 1.0035190745785776, #instance: 497923
+2022-04-13 07:14:21.553 -- auc: 0.8895924949960508, Δauc: 0.89285638800154, pcoc: 0.9985098573029698, Δpcoc: 0.999555114999973, #instance: 503923
+2022-04-13 07:14:21.618 -- auc: 0.8895264875431185, Δauc: 0.8838855562723716, pcoc: 0.9984806719823717, Δpcoc: 0.9960380324731508, #instance: 509923
+2022-04-13 07:14:21.965 -- auc: 0.8895405755190762, Δauc: 0.8906394924109632, pcoc: 0.9985186465366048, Δpcoc: 1.0017562769553374, #instance: 515923
+2022-04-13 07:14:22.064 -- auc: 0.8895808484449446, Δauc: 0.8929948674068088, pcoc: 0.9985395704066331, Δpcoc: 1.0003436445345513, #instance: 521923
+2022-04-13 07:14:22.072 -- auc: 0.8896774374509897, Δauc: 0.8979158643346923, pcoc: 0.9985610756306497, Δpcoc: 1.0004351708144046, #instance: 527923
+2022-04-13 07:14:22.236 -- auc: 0.8896498779274397, Δauc: 0.8872591513533749, pcoc: 0.9985663501405074, Δpcoc: 0.9990286007618854, #instance: 533923
+2022-04-13 07:14:22.571 -- auc: 0.8897261225369396, Δauc: 0.8963863798238798, pcoc: 0.998576416290615, Δpcoc: 0.9994705721863315, #instance: 539923
+2022-04-13 07:14:22.600 -- auc: 0.8897207519163791, Δauc: 0.8893442589725418, pcoc: 0.9985627961144506, Δpcoc: 0.9973401068215592, #instance: 545923
+2022-04-13 07:14:22.624 -- auc: 0.8898002221005628, Δauc: 0.8970501856492846, pcoc: 0.9985681850652285, Δpcoc: 0.999059335240778, #instance: 551923
+2022-04-13 07:14:22.812 -- auc: 0.8897303215736367, Δauc: 0.883304623425621, pcoc: 0.9986039219080414, Δpcoc: 1.0019009640514722, #instance: 557923
+2022-04-13 07:14:23.069 -- auc: 0.8899597297610824, Δauc: 0.9115332498095499, pcoc: 0.9985665633712946, Δpcoc: 0.9951312229049902, #instance: 563923
+2022-04-13 07:14:23.130 -- auc: 0.8900513094832979, Δauc: 0.8986546823777447, pcoc: 0.99858577682107, Δpcoc: 1.0003982552140152, #instance: 569923
+2022-04-13 07:14:23.193 -- auc: 0.8901495779575294, Δauc: 0.8991105672244853, pcoc: 0.9986855647625509, Δpcoc: 1.008310383906755, #instance: 575923
+2022-04-13 07:14:23.279 -- auc: 0.8902042590947504, Δauc: 0.8953956078301386, pcoc: 0.9986694980105587, Δpcoc: 0.9971347706440818, #instance: 581923
+2022-04-13 07:14:23.458 -- auc: 0.8903109672883748, Δauc: 0.9007667569089886, pcoc: 0.9986106221152606, Δpcoc: 0.9929156739115206, #instance: 587923
+2022-04-13 07:14:23.548 -- auc: 0.8904436805711317, Δauc: 0.903428608366547, pcoc: 0.9986954019108687, Δpcoc: 1.0070431389893786, #instance: 593923
+2022-04-13 07:14:23.655 -- auc: 0.8905806818985775, Δauc: 0.9042793780687398, pcoc: 0.9986627005148966, Δpcoc: 0.995445391066531, #instance: 599923
+2022-04-13 07:14:23.795 -- auc: 0.8906834713480689, Δauc: 0.9014114996489571, pcoc: 0.9985889520535466, Δpcoc: 0.9912704004207082, #instance: 605923
+2022-04-13 07:14:24.054 -- auc: 0.890815625798956, Δauc: 0.9039073166117514, pcoc: 0.9986755293543809, Δpcoc: 1.0074980741958124, #instance: 611923
+2022-04-13 07:14:24.068 -- auc: 0.8909371625853802, Δauc: 0.903179217294431, pcoc: 0.9987259949184982, Δpcoc: 1.0038911969013808, #instance: 617923
+2022-04-13 07:14:24.347 -- auc: 0.8910309685809412, Δauc: 0.9004360256450251, pcoc: 0.9988361508531267, Δpcoc: 1.0103595059289703, #instance: 623923
+2022-04-13 07:14:24.388 -- auc: 0.8911115205987062, Δauc: 0.8996588461721687, pcoc: 0.9988025077593009, Δpcoc: 0.9952982436836009, #instance: 629923
+2022-04-13 07:14:24.536 -- auc: 0.8912348888678199, Δauc: 0.9038672462856912, pcoc: 0.9988507930317967, Δpcoc: 1.0039624541946437, #instance: 635923
+2022-04-13 07:14:24.681 -- auc: 0.891337318660531, Δauc: 0.9021250230190312, pcoc: 0.9988597383657063, Δpcoc: 0.9998056639516693, #instance: 641923
+2022-04-13 07:14:24.813 -- auc: 0.8914560235477684, Δauc: 0.9042953545007224, pcoc: 0.9989040772401268, Δpcoc: 1.0036360257102708, #instance: 647923
+2022-04-13 07:14:24.876 -- auc: 0.8915460062249476, Δauc: 0.9010065153043058, pcoc: 0.9989352709958327, Δpcoc: 1.0023135741637044, #instance: 653923
+2022-04-13 07:14:25.153 -- auc: 0.8916777502434726, Δauc: 0.9060957641846106, pcoc: 0.9989032757065894, Δpcoc: 0.995446256355378, #instance: 659923
+2022-04-13 07:14:25.223 -- auc: 0.8918192792739741, Δauc: 0.9073776924262361, pcoc: 0.9989367238653676, Δpcoc: 1.0026439777855733, #instance: 665923
+2022-04-13 07:14:25.353 -- auc: 0.8919751845173113, Δauc: 0.9093612941448848, pcoc: 0.998931964528846, Δpcoc: 0.9984057177455758, #instance: 671923
+2022-04-13 07:14:25.584 -- auc: 0.8921225960517827, Δauc: 0.9086048281805227, pcoc: 0.9989305835338533, Δpcoc: 0.998776372328057, #instance: 677923
+2022-04-13 07:14:25.615 -- auc: 0.8922240869125775, Δauc: 0.903572721897662, pcoc: 0.9990118542017133, Δpcoc: 1.0083092855523368, #instance: 683923
+2022-04-13 07:14:25.761 -- auc: 0.8923725391764398, Δauc: 0.9093440327866288, pcoc: 0.999011745679936, Δpcoc: 0.9989994330377733, #instance: 689923
+2022-04-13 07:14:25.849 -- auc: 0.8925067722443931, Δauc: 0.9084026176806983, pcoc: 0.9989126123535549, Δpcoc: 0.9876021885026001, #instance: 695923
+2022-04-13 07:14:26.063 -- auc: 0.8927306055867599, Δauc: 0.9192809064630495, pcoc: 0.9988348830514803, Δpcoc: 0.9899096381820931, #instance: 701923
+2022-04-13 07:14:26.083 -- auc: 0.8928934115890028, Δauc: 0.9117092590053448, pcoc: 0.9988394290275004, Δpcoc: 0.9993717192786139, #instance: 707923
+2022-04-13 07:14:26.207 -- auc: 0.893120818218898, Δauc: 0.9198487456027217, pcoc: 0.9988222281008551, Δpcoc: 0.9967857270696622, #instance: 713923
+2022-04-13 07:14:26.259 -- auc: 0.8933031589626876, Δauc: 0.9148725141195727, pcoc: 0.9988138504220871, Δpcoc: 0.9978187293623166, #instance: 719923
+2022-04-13 07:14:26.728 -- auc: 0.8934200848358974, Δauc: 0.9074798948632355, pcoc: 0.9987634665169877, Δpcoc: 0.9927744391108622, #instance: 725923 1) / 8]
+2022-04-13 07:14:27.223 -- auc: 0.8935963132109621, Δauc: 0.9146279334305156, pcoc: 0.9987635142709732, Δpcoc: 0.9987692948351786, #instance: 731923
+2022-04-13 07:14:27.381 -- auc: 0.8936091217225622, Δauc: 0.9294532627865961, pcoc: 0.9987603108313039, Δpcoc: 0.9908578550660765, #instance: 732208        
+2022-04-13 07:14:27.389 -- auc: 0.8936778780974045, Δauc: 0.9193674083628937, pcoc: 0.9987987109452314, Δpcoc: 1.01508667355492, #instance: 733995
+2022-04-13 07:14:27.397 -- auc: 0.8936808040226135, Δauc: 0.916, pcoc: 0.9988027014400672, Δpcoc: 1.0313777378627231, #instance: 734090
+2022-04-13 07:14:27.404 -- auc: 0.8936973738746724, Δauc: 0.9445415695415695, pcoc: 0.9987899304816603, Δpcoc: 0.9675998117169763, #instance: 734368
+[2022-04-13 07:14:27.414] [info] C[0]:9 has stopped.
+[2022-04-13 07:14:27.415] [info] PS job with coordinator address 10.0.1.219:34787 stopped.
+Debug -- test result sample:
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+-------------------+
+|label|user_id|gender|age|occupation|  zip|movie_id|    recent_movie_ids|               genre|last_movie|          last_genre|      rawPrediction|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+-------------------+
+|  1.0|   5289|     M| 45|         2|94102|    1124|11612352268694...|               Drama|      3478|               Drama| 0.9747642874717712|
+|  0.0|   3771|     M| 25|         1|14982|    2462|19801976245629...|              Horror|      1655|              Horror|0.04700218513607979|
+|  1.0|   3491|     M| 25|        16|28542|    2358|2279891978442...|               Drama|      2252|        ComedyDrama| 0.9663158059120178|
+|  1.0|   2304|     M| 45|        12|94103|     848|16821245161928...|               Drama|        25|       DramaRomance| 0.9737896919250488|
+|  0.0|    546|     F| 25|         0|37211|    1249|25391617109211...|            Thriller|      3751|AnimationChildre...| 0.9381639361381531|
+|  1.0|     62|     F| 35|         3|98105|    1235|31423423202112...|              Comedy|      1193|               Drama| 0.9453966021537781|
+|  0.0|   5996|     F| 25|         0|87114|    2950|30884632573686...|AdventureDramaR...|      1381|ComedyMusicalRo...|0.36538809537887573|
+|  1.0|    715|     M| 18|         0|53715|    1079|36831199381111...|              Comedy|      2917|      CrimeThriller| 0.9715717434883118|
+|  1.0|   2733|     M| 45|        17|94002|    1244|27321299292511...|ComedyDramaRomance|       527|           DramaWar| 0.9938616752624512|
+|  1.0|   1160|     M| 18|        14|07017|    2840|26862394361734...|            Thriller|      2700|    AnimationComedy| 0.2997899055480957|
+|  1.0|   5432|     M| 56|        13|01742|    1283|34813408353712...|             Western|      3653|         Documentary| 0.9559105038642883|
+|  1.0|    754|     M| 35|         7|38024|    3247|3435161747608...|        ComedyCrime|      2764|CrimeDramaThriller| 0.8666793704032898|
+|  1.0|   3830|     M| 18|         4|60630|    2029|10282728121035...|      ComedyRomance|      1221|  ActionCrimeDrama| 0.9460465312004089|
+|  1.0|   1377|     M| 35|        16|65270|    1275|11971036124212...|    ActionAdventure|      1210|ActionAdventure...| 0.6040321588516235|
+|  1.0|   3942|     M| 18|         4|49855|     296|52771412212762...|         CrimeDrama|      1089|      CrimeThriller| 0.8388801217079163|
+|  0.0|   1941|     M| 35|        17|94550|    3665|24622515369213...|HorrorSci-FiThr...|      2514|              Horror| 0.1972888857126236|
+|  0.0|   2624|     F| 35|         0|44313|    2143|34793153101921...|AdventureFantasy...|      2017|Children'sFantas...| 0.9674397110939026|
+|  0.0|   5944|     F| 18|        10|27606|    2686|26941255186842...|       DramaMystery|        32|        DramaSci-Fi|  0.770775318145752|
+|  1.0|   1835|     M| 25|        19|11501|     501|62829123147105...|               Drama|       509|       DramaRomance| 0.9648159742355347|
+|  1.0|   2203|     M| 45|        12|53718|    1374|21152406592377...|ActionAdventure...|      2990|              Action| 0.9889923334121704|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+-------------------+
+only showing top 20 rows
+
+[2022-04-13 07:14:27.620] [info] PS job with coordinator address 10.0.1.219:35031 started.
+[2022-04-13 07:14:27.620] [info] PSRunner::RunPS: pid: 30434, tid: 30877, thread: 0x7fea15a47700
+[2022-04-13 07:14:27.620] [info] PSRunner::RunPSCoordinator: pid: 30434, tid: 30877, thread: 0x7fea15a47700
+[2022-04-13 07:14:27.622] [info] ActorProcess::Receiving: Coordinator pid: 30434, tid: 30880, thread: 0x7fea237fe700
+[2022-04-13 07:14:27.703] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+PS Coordinator node C[0]:9 is ready.
+2022-04-13 07:14:49.344 -- auc: 0.8726259322462394, Δauc: 0.8726259322462394, pcoc: 1.0105142218095284, Δpcoc: 1.0105142218095284, #instance: 1157          
+2022-04-13 07:14:49.352 -- auc: 0.8623550196253309, Δauc: 0.8515064973323295, pcoc: 1.0046934375458807, Δpcoc: 0.9990553684833339, #instance: 2323
+2022-04-13 07:14:49.360 -- auc: 0.8616369412379951, Δauc: 0.8602742983986047, pcoc: 0.9976813216204028, Δpcoc: 0.9840150890286834, #instance: 3476
+2022-04-13 07:14:49.368 -- auc: 0.8681726123162332, Δauc: 0.8868293708385719, pcoc: 0.9980590836430939, Δpcoc: 0.999183063143979, #instance: 4646
+[2022-04-13 07:14:49.380] [info] C[0]:9 has stopped.
+[2022-04-13 07:14:49.380] [info] PS job with coordinator address 10.0.1.219:35031 stopped.
+Debug -- test result sample:
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+-------------------+
+|label|user_id|gender|age|occupation|  zip|movie_id|    recent_movie_ids|               genre|last_movie|          last_genre|      rawPrediction|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+-------------------+
+|  1.0|   2271|     M| 50|        14|13210|    3578|89919451069903...|        ActionDrama|      3384|              Action|  0.997154951095581|
+|  1.0|   1304|     M| 25|        14|97203|    1073|24671617338636...|AdventureChildre...|      2174|      ComedyFantasy| 0.9172266125679016|
+|  1.0|   4892|     M| 25|        12|55405|    3464|43515443354261...|     Sci-FiThriller|       692|ActionSci-FiThr...|0.09832052141427994|
+|  1.0|   3682|     F| 50|         1|10706|    2064|23522133122034...|  ComedyDocumentary|      2478|      ComedyWestern|  0.971749484539032|
+|  1.0|   2767|     M| 25|         0|99163|    1909|25422901625317...|MysterySci-FiTh...|      1589| CrimeDramaMystery| 0.7802327871322632|
+|  1.0|   2694|     M| 18|         4|90024|    3301|53213201690177...|        ComedyCrime|      3785|       ComedyHorror| 0.9510064125061035|
+|  1.0|   3485|     M| 25|         0|94121|    1927|90412885931254...|                 War|      1293|               Drama| 0.9768021702766418|
+|  0.0|   2127|     M| 18|         4|12309|    2719|36414051023121...|     HorrorThriller|      1438|     ActionThriller|0.22316965460777283|
+|  1.0|   4240|     M| 35|        17|55330|    2414|11293072287232...|ActionAdventure...|      2161|AdventureChildre...| 0.9056529998779297|
+|  1.0|   5097|     M| 56|        16|19131|    1222|39489991019316...|    ActionDramaWar|       382|        DramaHorror| 0.9870538115501404|
+|  1.0|   1408|     M| 25|         0|90046|    1321|78625402826154...|              Horror|      3476|HorrorMysteryTh...| 0.8447884321212769|
+|  1.0|   4801|     M| 25|         4|30349|     246|17323645191090...|         Documentary|       466|   ActionComedyWar|  0.987872838973999|
+|  1.0|   4560|     M| 25|         0|69301|    1722|90312342028513...|ActionRomanceTh...|      3111|               Drama|    0.8184774518013|
+|  1.0|   5066|     F| 25|         1|23603|    3113|30062762317530...|     ActionThriller|      3185|               Drama|0.39055564999580383|
+|  1.0|   1790|     M| 25|         0|19152|     349|1589440443203...|ActionAdventure...|      3392|              Comedy| 0.9040679931640625|
+|  1.0|   3933|     F| 35|         6|48073|    2804|59328581225260...|        ComedyDrama|      3210|              Comedy| 0.9427148103713989|
+|  1.0|   4847|     M| 25|        12|94131|    2599|1197162904903...|              Comedy|      2289|        ComedyDrama| 0.9010255336761475|
+|  0.0|   4573|     M| 50|        16|11963|    3834|37353734376992...|AdventureDramaR...|      1152|CrimeFilm-NoirT...|0.42017120122909546|
+|  0.0|    319|     F| 50|         6|33436|    3635|20544133788319...|              Action|      2926|        ComedyDrama| 0.9238269925117493|
+|  1.0|   5929|     F| 35|         0|33607|    3096|28681655302427...|              Comedy|      2113|     HorrorThriller| 0.9086018800735474|
++-----+-------+------+---+----------+-----+--------+--------------------+--------------------+----------+--------------------+-------------------+
+only showing top 20 rows
+
+Debug -- Train AUC:  0.8936968239433707                                                                                                                     
+Debug -- Test AUC:  0.8681804513210652
+Debug--spark stop
+22/04/13 07:14:52 WARN ExecutorPodsWatchSnapshotSource: Kubernetes client has been closed (this is expected if the application is shutting down.)

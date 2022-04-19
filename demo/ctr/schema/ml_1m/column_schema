@@ -1,0 +1,11 @@
+0 label
+1 user_id
+2 gender
+3 age
+4 occupation
+5 zip
+6 movie_id
+7 recent_movie_ids
+8 genre
+9 last_movie
+10 last_genre

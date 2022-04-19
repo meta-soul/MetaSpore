@@ -17,6 +17,8 @@
 import torch
 import metaspore as ms
 
+from .layers import MLPLayer
+
 class WideDeep(torch.nn.Module):
     def __init__(self,
                 use_wide=True,
@@ -26,10 +28,17 @@ class WideDeep(torch.nn.Module):
                 wide_combine_schema_path=None,
                 deep_column_name_path=None,
                 deep_combine_schema_path=None,
-                dnn_hidden_units=[1024,512,256,128,1],
+                dnn_hidden_units=[1024,512,256,128],
                 dnn_hidden_activations="ReLU", 
-                dropout=0, 
-                batch_norm=False,
+                net_dropout=0, 
+                batch_norm=False, 
+                embedding_regularizer=None, 
+                net_regularizer=None,
+                use_bias=True,
+                ftrl_l1=1.0,
+                ftrl_l2=120.0,
+                ftrl_alpha=0.5,
+                ftrl_beta=1.0,
                 **kwargs):
         super().__init__()
         self.use_wide = use_wide
@@ -37,13 +46,23 @@ class WideDeep(torch.nn.Module):
             self.lr_sparse = ms.EmbeddingSumConcat(wide_embedding_dim,
                                                 wide_column_name_path,
                                                 wide_combine_schema_path)
+            self.lr_sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha=ftrl_alpha, beta=ftrl_beta)
+            self.lr_sparse.initializer = ms.NormalTensorInitializer(var=0.01)
         self.dnn_sparse = ms.EmbeddingSumConcat(deep_embedding_dim,
                                            deep_column_name_path,
                                            deep_combine_schema_path)
-        self.dnn_sparse.updater = ms.FTRLTensorUpdater()
+        self.dnn_sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha=ftrl_alpha, beta=ftrl_beta)
         self.dnn_sparse.initializer = ms.NormalTensorInitializer(var=0.01)
-        self.dnn = MLPLayer(dnn_hidden_units, deep_embedding_dim, self.dnn_sparse.feature_count)
-        self.bias = torch.nn.Parameter(torch.zeros(1), requires_grad=True)
+        self.dnn = MLPLayer(input_dim = self.dnn_sparse.feature_count * deep_embedding_dim,
+                                output_dim = 1,
+                                hidden_units = dnn_hidden_units,
+                                hidden_activations = dnn_hidden_activations,
+                                final_activation = None, 
+                                dropout_rates = net_dropout, 
+                                batch_norm = batch_norm, 
+                                use_bias = use_bias,
+                                input_norm = True)
+        
         self.final_activation = torch.nn.Sigmoid()
 
     def forward(self, x):
@@ -52,25 +71,5 @@ class WideDeep(torch.nn.Module):
             wide_out = torch.sum(wide_out, dim=1, keepdim=True)
         dnn_out = self.dnn_sparse(x)
         dnn_out = self.dnn(dnn_out)
-        final_out = torch.add(wide_out, dnn_out) if self.use_wide else dnn_out + self.bias
+        final_out = torch.add(wide_out, dnn_out) if self.use_wide else dnn_out
         return self.final_activation(final_out)
-
-class MLPLayer(torch.nn.Module):
-    def __init__(self,
-                 hidden_lay_unit,
-                 embedding_size,
-                 feature_dim):
-        super().__init__()
-        dense_layers=[]
-        dnn_linear_num=len(hidden_lay_unit)
-        dense_layers.append(ms.nn.Normalization(feature_dim*embedding_size))
-        dense_layers.append(torch.nn.Linear(feature_dim*embedding_size, hidden_lay_unit[0]))
-        dense_layers.append(torch.nn.ReLU())
-        for i in range(dnn_linear_num - 2):
-            dense_layers.append(torch.nn.Linear(hidden_lay_unit[i], hidden_lay_unit[i + 1]))
-            dense_layers.append(torch.nn.ReLU())
-        dense_layers.append(torch.nn.Linear(hidden_lay_unit[-2], hidden_lay_unit[-1]))
-        self.dnn = torch.nn.Sequential(*dense_layers)
-
-    def forward(self,inputs):
-        return self.dnn(inputs)

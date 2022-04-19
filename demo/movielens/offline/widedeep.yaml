@@ -34,4 +34,4 @@ ftrl_l1_regularization: 1.0
 ftrl_l2_regularization: 1.0
 training_epoches: 1
 shuffle_training_dataset: False
-dnn_hidden_units: [1024,512,256,128,1]
+dnn_hidden_units: [1024,512,256,128]
