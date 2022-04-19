@@ -1,7 +1,7 @@
 # 点击率模型的演示
 
-点击率(Click-through rate)是物料(Item)等被点击次数，与物料被显示次数的比率。是一种衡量物料热门程度的指标。
-在这个Demo中，我们实现了近年来那些在业界中效果最好的CTR模型，并给出这些模型在MovieLens及Criteo数据集上的基准(Benchmark)。
+点击率(Click-through rate)是物料(Item)等被点击次数，与物料被显示次数的比率，是一种衡量物料排序的指标。
+在这个Demo中，我们实现了近年来那些在业界中常用的CTR模型，并给出这些模型在MovieLens及Criteo数据集上的评测结果。
 
 ## 模型列表
 我们正在不断的添加新模型:
@@ -24,7 +24,7 @@
 ## 如何运行
 
 ### 数据预处理和特征生成
-对于MovieLens数据集, 我们目前仅用了`user_id`和`movie_id`作为模型的特征.
+对于MovieLens数据集, 我们目前仅用了`user_id`和`movie_id`作为模型的特征。
 
 对于Criteo数据集，我们标准化所有数值型特征`z`，具体方法是用`log(z)`代替所有大于2的`z`。此方法由Criteo竞赛的获胜者提出。
 ```python
@@ -43,7 +43,7 @@ def transform_number(x):
 我们会尽快更新这部分代码。
 
 ### 初始化模型配置文件
-首先, 上传 [schema](schema) 到你的3s云存储.
+首先, 上传 [schema](schema) 到你的S3云存储。
 然后通过替换对应`YAML`模板中的变量，初始化我们需要的模型配置文件，举例来说:
 ```shell
 export MY_S3_BUCKET='your S3 bucket directory'
