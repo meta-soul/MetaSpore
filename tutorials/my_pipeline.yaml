@@ -1,0 +1,125 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: my-pipeline-
+  annotations: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.11, pipelines.kubeflow.org/pipeline_compilation_time: '2022-04-20T15:02:34.311680',
+    pipelines.kubeflow.org/pipeline_spec: '{"inputs": [{"name": "parameter"}], "name":
+      "My pipeline"}'}
+  labels: {pipelines.kubeflow.org/kfp_sdk_version: 1.8.11}
+spec:
+  entrypoint: my-pipeline
+  templates:
+  - name: component-func
+    container:
+      args: [--input-string, '{{inputs.parameters.parameter}}']
+      command:
+      - sh
+      - -ec
+      - |
+        program_path=$(mktemp)
+        printf "%s" "$0" > "$program_path"
+        python3 -u "$program_path" "$@"
+      - |
+        import sys
+        try:
+            import cloudpickle as _cloudpickle
+        except ImportError:
+            import subprocess
+            try:
+                print("cloudpickle is not installed. Installing it globally", file=sys.stderr)
+                subprocess.run([sys.executable, "-m", "pip", "install", "cloudpickle==1.1.1", "--quiet"], env={"PIP_DISABLE_PIP_VERSION_CHECK": "1"}, check=True)
+                print("Installed cloudpickle globally", file=sys.stderr)
+            except:
+                print("Failed to install cloudpickle globally. Installing for the current user.", file=sys.stderr)
+                subprocess.run([sys.executable, "-m", "pip", "install", "cloudpickle==1.1.1", "--user", "--quiet"], env={"PIP_DISABLE_PIP_VERSION_CHECK": "1"}, check=True)
+                print("Installed cloudpickle for the current user", file=sys.stderr)
+                # Enable loading from user-installed package directory. Python does not add it to sys.path if it was empty at start. Running pip does not refresh `sys.path`.
+                import site
+                sys.path.append(site.getusersitepackages())
+            import cloudpickle as _cloudpickle
+            print("cloudpickle loaded successfully after installing.", file=sys.stderr)
+
+        pickler_python_version = (3, 8, 10, 'final', 0)
+        current_python_version = tuple(sys.version_info)
+        if (
+            current_python_version[0] != pickler_python_version[0] or
+            current_python_version[1] < pickler_python_version[1] or
+            current_python_version[0] == 3 and ((pickler_python_version[1] < 6) != (current_python_version[1] < 6))
+            ):
+            raise RuntimeError("Incompatible python versions: " + str(current_python_version) + " instead of " + str(pickler_python_version))
+
+        if current_python_version != pickler_python_version:
+            print("Warning!: Different python versions. The code may crash! Current environment python version: " + str(current_python_version) + ". Component code python version: " + str(pickler_python_version), file=sys.stderr)
+
+        import base64
+        import pickle
+
+        component_func = pickle.loads(base64.b64decode(b'gASVnQYAAAAAAACMF2Nsb3VkcGlja2xlLmNsb3VkcGlja2xllIwNX2J1aWx0aW5fdHlwZZSTlIwKTGFtYmRhVHlwZZSFlFKUKGgCjAhDb2RlVHlwZZSFlFKUKEsBSwBLAEsGSwVLE0NYiARkAWsCciR0AIMAfQF8AaABiAOhAaACiABkAogBFwChAgEAdAN0BHwAgwGDAX0CfAJkAxkAfQN0BXwDgwF9BHwCZAQZAH0FiAJ8BGYBfAWOAQEAZABTAJQoToiMBS90bXAvlIwKZXhwZXJpbWVudJSME3VzZXJfYXJnb19wYXJhbWV0ZXKUdJQojA9nZXRfczNfcmVzb3VyY2WUjAZCdWNrZXSUjA1kb3dubG9hZF9maWxllIwEZGljdJSMBGV2YWyUjApFeHBlcmltZW50lHSUKIwMaW5wdXRfc3RyaW5nlIwCczOUjANkaWOUjA5leHBlcmltZW50X2RpY5SMEmV4cF9vYmpfZm9yX3J1bm5lcpSMEnVzZXJfYXJnb19wYXJhX2RpY5R0lIxpL2hvbWUvamluaGFuL3RyeV90b19idWlsZC9NZXRhU3BvcmUvcHl0aG9uL2J1aWxkL2JkaXN0LmxpbnV4LXg4Nl82NC93aGVlbC9tZXRhc3BvcmUvcGlwZWxpbmUvY29tcG9uZW50LnB5lIwOY29tcG9uZW50X2Z1bmOUSxxDEAABCAEGARYDDAEIAQgBCAKUKIwIZmlsZV9kaXKUjAlmaWxlX25hbWWUjARmdW5jlIwNcHVibGljX2J1Y2tldJSMDXVzZV91c2VyX2ZpbGWUdJQpdJRSlH2UKIwLX19wYWNrYWdlX1+UjBJtZXRhc3BvcmUucGlwZWxpbmWUjAhfX25hbWVfX5SMHG1ldGFzcG9yZS5waXBlbGluZS5jb21wb25lbnSUjAhfX2ZpbGVfX5RoHHVOTihoAIwQX21ha2VfZW1wdHlfY2VsbJSTlClSlGguKVKUaC4pUpRoLilSlGguKVKUdJR0lFKUjBxjbG91ZHBpY2tsZS5jbG91ZHBpY2tsZV9mYXN0lIwSX2Z1bmN0aW9uX3NldHN0YXRllJOUaDZ9lCiMDmNvbXBvbmVudF9uYW1llIwIV2lkZURlZXCUjAxpc19kZWNvcmF0ZWSUiHV9lChoKmgdjAxfX3F1YWxuYW1lX1+UjEF0b19jb21wb25lbnRfZnVuYy48bG9jYWxzPi5kZWNvcmF0ZWRfZnVuYy48bG9jYWxzPi5jb21wb25lbnRfZnVuY5SMD19fYW5ub3RhdGlvbnNfX5R9lGgVaACMCXN1YmltcG9ydJSTlIwGc3RyaW5nlIWUUpRzjA5fX2t3ZGVmYXVsdHNfX5ROjAxfX2RlZmF1bHRzX1+UTowKX19tb2R1bGVfX5RoK4wHX19kb2NfX5ROjAtfX2Nsb3N1cmVfX5QoaC4pUpRoLilSlGgAjApfbWFrZV9jZWxslJOUaAUoaAgoSwFLAEsASwNLA0tLQypkAWQAbABtAQIAAQBtAgIAAQBtA30CAQB8AmoEfABmAXwBjgEBAGQAUwCUTksAhpQojCBtZXRhc3BvcmUuYWxnb3MucnVubmVycy5XaWRlRGVlcJSMBWFsZ29zlIwHcnVubmVyc5RoPIwRZXhwZXJpbWVudF9ydW5fbWWUdJRoC4wGa3dhcmdzlGg8h5SMUy9ob21lL2ppbmhhbi90cnlfdG9fYnVpbGQvTWV0YVNwb3JlL3B5dGhvbi8uL21ldGFzcG9yZS9hbGdvcy9jb21wb25lbnRzL1dpZGVEZWVwLnB5lIwTV2lkZURlZXBfRXhwZXJpbWVudJRLBUMEAAQYAZQpKXSUUpR9lChoKIwAlGgqjAhXaWRlRGVlcJRoLIxTL2hvbWUvamluaGFuL3RyeV90b19idWlsZC9NZXRhU3BvcmUvcHl0aG9uLy4vbWV0YXNwb3JlL2FsZ29zL2NvbXBvbmVudHMvV2lkZURlZXAucHmUdU5OTnSUUpRoOWhkfZR9lChoKmhbaD9oW2hBfZRoSE5oSU5oSmhhaEtOaExOjBdfY2xvdWRwaWNrbGVfc3VibW9kdWxlc5RdlIwLX19nbG9iYWxzX1+UfZR1hpSGUjCFlFKUaC4pUpRoUImFlFKUdJRoaF2UaGp9lChoDowSbWV0YXNwb3JlLnMzX3V0aWxzlGgOk5RoE4wdbWV0YXNwb3JlLnBpcGVsaW5lLmV4cGVyaW1lbnSUaBOTlHV1hpSGUjAu'))
+
+        import argparse
+        _parser = argparse.ArgumentParser(prog='Component func', description='')
+        _parser.add_argument("--input-string", dest="input_string", type=str, required=True, default=argparse.SUPPRESS)
+        _parsed_args = vars(_parser.parse_args())
+
+        _outputs = component_func(**_parsed_args)
+      image: hub.kce.ksyun.com/dmetasoul/spark:dmetasoul-v1.2.2-test
+      imagePullPolicy: Always
+    inputs:
+      parameters:
+      - {name: parameter}
+    metadata:
+      labels:
+        pipelines.kubeflow.org/kfp_sdk_version: 1.8.11
+        pipelines.kubeflow.org/pipeline-sdk-type: kfp
+        pipelines.kubeflow.org/enable_caching: "true"
+      annotations: {pipelines.kubeflow.org/component_spec: '{"implementation": {"container":
+          {"args": ["--input-string", {"inputValue": "input_string"}], "command":
+          ["sh", "-ec", "program_path=$(mktemp)\nprintf \"%s\" \"$0\" > \"$program_path\"\npython3
+          -u \"$program_path\" \"$@\"\n", "import sys\ntry:\n    import cloudpickle
+          as _cloudpickle\nexcept ImportError:\n    import subprocess\n    try:\n        print(\"cloudpickle
+          is not installed. Installing it globally\", file=sys.stderr)\n        subprocess.run([sys.executable,
+          \"-m\", \"pip\", \"install\", \"cloudpickle==1.1.1\", \"--quiet\"], env={\"PIP_DISABLE_PIP_VERSION_CHECK\":
+          \"1\"}, check=True)\n        print(\"Installed cloudpickle globally\", file=sys.stderr)\n    except:\n        print(\"Failed
+          to install cloudpickle globally. Installing for the current user.\", file=sys.stderr)\n        subprocess.run([sys.executable,
+          \"-m\", \"pip\", \"install\", \"cloudpickle==1.1.1\", \"--user\", \"--quiet\"],
+          env={\"PIP_DISABLE_PIP_VERSION_CHECK\": \"1\"}, check=True)\n        print(\"Installed
+          cloudpickle for the current user\", file=sys.stderr)\n        # Enable loading
+          from user-installed package directory. Python does not add it to sys.path
+          if it was empty at start. Running pip does not refresh `sys.path`.\n        import
+          site\n        sys.path.append(site.getusersitepackages())\n    import cloudpickle
+          as _cloudpickle\n    print(\"cloudpickle loaded successfully after installing.\",
+          file=sys.stderr)\n\npickler_python_version = (3, 8, 10, ''final'', 0)\ncurrent_python_version
+          = tuple(sys.version_info)\nif (\n    current_python_version[0] != pickler_python_version[0]
+          or\n    current_python_version[1] < pickler_python_version[1] or\n    current_python_version[0]
+          == 3 and ((pickler_python_version[1] < 6) != (current_python_version[1]
+          < 6))\n    ):\n    raise RuntimeError(\"Incompatible python versions: \"
+          + str(current_python_version) + \" instead of \" + str(pickler_python_version))\n\nif
+          current_python_version != pickler_python_version:\n    print(\"Warning!:
+          Different python versions. The code may crash! Current environment python
+          version: \" + str(current_python_version) + \". Component code python version:
+          \" + str(pickler_python_version), file=sys.stderr)\n\nimport base64\nimport
+          pickle\n\ncomponent_func = pickle.loads(base64.b64decode(b''gASVnQYAAAAAAACMF2Nsb3VkcGlja2xlLmNsb3VkcGlja2xllIwNX2J1aWx0aW5fdHlwZZSTlIwKTGFtYmRhVHlwZZSFlFKUKGgCjAhDb2RlVHlwZZSFlFKUKEsBSwBLAEsGSwVLE0NYiARkAWsCciR0AIMAfQF8AaABiAOhAaACiABkAogBFwChAgEAdAN0BHwAgwGDAX0CfAJkAxkAfQN0BXwDgwF9BHwCZAQZAH0FiAJ8BGYBfAWOAQEAZABTAJQoToiMBS90bXAvlIwKZXhwZXJpbWVudJSME3VzZXJfYXJnb19wYXJhbWV0ZXKUdJQojA9nZXRfczNfcmVzb3VyY2WUjAZCdWNrZXSUjA1kb3dubG9hZF9maWxllIwEZGljdJSMBGV2YWyUjApFeHBlcmltZW50lHSUKIwMaW5wdXRfc3RyaW5nlIwCczOUjANkaWOUjA5leHBlcmltZW50X2RpY5SMEmV4cF9vYmpfZm9yX3J1bm5lcpSMEnVzZXJfYXJnb19wYXJhX2RpY5R0lIxpL2hvbWUvamluaGFuL3RyeV90b19idWlsZC9NZXRhU3BvcmUvcHl0aG9uL2J1aWxkL2JkaXN0LmxpbnV4LXg4Nl82NC93aGVlbC9tZXRhc3BvcmUvcGlwZWxpbmUvY29tcG9uZW50LnB5lIwOY29tcG9uZW50X2Z1bmOUSxxDEAABCAEGARYDDAEIAQgBCAKUKIwIZmlsZV9kaXKUjAlmaWxlX25hbWWUjARmdW5jlIwNcHVibGljX2J1Y2tldJSMDXVzZV91c2VyX2ZpbGWUdJQpdJRSlH2UKIwLX19wYWNrYWdlX1+UjBJtZXRhc3BvcmUucGlwZWxpbmWUjAhfX25hbWVfX5SMHG1ldGFzcG9yZS5waXBlbGluZS5jb21wb25lbnSUjAhfX2ZpbGVfX5RoHHVOTihoAIwQX21ha2VfZW1wdHlfY2VsbJSTlClSlGguKVKUaC4pUpRoLilSlGguKVKUdJR0lFKUjBxjbG91ZHBpY2tsZS5jbG91ZHBpY2tsZV9mYXN0lIwSX2Z1bmN0aW9uX3NldHN0YXRllJOUaDZ9lCiMDmNvbXBvbmVudF9uYW1llIwIV2lkZURlZXCUjAxpc19kZWNvcmF0ZWSUiHV9lChoKmgdjAxfX3F1YWxuYW1lX1+UjEF0b19jb21wb25lbnRfZnVuYy48bG9jYWxzPi5kZWNvcmF0ZWRfZnVuYy48bG9jYWxzPi5jb21wb25lbnRfZnVuY5SMD19fYW5ub3RhdGlvbnNfX5R9lGgVaACMCXN1YmltcG9ydJSTlIwGc3RyaW5nlIWUUpRzjA5fX2t3ZGVmYXVsdHNfX5ROjAxfX2RlZmF1bHRzX1+UTowKX19tb2R1bGVfX5RoK4wHX19kb2NfX5ROjAtfX2Nsb3N1cmVfX5QoaC4pUpRoLilSlGgAjApfbWFrZV9jZWxslJOUaAUoaAgoSwFLAEsASwNLA0tLQypkAWQAbABtAQIAAQBtAgIAAQBtA30CAQB8AmoEfABmAXwBjgEBAGQAUwCUTksAhpQojCBtZXRhc3BvcmUuYWxnb3MucnVubmVycy5XaWRlRGVlcJSMBWFsZ29zlIwHcnVubmVyc5RoPIwRZXhwZXJpbWVudF9ydW5fbWWUdJRoC4wGa3dhcmdzlGg8h5SMUy9ob21lL2ppbmhhbi90cnlfdG9fYnVpbGQvTWV0YVNwb3JlL3B5dGhvbi8uL21ldGFzcG9yZS9hbGdvcy9jb21wb25lbnRzL1dpZGVEZWVwLnB5lIwTV2lkZURlZXBfRXhwZXJpbWVudJRLBUMEAAQYAZQpKXSUUpR9lChoKIwAlGgqjAhXaWRlRGVlcJRoLIxTL2hvbWUvamluaGFuL3RyeV90b19idWlsZC9NZXRhU3BvcmUvcHl0aG9uLy4vbWV0YXNwb3JlL2FsZ29zL2NvbXBvbmVudHMvV2lkZURlZXAucHmUdU5OTnSUUpRoOWhkfZR9lChoKmhbaD9oW2hBfZRoSE5oSU5oSmhhaEtOaExOjBdfY2xvdWRwaWNrbGVfc3VibW9kdWxlc5RdlIwLX19nbG9iYWxzX1+UfZR1hpSGUjCFlFKUaC4pUpRoUImFlFKUdJRoaF2UaGp9lChoDowSbWV0YXNwb3JlLnMzX3V0aWxzlGgOk5RoE4wdbWV0YXNwb3JlLnBpcGVsaW5lLmV4cGVyaW1lbnSUaBOTlHV1hpSGUjAu''))\n\nimport
+          argparse\n_parser = argparse.ArgumentParser(prog=''Component func'', description='''')\n_parser.add_argument(\"--input-string\",
+          dest=\"input_string\", type=str, required=True, default=argparse.SUPPRESS)\n_parsed_args
+          = vars(_parser.parse_args())\n\n_outputs = component_func(**_parsed_args)\n"],
+          "image": "hub.kce.ksyun.com/dmetasoul/spark:dmetasoul-v1.2.2-test"}}, "inputs":
+          [{"name": "input_string", "type": "<module ''string'' from ''/usr/lib/python3.8/string.py''>"}],
+          "name": "Component func"}', pipelines.kubeflow.org/component_ref: '{"digest":
+          "14d420fe9524743dba4c5876abe25dc0409f130ea274731975a5106ed1a9aee9", "url":
+          "/home/jinhan/.local/lib/python3.8/site-packages/metaspore/kubeflow_components/WideDeep.yaml"}',
+        pipelines.kubeflow.org/arguments.parameters: '{"input_string": "{{inputs.parameters.parameter}}"}'}
+  - name: my-pipeline
+    inputs:
+      parameters:
+      - {name: parameter}
+    dag:
+      tasks:
+      - name: component-func
+        template: component-func
+        arguments:
+          parameters:
+          - {name: parameter, value: '{{inputs.parameters.parameter}}'}
+  arguments:
+    parameters:
+    - {name: parameter}
+  serviceAccountName: pipeline-runner

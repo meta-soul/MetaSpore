@@ -9,7 +9,8 @@ pipeline_conf = kfp.dsl.PipelineConf()
 pipeline_conf.set_image_pull_policy('Always')
 
 def my_pipeline(parameter):
-    comp1(parameter)
+    task_never_use_cache = comp1(parameter)
+    task_never_use_cache.execution_options.caching_strategy.max_cache_staleness = "P0D"
 
 kfp.compiler.Compiler().compile(
     pipeline_func = my_pipeline,
