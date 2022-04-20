@@ -17,8 +17,10 @@
 package com.dmetasoul.metaspore.demo.multimodal.model;
 
 
+import com.dmetasoul.metaspore.serving.ArrowTensor;
 import com.google.protobuf.ByteString;
 
+import java.util.List;
 import java.util.Map;
 
 public class SearchContext {
@@ -30,7 +32,22 @@ public class SearchContext {
 
     private String matchEmbeddingModelName;
 
+    private String matchEmbeddingVectorName;
+
+    private List<String> matchMatcherNames;
+
+    private Integer matchMaxReservation;
+
+    private Map<String, String> matchMilvusArgs;
+
+    // QP results
     private Map<String, ByteString> qpResults;
+
+    // retrieval results, item list
+    private List<List<ItemModel>> matchItemModels;
+
+    // ranking results
+    private List<List<ItemModel>> rankItemModels;
 
     public SearchContext() {
 
@@ -56,13 +73,37 @@ public class SearchContext {
 
     public void setQpQueryProcessorModelName(String processorName) { this.qpQueryProcessorModelName = processorName; }
 
+    public String getMatchEmbeddingModelName() { return matchEmbeddingModelName; }
+
+    public void setMatchEmbeddingModelName(String modelName) { this.matchEmbeddingModelName = modelName; }
+
+    public String getMatchEmbeddingVectorName() { return this.matchEmbeddingVectorName; }
+
+    public void setMatchEmbeddingVectorName(String matchEmbeddingVectorName) { this.matchEmbeddingVectorName = matchEmbeddingVectorName; }
+
+    public List<String> getMatchMatcherNames() { return this.matchMatcherNames; }
+
+    public void setMatchMatcherNames(List<String> matchMatcherNames) { this.matchMatcherNames = matchMatcherNames; }
+
+    public Integer getMatchMaxReservation() { return  this.matchMaxReservation; }
+
+    public void setMatchMaxReservation(Integer maxReservation) { this.matchMaxReservation = maxReservation; }
+
+    public Map<String, String> getMatchMilvusArgs() { return this.matchMilvusArgs; }
+
+    public void setMatchMilvusArgs(Map<String, String> milvusArgs) { this.matchMilvusArgs = milvusArgs; }
+
     public Map<String, ByteString> getQpResults() { return qpResults; }
 
     public void setQpResults(Map<String, ByteString> qpResults) { this.qpResults = qpResults; }
 
-    public String getMatchEmbeddingModelName() { return matchEmbeddingModelName; }
+    public List<List<ItemModel>> getMatchItemModels() { return matchItemModels; }
 
-    public void setMatchEmbeddingModelName(String modelName) { this.matchEmbeddingModelName = modelName; }
+    public void setMatchItemModels(List<List<ItemModel>> itemModels) { this.matchItemModels = itemModels; }
+
+    public List<List<ItemModel>> getRankItemModels() { return rankItemModels; }
+
+    public void setRankItemModels(List<List<ItemModel>> itemModels) { this.rankItemModels = itemModels; }
 
     @Override
     public String toString() {

@@ -17,12 +17,15 @@
 package com.dmetasoul.metaspore.demo.multimodal.abtesting.experiment.qa.rank;
 
 
+import com.dmetasoul.metaspore.demo.multimodal.model.ItemModel;
+import com.dmetasoul.metaspore.demo.multimodal.model.SearchContext;
 import com.dmetasoul.metaspore.demo.multimodal.model.SearchResult;
 import com.dmetasoul.metaspore.pipeline.BaseExperiment;
 import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
 import com.dmetasoul.metaspore.pipeline.impl.Context;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 
 @ExperimentAnnotation(name = "rank.qa.base")
@@ -35,6 +38,15 @@ public class QaRankExperiment implements BaseExperiment<SearchResult, SearchResu
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
+        System.out.println("rank layer do nothing, just return for now!");
+
+        // just copy match results
+        SearchContext searchContext = in.getSearchContext();
+        List<List<ItemModel>> itemModels = searchContext.getMatchItemModels();
+        searchContext.setRankItemModels(itemModels);
+        in.setSearchItemModels(itemModels);
+
+        //System.out.println(itemModels);
         System.out.println("rank.base experiment, Query:" + in.getSearchQuery());
         return in;
     }

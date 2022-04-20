@@ -18,18 +18,22 @@ package com.dmetasoul.metaspore.demo.multimodal.model;
 
 import com.dmetasoul.metaspore.demo.multimodal.model.QueryModel;
 import com.dmetasoul.metaspore.demo.multimodal.model.ItemModel;
+import com.dmetasoul.metaspore.serving.ArrowTensor;
+import com.google.protobuf.ByteString;
+
 import java.util.List;
+import java.util.Map;
 
 public class SearchResult {
     private String searchQuery;
 
     private String searchResult;
 
+    private List<List<ItemModel>> searchItemModels;
+
     private SearchContext searchContext;
 
     private QueryModel queryModel;
-
-    private List<ItemModel> searchItemModels;
 
     public SearchResult() {
     }
@@ -74,9 +78,9 @@ public class SearchResult {
 
     public void setQueryModel(QueryModel queryModel) { this.queryModel = queryModel; }
 
-    public List<ItemModel> getSearchItemModels() { return searchItemModels; }
+    public List<List<ItemModel>> getSearchItemModels() { return searchItemModels; }
 
-    public void setSearchItemModels(List<ItemModel> searchItemModels) { this.searchItemModels = searchItemModels; }
+    public void setSearchItemModels(List<List<ItemModel>> itemModels) { this.searchItemModels = itemModels; }
 
     @Override
     public String toString() {
@@ -84,7 +88,6 @@ public class SearchResult {
                 "searchQueryModel='" + queryModel + '\'' +
                 ", searchResult='" + searchResult + '\'' +
                 ", searchContext=" + searchContext +
-                ", searchItemModels=" + searchItemModels + '\'' +
                 '}';
     }
 }
