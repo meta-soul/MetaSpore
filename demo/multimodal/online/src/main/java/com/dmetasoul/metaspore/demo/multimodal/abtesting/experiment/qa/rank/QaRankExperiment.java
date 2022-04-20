@@ -43,8 +43,8 @@ public class QaRankExperiment implements BaseExperiment<SearchResult, SearchResu
         // just copy match results
         SearchContext searchContext = in.getSearchContext();
         List<List<ItemModel>> itemModels = searchContext.getMatchItemModels();
-        searchContext.setRankItemModels(itemModels);
-        in.setSearchItemModels(itemModels);
+        searchContext.setRankItemModels(itemModels);  // set for downstream pipeline
+        in.setSearchItemModels(itemModels);  // the final search results set for now
 
         //System.out.println(itemModels);
         System.out.println("rank.base experiment, Query:" + in.getSearchQuery());

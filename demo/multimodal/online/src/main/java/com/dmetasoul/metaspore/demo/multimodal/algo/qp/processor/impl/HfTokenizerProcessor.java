@@ -22,14 +22,15 @@ public class HfTokenizerProcessor implements Processor {
     }
 
     @Override
-    public void process(SearchContext searchContext, QueryModel queryModel) throws IOException {
+    public Map<String, ByteString> process(SearchContext searchContext, QueryModel queryModel) throws IOException {
         String modelName = searchContext.getQpQueryEmbeddingModelName();
         List<String> texts = List.of(queryModel.getQuery());
         Map<String, ByteString> serviceResults = hfPreprocessorService.predictBlocking(modelName, texts, Collections.emptyMap());
-        searchContext.setQpResults(serviceResults);
 
         // There are some bugs in arrowTensor encode-decode
         //System.out.println("Qp Processor Results:");
         //System.out.println(hfPreprocessorService.getIntPredictFromArrowTensorResult(hfPreprocessorService.pbToArrow(serviceResults)));
+
+        return serviceResults;
     }
 }

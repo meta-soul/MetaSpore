@@ -72,8 +72,8 @@ public class QaMatchExperiment implements BaseExperiment<SearchResult, SearchRes
         searchContext.setMatchMilvusArgs(milvusArgs);
 
         List<List<ItemModel>> itemModels = retrievalService.match(in.getSearchContext(), in.getQueryModel());
-        searchContext.setMatchItemModels(itemModels);
-        in.setSearchItemModels(itemModels);
+        searchContext.setMatchItemModels(itemModels);  // set for downstream pipeline
+        in.setSearchItemModels(itemModels);  // the final search results set for now
 
         System.out.println("match.base experiment, Query:" + in.getSearchQuery());
         return in;

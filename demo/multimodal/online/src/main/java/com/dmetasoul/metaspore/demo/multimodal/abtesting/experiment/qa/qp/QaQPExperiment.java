@@ -23,6 +23,7 @@ import com.dmetasoul.metaspore.demo.multimodal.algo.qp.QpService;
 import com.dmetasoul.metaspore.pipeline.BaseExperiment;
 import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
 import com.dmetasoul.metaspore.pipeline.impl.Context;
+import com.google.protobuf.ByteString;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
@@ -54,7 +55,8 @@ public class QaQPExperiment implements BaseExperiment<SearchResult, SearchResult
         searchContext.setQpQueryProcessorModelName(processorName);
 
         // process by qpService, the results will be put into searchContext
-        qpService.process(in.getSearchContext(), in.getQueryModel());
+        Map<String, ByteString> qpResults = qpService.process(in.getSearchContext(), in.getQueryModel());
+        searchContext.setQpResults(qpResults);  // set for downstream pipeline
 
         System.out.println("qp.base experiment, userModel:" + searchContext.getUserId() + ", Query:" + in.getSearchQuery());
         return in;
