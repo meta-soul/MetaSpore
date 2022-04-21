@@ -3,11 +3,14 @@ import metaspore as ms
 
 def experiment_run_me(experiment,**kwargs):
     module = WideDeep.DemoModule()
-    estimator = ms.PyTorchEstimator(module = module)
-
+    
+    estimator = ms.PyTorchEstimator(
+        module = module,
+        worker_count = kwargs['worker_count'],  # read from user_parameter
+        server_count = kwargs['server_count']
+    )
     experiment.fill_parameter(estimator)
 
-    print(estimator.consul_host)
     def use_s3a(url):
         return url.replace('s3://', 's3a://')
 
@@ -26,4 +29,5 @@ def experiment_run_me(experiment,**kwargs):
     train_dataset = spark_session.read.parquet(use_s3a('s3://dmetasoul-bucket/demo/' + 'criteo_x1/train_5.parquet'))
     train_dataset = train_dataset.limit(30)
 
+    # publish or not is depend on user's experiment parameter
     estimator.fit(train_dataset)

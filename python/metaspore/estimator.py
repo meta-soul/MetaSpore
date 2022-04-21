@@ -38,6 +38,7 @@ class PyTorchAgent(Agent):
         self.model = None
         # new
         self.model_name = None
+        self.scene = None
 
         self.trainer = None
         self.is_training_mode = None
@@ -327,6 +328,7 @@ class PyTorchLauncher(PSLauncher):
         self.experiment_name = None
         # new
         self.model_name = None
+        self.scene = None
 
         self.training_epoches = None
         self.shuffle_training_dataset = None
@@ -369,6 +371,7 @@ class PyTorchLauncher(PSLauncher):
         self._agent_attributes['experiment_name'] = self.experiment_name
         # new
         self._agent_attributes['model_name'] = self.model_name
+        self._agent_attributes['scene'] = self.scene
 
         self._agent_attributes['training_epoches'] = self.training_epoches
         self._agent_attributes['shuffle_training_dataset'] = self.shuffle_training_dataset
@@ -400,6 +403,7 @@ class PyTorchHelperMixin(object):
                  model_version=None,
                  # new
                  model_name = None,
+                 scene = None,
 
                  experiment_name=None,
                  training_epoches=1,
@@ -428,6 +432,7 @@ class PyTorchHelperMixin(object):
         self.model_version = model_version
         # new
         self.model_name = model_name
+        self.scene = scene
 
         self.experiment_name = experiment_name
         self.training_epoches = training_epoches
@@ -478,6 +483,8 @@ class PyTorchHelperMixin(object):
         # new
         if self.model_name is not None and not isinstance(self.model_name, str):
             raise TypeError(f"model_name must be string; {self.model_name!r} is invalid")
+        if self.scene is not None and not isinstance(self.scene, str):
+            raise TypeError(f"scene must be string; {self.scene!r} is invalid")
 
         if not isinstance(self.training_epoches, int) or self.training_epoches <= 0:
             raise TypeError(f"training_epoches must be positive integer; {self.training_epoches!r} is invalid")
@@ -543,6 +550,7 @@ class PyTorchHelperMixin(object):
         launcher.experiment_name = self.experiment_name
         # new
         launcher.model_name = self.model_name
+        launcher.scene = self.scene
 
         launcher.training_epoches = self.training_epoches
         launcher.shuffle_training_dataset = self.shuffle_training_dataset
@@ -573,6 +581,7 @@ class PyTorchHelperMixin(object):
         args['experiment_name'] = self.experiment_name
         # new
         args['model_name'] = self.model_name
+        args['scene'] = self.scene
 
         args['metric_update_interval'] = self.metric_update_interval
         args['consul_host'] = self.consul_host
@@ -619,7 +628,7 @@ class PyTorchModel(PyTorchHelperMixin, pyspark.ml.base.Model):
         if response is None:
             consul_client.kv.put(self.consul_endpoint_prefix + '/', value=None)
             print("init consul endpoint dir: %s" % self.consul_endpoint_prefix)
-        endpoint = '%s/%s/%s' % (self.consul_endpoint_prefix, self.experiment_name, self.model_name)
+        endpoint = '%s/%s/%s/%s' % (self.consul_endpoint_prefix, self.scene, self.experiment_name, self.model_name)
         consul_path = f'{self.consul_host}:{self.consul_port}/{endpoint}'
         try:
             consul_client.kv.put(endpoint, string)
@@ -654,6 +663,7 @@ class PyTorchEstimator(PyTorchHelperMixin, pyspark.ml.base.Estimator):
         model = self._create_model(module)
         self.final_metric = launcher.agent_object._metric
 
-        model.publish()
+        if model.consul_endpoint_prefix is not None:
+            model.publish()
         
         return model
