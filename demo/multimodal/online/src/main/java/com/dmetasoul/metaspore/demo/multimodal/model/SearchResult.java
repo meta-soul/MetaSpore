@@ -19,21 +19,25 @@ package com.dmetasoul.metaspore.demo.multimodal.model;
 import com.dmetasoul.metaspore.demo.multimodal.model.QueryModel;
 import com.dmetasoul.metaspore.demo.multimodal.model.ItemModel;
 import com.dmetasoul.metaspore.serving.ArrowTensor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.protobuf.ByteString;
 
 import java.util.List;
 import java.util.Map;
 
 public class SearchResult {
+    @JsonIgnore
     private String searchQuery;
 
+    @JsonIgnore
     private String searchResult;
 
-    private List<List<ItemModel>> searchItemModels;
-
+    @JsonIgnore
     private SearchContext searchContext;
 
     private QueryModel queryModel;
+
+    private List<List<ItemModel>> searchItemModels;
 
     public SearchResult() {
     }

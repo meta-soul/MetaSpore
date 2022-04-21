@@ -3,7 +3,6 @@ package com.dmetasoul.metaspore.demo.multimodal;
 import com.dmetasoul.metaspore.demo.multimodal.service.impl.HfPreprocessorServiceImpl;
 import com.dmetasoul.metaspore.serving.ArrowTensor;
 import com.google.protobuf.ByteString;
-import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
