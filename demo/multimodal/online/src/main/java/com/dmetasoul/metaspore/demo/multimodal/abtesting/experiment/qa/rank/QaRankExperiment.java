@@ -25,29 +25,47 @@ import com.dmetasoul.metaspore.pipeline.annotation.ExperimentAnnotation;
 import com.dmetasoul.metaspore.pipeline.impl.Context;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @ExperimentAnnotation(name = "rank.qa.base")
 @Component
 public class QaRankExperiment implements BaseExperiment<SearchResult, SearchResult> {
+    private Integer maxReservation;
+
     @Override
     public void initialize(Map<String, Object> args) {
+        maxReservation = (Integer) args.get("maxReservation");
         System.out.println("rank.base initialize... " + args);
     }
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
-        System.out.println("rank layer do nothing, just return for now!");
+        SearchContext searchContext = in.getSearchContext();
+        searchContext.setRankMaxReservation(maxReservation);
 
         // just copy match results
-        SearchContext searchContext = in.getSearchContext();
+        System.out.println("rank layer do nothing, just return for now!");
+        Integer maxReservation = searchContext.getRankMaxReservation();
         List<List<ItemModel>> itemModels = searchContext.getMatchItemModels();
-        searchContext.setRankItemModels(itemModels);  // set for downstream pipeline
-        in.setSearchItemModels(itemModels);  // the final search results set for now
+        List<List<ItemModel>> rankingItemModels = new ArrayList<>();
+        for (int qid=0; qid<itemModels.size(); qid++) {
+            itemModels.set(qid, itemModels.get(qid).subList(0, maxReservation));  // truncate
+            itemModels.get(qid).forEach(x -> {
+                x.setOriginalRankingScoreMap("dummy", x.getFinalRetrievalScore());
+                x.setFinalRankingScore(x.getFinalRetrievalScore());
+            });
+            rankingItemModels.add(itemModels.get(qid));
+        }
+
+        searchContext.setRankItemModels(rankingItemModels);  // set for downstream pipeline
+        in.setSearchItemModels(rankingItemModels);  // the final search results set for now
 
         //System.out.println(itemModels);
-        System.out.println("rank.base experiment, Query:" + in.getSearchQuery());
+        System.out.println("rank.base experiment, Query:" + in.getSearchQuery() + ", Items:" + String.valueOf(rankingItemModels.stream().map(List::size).collect(Collectors.toList())));
+
         return in;
     }
 }

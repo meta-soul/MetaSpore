@@ -40,6 +40,8 @@ public class SearchContext {
 
     private Map<String, String> matchMilvusArgs;
 
+    private Integer rankMaxReservation;
+
     // QP results
     private Map<String, ByteString> qpResults;
 
@@ -92,6 +94,10 @@ public class SearchContext {
     public Map<String, String> getMatchMilvusArgs() { return this.matchMilvusArgs; }
 
     public void setMatchMilvusArgs(Map<String, String> milvusArgs) { this.matchMilvusArgs = milvusArgs; }
+
+    public Integer getRankMaxReservation() { return rankMaxReservation; }
+
+    public void setRankMaxReservation(Integer maxReservation) { this.rankMaxReservation = maxReservation; }
 
     public Map<String, ByteString> getQpResults() { return qpResults; }
 

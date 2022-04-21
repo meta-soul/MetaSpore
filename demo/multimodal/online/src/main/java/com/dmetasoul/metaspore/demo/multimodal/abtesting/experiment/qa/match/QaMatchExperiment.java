@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
+
 import com.google.common.collect.Lists;
 
 @ExperimentAnnotation(name = "match.qa.base")
@@ -75,7 +77,7 @@ public class QaMatchExperiment implements BaseExperiment<SearchResult, SearchRes
         searchContext.setMatchItemModels(itemModels);  // set for downstream pipeline
         in.setSearchItemModels(itemModels);  // the final search results set for now
 
-        System.out.println("match.base experiment, Query:" + in.getSearchQuery());
+        System.out.println("match.base experiment, Query:" + in.getSearchQuery() + ", Items:" + String.valueOf(itemModels.stream().map(List::size).collect(Collectors.toList())));
         return in;
     }
 }
