@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.demo.multimodal.abtesting.layer;
+package com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.qa;
 
 import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.LayerBucketizer;
 import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.RandomLayerBucketizer;
@@ -28,14 +28,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@LayerAnnotation(name = "rank")
+@LayerAnnotation(name = "match.qa")
 @Component
-public class RankLayer implements BaseLayer<SearchResult> {
+public class QaMatchLayer implements BaseLayer<SearchResult> {
     private LayerBucketizer bucketizer;
 
     @Override
     public void intitialize(LayerArgs layerArgs) {
-        System.out.println("Rank layer, args:" + layerArgs);
+        System.out.println("QA Match layer, args:" + layerArgs);
         Map<String, Object> extraArgs = layerArgs.getExtraLayerArgs();
         String bucketizer = (String) extraArgs.getOrDefault("bucketizer", "sha256");
         switch (bucketizer.toLowerCase()) {
@@ -50,7 +50,7 @@ public class RankLayer implements BaseLayer<SearchResult> {
     @Override
     public String split(Context ctx, SearchResult in) {
         String returnExp = bucketizer.toBucket(in.getSearchContext());
-        System.out.printf("Rank layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
+        System.out.printf("QA Match layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
         return returnExp;
     }
 }

@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.demo.multimodal.abtesting.layer;
+package com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.base;
 
 import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.LayerBucketizer;
 import com.dmetasoul.metaspore.demo.multimodal.abtesting.layer.bucketizer.RandomLayerBucketizer;
@@ -28,14 +28,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@LayerAnnotation(name = "qp")
+@LayerAnnotation(name = "match.base")
 @Component
-public class QPLayer implements BaseLayer<SearchResult> {
+public class MatchLayer implements BaseLayer<SearchResult> {
     private LayerBucketizer bucketizer;
 
     @Override
     public void intitialize(LayerArgs layerArgs) {
-        System.out.println("QP layer, args:" + layerArgs);
+        System.out.println("Match layer, args:" + layerArgs);
         Map<String, Object> extraArgs = layerArgs.getExtraLayerArgs();
         String bucketizer = (String) extraArgs.getOrDefault("bucketizer", "sha256");
         switch (bucketizer.toLowerCase()) {
@@ -50,8 +50,7 @@ public class QPLayer implements BaseLayer<SearchResult> {
     @Override
     public String split(Context ctx, SearchResult in) {
         String returnExp = bucketizer.toBucket(in.getSearchContext());
-        // TODO we should avoid to reference the experiment name explicitly
-        System.out.printf("QP layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
+        System.out.printf("Match layer split: %s, return exp: %s%n", this.getClass().getName(), returnExp);
         return returnExp;
     }
 }

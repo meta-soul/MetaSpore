@@ -14,7 +14,8 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.demo.multimodal.abtesting.experiment.match;
+package com.dmetasoul.metaspore.demo.multimodal.abtesting.experiment.base.rank;
+
 
 import com.dmetasoul.metaspore.demo.multimodal.model.SearchResult;
 import com.dmetasoul.metaspore.pipeline.BaseExperiment;
@@ -24,17 +25,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@ExperimentAnnotation(name = "match.base")
+@ExperimentAnnotation(name = "rank.base.base")
 @Component
-public class MatchExperiment implements BaseExperiment<SearchResult, SearchResult> {
+public class RankExperiment implements BaseExperiment<SearchResult, SearchResult> {
     @Override
     public void initialize(Map<String, Object> args) {
-        System.out.println("match.base initialize... " + args);
+        System.out.println("rank.base initialize... " + args);
     }
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
-        System.out.println("match.base experiment, Query:" + in.getSearchQuery());
+        System.out.println("rank.base experiment, Query:" + in.getSearchQuery());
         return in;
     }
 }

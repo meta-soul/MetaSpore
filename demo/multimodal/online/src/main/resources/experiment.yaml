@@ -2,43 +2,46 @@ scene-config:
   scenes:
     - name: questionAnswer
       layers:
-        - name: qp
+        - name: qp.qa
           normalLayerArgs:
             - experimentName: qp.qa.base
               ratio: 1.0
-        - name: match
+        - name: match.qa
           normalLayerArgs:
             - experimentName: match.qa.base
               ratio: 1.0
-        - name: rank
+        - name: rank.qa
           normalLayerArgs:
             - experimentName: rank.qa.base
               ratio: 1.0
-        - name: summary
+        - name: summary.qa
           normalLayerArgs:
             - experimentName: summary.qa.base
               ratio: 1.0
 
   experiments:
-    - layerName: qp
+    - layerName: qp.qa
       experimentName: qp.qa.base
       extraExperimentArgs:
-        modelName: nlp_tokenizer
-    - layerName: match
+        modelName: sbert-chinese-qmc-domain-v1
+        processorName: HfTokenizerProcessor
+    - layerName: match.qa
       experimentName: match.qa.base
       extraExperimentArgs:
-        modelName: sentence_bert
-        matcherNames: [TwoTowersMatcher]
+        modelName: sbert-chinese-qmc-domain-v1
+        vectorName: sentence_embedding
+        matcherNames: [ANNMatcher]
         maxReservation: 200
-        itemCfAlgoLevel: 1
-    - layerName: rank
+        milvusArgs:
+          collectionName: baike_qa_demo
+          outFields: id
+          vectorField: question_emb
+          searchParams: "{\"nprobe\":128}"
+    - layerName: rank.qa
       experimentName: rank.qa.base
       extraExperimentArgs:
-        modelName: multimodal_deepfm
-        ranker: DeepFMRanker
-        maxReservation: 100
-    - layerName: summary
+        maxReservation: 50
+    - layerName: summary.qa
       experimentName: summary.qa.base
       extraExperimentArgs:
-        modelName: summary.base
-
+        summaryFields: [question, answer, category]

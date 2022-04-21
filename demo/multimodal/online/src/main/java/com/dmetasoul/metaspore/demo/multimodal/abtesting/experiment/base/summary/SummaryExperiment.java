@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.demo.multimodal.abtesting.experiment.qp;
+package com.dmetasoul.metaspore.demo.multimodal.abtesting.experiment.base.summary;
 
 import com.dmetasoul.metaspore.demo.multimodal.model.SearchResult;
 import com.dmetasoul.metaspore.pipeline.BaseExperiment;
@@ -24,17 +24,17 @@ import org.springframework.stereotype.Component;
 
 import java.util.Map;
 
-@ExperimentAnnotation(name = "qp.base")
+@ExperimentAnnotation(name = "summary.base.base")
 @Component
-public class QPExperiment implements BaseExperiment<SearchResult, SearchResult> {
+public class SummaryExperiment implements BaseExperiment<SearchResult, SearchResult> {
     @Override
     public void initialize(Map<String, Object> args) {
-        System.out.println("qp.base initialize... " + args);
+        System.out.println("summary.base initialize... " + args);
     }
 
     @Override
     public SearchResult run(Context ctx, SearchResult in) {
-        System.out.println("qp.base experiment, userModel:" + in.getSearchContext().getUserId() + ", Query:" + in.getSearchQuery());
+        System.out.println("summary.base experiment, Query:" + in.getSearchQuery());
         return in;
     }
 }
