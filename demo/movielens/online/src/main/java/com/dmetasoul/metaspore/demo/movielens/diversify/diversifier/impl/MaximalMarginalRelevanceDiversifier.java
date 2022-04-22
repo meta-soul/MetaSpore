@@ -29,7 +29,7 @@ import java.util.*;
 @Service
 public class MaximalMarginalRelevanceDiversifier implements Diversifier {
     public static final String ALGO_NAME = "MaximalMarginalRelevanceDiversifier";
-    public static final double  DEFAULT_LAMBDA = 0.7;
+    public static final double DEFAULT_LAMBDA = 0.7;
 
 
     public List<ItemModel> diverse(RecommendContext recommendContext,
@@ -37,13 +37,19 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                                    Integer window,
                                    Integer tolerance
     ) {
+        if (itemModels.size() <= window) return itemModels;
         Double lambda = recommendContext.getLambda();
         if (lambda == null) {
             lambda = DEFAULT_LAMBDA;
         }
+        LinkList itemLinkList = new LinkList();
         int genreCount = Utils.groupByType(itemModels).size();
         if (window == null || window > genreCount) {
             window = genreCount;
+        }
+
+        for (int i = itemModels.size() - 1; i >= 0; i--) {
+            itemLinkList.add(itemModels.get(i));
         }
 
         // label the visited
@@ -54,9 +60,9 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         // compute the genre in the window
         HashMap<String, Integer> genreInWindow = new HashMap();
         HashMap<String, Integer> genreSplitedInWindow = new HashMap<>();
-
         // start diverse
         for (int i = 0; i < itemModels.size(); i++) {
+            ListNode itemNode = itemLinkList.head.next;
             //compute the count of genre in window
             int genreInWindowNum = 0;
             if (!genreInWindow.isEmpty()) {
@@ -65,46 +71,40 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 }
             }
 
-            if (genreInWindow.containsKey(itemModels.get(i).getGenre())) {
+            if (genreInWindow.containsKey(itemNode.itemModel.getGenre())) {
                 int maxIndex = i;
                 double maxMMR = Double.MIN_VALUE;
-
-                for (int startFound = i; startFound < Math.min(i + tolerance, itemModels.size()); startFound++) {
+                ListNode itemNodefind = itemNode;
+                ListNode itemMaxMMR = new ListNode();
+                for (int startFound = 0; startFound < tolerance && itemNodefind != null; startFound++) {
                     // MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
                     // SimScore:itemModel's final simscore
                     // sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
 
-                    double rankingScore = itemModels.get(startFound).getFinalRankingScore() * lambda;
-                    double simScore = getSimScore(itemModels.get(startFound), genreSplitedInWindow) * (1 - lambda);
+                    double rankingScore = itemNodefind.itemModel.getFinalRankingScore() * lambda;
+                    double simScore = getSimScore(itemNodefind.itemModel, genreSplitedInWindow) * (1 - lambda);
                     if ((rankingScore - simScore) > maxMMR) {
-                        maxIndex = startFound;
+                        itemMaxMMR = itemNodefind;
                         maxMMR = rankingScore - simScore;
                     }
                 }
                 String minGenre = itemModels.get(maxIndex).getGenre();
-                int defaultcount = genreInWindow.containsKey(minGenre) ? genreInWindow.get(minGenre) + 1 : 1;
-                genreInWindow.put(minGenre, defaultcount);
+                renewHashMap(genreInWindow,minGenre);
                 // renew genreSplitedWindow;
                 List<String> genreList = itemModels.get(maxIndex).getGenreList();
                 for (String genre : genreList) {
-                    int value = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
-                    genreSplitedInWindow.put(genre, value);
+                    renewHashMap(genreSplitedInWindow,genre);
                 }
                 // exchange location
-                ItemModel needDiverse = itemModels.get(maxIndex);
-                itemVisited.put(itemModels.get(maxIndex), 1);
-                for (int j = maxIndex; j > i; j--) {
-                    itemModels.set(j, itemModels.get(j - 1));
-                }
-                itemModels.set(i, needDiverse);
+                itemLinkList.swap(itemNode, itemMaxMMR);
             } else {
                 genreInWindow.put(itemModels.get(i).getGenre(), 1);
                 itemVisited.put(itemModels.get(i), 1);
                 List<String> genreList = itemModels.get(i).getGenreList();
                 for (String genre : genreList) {
-                    int value = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
-                    genreSplitedInWindow.put(genre, value);
+                    renewHashMap(genreSplitedInWindow,genre);
                 }
+                itemNode = itemNode.next;
             }
             if (genreInWindowNum == window) {
                 ItemModel itemDelete = itemModels.get(i - window + 1);
@@ -122,10 +122,19 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 }
             }
         }
-
-        return itemModels;
+        ListNode getList = itemLinkList.head.next;
+        List<ItemModel> itemDiverdified = new ArrayList<>();
+        while (getList != null) {
+            itemDiverdified.add(getList.itemModel);
+            getList = getList.next;
+        }
+        return itemDiverdified;
     }
 
+    public static  void renewHashMap(HashMap<String,Integer> genreMap,String genre){
+        int defaultcount = genreMap.containsKey(genre) ? genreMap.get(genre) + 1 : 1;
+        genreMap.put(genre, defaultcount);
+    }
     // simScore= \frac{A \cup B}{A \cup B}
     public static Double getSimScore(ItemModel item, HashMap<String, Integer> itemInWindow) {
         List<String> itemGenre = item.getGenreList();
@@ -142,6 +151,57 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         }
         return intersection / (differentSet + itemGenre.size());
     }
+
+    public class ListNode {
+        ItemModel itemModel;
+        ListNode next;
+        ListNode prev;
+
+        ListNode() {
+        }
+
+        ;
+
+        ListNode(ItemModel itemModel) {
+            this.itemModel = itemModel;
+        }
+    }
+
+    class LinkList {
+        int size;
+        ListNode head;
+
+        public LinkList() {
+            size = 0;
+            head = new ListNode(null);
+        }
+
+        public void add(ItemModel itemModel) {
+            ListNode toAdd = new ListNode(itemModel);
+            toAdd.next = head.next;
+            head.next.prev = toAdd;
+            head.next = toAdd;
+            toAdd.prev = head;
+            size++;
+        }
+
+        public void swap(ListNode i, ListNode j) {
+            ListNode tempNext = j.next;
+            ListNode tempPrev = j.prev;
+            i.prev.next = j;
+            i.prev = j.prev;
+            j.next = i;
+            j.prev = i.prev;
+            i.prev = j;
+            tempNext.prev = tempPrev;
+            tempPrev.next = tempNext;
+        }
+
+        public boolean isEmpty() {
+            return size == 0;
+        }
+    }
+
 }
 
 
