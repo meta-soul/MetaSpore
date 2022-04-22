@@ -172,17 +172,19 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             size = 0;
             head = new ListNode(null);
         }
-        public void addAll(List<ItemModel> itemList){
-            int length=itemList.size();
-            for(int i=length-1;i>=0;i--){
-                ListNode addToHead=new ListNode(itemList.get(i));
-                addToHead.next=head.next;
-                head.next.prev=addToHead;
-                head.next=addToHead;
-                addToHead.prev=head;
+
+        public void addAll(List<ItemModel> itemList) {
+            int length = itemList.size();
+            for (int i = length - 1; i >= 0; i--) {
+                ListNode addToHead = new ListNode(itemList.get(i));
+                addToHead.next = head.next;
+                head.next.prev = addToHead;
+                head.next = addToHead;
+                addToHead.prev = head;
                 size++;
             }
         }
+
         public void add(ItemModel itemModel) {
             ListNode addToHead = new ListNode(itemModel);
             addToHead.next = head.next;
