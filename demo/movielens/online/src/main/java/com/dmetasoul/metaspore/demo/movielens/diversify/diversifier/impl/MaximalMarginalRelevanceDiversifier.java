@@ -48,9 +48,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             window = genreCount;
         }
 
-        for (int i = itemModels.size() - 1; i >= 0; i--) {
-            itemLinkList.add(itemModels.get(i));
-        }
+        itemLinkList.addAll(itemModels);
 
         // label the visited
         HashMap<ItemModel, Integer> itemVisited = new HashMap<>();
@@ -61,8 +59,8 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         HashMap<String, Integer> genreInWindow = new HashMap();
         HashMap<String, Integer> genreSplitedInWindow = new HashMap<>();
         // start diverse
+        ListNode itemNode = itemLinkList.head.next;
         for (int i = 0; i < itemModels.size(); i++) {
-            ListNode itemNode = itemLinkList.head.next;
             //compute the count of genre in window
             int genreInWindowNum = 0;
             if (!genreInWindow.isEmpty()) {
@@ -89,11 +87,11 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                     }
                 }
                 String minGenre = itemModels.get(maxIndex).getGenre();
-                renewHashMap(genreInWindow,minGenre);
+                renewHashMap(genreInWindow, minGenre);
                 // renew genreSplitedWindow;
                 List<String> genreList = itemModels.get(maxIndex).getGenreList();
                 for (String genre : genreList) {
-                    renewHashMap(genreSplitedInWindow,genre);
+                    renewHashMap(genreSplitedInWindow, genre);
                 }
                 // exchange location
                 itemLinkList.swap(itemNode, itemMaxMMR);
@@ -102,7 +100,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 itemVisited.put(itemModels.get(i), 1);
                 List<String> genreList = itemModels.get(i).getGenreList();
                 for (String genre : genreList) {
-                    renewHashMap(genreSplitedInWindow,genre);
+                    renewHashMap(genreSplitedInWindow, genre);
                 }
                 itemNode = itemNode.next;
             }
@@ -131,10 +129,11 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         return itemDiverdified;
     }
 
-    public static  void renewHashMap(HashMap<String,Integer> genreMap,String genre){
+    public static void renewHashMap(HashMap<String, Integer> genreMap, String genre) {
         int defaultcount = genreMap.containsKey(genre) ? genreMap.get(genre) + 1 : 1;
         genreMap.put(genre, defaultcount);
     }
+
     // simScore= \frac{A \cup B}{A \cup B}
     public static Double getSimScore(ItemModel item, HashMap<String, Integer> itemInWindow) {
         List<String> itemGenre = item.getGenreList();
@@ -160,8 +159,6 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         ListNode() {
         }
 
-        ;
-
         ListNode(ItemModel itemModel) {
             this.itemModel = itemModel;
         }
@@ -175,13 +172,23 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             size = 0;
             head = new ListNode(null);
         }
-
+        public void addAll(List<ItemModel> itemList){
+            int length=itemList.size();
+            for(int i=length-1;i>=0;i--){
+                ListNode addToHead=new ListNode(itemList.get(i));
+                addToHead.next=head.next;
+                head.next.prev=addToHead;
+                head.next=addToHead;
+                addToHead.prev=head;
+                size++;
+            }
+        }
         public void add(ItemModel itemModel) {
-            ListNode toAdd = new ListNode(itemModel);
-            toAdd.next = head.next;
-            head.next.prev = toAdd;
-            head.next = toAdd;
-            toAdd.prev = head;
+            ListNode addToHead = new ListNode(itemModel);
+            addToHead.next = head.next;
+            head.next.prev = addToHead;
+            head.next = addToHead;
+            addToHead.prev = head;
             size++;
         }
 
