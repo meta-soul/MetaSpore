@@ -26,7 +26,7 @@ import java.util.*;
 public class ItemModel {
     private String id;
     private String title;
-    private String genre;
+    private String genre="null";
     private List<String> genreList;
     private String imdbUrl;
     private Double genreGreaterThanThreeRate;
