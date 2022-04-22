@@ -1,5 +1,5 @@
 Debug -- CTR Demo Deep&Cross V2
-Debug--load config: {'app_name': 'CTR Demo Deep&Cross V2', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 256, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': 's3://dmetasoul-bucket/demo/movielens/feature_generation/rank/25m/train.parquet', 'test_path': 's3://dmetasoul-bucket/demo/movielens/feature_generation/rank/25m/test.parquet', 'wide_column_name_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema', 'wide_combine_schema_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema', 'deep_column_name_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema', 'deep_combine_schema_path': 's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema', 'model_in_path': None, 'model_out_path': 's3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_out/ml_25m/', 'model_export_path': 's3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_export/ml_25m/', 'model_version': '0.1', 'experiment_name': 'movie_lens_dcn2_25m', 'input_label_column_index': 0, 'metric_update_interval': 100, 'use_wide': True, 'wide_embedding_dim': 16, 'deep_embedding_dim': 16, 'adam_learning_rate': 1e-05, 'ftrl_l1': 1.0, 'ftrl_l2': 120.0, 'ftrl_alpha': 0.5, 'ftrl_beta': 1.0, 'sparse_init_var': 0.01, 'dnn_activations': 'ReLU', 'use_bias': True, 'batch_norm': True, 'net_dropout': None, 'net_regularizer': None, 'stacked_dnn_hidden_units': [512, 512, 512], 'parallel_dnn_hidden_units': [512, 512, 512], 'model_structure': 'stacked_parallel', 'low_rank': 32, 'num_experts': 4, 'num_crossing_layers': 3, 'use_low_rank_mixture': True}
+Debug--load config: {'app_name': 'CTR Demo Deep&Cross V2', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 256, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': '${MY_S3_BUCKET}/movielens/feature_generation/rank/25m/train.parquet', 'test_path': '${MY_S3_BUCKET}/movielens/feature_generation/rank/25m/test.parquet', 'wide_column_name_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema', 'wide_combine_schema_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema', 'deep_column_name_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema', 'deep_combine_schema_path': '${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema', 'model_in_path': None, 'model_out_path': '${MY_S3_BUCKET}/movielens/model/dcn_v2/model_out/ml_25m/', 'model_export_path': '${MY_S3_BUCKET}/movielens/model/dcn_v2/model_export/ml_25m/', 'model_version': '0.1', 'experiment_name': 'movie_lens_dcn2_25m', 'input_label_column_index': 0, 'metric_update_interval': 100, 'use_wide': True, 'wide_embedding_dim': 16, 'deep_embedding_dim': 16, 'adam_learning_rate': 1e-05, 'ftrl_l1': 1.0, 'ftrl_l2': 120.0, 'ftrl_alpha': 0.5, 'ftrl_beta': 1.0, 'sparse_init_var': 0.01, 'dnn_activations': 'ReLU', 'use_bias': True, 'batch_norm': True, 'net_dropout': None, 'net_regularizer': None, 'stacked_dnn_hidden_units': [512, 512, 512], 'parallel_dnn_hidden_units': [512, 512, 512], 'model_structure': 'stacked_parallel', 'low_rank': 32, 'num_experts': 4, 'num_crossing_layers': 3, 'use_low_rank_mixture': True}
 updating: python/ (stored 0%)
 updating: python/xdeepfm_net.py (deflated 76%)
 updating: python/cf_retrieval.py (deflated 80%)
@@ -76,8 +76,20 @@ Debug -- spark init
 Debug -- version: 3.1.2
 Debug -- applicaitonId: spark-application-1650443962293
 Debug -- uiWebUrl: http://jupyter.my.nginx.test/hub/user-redirect/proxy/4040/jobs/
-[Stage 0:>                                                                                                                                      (0 + 1) / 1]                                                                                                                                                            [Stage 1:>                                                                                                                                      (0 + 1) / 1]                                                                                                                                                            Debug -- match train dataset sample:
-[Stage 2:>                                                                                                                                      (0 + 1) / 1]                                                                                                                                                            +-----+-------+--------+--------------------+
+
+[Stage 0:>                                                                                                                                      (0 + 1) / 1]
+
+                                                                                                                                                            
+
+[Stage 1:>                                                                                                                                      (0 + 1) / 1]
+
+                                                                                                                                                            
+Debug -- match train dataset sample:
+
+[Stage 2:>                                                                                                                                      (0 + 1) / 1]
+
+                                                                                                                                                            
++-----+-------+--------+--------------------+
 |label|user_id|movie_id|               genre|
 +-----+-------+--------+--------------------+
 |    1|    901|     223|              Comedy|
@@ -110,63 +122,121 @@ Debug--match train test dataset sample:
 +-----+-------+--------+--------------------+
 only showing top 10 rows
 
-[Stage 4:>                                                                                                                                      (0 + 8) / 8][Stage 4:================>                                                                                                                      (1 + 7) / 8][Stage 4:=================================>                                                                                                     (2 + 6) / 8][Stage 4:==================================================>                                                                                    (3 + 5) / 8][Stage 4:===================================================================>                                                                   (4 + 4) / 8][Stage 4:====================================================================================>                                                  (5 + 3) / 8][Stage 4:=====================================================================================================>                                 (6 + 2) / 8][Stage 4:======================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            Debug -- train dataset positive count: 15519198
-[Stage 6:>                                                                                                                                      (0 + 8) / 8][Stage 6:================>                                                                                                                      (1 + 7) / 8][Stage 6:=================================>                                                                                                     (2 + 6) / 8][Stage 6:==================================================>                                                                                    (3 + 5) / 8][Stage 6:===================================================================>                                                                   (4 + 4) / 8][Stage 6:=====================================================================================================>                                 (6 + 2) / 8][Stage 6:======================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            Debug -- train dataset negative count: 4450653
-[Stage 8:>                                                                                                                                      (0 + 8) / 8][Stage 8:================>                                                                                                                      (1 + 7) / 8][Stage 8:===================================================================>                                                                   (4 + 4) / 8][Stage 8:====================================================================================>                                                  (5 + 3) / 8][Stage 8:=====================================================================================================>                                 (6 + 2) / 8][Stage 8:======================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            Debug -- test dataset count: 133316
+
+[Stage 4:>                                                                                                                                      (0 + 8) / 8]
+
+[Stage 4:================>                                                                                                                      (1 + 7) / 8]
+
+[Stage 4:=================================>                                                                                                     (2 + 6) / 8]
+
+[Stage 4:==================================================>                                                                                    (3 + 5) / 8]
+
+[Stage 4:===================================================================>                                                                   (4 + 4) / 8]
+
+[Stage 4:====================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 4:=====================================================================================================>                                 (6 + 2) / 8]
+
+[Stage 4:======================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+Debug -- train dataset positive count: 15519198
+
+[Stage 6:>                                                                                                                                      (0 + 8) / 8]
+
+[Stage 6:================>                                                                                                                      (1 + 7) / 8]
+
+[Stage 6:=================================>                                                                                                     (2 + 6) / 8]
+
+[Stage 6:==================================================>                                                                                    (3 + 5) / 8]
+
+[Stage 6:===================================================================>                                                                   (4 + 4) / 8]
+
+[Stage 6:=====================================================================================================>                                 (6 + 2) / 8]
+
+[Stage 6:======================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+Debug -- train dataset negative count: 4450653
+
+[Stage 8:>                                                                                                                                      (0 + 8) / 8]
+
+[Stage 8:================>                                                                                                                      (1 + 7) / 8]
+
+[Stage 8:===================================================================>                                                                   (4 + 4) / 8]
+
+[Stage 8:====================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 8:=====================================================================================================>                                 (6 + 2) / 8]
+
+[Stage 8:======================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+Debug -- test dataset count: 133316
 Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
 [WARN] 2022-04-20 08:44:50.342 STSAssumeRoleWithWebIdentityCredentialsProvider [139685827225408] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-20 08:44:50.342] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema, read_only: true
+[2022-04-20 08:44:50.342] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema, read_only: true
 
-[2022-04-20 08:44:50.365] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema with total length: 37
+[2022-04-20 08:44:50.365] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema with total length: 37
 
-[2022-04-20 08:44:50.369] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema with size 37 at position 0 larger than total size: 37, change size to 37
+[2022-04-20 08:44:50.369] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema with size 37 at position 0 larger than total size: 37, change size to 37
 
-[2022-04-20 08:44:50.422] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema reached end 37
+[2022-04-20 08:44:50.422] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema reached end 37
 
-[2022-04-20 08:44:50.423] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema reached end 37
+[2022-04-20 08:44:50.423] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema reached end 37
 
 [WARN] 2022-04-20 08:44:50.423 STSAssumeRoleWithWebIdentityCredentialsProvider [139685827225408] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-20 08:44:50.423] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema, read_only: true
+[2022-04-20 08:44:50.423] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema, read_only: true
 
-[2022-04-20 08:44:50.444] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema with total length: 17
+[2022-04-20 08:44:50.444] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema with total length: 17
 
-[2022-04-20 08:44:50.448] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
+[2022-04-20 08:44:50.448] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
 
-[2022-04-20 08:44:50.488] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema reached end 17
+[2022-04-20 08:44:50.488] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema reached end 17
 
-[2022-04-20 08:44:50.488] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema reached end 17
+[2022-04-20 08:44:50.488] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema reached end 17
 
-[32mloaded combine schema from[m [32mcolumn name file [m's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema' [32mand combine schema file [m's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema'
+[32mloaded combine schema from[m [32mcolumn name file [m'${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema' [32mand combine schema file [m'${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema'
 [WARN] 2022-04-20 08:44:50.545 STSAssumeRoleWithWebIdentityCredentialsProvider [139685827225408] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-20 08:44:50.545] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema, read_only: true
+[2022-04-20 08:44:50.545] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema, read_only: true
 
-[2022-04-20 08:44:50.567] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema with total length: 37
+[2022-04-20 08:44:50.567] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema with total length: 37
 
-[2022-04-20 08:44:50.567] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema with size 37 at position 0 larger than total size: 37, change size to 37
+[2022-04-20 08:44:50.567] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema with size 37 at position 0 larger than total size: 37, change size to 37
 
-[2022-04-20 08:44:50.614] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema reached end 37
+[2022-04-20 08:44:50.614] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema reached end 37
 
-[2022-04-20 08:44:50.615] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema reached end 37
+[2022-04-20 08:44:50.615] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema reached end 37
 
 [WARN] 2022-04-20 08:44:50.615 STSAssumeRoleWithWebIdentityCredentialsProvider [139685827225408] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-20 08:44:50.615] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema, read_only: true
+[2022-04-20 08:44:50.615] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema, read_only: true
 
-[2022-04-20 08:44:50.638] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema with total length: 17
+[2022-04-20 08:44:50.638] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema with total length: 17
 
-[2022-04-20 08:44:50.638] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
+[2022-04-20 08:44:50.638] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema with size 17 at position 0 larger than total size: 17, change size to 17
 
-[2022-04-20 08:44:50.729] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema reached end 17
+[2022-04-20 08:44:50.729] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema reached end 17
 
-[2022-04-20 08:44:50.730] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema reached end 17
+[2022-04-20 08:44:50.730] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema reached end 17
 
-[32mloaded combine schema from[m [32mcolumn name file [m's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema' [32mand combine schema file [m's3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema'
+[32mloaded combine schema from[m [32mcolumn name file [m'${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema' [32mand combine schema file [m'${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema'
 [2022-04-20 08:44:50.819] [info] PS job with coordinator address 10.0.1.219:55843 started.
 [2022-04-20 08:44:50.819] [info] PSRunner::RunPS: pid: 13127, tid: 13385, thread: 0x7f0aeca7a700
 [2022-04-20 08:44:50.819] [info] PSRunner::RunPSCoordinator: pid: 13127, tid: 13385, thread: 0x7f0aeca7a700
 [2022-04-20 08:44:50.820] [info] ActorProcess::Receiving: Coordinator pid: 13127, tid: 13389, thread: 0x7f0aceffd700
-[Stage 10:>                                                       (0 + 4) / 4][Stage 11:>                                                       (0 + 4) / 4][2022-04-20 08:44:51.796] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+
+[Stage 10:>                                                       (0 + 4) / 4][Stage 11:>                                                       (0 + 4) / 4]
+[2022-04-20 08:44:51.796] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
 PS Coordinator node [32mC[0]:9[m is ready.
-[Stage 10:============================>                           (2 + 2) / 4][Stage 11:>                                                       (0 + 4) / 4]                                                                                                                                                            [Stage 11:>                                                                                                                                     (0 + 4) / 4][Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:45:01.192 -- auc: 0.5484537511670119, Δauc: 0.5484537511670119, pcoc: 0.7042806964294701, Δpcoc: 0.7042806964294701, #instance: 25600
+
+[Stage 10:============================>                           (2 + 2) / 4][Stage 11:>                                                       (0 + 4) / 4]
+
+                                                                                                                                                            
+
+[Stage 11:>                                                                                                                                     (0 + 4) / 4]
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:45:01.192 -- auc: 0.5484537511670119, Δauc: 0.5484537511670119, pcoc: 0.7042806964294701, Δpcoc: 0.7042806964294701, #instance: 25600
 2022-04-20 08:45:01.200 -- auc: 0.5522117905716768, Δauc: 0.5559504368522766, pcoc: 0.7037312259115852, Δpcoc: 0.7031825836995913, #instance: 51200
 2022-04-20 08:45:01.208 -- auc: 0.5526030214872095, Δauc: 0.5534668057786687, pcoc: 0.7023512606937883, Δpcoc: 0.6996074734297668, #instance: 76800
 2022-04-20 08:45:01.471 -- auc: 0.5542558958908276, Δauc: 0.5594135603359554, pcoc: 0.7035132154303553, Δpcoc: 0.7069982051131597, #instance: 102400
@@ -194,7 +264,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:45:48.608 -- auc: 0.7075812777695241, Δauc: 0.7714465521404067, pcoc: 0.8712761809904919, Δpcoc: 0.9814470441136616, #instance: 665600
 2022-04-20 08:45:48.681 -- auc: 0.7099726436489957, Δauc: 0.7800236152972333, pcoc: 0.875219540496751, Δpcoc: 0.9774858820661346, #instance: 691200
 2022-04-20 08:45:48.700 -- auc: 0.7122951116662253, Δauc: 0.7835874472382989, pcoc: 0.8788801127651781, Δpcoc: 0.9774337415975781, #instance: 716800
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:45:56.358 -- auc: 0.7145829497966358, Δauc: 0.782664596084807, pcoc: 0.882468598008098, Δpcoc: 0.9824844285538609, #instance: 742400
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:45:56.358 -- auc: 0.7145829497966358, Δauc: 0.782664596084807, pcoc: 0.882468598008098, Δpcoc: 0.9824844285538609, #instance: 742400
 2022-04-20 08:45:56.515 -- auc: 0.7169549657384253, Δauc: 0.7906249269378445, pcoc: 0.8859050436557128, Δpcoc: 0.9854234886963883, #instance: 768000
 2022-04-20 08:45:56.614 -- auc: 0.7189614046595443, Δauc: 0.7867436075271278, pcoc: 0.8891458562072414, Δpcoc: 0.9863127796177693, #instance: 793600
 2022-04-20 08:45:56.622 -- auc: 0.7209182678064132, Δauc: 0.7901774315750483, pcoc: 0.8921916466791087, Δpcoc: 0.9865855988600524, #instance: 819200
@@ -226,7 +298,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:46:52.175 -- auc: 0.7560753238532432, Δauc: 0.8166305151529705, pcoc: 0.9383045842290451, Δpcoc: 0.9971814334176502, #instance: 1484800
 2022-04-20 08:46:52.265 -- auc: 0.7569946357812773, Δauc: 0.8098604737878203, pcoc: 0.9392682131905365, Δpcoc: 0.9950767499089666, #instance: 1510400
 2022-04-20 08:46:52.273 -- auc: 0.7581109816219377, Δauc: 0.821691756136357, pcoc: 0.9402037114696856, Δpcoc: 0.9953490092010728, #instance: 1536000
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:46:59.933 -- auc: 0.759008361169968, Δauc: 0.8119803218051328, pcoc: 0.9411431291608587, Δpcoc: 0.997473030310724, #instance: 1561600
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:46:59.933 -- auc: 0.759008361169968, Δauc: 0.8119803218051328, pcoc: 0.9411431291608587, Δpcoc: 0.997473030310724, #instance: 1561600
 2022-04-20 08:47:00.078 -- auc: 0.7597926169637943, Δauc: 0.8077064018590219, pcoc: 0.9420555727415612, Δpcoc: 0.9976776860460472, #instance: 1587200
 2022-04-20 08:47:00.162 -- auc: 0.7607086267700794, Δauc: 0.8174598089700406, pcoc: 0.9429974604939889, Δpcoc: 1.0016332534306367, #instance: 1612800
 2022-04-20 08:47:00.173 -- auc: 0.7616002436476608, Δauc: 0.8170014470331461, pcoc: 0.9438695645074017, Δpcoc: 0.9989026257552267, #instance: 1638400
@@ -254,7 +328,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:47:47.593 -- auc: 0.7774982914618316, Δauc: 0.8264170026445722, pcoc: 0.957475413719134, Δpcoc: 0.9941542882185715, #instance: 2201600
 2022-04-20 08:47:47.675 -- auc: 0.7780478517206137, Δauc: 0.8249912995295365, pcoc: 0.9579735920168849, Δpcoc: 1.0009425630247237, #instance: 2227200
 2022-04-20 08:47:47.683 -- auc: 0.7786025627475199, Δauc: 0.8254455719425449, pcoc: 0.9584495269161128, Δpcoc: 0.999881868950226, #instance: 2252800
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:47:55.355 -- auc: 0.7791649691688087, Δauc: 0.8269045627374549, pcoc: 0.9589077309912303, Δpcoc: 0.9992121407723973, #instance: 2278400
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:47:55.355 -- auc: 0.7791649691688087, Δauc: 0.8269045627374549, pcoc: 0.9589077309912303, Δpcoc: 0.9992121407723973, #instance: 2278400
 2022-04-20 08:47:55.531 -- auc: 0.7797569592896814, Δauc: 0.8304170073365564, pcoc: 0.9593376356892442, Δpcoc: 0.9975404460718144, #instance: 2304000
 2022-04-20 08:47:55.613 -- auc: 0.7803260180223881, Δauc: 0.8299009989525891, pcoc: 0.9597837428258874, Δpcoc: 0.999999666466157, #instance: 2329600
 2022-04-20 08:47:55.620 -- auc: 0.7808878391246517, Δauc: 0.8297572346445914, pcoc: 0.9601659869724065, Δpcoc: 0.9948011572214286, #instance: 2355200
@@ -286,7 +362,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:48:50.923 -- auc: 0.7927180873948405, Δauc: 0.8319330639186033, pcoc: 0.9685711226506852, Δpcoc: 0.9962201313629326, #instance: 3020800
 2022-04-20 08:48:51.017 -- auc: 0.7931705433623342, Δauc: 0.8434423549167396, pcoc: 0.9688165669942904, Δpcoc: 0.9977840975337622, #instance: 3046400
 2022-04-20 08:48:51.025 -- auc: 0.7935643069950962, Δauc: 0.8381450977917586, pcoc: 0.9690587383797717, Δpcoc: 0.9979082793252388, #instance: 3072000
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:48:58.642 -- auc: 0.7938946846035523, Δauc: 0.8323483107605282, pcoc: 0.9693380977566495, Δpcoc: 1.0030652272621055, #instance: 3097600
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:48:58.642 -- auc: 0.7938946846035523, Δauc: 0.8323483107605282, pcoc: 0.9693380977566495, Δpcoc: 1.0030652272621055, #instance: 3097600
 2022-04-20 08:48:58.764 -- auc: 0.7942987116906349, Δauc: 0.840772497773536, pcoc: 0.9695853679354419, Δpcoc: 0.9995900018011988, #instance: 3123200
 2022-04-20 08:48:58.849 -- auc: 0.7946391232313836, Δauc: 0.834604414328554, pcoc: 0.969812157868496, Δpcoc: 0.9974594472742615, #instance: 3148800
 2022-04-20 08:48:58.858 -- auc: 0.7949481785271975, Δauc: 0.831303284660141, pcoc: 0.9700283320626515, Δpcoc: 0.9965523472219773, #instance: 3174400
@@ -314,7 +392,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:49:46.081 -- auc: 0.8022069736000095, Δauc: 0.8400610044619115, pcoc: 0.9742150202704851, Δpcoc: 0.992293975487184, #instance: 3737600
 2022-04-20 08:49:46.155 -- auc: 0.80251705811363, Δauc: 0.8453957391043216, pcoc: 0.9743852122719608, Δpcoc: 0.9992687036537234, #instance: 3763200
 2022-04-20 08:49:46.163 -- auc: 0.8027779495758693, Δauc: 0.8397792453058992, pcoc: 0.9745651305078504, Δpcoc: 1.0010879886665474, #instance: 3788800
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:49:53.897 -- auc: 0.8030738330526792, Δauc: 0.8444905695114764, pcoc: 0.9747240939250782, Δpcoc: 0.9982232330984359, #instance: 3814400
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:49:53.897 -- auc: 0.8030738330526792, Δauc: 0.8444905695114764, pcoc: 0.9747240939250782, Δpcoc: 0.9982232330984359, #instance: 3814400
 2022-04-20 08:49:53.991 -- auc: 0.8033781955726342, Δauc: 0.8459865597642304, pcoc: 0.9748740461927029, Δpcoc: 0.9971362598840199, #instance: 3840000
 2022-04-20 08:49:54.053 -- auc: 0.8036334862214196, Δauc: 0.8407803295602618, pcoc: 0.9750547851818205, Δpcoc: 1.0022441099227652, #instance: 3865600
 2022-04-20 08:49:54.064 -- auc: 0.8039430931607289, Δauc: 0.8478819476979639, pcoc: 0.9752255573139227, Δpcoc: 1.0010433378490848, #instance: 3891200
@@ -346,7 +426,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:50:49.516 -- auc: 0.810331199754324, Δauc: 0.8488827471328456, pcoc: 0.9786426667045397, Δpcoc: 0.9965446291964126, #instance: 4556800
 2022-04-20 08:50:49.601 -- auc: 0.8105275343514216, Δauc: 0.8440156897813023, pcoc: 0.9787689778268103, Δpcoc: 1.001310632993055, #instance: 4582400
 2022-04-20 08:50:49.609 -- auc: 0.8107666133476283, Δauc: 0.8508709903373788, pcoc: 0.9788853276625233, Δpcoc: 0.9997183731254067, #instance: 4608000
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:50:57.362 -- auc: 0.8109853402313513, Δauc: 0.8479921781211817, pcoc: 0.9789696538160704, Δpcoc: 0.9940800648671132, #instance: 4633600
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:50:57.362 -- auc: 0.8109853402313513, Δauc: 0.8479921781211817, pcoc: 0.9789696538160704, Δpcoc: 0.9940800648671132, #instance: 4633600
 2022-04-20 08:50:57.439 -- auc: 0.8111933278338351, Δauc: 0.8469745152792804, pcoc: 0.9790921192440716, Δpcoc: 1.00131937216597, #instance: 4659200
 2022-04-20 08:50:57.518 -- auc: 0.8114123390426389, Δauc: 0.8491262486147733, pcoc: 0.9792196526291431, Δpcoc: 1.0025071779806707, #instance: 4684800
 2022-04-20 08:50:57.526 -- auc: 0.8116180183880803, Δauc: 0.8474481189312265, pcoc: 0.9793298429615729, Δpcoc: 0.9994925854312997, #instance: 4710400
@@ -378,7 +460,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:51:52.905 -- auc: 0.8165678967392858, Δauc: 0.8550110070498789, pcoc: 0.981755065833586, Δpcoc: 0.999863706941645, #instance: 5376000
 2022-04-20 08:51:52.976 -- auc: 0.8167405926315991, Δauc: 0.8512250199753383, pcoc: 0.9818368114847669, Δpcoc: 0.9989905528395568, #instance: 5401600
 2022-04-20 08:51:53.080 -- auc: 0.8169061062137256, Δauc: 0.8499798032728147, pcoc: 0.9818900423375625, Δpcoc: 0.9930466921231274, #instance: 5427200
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:52:00.789 -- auc: 0.817060981797771, Δauc: 0.8484582895833017, pcoc: 0.9819721371409216, Δpcoc: 0.9993821928481346, #instance: 5452800
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:52:00.789 -- auc: 0.817060981797771, Δauc: 0.8484582895833017, pcoc: 0.9819721371409216, Δpcoc: 0.9993821928481346, #instance: 5452800
 2022-04-20 08:52:00.864 -- auc: 0.8172245057339272, Δauc: 0.8502794982603756, pcoc: 0.982054695876797, Δpcoc: 0.9996580913198726, #instance: 5478400
 2022-04-20 08:52:00.922 -- auc: 0.8174029209238314, Δauc: 0.8535809798178617, pcoc: 0.9821148429438252, Δpcoc: 0.9949358333154028, #instance: 5504000
 2022-04-20 08:52:01.030 -- auc: 0.8175766704631087, Δauc: 0.8528956552333001, pcoc: 0.9821932793929832, Δpcoc: 0.9990537610454736, #instance: 5529600
@@ -406,7 +490,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:52:47.794 -- auc: 0.8209911998565332, Δauc: 0.8546570238493196, pcoc: 0.983807920298094, Δpcoc: 1.0031025073232316, #instance: 6092800
 2022-04-20 08:52:47.857 -- auc: 0.8211490003153645, Δauc: 0.8562926781215994, pcoc: 0.9838584784287195, Δpcoc: 0.9958649286358362, #instance: 6118400
 2022-04-20 08:52:47.961 -- auc: 0.8212839392925092, Δauc: 0.8516329766436591, pcoc: 0.9838999556459179, Δpcoc: 0.9937641484066236, #instance: 6144000
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:52:55.545 -- auc: 0.8214373976995727, Δauc: 0.8561838809104967, pcoc: 0.9839478964537912, Δpcoc: 0.995407533122735, #instance: 6169600
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:52:55.545 -- auc: 0.8214373976995727, Δauc: 0.8561838809104967, pcoc: 0.9839478964537912, Δpcoc: 0.995407533122735, #instance: 6169600
 2022-04-20 08:52:55.621 -- auc: 0.8215880186203023, Δauc: 0.8557647781605134, pcoc: 0.9840168068100485, Δpcoc: 1.0006511436019445, #instance: 6195200
 2022-04-20 08:52:55.706 -- auc: 0.8217324457941759, Δauc: 0.8548197170060831, pcoc: 0.984075310593618, Δpcoc: 0.998226881937765, #instance: 6220800
 2022-04-20 08:52:55.786 -- auc: 0.8218878041073039, Δauc: 0.8569588224942776, pcoc: 0.984128939705842, Δpcoc: 0.9971373487166145, #instance: 6246400
@@ -438,7 +524,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:53:50.971 -- auc: 0.8253565714872754, Δauc: 0.856114750253878, pcoc: 0.9855518314849712, Δpcoc: 1.0014484239744692, #instance: 6912000
 2022-04-20 08:53:51.047 -- auc: 0.8255002525249641, Δauc: 0.8617221871671041, pcoc: 0.98559631884911, Δpcoc: 0.9975782414877167, #instance: 6937600
 2022-04-20 08:53:51.143 -- auc: 0.8256083604908033, Δauc: 0.8539363386819561, pcoc: 0.9856525231018783, Δpcoc: 1.000916047730642, #instance: 6963200
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:53:58.839 -- auc: 0.8257404336225382, Δauc: 0.8595748154258644, pcoc: 0.9856962708502606, Δpcoc: 0.9975961224548107, #instance: 6988800
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:53:58.839 -- auc: 0.8257404336225382, Δauc: 0.8595748154258644, pcoc: 0.9856962708502606, Δpcoc: 0.9975961224548107, #instance: 6988800
 2022-04-20 08:53:58.904 -- auc: 0.825867392110742, Δauc: 0.8585724282968035, pcoc: 0.9857436518012039, Δpcoc: 0.9986759033755285, #instance: 7014400
 2022-04-20 08:53:58.984 -- auc: 0.82599823830731, Δauc: 0.8597007034891638, pcoc: 0.9857879354526391, Δpcoc: 0.9979099489781406, #instance: 7040000
 2022-04-20 08:53:59.077 -- auc: 0.8261268304693256, Δauc: 0.8592552794690593, pcoc: 0.9858418563744841, Δpcoc: 1.0006901571952984, #instance: 7065600
@@ -466,7 +554,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:54:46.089 -- auc: 0.8287277685003058, Δauc: 0.8621285163609946, pcoc: 0.9868259088264518, Δpcoc: 0.9956632403950627, #instance: 7628800
 2022-04-20 08:54:46.165 -- auc: 0.8288310706613289, Δauc: 0.8581511957893808, pcoc: 0.9868641793378935, Δpcoc: 0.9982552483369606, #instance: 7654400
 2022-04-20 08:54:46.243 -- auc: 0.8289380405763371, Δauc: 0.8590687928293139, pcoc: 0.9869112926959906, Δpcoc: 1.0010261633639574, #instance: 7680000
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:54:53.841 -- auc: 0.8290424467019275, Δauc: 0.8586216181066608, pcoc: 0.9869450557754524, Δpcoc: 0.9970113806110873, #instance: 7705600
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:54:53.841 -- auc: 0.8290424467019275, Δauc: 0.8586216181066608, pcoc: 0.9869450557754524, Δpcoc: 0.9970113806110873, #instance: 7705600
 2022-04-20 08:54:53.918 -- auc: 0.8291469252088906, Δauc: 0.8590907404142168, pcoc: 0.986977716906336, Δpcoc: 0.9967603799395275, #instance: 7731200
 2022-04-20 08:54:54.012 -- auc: 0.8292619058076582, Δauc: 0.8624594126076262, pcoc: 0.9870189065069354, Δpcoc: 0.9994276217191966, #instance: 7756800
 2022-04-20 08:54:54.095 -- auc: 0.8293837526546545, Δauc: 0.8640210991464359, pcoc: 0.9870674636612488, Δpcoc: 1.001792268637423, #instance: 7782400
@@ -498,7 +588,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:55:49.131 -- auc: 0.8320438765714449, Δauc: 0.8629065988762991, pcoc: 0.9880237980998416, Δpcoc: 1.0047351293303486, #instance: 8448000
 2022-04-20 08:55:49.204 -- auc: 0.8321390786352217, Δauc: 0.861931309727367, pcoc: 0.9880455936424872, Δpcoc: 0.9952189441240479, #instance: 8473600
 2022-04-20 08:55:49.357 -- auc: 0.8322461295940444, Δauc: 0.8655072348641034, pcoc: 0.9880806901061794, Δpcoc: 0.999714562708684, #instance: 8499200
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:55:56.907 -- auc: 0.8323545218859201, Δauc: 0.8659882053291537, pcoc: 0.9881204612608623, Δpcoc: 1.0013870940545593, #instance: 8524800
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:55:56.907 -- auc: 0.8323545218859201, Δauc: 0.8659882053291537, pcoc: 0.9881204612608623, Δpcoc: 1.0013870940545593, #instance: 8524800
 2022-04-20 08:55:56.982 -- auc: 0.8324428479898168, Δauc: 0.8601724480587856, pcoc: 0.9881543111844429, Δpcoc: 0.9994562207784307, #instance: 8550400
 2022-04-20 08:55:57.077 -- auc: 0.8325350935685869, Δauc: 0.8616675347681676, pcoc: 0.9881816232971091, Δpcoc: 0.9973040734973122, #instance: 8576000
 2022-04-20 08:55:57.243 -- auc: 0.8326293375682033, Δauc: 0.8625506652727071, pcoc: 0.9882199681729658, Δpcoc: 1.001105950198612, #instance: 8601600
@@ -530,7 +622,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:56:52.517 -- auc: 0.8349563121571002, Δauc: 0.8649848310387985, pcoc: 0.9889943047981922, Δpcoc: 0.9946722985030115, #instance: 9267200
 2022-04-20 08:56:52.591 -- auc: 0.8350447456265603, Δauc: 0.8652576628352491, pcoc: 0.9890342597599769, Δpcoc: 1.0035665230799202, #instance: 9292800
 2022-04-20 08:56:52.750 -- auc: 0.8351228240288768, Δauc: 0.8619098347688359, pcoc: 0.9890641879982536, Δpcoc: 0.9999339335798012, #instance: 9318400
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]2022-04-20 08:57:00.380 -- auc: 0.8352063016699307, Δauc: 0.8637814416077405, pcoc: 0.9890938660685692, Δpcoc: 0.9999356924639546, #instance: 9344000
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:>                                                       (0 + 4) / 8]
+2022-04-20 08:57:00.380 -- auc: 0.8352063016699307, Δauc: 0.8637814416077405, pcoc: 0.9890938660685692, Δpcoc: 0.9999356924639546, #instance: 9344000
 2022-04-20 08:57:00.450 -- auc: 0.8352752237750728, Δauc: 0.8592617531595302, pcoc: 0.9891158234061498, Δpcoc: 0.9971368563884687, #instance: 9369600
 2022-04-20 08:57:00.535 -- auc: 0.8353576168977299, Δauc: 0.8639254599474462, pcoc: 0.989151250537271, Δpcoc: 1.002178045145388, #instance: 9395200
 2022-04-20 08:57:00.703 -- auc: 0.8354500315179639, Δauc: 0.8672895586146432, pcoc: 0.9891797826584743, Δpcoc: 0.9996801469220018, #instance: 9420800
@@ -554,7 +648,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:57:40.070 -- auc: 0.836866387646423, Δauc: 0.8620392710255513, pcoc: 0.9896254022526584, Δpcoc: 0.9953160468312565, #instance: 9881600
 2022-04-20 08:57:40.154 -- auc: 0.8369521507020159, Δauc: 0.868242446863149, pcoc: 0.9896538958633805, Δpcoc: 1.000638702774067, #instance: 9907200
 2022-04-20 08:57:40.332 -- auc: 0.8370112568362338, Δauc: 0.8592196872165887, pcoc: 0.9896720496364724, Δpcoc: 0.9966572529849361, #instance: 9932800
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:=======>                                                (1 + 4) / 8]2022-04-20 08:57:47.863 -- auc: 0.8371009300427523, Δauc: 0.8698902580886538, pcoc: 0.9896919867024997, Δpcoc: 0.9973979367556101, #instance: 9958400
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:=======>                                                (1 + 4) / 8]
+2022-04-20 08:57:47.863 -- auc: 0.8371009300427523, Δauc: 0.8698902580886538, pcoc: 0.9896919867024997, Δpcoc: 0.9973979367556101, #instance: 9958400
 2022-04-20 08:57:48.026 -- auc: 0.8371739741857015, Δauc: 0.8641278687985586, pcoc: 0.9897105449171192, Δpcoc: 0.9968913213580044, #instance: 9984000
 2022-04-20 08:57:48.193 -- auc: 0.8372476809406553, Δauc: 0.8646543068124389, pcoc: 0.989750011324738, Δpcoc: 1.0052227694692741, #instance: 10009600
 2022-04-20 08:57:48.588 -- auc: 0.8373096581720327, Δauc: 0.8608765980834756, pcoc: 0.9897871330233748, Δpcoc: 1.0043836727739133, #instance: 10035142
@@ -566,7 +662,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:58:03.877 -- auc: 0.8377613199903007, Δauc: 0.8674591042501456, pcoc: 0.9899196059639541, Δpcoc: 0.9991329245937652, #instance: 10188742
 2022-04-20 08:58:04.050 -- auc: 0.8378296055390985, Δauc: 0.8638512649908723, pcoc: 0.9899434481810856, Δpcoc: 0.999415443913827, #instance: 10214342
 2022-04-20 08:58:04.438 -- auc: 0.8378931830610366, Δauc: 0.862405887673118, pcoc: 0.9899754578008823, Δpcoc: 1.0027691279465527, #instance: 10239942
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:==============>                                         (2 + 4) / 8]2022-04-20 08:58:11.696 -- auc: 0.8379670933463929, Δauc: 0.8659446801218107, pcoc: 0.9899918687187362, Δpcoc: 0.9965374379896028, #instance: 10265542
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:==============>                                         (2 + 4) / 8]
+2022-04-20 08:58:11.696 -- auc: 0.8379670933463929, Δauc: 0.8659446801218107, pcoc: 0.9899918687187362, Δpcoc: 0.9965374379896028, #instance: 10265542
 2022-04-20 08:58:12.015 -- auc: 0.8380251399174183, Δauc: 0.8605129682283053, pcoc: 0.9900157962476427, Δpcoc: 0.9995938888220588, #instance: 10291142
 2022-04-20 08:58:12.329 -- auc: 0.8380984047731131, Δauc: 0.8660719988948691, pcoc: 0.9900395188829154, Δpcoc: 0.9996174661098205, #instance: 10316612
 2022-04-20 08:58:12.432 -- auc: 0.8381689295632664, Δauc: 0.8651083609537368, pcoc: 0.9900622001701158, Δpcoc: 0.999201326085546, #instance: 10342212
@@ -574,7 +672,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:58:19.839 -- auc: 0.8382983090795788, Δauc: 0.8589716565343924, pcoc: 0.9901113238649546, Δpcoc: 0.9995941562023413, #instance: 10393412
 2022-04-20 08:58:20.162 -- auc: 0.8383762232828582, Δauc: 0.8682786784365447, pcoc: 0.9901400883359261, Δpcoc: 1.0018231440868446, #instance: 10419012
 2022-04-20 08:58:20.332 -- auc: 0.8384383743646752, Δauc: 0.8626201868286905, pcoc: 0.9901576919040597, Δpcoc: 0.9973007840639486, #instance: 10444612
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:=====================>                                  (3 + 4) / 8]2022-04-20 08:58:27.746 -- auc: 0.8385071700942492, Δauc: 0.8651535228825199, pcoc: 0.9901816666092366, Δpcoc: 0.9999619197433277, #instance: 10470212
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:=====================>                                  (3 + 4) / 8]
+2022-04-20 08:58:27.746 -- auc: 0.8385071700942492, Δauc: 0.8651535228825199, pcoc: 0.9901816666092366, Δpcoc: 0.9999619197433277, #instance: 10470212
 2022-04-20 08:58:27.982 -- auc: 0.8385736341409744, Δauc: 0.8646750407629324, pcoc: 0.9902047469348937, Δpcoc: 0.9997096242942792, #instance: 10495583
 2022-04-20 08:58:28.065 -- auc: 0.8386523762085238, Δauc: 0.8689266645267162, pcoc: 0.9902235561666082, Δpcoc: 0.9979209379333582, #instance: 10521183
 2022-04-20 08:58:28.230 -- auc: 0.8387306761321666, Δauc: 0.8691560694661044, pcoc: 0.9902391914488661, Δpcoc: 0.9966324706396389, #instance: 10546783
@@ -594,7 +694,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 08:58:59.834 -- auc: 0.8396952783544439, Δauc: 0.8683423326283224, pcoc: 0.9905496810363219, Δpcoc: 0.9983112863635553, #instance: 10905183
 2022-04-20 08:58:59.894 -- auc: 0.839764000145411, Δauc: 0.8673478674203609, pcoc: 0.9905765510693517, Δpcoc: 1.002056593543286, #instance: 10930783
 2022-04-20 08:59:00.056 -- auc: 0.8398432743259325, Δauc: 0.8716380542928307, pcoc: 0.9905868841235153, Δpcoc: 0.9949765398769777, #instance: 10956383
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 08:59:07.640 -- auc: 0.839903282044357, Δauc: 0.8643689897062921, pcoc: 0.9906059984669098, Δpcoc: 0.998788171243121, #instance: 10981983
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 08:59:07.640 -- auc: 0.839903282044357, Δauc: 0.8643689897062921, pcoc: 0.9906059984669098, Δpcoc: 0.998788171243121, #instance: 10981983
 2022-04-20 08:59:07.707 -- auc: 0.8399668401700238, Δauc: 0.8659181123117287, pcoc: 0.9906384518597376, Δpcoc: 1.0046390659935407, #instance: 11007583
 2022-04-20 08:59:07.868 -- auc: 0.840041797272987, Δauc: 0.8701752100200151, pcoc: 0.9906548406152501, Δpcoc: 0.9976944809434979, #instance: 11033183
 2022-04-20 08:59:07.960 -- auc: 0.8401202179660976, Δauc: 0.8723290493700191, pcoc: 0.9906769617297975, Δpcoc: 1.0003152167651712, #instance: 11058531
@@ -626,7 +728,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:00:02.798 -- auc: 0.8417465649137744, Δauc: 0.8655420410458246, pcoc: 0.9911570723598226, Δpcoc: 0.9995942544738122, #instance: 11724131
 2022-04-20 09:00:02.949 -- auc: 0.8418047007993539, Δauc: 0.8672242483388559, pcoc: 0.9911847940163203, Δpcoc: 1.0039292675214626, #instance: 11749731
 2022-04-20 09:00:03.034 -- auc: 0.8418604275085004, Δauc: 0.8664497117532821, pcoc: 0.9912100795831921, Δpcoc: 1.0028440469986017, #instance: 11775331
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:00:10.552 -- auc: 0.8419166233776312, Δauc: 0.8664111686043889, pcoc: 0.9912180835262439, Δpcoc: 0.9948819585207129, #instance: 11800931
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:00:10.552 -- auc: 0.8419166233776312, Δauc: 0.8664111686043889, pcoc: 0.9912180835262439, Δpcoc: 0.9948819585207129, #instance: 11800931
 2022-04-20 09:00:10.620 -- auc: 0.8419772206623047, Δauc: 0.8685184904186296, pcoc: 0.991232133129154, Δpcoc: 0.9976995093256229, #instance: 11826531
 2022-04-20 09:00:10.774 -- auc: 0.8420330323009864, Δauc: 0.866621963354899, pcoc: 0.9912446593945471, Δpcoc: 0.9970207231579307, #instance: 11852131
 2022-04-20 09:00:10.869 -- auc: 0.842098636876899, Δauc: 0.8706815297238073, pcoc: 0.9912721978288603, Δpcoc: 1.0040881674834043, #instance: 11877731
@@ -654,7 +758,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:00:57.703 -- auc: 0.8433579644527875, Δauc: 0.8690085126490956, pcoc: 0.991649703376265, Δpcoc: 1.0039435635546974, #instance: 12440931
 2022-04-20 09:00:57.857 -- auc: 0.8434072370180733, Δauc: 0.8663490573229475, pcoc: 0.9916491350578172, Δpcoc: 0.9913751891332191, #instance: 12466531
 2022-04-20 09:00:58.032 -- auc: 0.8434584914421471, Δauc: 0.8673389451054816, pcoc: 0.9916660108739137, Δpcoc: 0.9998834740158206, #instance: 12492131
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:01:05.544 -- auc: 0.8435111592381757, Δauc: 0.8678828433890053, pcoc: 0.9916845741866869, Δpcoc: 1.0007505067637268, #instance: 12517731
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:01:05.544 -- auc: 0.8435111592381757, Δauc: 0.8678828433890053, pcoc: 0.9916845741866869, Δpcoc: 1.0007505067637268, #instance: 12517731
 2022-04-20 09:01:05.621 -- auc: 0.8435656837107892, Δauc: 0.8689222594124419, pcoc: 0.9916931572995081, Δpcoc: 0.995876717424106, #instance: 12543331
 2022-04-20 09:01:05.773 -- auc: 0.8436222741890655, Δauc: 0.8699525352228722, pcoc: 0.9917128383165794, Δpcoc: 1.0013665034456074, #instance: 12568931
 2022-04-20 09:01:05.940 -- auc: 0.8436770771984333, Δauc: 0.869133783775692, pcoc: 0.9917313997268141, Δpcoc: 1.0008526162138358, #instance: 12594531
@@ -686,7 +792,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:02:00.705 -- auc: 0.8450620099658469, Δauc: 0.8657423889519451, pcoc: 0.9921254705911873, Δpcoc: 1.0000970245181624, #instance: 13260131
 2022-04-20 09:02:00.867 -- auc: 0.8451151098396494, Δauc: 0.8712576484156079, pcoc: 0.9921369341251554, Δpcoc: 0.9980628762160986, #instance: 13285731
 2022-04-20 09:02:01.038 -- auc: 0.8451672814687224, Δauc: 0.8708404026966838, pcoc: 0.9921411666234607, Δpcoc: 0.9943252334709111, #instance: 13311331
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:02:08.444 -- auc: 0.845223131754556, Δauc: 0.8727492006885254, pcoc: 0.9921558906129553, Δpcoc: 0.9998109977481006, #instance: 13336931
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:02:08.444 -- auc: 0.845223131754556, Δauc: 0.8727492006885254, pcoc: 0.9921558906129553, Δpcoc: 0.9998109977481006, #instance: 13336931
 2022-04-20 09:02:08.528 -- auc: 0.8452761684420107, Δauc: 0.8714357319204477, pcoc: 0.9921594476974687, Δpcoc: 0.9940051237145373, #instance: 13362531
 2022-04-20 09:02:08.685 -- auc: 0.8453226841037682, Δauc: 0.8685214818949921, pcoc: 0.9921792617651365, Δpcoc: 1.0025606137112981, #instance: 13388131
 2022-04-20 09:02:08.855 -- auc: 0.8453739074506152, Δauc: 0.8706396910735827, pcoc: 0.9921997986254201, Δpcoc: 1.0029874612239267, #instance: 13413731
@@ -717,7 +825,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:03:03.734 -- auc: 0.8465724178088947, Δauc: 0.8688559093916328, pcoc: 0.9925234772129512, Δpcoc: 0.9988054374971546, #instance: 14053731
 2022-04-20 09:03:03.811 -- auc: 0.8466279261543319, Δauc: 0.8751805524931979, pcoc: 0.992538456646119, Δpcoc: 1.0007729606891447, #instance: 14079331
 2022-04-20 09:03:03.976 -- auc: 0.8466757383976198, Δauc: 0.8716637054000342, pcoc: 0.9925443989022847, Δpcoc: 0.995796300149256, #instance: 14104931
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:03:04.150 -- auc: 0.8467226289654007, Δauc: 0.8713275920489606, pcoc: 0.9925625768917191, Δpcoc: 1.0025928743281494, #instance: 14130531
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:03:04.150 -- auc: 0.8467226289654007, Δauc: 0.8713275920489606, pcoc: 0.9925625768917191, Δpcoc: 1.0025928743281494, #instance: 14130531
 2022-04-20 09:03:11.942 -- auc: 0.8467642707748706, Δauc: 0.8685933238900455, pcoc: 0.9925812918506043, Δpcoc: 1.002986300210678, #instance: 14156131
 2022-04-20 09:03:12.088 -- auc: 0.8468066714348126, Δauc: 0.8691612634844873, pcoc: 0.9926006641516438, Δpcoc: 1.0033883246693913, #instance: 14181731
 2022-04-20 09:03:12.254 -- auc: 0.8468556669169521, Δauc: 0.8723286720098383, pcoc: 0.9926167771030788, Δpcoc: 1.0015932816606854, #instance: 14207331
@@ -746,7 +856,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:03:59.591 -- auc: 0.8479109071461303, Δauc: 0.8737292955388833, pcoc: 0.9928793334784763, Δpcoc: 0.9987508617106096, #instance: 14796131
 2022-04-20 09:03:59.671 -- auc: 0.8479418526412961, Δauc: 0.8653304504762025, pcoc: 0.9928911411812578, Δpcoc: 0.999716029594301, #instance: 14821731
 2022-04-20 09:03:59.744 -- auc: 0.8479814300808841, Δauc: 0.8698332840430147, pcoc: 0.9929028229057824, Δpcoc: 0.9996628394051432, #instance: 14847331
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:04:07.421 -- auc: 0.8480202665934945, Δauc: 0.869735285149472, pcoc: 0.9929150904168297, Δpcoc: 1.0000349437858873, #instance: 14872931
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:04:07.421 -- auc: 0.8480202665934945, Δauc: 0.869735285149472, pcoc: 0.9929150904168297, Δpcoc: 1.0000349437858873, #instance: 14872931
 2022-04-20 09:04:07.489 -- auc: 0.8480710168448644, Δauc: 0.8757927386635432, pcoc: 0.9929292838831245, Δpcoc: 1.001203596534831, #instance: 14898531
 2022-04-20 09:04:07.577 -- auc: 0.8481192815546378, Δauc: 0.8745770832347255, pcoc: 0.9929414448261015, Δpcoc: 1.0000351546387136, #instance: 14924131
 2022-04-20 09:04:07.643 -- auc: 0.8481641823693112, Δauc: 0.8728070440317142, pcoc: 0.9929492228440618, Δpcoc: 0.99747968744973, #instance: 14949731
@@ -778,7 +890,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:05:01.999 -- auc: 0.849289249003649, Δauc: 0.8743511051418748, pcoc: 0.9932280881490659, Δpcoc: 1.001617006718158, #instance: 15615331
 2022-04-20 09:05:02.063 -- auc: 0.8493344802196214, Δauc: 0.8755006116846141, pcoc: 0.9932407851642168, Δpcoc: 1.0009967063136491, #instance: 15640931
 2022-04-20 09:05:02.155 -- auc: 0.8493805141892903, Δauc: 0.8760305241079299, pcoc: 0.9932451703153886, Δpcoc: 0.9959154382723557, #instance: 15666531
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:05:09.975 -- auc: 0.8494263588982318, Δauc: 0.875775924550274, pcoc: 0.99325669379395, Δpcoc: 1.000318511380711, #instance: 15692131
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:05:09.975 -- auc: 0.8494263588982318, Δauc: 0.875775924550274, pcoc: 0.99325669379395, Δpcoc: 1.000318511380711, #instance: 15692131
 2022-04-20 09:05:09.983 -- auc: 0.8494648189669078, Δauc: 0.8720095772682215, pcoc: 0.9932627979303257, Δpcoc: 0.9969910601868391, #instance: 15717731
 2022-04-20 09:05:10.046 -- auc: 0.8495040648964762, Δauc: 0.8725437031044733, pcoc: 0.9932792855471242, Δpcoc: 1.0034290556344831, #instance: 15743331
 2022-04-20 09:05:10.133 -- auc: 0.8495437915731316, Δauc: 0.8728073858653531, pcoc: 0.9932894174289276, Δpcoc: 0.9995160201526632, #instance: 15768931
@@ -806,7 +920,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:05:57.361 -- auc: 0.850388215899452, Δauc: 0.8746716845441534, pcoc: 0.9935062921383648, Δpcoc: 0.9980290030639214, #instance: 16332131
 2022-04-20 09:05:57.423 -- auc: 0.8504257949848018, Δauc: 0.8732642448074094, pcoc: 0.993516321373902, Δpcoc: 0.9999137730415844, #instance: 16357731
 2022-04-20 09:05:57.502 -- auc: 0.8504698032358903, Δauc: 0.8770766042823143, pcoc: 0.9935203172249871, Δpcoc: 0.9960647480589573, #instance: 16383331
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:06:05.332 -- auc: 0.8505092269423374, Δauc: 0.8744025756507521, pcoc: 0.9935341229329254, Δpcoc: 1.0024056204082241, #instance: 16408931
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:06:05.332 -- auc: 0.8505092269423374, Δauc: 0.8744025756507521, pcoc: 0.9935341229329254, Δpcoc: 1.0024056204082241, #instance: 16408931
 2022-04-20 09:06:05.341 -- auc: 0.8505461982765063, Δauc: 0.872836921019432, pcoc: 0.9935434941857796, Δpcoc: 0.9995550772296908, #instance: 16434531
 2022-04-20 09:06:05.417 -- auc: 0.8505814612557037, Δauc: 0.8722632734742504, pcoc: 0.993557422553955, Δpcoc: 1.0025379096753388, #instance: 16460131
 2022-04-20 09:06:05.488 -- auc: 0.8506180386513085, Δauc: 0.8729867240218719, pcoc: 0.9935609418884448, Δpcoc: 0.9958195710263529, #instance: 16485731
@@ -838,7 +954,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:07:00.657 -- auc: 0.8515799317628697, Δauc: 0.8715822909979709, pcoc: 0.9937980541335754, Δpcoc: 1.001154943400098, #instance: 17151331
 2022-04-20 09:07:00.720 -- auc: 0.8516198414687034, Δauc: 0.8769336443262667, pcoc: 0.9938033843692577, Δpcoc: 0.997368351587344, #instance: 17176931
 2022-04-20 09:07:00.817 -- auc: 0.8516607180349824, Δauc: 0.8774924476804981, pcoc: 0.9938073440315233, Δpcoc: 0.9964572108825204, #instance: 17202531
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:07:08.729 -- auc: 0.8516890913175166, Δauc: 0.8699634441998829, pcoc: 0.9938181714605925, Δpcoc: 1.001096042754082, #instance: 17228131
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:07:08.729 -- auc: 0.8516890913175166, Δauc: 0.8699634441998829, pcoc: 0.9938181714605925, Δpcoc: 1.001096042754082, #instance: 17228131
 2022-04-20 09:07:08.737 -- auc: 0.8517286988749764, Δauc: 0.8769377149804708, pcoc: 0.9938324585258498, Δpcoc: 1.003481614772498, #instance: 17253731
 2022-04-20 09:07:08.790 -- auc: 0.851765228037071, Δauc: 0.8751401733695345, pcoc: 0.9938407683945286, Δpcoc: 0.9994342857575321, #instance: 17279331
 2022-04-20 09:07:08.888 -- auc: 0.851801675888139, Δauc: 0.875313810069421, pcoc: 0.9938402422588094, Δpcoc: 0.9934878646584223, #instance: 17304931
@@ -866,7 +984,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:07:56.724 -- auc: 0.8525493311866619, Δauc: 0.8733050428188306, pcoc: 0.9940267125727147, Δpcoc: 0.9959466645789724, #instance: 17868131
 2022-04-20 09:07:56.790 -- auc: 0.8525801217099193, Δauc: 0.8730979105571713, pcoc: 0.9940296813120905, Δpcoc: 0.996089610692259, #instance: 17893731
 2022-04-20 09:07:56.807 -- auc: 0.8526129153433075, Δauc: 0.8745718253836763, pcoc: 0.994040990493606, Δpcoc: 1.0019579879948932, #instance: 17919331
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:08:04.529 -- auc: 0.8526437914049809, Δauc: 0.8732699091826783, pcoc: 0.9940548619106637, Δpcoc: 1.0038000288761595, #instance: 17944931
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:08:04.529 -- auc: 0.8526437914049809, Δauc: 0.8732699091826783, pcoc: 0.9940548619106637, Δpcoc: 1.0038000288761595, #instance: 17944931
 2022-04-20 09:08:04.600 -- auc: 0.8526821010427343, Δauc: 0.8780335723532549, pcoc: 0.9940575810428532, Δpcoc: 0.995956601231665, #instance: 17970531
 2022-04-20 09:08:04.694 -- auc: 0.8527150780376845, Δauc: 0.874720434440275, pcoc: 0.9940686497709684, Δpcoc: 1.0018650799093887, #instance: 17996131
 2022-04-20 09:08:04.702 -- auc: 0.852752105316423, Δauc: 0.8775182260642657, pcoc: 0.9940703396794874, Δpcoc: 0.9952529194141954, #instance: 18021731
@@ -898,7 +1018,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:08:59.648 -- auc: 0.8535909704583188, Δauc: 0.8781532858912678, pcoc: 0.994268432142327, Δpcoc: 0.9983102453133037, #instance: 18687331
 2022-04-20 09:08:59.715 -- auc: 0.853623079594196, Δauc: 0.8759197127941297, pcoc: 0.9942760526008225, Δpcoc: 0.9998434022540471, #instance: 18712931
 2022-04-20 09:08:59.727 -- auc: 0.8536597639711765, Δauc: 0.8789144808924967, pcoc: 0.9942793723651494, Δpcoc: 0.9966994000198249, #instance: 18738531
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:09:07.438 -- auc: 0.8536923597090882, Δauc: 0.8764870095592965, pcoc: 0.9942841135964963, Δpcoc: 0.9977450974543292, #instance: 18764131
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:09:07.438 -- auc: 0.8536923597090882, Δauc: 0.8764870095592965, pcoc: 0.9942841135964963, Δpcoc: 0.9977450974543292, #instance: 18764131
 2022-04-20 09:09:07.512 -- auc: 0.8537197125569647, Δauc: 0.8729875415140534, pcoc: 0.9942899494578814, Δpcoc: 0.9985618181537881, #instance: 18789731
 2022-04-20 09:09:07.590 -- auc: 0.8537557557510633, Δauc: 0.8789559758535629, pcoc: 0.9942944903675086, Δpcoc: 0.9976208206762309, #instance: 18815331
 2022-04-20 09:09:07.604 -- auc: 0.853787638086928, Δauc: 0.8760014132802657, pcoc: 0.9943072169638664, Δpcoc: 1.0037085186022947, #instance: 18840931
@@ -930,25 +1052,39 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:10:03.018 -- auc: 0.8546029619494948, Δauc: 0.8772608716417429, pcoc: 0.9944968510765886, Δpcoc: 1.0017429287898898, #instance: 19506531
 2022-04-20 09:10:03.172 -- auc: 0.854628227683176, Δauc: 0.8731050127851893, pcoc: 0.9944939593974989, Δpcoc: 0.992308496157043, #instance: 19532131
 2022-04-20 09:10:03.185 -- auc: 0.8546539588543627, Δauc: 0.8735351843409254, pcoc: 0.994502651399804, Δpcoc: 1.0011357813781399, #instance: 19557731
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]2022-04-20 09:10:10.811 -- auc: 0.8546846410005093, Δauc: 0.8769598446408743, pcoc: 0.994511092400712, Δpcoc: 1.000976393333824, #instance: 19583331
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:============================>                           (4 + 4) / 8]
+2022-04-20 09:10:10.811 -- auc: 0.8546846410005093, Δauc: 0.8769598446408743, pcoc: 0.994511092400712, Δpcoc: 1.000976393333824, #instance: 19583331
 2022-04-20 09:10:10.884 -- auc: 0.8547160968756025, Δauc: 0.8774315598965231, pcoc: 0.9945182850211053, Δpcoc: 1.0000276530513141, #instance: 19608931
 2022-04-20 09:10:11.044 -- auc: 0.8547495114268777, Δauc: 0.8790491398795562, pcoc: 0.9945258569744982, Δpcoc: 1.0003371588363463, #instance: 19634531
 2022-04-20 09:10:11.056 -- auc: 0.8547816081468279, Δauc: 0.87808496792093, pcoc: 0.994534675330565, Δpcoc: 1.001323347561752, #instance: 19660131
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:===================================>                    (5 + 3) / 8]2022-04-20 09:10:18.569 -- auc: 0.8548121981627586, Δauc: 0.8771162129703876, pcoc: 0.994539865175783, Δpcoc: 0.9985228928069118, #instance: 19685731
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:===================================>                    (5 + 3) / 8]
+2022-04-20 09:10:18.569 -- auc: 0.8548121981627586, Δauc: 0.8771162129703876, pcoc: 0.994539865175783, Δpcoc: 0.9985228928069118, #instance: 19685731
 2022-04-20 09:10:18.629 -- auc: 0.854838020372842, Δauc: 0.8737737246162042, pcoc: 0.9945436007869451, Δpcoc: 0.997412704129949, #instance: 19711331
 2022-04-20 09:10:18.799 -- auc: 0.8548734866396226, Δauc: 0.8806463997488012, pcoc: 0.9945519200572518, Δpcoc: 1.0009697580191041, #instance: 19736931
 2022-04-20 09:10:25.910 -- auc: 0.8549058459367384, Δauc: 0.8786256877387117, pcoc: 0.99455598209767, Δpcoc: 0.9976829660911034, #instance: 19762531
 2022-04-20 09:10:25.988 -- auc: 0.8549344876454524, Δauc: 0.8759189131176874, pcoc: 0.9945634297667805, Δpcoc: 1.000316265896461, #instance: 19788131
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:==========================================>             (6 + 2) / 8]2022-04-20 09:10:32.935 -- auc: 0.8549654443395791, Δauc: 0.877715822220677, pcoc: 0.994570984209611, Δpcoc: 1.0004150261671, #instance: 19813731
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:==========================================>             (6 + 2) / 8]
+2022-04-20 09:10:32.935 -- auc: 0.8549654443395791, Δauc: 0.877715822220677, pcoc: 0.994570984209611, Δpcoc: 1.0004150261671, #instance: 19813731
 2022-04-20 09:10:32.992 -- auc: 0.8549921775644153, Δauc: 0.8748447663716085, pcoc: 0.9945773178529181, Δpcoc: 0.9994768868556306, #instance: 19839331
-[Stage 11:>                                                       (0 + 4) / 4][Stage 15:=================================================>      (7 + 1) / 8]2022-04-20 09:10:39.595 -- auc: 0.8550241229568742, Δauc: 0.8783637804600243, pcoc: 0.9945863034498248, Δpcoc: 1.0015712667643886, #instance: 19864931
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 15:=================================================>      (7 + 1) / 8]
+2022-04-20 09:10:39.595 -- auc: 0.8550241229568742, Δauc: 0.8783637804600243, pcoc: 0.9945863034498248, Δpcoc: 1.0015712667643886, #instance: 19864931
 2022-04-20 09:10:46.227 -- auc: 0.8550499789535859, Δauc: 0.8743417858523652, pcoc: 0.9945920525442061, Δpcoc: 0.999053594567852, #instance: 19890531
 2022-04-20 09:10:52.853 -- auc: 0.8550763475070482, Δauc: 0.8746351637665757, pcoc: 0.9945993189371954, Δpcoc: 1.0002504449707326, #instance: 19916131
-                                                                                                                                                            2022-04-20 09:10:57.599 -- auc: 0.8550881198053226, Δauc: 0.8748007247426534, pcoc: 0.9946021282614047, Δpcoc: 0.9995703128399753, #instance: 19927407
+
+                                                                                                                                                            
+2022-04-20 09:10:57.599 -- auc: 0.8550881198053226, Δauc: 0.8748007247426534, pcoc: 0.9946021282614047, Δpcoc: 0.9995703128399753, #instance: 19927407
 2022-04-20 09:10:57.608 -- auc: 0.8550879099616734, Δauc: 0.845829636202307, pcoc: 0.9946023049262444, Δpcoc: 1.0030988610309104, #instance: 19927827
 2022-04-20 09:10:57.616 -- auc: 0.8551170712763823, Δauc: 0.8774030250195489, pcoc: 0.9946098026077438, Δpcoc: 1.0006460902546617, #instance: 19952602
 2022-04-20 09:10:57.623 -- auc: 0.8551415800862833, Δauc: 0.8816530206759052, pcoc: 0.9946177538518317, Δpcoc: 1.0038849778442016, #instance: 19969851
-[Stage 11:>                                                       (0 + 4) / 4][Stage 17:>                                                       (0 + 4) / 4]                                                                                                                                                            [2022-04-20 09:11:18.588] [info] C[0]:9 has stopped.
+
+[Stage 11:>                                                       (0 + 4) / 4][Stage 17:>                                                       (0 + 4) / 4]
+
+                                                                                                                                                            
+[2022-04-20 09:11:18.588] [info] C[0]:9 has stopped.
 [2022-04-20 09:11:18.590] [info] PS job with coordinator address 10.0.1.219:55843 stopped.
 Debug -- model output:
 2022-04-20 09:11:02      16384 crossnet.C_list.0__dense_data.dat
@@ -1119,7 +1255,15 @@ Debug -- model output:
 [2022-04-20 09:11:19.215] [info] ActorProcess::Receiving: Coordinator pid: 13127, tid: 13442, thread: 0x7f0acf77e700
 [2022-04-20 09:11:19.260] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
 PS Coordinator node [32mC[0]:9[m is ready.
-[Stage 19:>                                                       (0 + 4) / 4][Stage 22:>                                                       (0 + 4) / 4]                                                                                                                                                            [Stage 19:>                                                                                                                                     (0 + 4) / 4][Stage 19:>                                                       (0 + 4) / 4][Stage 23:>                                                       (0 + 4) / 8]2022-04-20 09:11:32.562 -- auc: 0.8746309949166013, Δauc: 0.8746309949166013, pcoc: 0.9977490688713587, Δpcoc: 0.9977490688713587, #instance: 25600
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 22:>                                                       (0 + 4) / 4]
+
+                                                                                                                                                            
+
+[Stage 19:>                                                                                                                                     (0 + 4) / 4]
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:>                                                       (0 + 4) / 8]
+2022-04-20 09:11:32.562 -- auc: 0.8746309949166013, Δauc: 0.8746309949166013, pcoc: 0.9977490688713587, Δpcoc: 0.9977490688713587, #instance: 25600
 2022-04-20 09:11:32.622 -- auc: 0.8750072633598256, Δauc: 0.8753717063704678, pcoc: 0.9995252831802429, Δpcoc: 1.0013106012456974, #instance: 51200
 2022-04-20 09:11:32.952 -- auc: 0.8751651909077017, Δauc: 0.8755001544205424, pcoc: 0.9983293059181673, Δpcoc: 0.9959347110026695, #instance: 76800
 2022-04-20 09:11:33.084 -- auc: 0.8754837782454549, Δauc: 0.876404256222051, pcoc: 0.9984890888927946, Δpcoc: 0.9989702148806089, #instance: 102400
@@ -1356,7 +1500,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:12:30.989 -- auc: 0.883397306440904, Δauc: 0.8851477830256567, pcoc: 1.0001659949726898, Δpcoc: 1.003692685528131, #instance: 6016000
 2022-04-20 09:12:31.211 -- auc: 0.883399422215204, Δauc: 0.883884826791744, pcoc: 1.0001595001791561, Δpcoc: 0.9986421965637573, #instance: 6041600
 2022-04-20 09:12:31.308 -- auc: 0.8833917956038702, Δauc: 0.8816162743720165, pcoc: 1.0001661270550528, Δpcoc: 1.0017325798306282, #instance: 6067200
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:>                                                       (0 + 4) / 8]2022-04-20 09:12:31.780 -- auc: 0.8834099168230075, Δauc: 0.8877711240545549, pcoc: 1.000162721497817, Δpcoc: 0.9993588481618659, #instance: 6092800
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:>                                                       (0 + 4) / 8]
+2022-04-20 09:12:31.780 -- auc: 0.8834099168230075, Δauc: 0.8877711240545549, pcoc: 1.000162721497817, Δpcoc: 0.9993588481618659, #instance: 6092800
 2022-04-20 09:12:32.021 -- auc: 0.8834104524176909, Δauc: 0.8835915358508666, pcoc: 1.0001449177000932, Δpcoc: 0.9959283720242911, #instance: 6118400
 2022-04-20 09:12:32.212 -- auc: 0.8834167772537183, Δauc: 0.8849207635815912, pcoc: 1.0001433176213803, Δpcoc: 0.9997617144205272, #instance: 6144000
 2022-04-20 09:12:32.300 -- auc: 0.8834290795307654, Δauc: 0.8863380936048805, pcoc: 1.0001512708708349, Δpcoc: 1.0020704381243208, #instance: 6169600
@@ -1512,7 +1658,11 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:13:10.044 -- auc: 0.884449257081374, Δauc: 0.888113049190111, pcoc: 1.000032843234321, Δpcoc: 0.9934920680912196, #instance: 10009600
 2022-04-20 09:13:10.342 -- auc: 0.8844540725018835, Δauc: 0.8862487499447553, pcoc: 1.0000315564748095, Δpcoc: 0.9995257886626675, #instance: 10035200
 2022-04-20 09:13:10.374 -- auc: 0.8844555915560838, Δauc: 0.8850201712096928, pcoc: 1.0000272770307674, Δpcoc: 0.9983586445372555, #instance: 10060800
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=======>                                                (1 + 3) / 8][Stage 19:>                                                       (0 + 4) / 4][Stage 23:=======>                                                (1 + 4) / 8]2022-04-20 09:13:10.920 -- auc: 0.8844573171659181, Δauc: 0.8851308269651926, pcoc: 1.0000342109244191, Δpcoc: 1.0027746645895566, #instance: 10086342
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=======>                                                (1 + 3) / 8]
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=======>                                                (1 + 4) / 8]
+2022-04-20 09:13:10.920 -- auc: 0.8844573171659181, Δauc: 0.8851308269651926, pcoc: 1.0000342109244191, Δpcoc: 1.0027746645895566, #instance: 10086342
 2022-04-20 09:13:11.022 -- auc: 0.8844598362593323, Δauc: 0.8854886687327206, pcoc: 1.0000245648328276, Δpcoc: 0.9962349083295514, #instance: 10111942
 2022-04-20 09:13:11.369 -- auc: 0.8844662493052945, Δauc: 0.8869956021042099, pcoc: 1.0000323034993768, Δpcoc: 1.0031031079062114, #instance: 10137542
 2022-04-20 09:13:11.403 -- auc: 0.8844672021981482, Δauc: 0.8848338172170502, pcoc: 1.0000327624899616, Δpcoc: 1.0002140368730672, #instance: 10163142
@@ -1522,7 +1672,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:13:12.444 -- auc: 0.8845014844123591, Δauc: 0.887389492514389, pcoc: 1.0000165530259228, Δpcoc: 0.9978998513499503, #instance: 10265542
 2022-04-20 09:13:12.928 -- auc: 0.8845060346133942, Δauc: 0.8863044140396596, pcoc: 1.0000135370773626, Δpcoc: 0.9988020640546524, #instance: 10291142
 2022-04-20 09:13:13.451 -- auc: 0.8845030180027598, Δauc: 0.8832580035414958, pcoc: 1.0000156218206009, Δpcoc: 1.0008522182987134, #instance: 10316742
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=====================>                                  (3 + 4) / 8]2022-04-20 09:13:13.922 -- auc: 0.8845035724081164, Δauc: 0.8847213783984749, pcoc: 1.000015021448785, Δpcoc: 0.999773106607124, #instance: 10342342
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=====================>                                  (3 + 4) / 8]
+2022-04-20 09:13:13.922 -- auc: 0.8845035724081164, Δauc: 0.8847213783984749, pcoc: 1.000015021448785, Δpcoc: 0.999773106607124, #instance: 10342342
 2022-04-20 09:13:14.399 -- auc: 0.8845054666850023, Δauc: 0.885263748615436, pcoc: 1.0000272091165376, Δpcoc: 1.0050121965641756, #instance: 10367812
 2022-04-20 09:13:14.460 -- auc: 0.8844929008670345, Δauc: 0.8793622514607538, pcoc: 1.000023088756987, Δpcoc: 0.9983562261289626, #instance: 10393412
 2022-04-20 09:13:14.925 -- auc: 0.8844927191550539, Δauc: 0.8844129628244596, pcoc: 1.000015783636508, Δpcoc: 0.9970588846572268, #instance: 10419012
@@ -1548,7 +1700,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:13:19.909 -- auc: 0.8846098471645772, Δauc: 0.8900838159812853, pcoc: 0.9999946930290369, Δpcoc: 0.9970672801237569, #instance: 10930783
 2022-04-20 09:13:20.435 -- auc: 0.8846204532580881, Δauc: 0.8891216157837456, pcoc: 0.9999987273660865, Δpcoc: 1.0017215776891721, #instance: 10956383
 2022-04-20 09:13:20.451 -- auc: 0.8846257104302941, Δauc: 0.8868865999548976, pcoc: 1.000002487796801, Δpcoc: 1.0016132613603808, #instance: 10981983
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:============================>                           (4 + 4) / 8]2022-04-20 09:13:20.917 -- auc: 0.8846394941930424, Δauc: 0.890526691696964, pcoc: 0.9999987777981657, Δpcoc: 0.9984088559829702, #instance: 11007583
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:============================>                           (4 + 4) / 8]
+2022-04-20 09:13:20.917 -- auc: 0.8846394941930424, Δauc: 0.890526691696964, pcoc: 0.9999987777981657, Δpcoc: 0.9984088559829702, #instance: 11007583
 2022-04-20 09:13:21.430 -- auc: 0.8846448393252471, Δauc: 0.8869366851912563, pcoc: 0.999999946238811, Δpcoc: 1.0005032150734108, #instance: 11033183
 2022-04-20 09:13:21.438 -- auc: 0.8846538626773016, Δauc: 0.8885021997178761, pcoc: 1.0000080782452625, Δpcoc: 1.003529452227689, #instance: 11058783
 2022-04-20 09:13:21.657 -- auc: 0.8846708784628192, Δauc: 0.892082019080159, pcoc: 1.0000070653670972, Δpcoc: 0.9995647241793028, #instance: 11084131
@@ -1786,7 +1940,9 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:14:19.867 -- auc: 0.8866742791544295, Δauc: 0.8962345826163309, pcoc: 0.9999864145224304, Δpcoc: 1.0036069452943115, #instance: 17023331
 2022-04-20 09:14:19.924 -- auc: 0.8866845916485342, Δauc: 0.8935383833414613, pcoc: 0.9999882498839396, Δpcoc: 1.0012091955412337, #instance: 17048931
 2022-04-20 09:14:20.163 -- auc: 0.8866954132283602, Δauc: 0.8939414159117544, pcoc: 0.9999885673683148, Δpcoc: 1.000199767787539, #instance: 17074531
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:============================>                           (4 + 4) / 8]2022-04-20 09:14:20.762 -- auc: 0.8867071450309579, Δauc: 0.8944294678466977, pcoc: 0.999991836106376, Δpcoc: 1.002182107004729, #instance: 17100131
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:============================>                           (4 + 4) / 8]
+2022-04-20 09:14:20.762 -- auc: 0.8867071450309579, Δauc: 0.8944294678466977, pcoc: 0.999991836106376, Δpcoc: 1.002182107004729, #instance: 17100131
 2022-04-20 09:14:20.898 -- auc: 0.8867195711006809, Δauc: 0.8950337513388811, pcoc: 0.999987404046014, Δpcoc: 0.9970239726132567, #instance: 17125731
 2022-04-20 09:14:20.925 -- auc: 0.886729874273911, Δauc: 0.893648097755644, pcoc: 0.9999877926168087, Δpcoc: 1.0002480063793993, #instance: 17151331
 2022-04-20 09:14:21.155 -- auc: 0.8867475094623087, Δauc: 0.8986743093148728, pcoc: 0.9999815279587685, Δpcoc: 0.9957953931311531, #instance: 17176931
@@ -1891,13 +2047,21 @@ PS Coordinator node [32mC[0]:9[m is ready.
 2022-04-20 09:14:46.232 -- auc: 0.8885573146659642, Δauc: 0.9089316461409036, pcoc: 0.9999676643578052, Δpcoc: 1.001937700697611, #instance: 19711331
 2022-04-20 09:14:46.240 -- auc: 0.8885870420830957, Δauc: 0.9114845432709998, pcoc: 0.9999665623960247, Δpcoc: 0.9991199203737642, #instance: 19736931
 2022-04-20 09:14:46.308 -- auc: 0.8886102351212468, Δauc: 0.9064504108558813, pcoc: 0.9999646661496016, Δpcoc: 0.9985038240012184, #instance: 19762531
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:===================================>                    (5 + 3) / 8]2022-04-20 09:14:47.254 -- auc: 0.8886400940391634, Δauc: 0.911521068989578, pcoc: 0.9999655259619156, Δpcoc: 1.0006300416353628, #instance: 19788131
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:===================================>                    (5 + 3) / 8]
+2022-04-20 09:14:47.254 -- auc: 0.8886400940391634, Δauc: 0.911521068989578, pcoc: 0.9999655259619156, Δpcoc: 1.0006300416353628, #instance: 19788131
 2022-04-20 09:14:47.291 -- auc: 0.8886658205377789, Δauc: 0.9084589180005312, pcoc: 0.9999628110905214, Δpcoc: 0.9978644114495474, #instance: 19813731
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:==========================================>             (6 + 2) / 8]2022-04-20 09:14:48.244 -- auc: 0.8886961491519644, Δauc: 0.9119290648361147, pcoc: 0.9999636099282082, Δpcoc: 1.0005841919887584, #instance: 19839331
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:==========================================>             (6 + 2) / 8]
+2022-04-20 09:14:48.244 -- auc: 0.8886961491519644, Δauc: 0.9119290648361147, pcoc: 0.9999636099282082, Δpcoc: 1.0005841919887584, #instance: 19839331
 2022-04-20 09:14:48.274 -- auc: 0.8887206778165981, Δauc: 0.9077537765106701, pcoc: 0.9999667616696781, Δpcoc: 1.0024123177914748, #instance: 19864931
-[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=================================================>      (7 + 1) / 8]2022-04-20 09:14:49.233 -- auc: 0.8887475247241126, Δauc: 0.909618564060554, pcoc: 0.9999673516166439, Δpcoc: 1.000424599286028, #instance: 19890531
+
+[Stage 19:>                                                       (0 + 4) / 4][Stage 23:=================================================>      (7 + 1) / 8]
+2022-04-20 09:14:49.233 -- auc: 0.8887475247241126, Δauc: 0.909618564060554, pcoc: 0.9999673516166439, Δpcoc: 1.000424599286028, #instance: 19890531
 2022-04-20 09:14:50.239 -- auc: 0.8887800770054137, Δauc: 0.9138249648425768, pcoc: 0.9999679671329457, Δpcoc: 1.0004477922467567, #instance: 19916131
-                                                                                                                                                            2022-04-20 09:14:51.075 -- auc: 0.8888062245088499, Δauc: 0.9096839867896788, pcoc: 0.9999677749137544, Δpcoc: 0.9998131131501177, #instance: 19940906
+
+                                                                                                                                                            
+2022-04-20 09:14:51.075 -- auc: 0.8888062245088499, Δauc: 0.9096839867896788, pcoc: 0.9999677749137544, Δpcoc: 0.9998131131501177, #instance: 19940906
 2022-04-20 09:14:51.084 -- auc: 0.8888155986789876, Δauc: 0.9146547654426596, pcoc: 0.9999677008585709, Δpcoc: 0.999767104097022, #instance: 19948238
 2022-04-20 09:14:51.092 -- auc: 0.8888283251678228, Δauc: 0.9128998739994536, pcoc: 0.9999685195935784, Δpcoc: 1.001558449339123, #instance: 19958575
 2022-04-20 09:14:51.103 -- auc: 0.88883872312651, Δauc: 0.907200473262892, pcoc: 0.9999670308149384, Δpcoc: 0.997328591521087, #instance: 19969851
@@ -1936,11 +2100,29 @@ only showing top 20 rows
 [2022-04-20 09:14:51.320] [info] ActorProcess::Receiving: Coordinator pid: 13127, tid: 13580, thread: 0x7f0ac281a700
 [2022-04-20 09:14:51.405] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
 PS Coordinator node [32mC[0]:9[m is ready.
-[Stage 27:>                                                                                                                                     (0 + 4) / 4][Stage 27:>                                                       (0 + 4) / 4][Stage 30:>                                                       (0 + 4) / 4]                                                                                                                                                            [Stage 27:>                                                       (0 + 4) / 4][Stage 31:>                                                       (0 + 4) / 8][Stage 27:>                                                       (0 + 4) / 4][Stage 31:=====================>                                  (3 + 4) / 8][Stage 27:>                                                       (0 + 4) / 4][Stage 31:============================>                           (4 + 4) / 8]2022-04-20 09:15:16.410 -- auc: 0.8330558565272769, Δauc: 0.8330558565272769, pcoc: 0.9870044814465798, Δpcoc: 0.9870044814465798, #instance: 25468
+
+[Stage 27:>                                                                                                                                     (0 + 4) / 4]
+
+[Stage 27:>                                                       (0 + 4) / 4][Stage 30:>                                                       (0 + 4) / 4]
+
+                                                                                                                                                            
+
+[Stage 27:>                                                       (0 + 4) / 4][Stage 31:>                                                       (0 + 4) / 8]
+
+[Stage 27:>                                                       (0 + 4) / 4][Stage 31:=====================>                                  (3 + 4) / 8]
+
+[Stage 27:>                                                       (0 + 4) / 4][Stage 31:============================>                           (4 + 4) / 8]
+2022-04-20 09:15:16.410 -- auc: 0.8330558565272769, Δauc: 0.8330558565272769, pcoc: 0.9870044814465798, Δpcoc: 0.9870044814465798, #instance: 25468
 2022-04-20 09:15:16.769 -- auc: 0.8277969280896907, Δauc: 0.8224134405739427, pcoc: 0.9865172557848787, Δpcoc: 0.9860314058191636, #instance: 50916
 2022-04-20 09:15:17.242 -- auc: 0.8288088723870995, Δauc: 0.8308475011095975, pcoc: 0.987541785237547, Δpcoc: 0.9896020093536919, #instance: 76280
 2022-04-20 09:15:18.195 -- auc: 0.8296569885241207, Δauc: 0.8321703634036811, pcoc: 0.9886966072432897, Δpcoc: 0.9921827433171578, #instance: 101727
-[Stage 27:>                                                       (0 + 4) / 4][Stage 31:==========================================>             (6 + 2) / 8][Stage 27:>                                                       (0 + 4) / 4][Stage 31:=================================================>      (7 + 1) / 8]                                                                                                                                                            2022-04-20 09:15:21.228 -- auc: 0.8302333824117661, Δauc: 0.8380408174125911, pcoc: 0.9879254435267703, Δpcoc: 0.9782002505334844, #instance: 109746
+
+[Stage 27:>                                                       (0 + 4) / 4][Stage 31:==========================================>             (6 + 2) / 8]
+
+[Stage 27:>                                                       (0 + 4) / 4][Stage 31:=================================================>      (7 + 1) / 8]
+
+                                                                                                                                                            
+2022-04-20 09:15:21.228 -- auc: 0.8302333824117661, Δauc: 0.8380408174125911, pcoc: 0.9879254435267703, Δpcoc: 0.9782002505334844, #instance: 109746
 2022-04-20 09:15:21.237 -- auc: 0.8315032692804447, Δauc: 0.8517303786039474, pcoc: 0.9874109525617453, Δpcoc: 0.9792315047853773, #instance: 116655
 2022-04-20 09:15:21.245 -- auc: 0.832143284429854, Δauc: 0.8404787385507126, pcoc: 0.9871370882245681, Δpcoc: 0.9835008262919245, #instance: 125453
 2022-04-20 09:15:21.253 -- auc: 0.832257037104768, Δauc: 0.834213780609766, pcoc: 0.9867388217911341, Δpcoc: 0.9804187041419556, #instance: 133316
@@ -1973,7 +2155,81 @@ Debug -- test result sample:
 +-----+-------+--------+--------------------+-------------------+
 only showing top 20 rows
 
-[Stage 34:>                                                                                                                                     (0 + 4) / 8][Stage 34:================>                                                                                                                     (1 + 4) / 8][Stage 34:==================================================>                                                                                   (3 + 4) / 8][Stage 34:===================================================================>                                                                  (4 + 4) / 8][Stage 34:===================================================================================>                                                  (5 + 3) / 8][Stage 34:=====================================================================================================================>                (7 + 1) / 8][Stage 35:>                                                                                                                                     (0 + 4) / 8][Stage 35:==================================================>                                                                                   (3 + 4) / 8][Stage 35:===================================================================>                                                                  (4 + 4) / 8][Stage 35:===================================================================================>                                                  (5 + 3) / 8][Stage 35:=====================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            [Stage 37:>                                                                                                                                     (0 + 4) / 8][Stage 37:==================================================>                                                                                   (3 + 4) / 8][Stage 37:===================================================================>                                                                  (4 + 4) / 8][Stage 37:=====================================================================================================================>                (7 + 1) / 8][Stage 38:>                                                                                                                                     (0 + 4) / 8][Stage 38:================>                                                                                                                     (1 + 4) / 8][Stage 38:==================================================>                                                                                   (3 + 4) / 8][Stage 38:===================================================================>                                                                  (4 + 4) / 8][Stage 38:===================================================================================>                                                  (5 + 3) / 8][Stage 38:=====================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            [Stage 41:>                                                                                                                                     (0 + 4) / 8][Stage 41:==================================================>                                                                                   (3 + 4) / 8][Stage 41:===================================================================>                                                                  (4 + 4) / 8][Stage 41:===================================================================================>                                                  (5 + 3) / 8][Stage 41:=====================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            [Stage 44:>                                                                                                                                     (0 + 4) / 8][Stage 44:================>                                                                                                                     (1 + 4) / 8][Stage 44:==================================================>                                                                                   (3 + 4) / 8][Stage 44:===================================================================>                                                                  (4 + 4) / 8][Stage 44:===================================================================================>                                                  (5 + 3) / 8][Stage 44:====================================================================================================>                                 (6 + 2) / 8][Stage 44:=====================================================================================================================>                (7 + 1) / 8]                                                                                                                                                            Debug -- Train AUC:  0.8888378134172892
+
+[Stage 34:>                                                                                                                                     (0 + 4) / 8]
+
+[Stage 34:================>                                                                                                                     (1 + 4) / 8]
+
+[Stage 34:==================================================>                                                                                   (3 + 4) / 8]
+
+[Stage 34:===================================================================>                                                                  (4 + 4) / 8]
+
+[Stage 34:===================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 34:=====================================================================================================================>                (7 + 1) / 8]
+
+[Stage 35:>                                                                                                                                     (0 + 4) / 8]
+
+[Stage 35:==================================================>                                                                                   (3 + 4) / 8]
+
+[Stage 35:===================================================================>                                                                  (4 + 4) / 8]
+
+[Stage 35:===================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 35:=====================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+
+[Stage 37:>                                                                                                                                     (0 + 4) / 8]
+
+[Stage 37:==================================================>                                                                                   (3 + 4) / 8]
+
+[Stage 37:===================================================================>                                                                  (4 + 4) / 8]
+
+[Stage 37:=====================================================================================================================>                (7 + 1) / 8]
+
+[Stage 38:>                                                                                                                                     (0 + 4) / 8]
+
+[Stage 38:================>                                                                                                                     (1 + 4) / 8]
+
+[Stage 38:==================================================>                                                                                   (3 + 4) / 8]
+
+[Stage 38:===================================================================>                                                                  (4 + 4) / 8]
+
+[Stage 38:===================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 38:=====================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+
+[Stage 41:>                                                                                                                                     (0 + 4) / 8]
+
+[Stage 41:==================================================>                                                                                   (3 + 4) / 8]
+
+[Stage 41:===================================================================>                                                                  (4 + 4) / 8]
+
+[Stage 41:===================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 41:=====================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+
+[Stage 44:>                                                                                                                                     (0 + 4) / 8]
+
+[Stage 44:================>                                                                                                                     (1 + 4) / 8]
+
+[Stage 44:==================================================>                                                                                   (3 + 4) / 8]
+
+[Stage 44:===================================================================>                                                                  (4 + 4) / 8]
+
+[Stage 44:===================================================================================>                                                  (5 + 3) / 8]
+
+[Stage 44:====================================================================================================>                                 (6 + 2) / 8]
+
+[Stage 44:=====================================================================================================================>                (7 + 1) / 8]
+
+                                                                                                                                                            
+Debug -- Train AUC:  0.8888378134172892
 Debug -- Test AUC:  0.8322578823883071
 Debug--spark stop
 22/04/20 09:15:49 WARN ExecutorPodsWatchSnapshotSource: Kubernetes client has been closed (this is expected if the application is shutting down.)

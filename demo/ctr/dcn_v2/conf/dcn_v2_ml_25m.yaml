@@ -9,18 +9,18 @@ server_memory: '10G'
 coordinator_memory: '10G'
 
 ## datasets
-train_path: s3://dmetasoul-bucket/demo/movielens/feature_generation/rank/25m/train.parquet
-test_path: s3://dmetasoul-bucket/demo/movielens/feature_generation/rank/25m/test.parquet
+train_path: ${MY_S3_BUCKET}/movielens/feature_generation/rank/25m/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/feature_generation/rank/25m/test.parquet
 
 ## model configurations
-wide_column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema
-wide_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/wide_combine_column_schema
-deep_column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/column_schema
-deep_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_25m/combine_column_schema
+wide_column_name_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema
+wide_combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/wide_combine_column_schema
+deep_column_name_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/column_schema
+deep_combine_schema_path: ${MY_S3_BUCKET}/movielens/schema/widedeep/ml_25m/combine_column_schema
 
 model_in_path: null
-model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_out/ml_25m/
-model_export_path: s3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_export/ml_25m/
+model_out_path: ${MY_S3_BUCKET}/movielens/model/dcn_v2/model_out/ml_25m/
+model_export_path: ${MY_S3_BUCKET}/movielens/model/dcn_v2/model_export/ml_25m/
 model_version: '0.1'
 experiment_name: movie_lens_dcn2_25m
 input_label_column_index: 0

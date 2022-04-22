@@ -9,18 +9,18 @@ server_memory: '10G'
 coordinator_memory: '10G'
 
 ## datasets
-train_path: s3://dmetasoul-bucket/demo/criteo_x1/train_5.parquet
-test_path: s3://dmetasoul-bucket/demo/criteo_x1/test_1.parquet
+train_path: ${MY_S3_BUCKET}/criteo_x1/train_5.parquet
+test_path: ${MY_S3_BUCKET}/criteo_x1/test_1.parquet
 
 ## model configurations
-wide_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
-wide_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
-deep_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
-deep_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+wide_column_name_path: ${MY_S3_BUCKET}/schema/column_name_demo.txt
+wide_combine_schema_path: ${MY_S3_BUCKET}/schema/combine_schema_demo.txt
+deep_column_name_path: ${MY_S3_BUCKET}/schema/column_name_demo.txt
+deep_combine_schema_path: ${MY_S3_BUCKET}/schema/combine_schema_demo.txt
 
 model_in_path: null
-model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_out/criteo_d5/
-model_export_path: s3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_export/criteo_d5/
+model_out_path: ${MY_S3_BUCKET}/movielens/model/dcn_v2/model_out/criteo_d5/
+model_export_path: ${MY_S3_BUCKET}/movielens/model/dcn_v2/model_export/criteo_d5/
 model_version: '0.1'
 experiment_name: criteo_dcn2_d5
 input_label_column_index: 0
