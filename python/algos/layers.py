@@ -195,7 +195,28 @@ class MultiHeadSelfAttention(MultiHeadAttention):
     def forward(self,X):
         output, attention = super().forward(X, X, X)
         return output
+
+# Scaled dot-product attention layer
+# Copyright (C) 2018. pengshuang@Github for ScaledDotProductAttention.
+class ScaledDotproductAttention(torch.nn.Module):
+    def __init__(self, dropout_rate=0.):
+        super().__init__()
+        self.dropout = None
+        if dropout_rate is not None and dropout_rate > 0:
+            self.dropout = torch.nn.Dropout(dropout_rate)
+        self.softmax = torch.nn.Softmax(dim=2)
     
+    def forward(self, W_q, W_k, W_v, scale=None, mask=None):
+        attention=torch.bmm(W_q, W_k.transpose(1,2))
+        scale = (W_k.size(-1)) ** -0.5
+        attention = attention * scale
+        mask = torch.triu(torch.ones(attention.size(1), attention.size(2)), 1).bool()
+        attention.masked_fill_(~mask, 0) 
+        attention = self.softmax(attention)
+        if self.dropout is not None:
+            attention = self.dropout(attention)
+        output = torch.bmm(attention, W_v)
+        return output, attention
 
 # Cross net v2 layer
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/models/DCNv2.py
