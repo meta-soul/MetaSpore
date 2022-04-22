@@ -1,0 +1,50 @@
+## spark session
+app_name: 'CTR Demo Deep&Cross V2'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 50
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/criteo_x1/train_5.parquet
+test_path: s3://dmetasoul-bucket/demo/criteo_x1/test_1.parquet
+
+## model configurations
+wide_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
+wide_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+deep_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
+deep_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_out/criteo_d5/
+model_export_path: s3://dmetasoul-bucket/demo/movielens/model/dcn_v2/model_export/criteo_d5/
+model_version: '0.1'
+experiment_name: criteo_dcn2_d5
+input_label_column_index: 0
+metric_update_interval: 100
+
+## model hyper params
+use_wide: True
+wide_embedding_dim: 16
+deep_embedding_dim: 16
+adam_learning_rate: 0.00001
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.5
+ftrl_beta: 1.0
+sparse_init_var: 0.01
+dnn_activations: ReLU
+use_bias: True
+batch_norm: True
+net_dropout: null
+net_regularizer: null
+stacked_dnn_hidden_units: [512, 512, 512]
+parallel_dnn_hidden_units: [512, 512, 512]
+model_structure: stacked_parallel
+low_rank: 32
+num_experts: 4
+num_crossing_layers: 3
+use_low_rank_mixture: True

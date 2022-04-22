@@ -1,0 +1,44 @@
+## spark session
+app_name: 'CTR Demo xDeepFM'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 50
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/criteo_x1/train_5.parquet
+test_path: s3://dmetasoul-bucket/demo/criteo_x1/test_1.parquet
+
+## model configurations
+wide_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
+wide_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+deep_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
+deep_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/movielens/model/xdeepfm/model_out/criteo_d5/
+model_export_path: s3://dmetasoul-bucket/demo/movielens/model/xdeepfm/model_export/criteo_d5/
+model_version: '0.1'
+experiment_name: criteo_xdfm_d5
+input_label_column_index: 0
+metric_update_interval: 100
+
+## model hyper params
+use_wide: True
+use_dnn: True
+use_cin: True
+wide_embedding_dim: 10
+deep_embedding_dim: 10
+adam_learning_rate: 0.0001
+dnn_hidden_units: [1024, 1024, 1024]
+sparse_init_var: 0.01
+dnn_hidden_activations: ReLU
+use_bias: True
+batch_norm: True
+net_dropout: null
+net_regularizer: null
+embedding_regularizer: null
+cin_lay_unit: [16, 16, 16]
