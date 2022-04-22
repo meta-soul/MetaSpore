@@ -50,7 +50,8 @@ message HfTokenizerPushResponse {
     sh client.sh
 
     # push model
-    aws s3 cp s3://dmetasoul-bucket/demo/nlp-algos-transformer/models/sbert-chinese-qmc-domain-v1/sbert-chinese-qmc-domain-v1.tar.gz ./
+    MY_S3_PATH='your S3 bucket'
+    aws s3 cp ${MY_S3_PATH}/demo/nlp-algos-transformer/models/sbert-chinese-qmc-domain-v1/sbert-chinese-qmc-domain-v1.tar.gz ./
     python client.py push bert-qmc-v1 ./sbert-chinese-qmc-domain-v1.tar.gz
 
     # call service
