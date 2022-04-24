@@ -1,0 +1,7 @@
+*.log
+venv
+__pycache__
+data/lcqmc/*.tsv
+data/lcqmc/*.corpus
+data/lcqmc/*.pdf
+env_dev.sh
