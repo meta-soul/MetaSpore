@@ -2,4 +2,6 @@
 .vscode
 .idea
 .ipynb_checkpoints/
-.dev
+*.dev
+*.zip
+*/__pycache__/

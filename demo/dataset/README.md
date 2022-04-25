@@ -68,3 +68,34 @@ Assuming we are in root directory of this project, we can execute the following 
 ```shell
 python rank_dataset.py --conf rank.yaml.dev --verbose
 ```
+
+## Criteo-5D
+In this section, we use the publicly available dataset [Terabyte Click Logs](https://labs.criteo.com/2013/12/download-terabyte-click-logs-2/) published by CriteoLabs as our demo dataset. If the downloading fails, please refer to [MetaSpore Demo Dataset](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/criteo/index.html) and download the dataset manually.
+
+```python
+import metaspore
+metaspore.demo.download_dataset()
+```
+
+We normalize numerical values by transforming from a value z to log(z) if z > 2, which is proposed by the winner of Criteo Competition in [3 Idiots' Approach](https://github.com/ycjuan/kaggle-2014-criteo). 
+
+```python
+import numpy as np
+def transform_number(x):
+    value = -1
+    try:
+        if x is not None:
+            value = float(x)
+    except ValueError:
+        pass
+    return int(np.floor(np.log(value) ** 2)) if value>2.0 else int(value)
+```
+
+Moreover, we use the training data of the first 5 days provided by the competition as the training set, and the test data provided by the first day as the test set.
+
+Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of `CTR estimator` models:
+
+```shell
+cd criteo_5d
+python fg.py --conf fg.yaml.dev --verbose
+```
