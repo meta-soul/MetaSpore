@@ -12,3 +12,4 @@ s3_root_dir: ${MY_S3_BUCKET}/
 train_day_count: 5
 test_day_count: 1
 output_root_dir: ${MY_S3_BUCKET}/criteo_5d/
+

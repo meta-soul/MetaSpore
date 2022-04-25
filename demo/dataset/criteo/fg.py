@@ -20,6 +20,8 @@ import time
 import argparse
 import subprocess
 
+from pyspark.sql import SparkSession
+
 sys.path.append('../')
 from common.criteo_sparse_features_extractor import read_crieto_files
 from common.criteo_sparse_features_extractor import feature_generation
@@ -31,7 +33,7 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark(**kwargs):
+def init_spark(app_name, executor_memory, executor_instances, executor_cores, default_parallelism, **kwargs):
     subprocess.run(['zip', '-r', 'criteo/python.zip', 'common'], cwd='../')
     spark = (SparkSession.builder
         .appName(app_name)
@@ -58,12 +60,12 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(**kwargs):
+def read_dataset(s3_root_dir, train_day_count, test_day_count, **kwargs):
     train_dataset = read_crieto_files(s3_root_dir, train_day_count, 'train')
     test_dataset = read_crieto_files(s3_root_dir, test_day_count, 'test')
     return train_dataset, test_dataset
 
-def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, **kwargs):
+def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, output_root_dir, **kwargs):
     start = time.time()
     train_out_path = output_root_dir + '/train_%d.parquet' % train_day_count
     test_out_path = output_root_dir + '/test_%d.parquet' % test_day_count
