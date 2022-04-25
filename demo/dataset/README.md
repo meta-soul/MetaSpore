@@ -66,6 +66,7 @@ python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --v
 Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of `CTR estimator` models:
 
 ```shell
+cd ml_25m
 python rank_dataset.py --conf rank.yaml.dev --verbose
 ```
 
