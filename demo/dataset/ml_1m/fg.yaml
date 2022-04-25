@@ -1,0 +1,16 @@
+## spark session
+app_name: MovieLens 1M Feature Generation
+executor_memory: '10G'
+executor_instances: '4'
+executor_cores: '4'
+default_parallelism: '400'
+
+## input dataset configuration
+movies_path: ${MY_S3_BUCKET}/movielens/ml-1m/movies.dat
+ratings_path: ${MY_S3_BUCKET}/movielens/ml-1m/ratings.dat
+users_path: ${MY_S3_BUCKET}/movielens/ml-1m/users.dat
+imdb_path: ${MY_S3_BUCKET}/movielens/ml-25m/movie_ml_imdb.csv
+
+## output dataset configuration
+fg_datast_out_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
+
