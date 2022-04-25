@@ -34,7 +34,8 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark():
+def init_spark(app_name, executor_memory, executor_instances, executor_cores, 
+               default_parallelism, **kwargs):
     subprocess.run(['zip', '-r', 'ml_1m/python.zip', 'common'], cwd='../')
     spark = (SparkSession.builder
         .appName(app_name)
@@ -61,7 +62,7 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(**kwargs):
+def read_dataset(movies_path, ratings_path, users_path, imdb_path, **kwargs):
     ### read movies
     movies_schema = StructType([
             StructField("movie_id", LongType(), True),
@@ -124,78 +125,7 @@ def merge_dataset(users, movies, ratings):
     dataset.show(10)
     return dataset
 
-# split train, test
-def split_train_test(dataset):
-    dataset.registerTempTable('dataset')        
-    query ="""
-    select 
-        label, user_id, gender, age, occupation, zip, movie_id, recent_movie_ids, genre, rating, last_movie, last_genre, timestamp  
-    from
-    (
-        select
-            *,
-            ROW_NUMBER() OVER(PARTITION BY user_id ORDER BY timestamp DESC) as sample_id
-        from
-            dataset
-    ) ta
-    where ta.sample_id = 1
-    order by user_id ASC
-    """
-    test_dataset = spark.sql(query)
-    train_dataset = dataset.exceptAll(test_dataset)
-    return train_dataset, test_dataset
-
-def prepare_train(spark, train_fg_dataset, train_neg_sample, verbose=True):
-    train_fg_dataset = train_fg_dataset.drop('timestamp')
-    train_dataset = train_fg_dataset.union(train_neg_sample)
-    train_dataset = train_dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
-    train_dataset = train_dataset.drop('rand', 'rating')
-    train_dataset = train_dataset.select(*(F.col(c).cast('string').alias(c) for c in train_dataset.columns))
-    if verbose:
-        print('Debug -- match train dataset size: %d'%train_dataset.count())
-        print('Debug -- match train types:', train_dataset.dtypes)
-        print('Debug -- match train dataset sample:')
-        train_dataset.show(10)
-    return train_dataset
-
-def prepare_test(spark, test_fg_dataset, verbose=True):
-    test_dataset = test_fg_dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
-    test_dataset = test_dataset.drop('rand', 'timestamp', 'rating')
-    test_dataset = test_dataset.select(*(F.col(c).cast('string').alias(c) for c in test_dataset.columns))
-    if verbose:
-        print('Debug -- match test dataset size: %d'%test_dataset.count())
-        print('Debug -- match test types:', test_dataset.dtypes)
-        print('Debug -- match test dataset sample:')
-        test_dataset.show(10)
-    return test_dataset
-
-def prepare_item(spark, train_fg_dataset, test_fg_dataset, verbose=True):
-    temp_table = train_fg_dataset.where(train_fg_dataset['label'] == '1').union(test_fg_dataset).distinct()
-    temp_table.registerTempTable('temp_table')        
-    query = """
-    select
-        label, user_id, gender, age, occupation, zip, movie_id, recent_movie_ids, genre, last_movie, last_genre
-    from
-    (
-        select
-            *,
-            ROW_NUMBER() OVER(PARTITION BY movie_id ORDER BY recent_movie_ids DESC) as sample_id
-        from
-            temp_table
-    ) ta
-    where 
-        sample_id=1
-    """
-    item_dataset = spark.sql(query)
-    item_dataset = item_dataset.select(*(F.col(c).cast('string').alias(c) for c in item_dataset.columns))
-    if verbose:
-        print('Debug -- match item dataset size: %d'%item_dataset.count())
-        print('Debug -- match item types:', item_dataset.dtypes)
-        print('Debug -- match item dataset sample:')
-        item_dataset.show(10)
-    return item_dataset
-
-def write_dataset_to_s3(fg_dataset):
+def write_dataset_to_s3(fg_dataset, fg_datast_out_path, **kwargs):
     start = time.time()
     fg_dataset.write.parquet(fg_datast_out_path, mode="overwrite")
     print('Debug -- write_fg_dataset_to_s3 cost time:', time.time() - start)
@@ -211,8 +141,7 @@ if __name__=="__main__":
     ## init spark
     verbose = args.verbose
     params = load_config(args.conf)
-    locals().update(params)
-    spark = init_spark()
+    spark = init_spark(**params)
 
     ## preprocessing
     users, movies, ratings, imdb = read_dataset(**params)
@@ -222,6 +151,6 @@ if __name__=="__main__":
     fg_dataset = generate_sparse_features_1m(merged_dataset, verbose=verbose)
 
     ## write to s3
-    write_dataset_to_s3(fg_dataset)
+    write_dataset_to_s3(fg_dataset, **params)
     
     stop_spark(spark)
