@@ -1,0 +1,14 @@
+## spark session
+app_name: Criteo 5D Feature Generation
+executor_memory: '10G'
+executor_instances: '4'
+executor_cores: '4'
+default_parallelism: '400'
+
+## input dataset configuration
+s3_root_dir: ${MY_S3_BUCKET}/
+
+## output dataset configuration
+train_day_count: 5
+test_day_count: 1
+output_root_dir: ${MY_S3_BUCKET}/criteo_5d/

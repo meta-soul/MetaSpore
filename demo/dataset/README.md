@@ -96,6 +96,6 @@ Moreover, we use the training data of the first 5 days provided by the competiti
 Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of `CTR estimator` models:
 
 ```shell
-cd criteo_5d
-python fg.py --conf fg.yaml.dev --verbose
+cd criteo
+python fg.py --conf fg_5d.yaml.dev --verbose
 ```
