@@ -28,9 +28,35 @@ cd ml_1m
 python match_dataset_cf.py --conf match_dataset.yaml --no-verbose
 ```
 
-After that we can get the train and test dataset of `TwoTowers` model through following command:
+After that we can get the train and test dataset of `TwoTowers` models through following command:
 
 ```shell
+python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml --no-verbose
+```
+
+### 3. Rank Dataset
+Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of `CTR estimator` models:
+
+```shell
+python rank_dataset.py --conf rank.yaml --no-verbose
+```
+
+## MovieLens-25M
+
+### 1. Feature Generation
+
+Assuming we are in root directory of this project, we can execute the following commands to get the result of feature generation processing.
+
+ ```shell
+ cd ml_25m
+ python fg.py --conf fg.yaml --no-verbose
+ ```
+
+### 2. Match Dataset
+Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of `TwoTowers` models.
+
+```shell
+cd ml_25m
 python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml --no-verbose
 ```
 
