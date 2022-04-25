@@ -1,0 +1,60 @@
+experiment: lcqmc
+version: v1
+working_dir: ./src
+input_dir: ./data
+output_dir: ./output
+python: /opt/anaconda3/envs/pytorch-1.10.1/bin/python
+
+train:
+  task_type: sts
+  loss_type: default
+  train_file: lcqmc/train.tsv
+  dev_file: lcqmc/dev.tsv
+  test_file: lcqmc/dev.tsv
+  model: bert-base-chinese
+  max_seq_len: 256
+  device: "cuda:0"
+  num_epochs: 4
+  train_batch_size: 128
+  eval_batch_size: 32
+  learning_rate: 2e-05
+
+train-eval:
+  eval_list:
+    -
+      name: lcqmc_test
+      path: lcqmc/dev.tsv
+
+train-bench:
+  input_file: lcqmc/dev.corpus
+  batch_size: 1
+  device: cpu
+  max_seq_len: 256
+
+distill:
+  train_file: lcqmc/train.corpus
+  dev_file: lcqmc/dev.corpus
+  test_file: lcqmc/dev.tsv
+  student_model: none
+  student_keep_layers: 1,4,7,10
+  max_seq_len: 256
+  device: "cuda:0"
+  num_epochs: 1
+  train_batch_size: 256
+  eval_batch_size: 32
+  learning_rate: 1e-4
+
+distill-eval:
+  eval_list:
+    -
+      name: lcqmc_test
+      path: lcqmc/dev.tsv
+
+distill-bench:
+  input_file: lcqmc/dev.corpus
+  batch_size: 1
+  device: cpu
+  max_seq_len: 256
+
+export:
+  model_name: distill

@@ -1,0 +1,5 @@
+[来源](https://www.luge.ai/#/luge/dataDetail?id=14)
+
+百度知道领域的中文问题匹配数据集，目的是为了解决在中文领域大规模问题匹配数据集的缺失。该数据集从百度知道不同领域的用户问题中抽取构建数据。
+
+要跑通文档中演示样例，需要将数据下载解压到这个目录中（有 `train.tsv`, `dev.tsv`, `test.tsv` 等文件），然后执行 `cut -f1 train.tsv > train.corpus && cut -f2 train.tsv >> train.corpus` 和 `cut -f1 dev.tsv > dev.corpus && cut -f2 dev.tsv >> dev.corpus` 来生成无监督语料数据。

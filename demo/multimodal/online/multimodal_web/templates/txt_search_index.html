@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>
+    Search Bar
+  </title>
+  
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1">
+
+  <style>
+
+select{
+    border: none;
+    padding: 10px;
+    margin: 10px;
+    height: 36px;
+    border:1px solid #eaeaea;
+    outline:none;
+}
+select:hover{
+    border-color: #a0a0a0 #b9b9b9 #b9b9b9 #b9b9b9;
+}
+select:focus{
+    border-color:#4d90fe;
+}
+
+input{
+    border: none;
+    padding: 10px;
+    margin: 10px;
+    height: 20px;
+    width: 500px;
+    border:1px solid #eaeaea;
+    outline:none;
+}
+input:hover{
+    border-color: #a0a0a0 #b9b9b9 #b9b9b9 #b9b9b9;
+}
+input:focus{
+    border-color:#4d90fe;
+}
+
+input[type="submit"] {
+    border-radius: 2px;
+    background: #f2f2f2;
+    border: 1px solid #f2f2f2;
+    color: #757575;
+    cursor: default;
+    font-size: 14px;
+    font-weight: bold;
+    width: 100px;
+    padding: 0 16px;
+    height:36px;
+}
+input[type="submit"]:hover {
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    background: #f8f8f8;
+    border: 1px solid #c6c6c6;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    color: #222;
+}
+.result {
+    margin: 20px;
+}
+table {
+    display: table;
+    caption-side: bottom;
+    border-collapse: collapse;
+    text-indent: initial;
+    border-spacing: 2px;
+}
+table tbody tr {
+    border-bottom: 1pt solid lightgray;
+}
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-striped-color: #212529;
+    --bs-table-striped-bg: rgba(0, 0, 0, 0.05);
+    --bs-table-active-color: #212529;
+    --bs-table-active-bg: rgba(0, 0, 0, 0.1);
+    --bs-table-hover-color: #212529;
+    --bs-table-hover-bg: rgba(0, 0, 0, 0.075);
+    width: 100%;
+    margin-bottom: 1rem;
+    color: #212529;
+    vertical-align: top;
+    border-color: #dee2e6;
+}
+.main {
+    width: 85%;
+}
+.results {
+    width: 85%;
+}
+  </style>
+</head>
+
+<body>
+  
+<div class="main">
+  <form action="/txt" method="POST">
+    <p>
+      <select name="search_type">
+        <option value="txt" {% if search_type=="txt" %}selected{% endif %}>搜文本</option>
+        <option value="img" {% if search_type=="img" %}selected{% endif %}>搜图片</option>
+      </select>
+      <input name="query" type="text" value="{% if query %}{{query}}{% endif %}" />
+      <input name="submit" type="submit" value="搜索" />
+    </p>
+  </form>
+</div>
+
+<div class="result">
+{% if results %}
+<table class="table">
+<thead>
+<tr>
+<th scope="col">No.</th>
+<th scope="col">Title</th>
+<th scope="col">Content</th>
+<th scope="col">Score</th>
+<th scope="col">Link</th>
+</tr>
+</thead>
+<tbody>
+{% for res in results %}
+<tr>
+<th scope="row" valign="top">#{{loop.index}}</th>
+<td valign="top">{{res.title}}</td>
+<td valign="top">{{res.content|safe}}</td>
+<td valign="top">{{res.score}}</td>
+<td valign="top"><a href="{{res.url}}">url</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+</div>
+
+</body>
+
+</html>       
+
