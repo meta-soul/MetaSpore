@@ -7,7 +7,7 @@ executor_cores: '4'
 default_parallelism: '400'
 
 ## input dataset path
-fg_datset_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
+fg_dataset_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
 
 ## output dataset path
 match_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/cf/train.parquet

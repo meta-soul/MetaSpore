@@ -62,8 +62,8 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(fg_datset_path, **kwargs):
-    fg_dataset = spark.read.parquet(fg_datset_path)
+def read_dataset(fg_dataset_path, **kwargs):
+    fg_dataset = spark.read.parquet(fg_dataset_path)
     print('Debug -- read dataset sample:')
     fg_dataset.show(10)
     return fg_dataset
