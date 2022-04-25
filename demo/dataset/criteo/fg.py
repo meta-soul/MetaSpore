@@ -66,7 +66,7 @@ def read_dataset(spark, s3_root_dir, train_day_count, test_day_count, **kwargs):
     test_dataset = read_crieto_files(spark, s3_root_dir, test_day_count, 'test')
     return train_dataset, test_dataset
 
-def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, output_root_dir, **kwargs):
+def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, train_day_count, test_day_count, output_root_dir, **kwargs):
     start = time.time()
     train_out_path = output_root_dir + '/train_%d.parquet' % train_day_count
     test_out_path = output_root_dir + '/test_%d.parquet' % test_day_count
