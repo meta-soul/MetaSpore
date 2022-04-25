@@ -66,6 +66,13 @@ def read_dataset(spark, s3_root_dir, train_day_count, test_day_count, **kwargs):
     test_dataset = read_crieto_files(spark, s3_root_dir, test_day_count, 'test')
     return train_dataset, test_dataset
 
+def transform_dataset(train_dataset, test_dataset, verbose):
+    start = time.time()
+    fg_train_dataset = feature_generation(train_dataset, verbose)
+    fg_test_dataset = feature_generation(test_dataset, verbose)
+    print('Debug -- transform_dataset cost time:', time.time() - start)
+    return fg_train_dataset, fg_test_dataset
+
 def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, train_day_count, test_day_count, output_root_dir, **kwargs):
     start = time.time()
     train_out_path = output_root_dir + '/train_%d.parquet' % train_day_count
@@ -94,8 +101,7 @@ if __name__=="__main__":
     train_dataset, test_dataset = read_dataset(spark, **params)
 
     ## generate sparse features
-    fg_train_dataset = feature_generation(train_dataset, verbose)
-    fg_test_dataset = feature_generation(test_dataset, verbose)
+    fg_train_dataset, fg_test_dataset = transform_dataset(train_dataset, test_dataset, verbose)
 
     ## write to s3
     write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, **params)
