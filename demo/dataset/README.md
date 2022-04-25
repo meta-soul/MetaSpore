@@ -2,7 +2,7 @@
 In this project, data processing is unified for movieLens-1m, movielens-25m, criteo-5d and other datasets, including feature generation,  matching dataset generation, ranking dataset generation, negative sampling, etc.
 
 ## Initialize the Configuration Files for Models
-Before we continue to dive into the offline models, we should firstly initialize the config files from their YAML template for substituting some variables. For example
+First of all, we should firstly initialize the config files from their YAML template for substituting some variables. For example
 ```shell
 export MY_S3_BUCKET='your S3 bucket directory'
 envsubst < fg.yaml > fg.yaml.dev 
