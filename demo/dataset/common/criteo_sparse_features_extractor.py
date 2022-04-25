@@ -30,7 +30,7 @@ def get_crieto_meta():
     schema = StructType([StructField(h, StringType(), True) for h in headers])
     return headers, schema
 
-def read_crieto_files(s3_root_dir, days=1, mode='train'):
+def read_crieto_files(spark, s3_root_dir, days=1, mode='train'):
     ''' Read criteo files from S3 file systems
 
     Args

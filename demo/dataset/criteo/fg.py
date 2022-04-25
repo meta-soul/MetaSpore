@@ -33,7 +33,8 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark(app_name, executor_memory, executor_instances, executor_cores, default_parallelism, **kwargs):
+def init_spark(app_name, executor_memory, executor_instances, executor_cores, 
+               default_parallelism, **kwargs):
     subprocess.run(['zip', '-r', 'criteo/python.zip', 'common'], cwd='../')
     spark = (SparkSession.builder
         .appName(app_name)
@@ -60,9 +61,9 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(s3_root_dir, train_day_count, test_day_count, **kwargs):
-    train_dataset = read_crieto_files(s3_root_dir, train_day_count, 'train')
-    test_dataset = read_crieto_files(s3_root_dir, test_day_count, 'test')
+def read_dataset(spark, s3_root_dir, train_day_count, test_day_count, **kwargs):
+    train_dataset = read_crieto_files(spark, s3_root_dir, train_day_count, 'train')
+    test_dataset = read_crieto_files(spark, s3_root_dir, test_day_count, 'test')
     return train_dataset, test_dataset
 
 def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, output_root_dir, **kwargs):
@@ -90,7 +91,7 @@ if __name__=="__main__":
     spark = init_spark(**params)
 
     ## preprocessing
-    train_dataset, test_dataset = read_dataset(**params)
+    train_dataset, test_dataset = read_dataset(spark, **params)
 
     ## generate sparse features
     fg_train_dataset = feature_generation(train_dataset, verbose)
