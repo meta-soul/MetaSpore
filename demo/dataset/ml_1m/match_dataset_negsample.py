@@ -203,7 +203,7 @@ if __name__=="__main__":
     ## negtive sampling
     train_neg_sample = negative_sampling_train_dataset(spark, train_fg_dataset, num_negs, verbose)
     
-    ## for match model
+    ## for twotwoers model
     train_dataset = prepare_train(spark, train_fg_dataset, train_neg_sample, verbose)
     test_dataset = prepare_test(spark, test_fg_dataset, verbose)
     item_dataset = prepare_item(spark, fg_dataset, verbose)

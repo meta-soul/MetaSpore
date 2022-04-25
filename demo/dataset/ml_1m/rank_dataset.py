@@ -14,18 +14,12 @@
 # limitations under the License.
 #
 
-import sys
 import yaml
 import time
 import argparse
-import subprocess
 
-from functools import reduce
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
-
-sys.path.append('../') 
-from common.neg_sampler import negative_sampling
 
 def load_config(path):
     params = dict()
@@ -35,7 +29,6 @@ def load_config(path):
     return params
 
 def init_spark():
-    subprocess.run(['zip', '-r', 'ml_1m/python.zip', 'common'], cwd='../')
     spark = (SparkSession.builder
         .appName(app_name)
         .config("spark.executor.memory", executor_memory)
@@ -45,9 +38,7 @@ def init_spark():
         .config("spark.executor.memoryOverhead", "2G")
         .config("spark.sql.autoBroadcastJoinThreshold", "64MB")
         .config("spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a", "org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory")
-        .config("spark.submit.pyFiles", "python.zip")
         .config("spark.network.timeout","500")
-        # .config("spark.ui.showConsoleProgress", "false") ## close stage log
         .getOrCreate())
     
     sc = spark.sparkContext
@@ -63,36 +54,11 @@ def stop_spark(spark):
 
 def read_dataset(**kwargs):
     fg_dataset = spark.read.parquet(fg_datset_path)
-    print('Debug -- read dataset sample:')
+    print('Debug -- fg dataset sample:')
     fg_dataset.show(10)
     return fg_dataset
 
-def prepare_train(spark, train_dataset, verbose=True):
-    train_dataset = train_dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
-    train_dataset = train_dataset.drop('rand', 'rating')
-    train_dataset = train_dataset.select(*(F.col(c).cast('string').alias(c) for c in train_dataset.columns))
-    if verbose:
-        print('Debug -- match train dataset size: %d'%train_dataset.count())
-        print('Debug -- match train types:', train_dataset.dtypes)
-        print('Debug -- match train dataset sample:')
-        train_dataset.show(10)
-    return train_dataset
-
-def prepare_test(spark, test_fg_dataset, verbose=True):
-    test_dataset = test_fg_dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
-    test_dataset = test_dataset.drop('rand', 'timestamp', 'rating')
-    test_dataset = test_dataset.select(*(F.col(c).cast('string').alias(c) for c in test_dataset.columns))
-    if verbose:
-        print('Debug -- match test dataset size: %d'%test_dataset.count())
-        print('Debug -- match test types:', test_dataset.dtypes)
-        print('Debug -- match test dataset sample:')
-        test_dataset.show(10)
-    return test_dataset
-
 def split_train_test(dataset):
-    # treat low ratings as negative ones
-    dataset = dataset.withColumn('label',  F.when(F.col('rating')> 0, 1).otherwise(0))
-    # split train and test
     dataset.registerTempTable('dataset')        
     query ="""
     select 
@@ -105,7 +71,7 @@ def split_train_test(dataset):
         from
             dataset
     ) ta
-    where ta.sample_id <= 3
+    where ta.sample_id = 1
     order by user_id ASC
     """
     test_dataset = spark.sql(query)
@@ -113,18 +79,36 @@ def split_train_test(dataset):
     train_dataset = dataset.exceptAll(test_dataset)
     return train_dataset, test_dataset
 
-def write_dataset_to_s3(match_train_dataset, match_test_dataset):
+def prepare_rank_train(spark, dataset, verbose=True, mode='train'):
     start = time.time()
-    match_train_dataset.write.parquet(match_train_dataset_out_path, mode="overwrite")
+    dataset = dataset.filter(dataset['rating'] != 3)
+    dataset = dataset.withColumn('label',  F.when(F.col('rating')> 3, 1).otherwise(0))
+    dataset = dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
+    dataset = dataset.drop('rand', 'timestamp', 'rating')
+    dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+    print('Debug -- prepare_rank_train cost time:', time.time() - start)
+    if verbose:
+        print('Debug -- rank %s sample size:'% mode, dataset.count())
+        print('Debug -- rank %s data types:'% mode, dataset.dtypes)
+        print('Debug -- rank %s sample:'% mode)
+        dataset.show(10)
+        print('Debug -- prepare_rank_train total cost time:', time.time() - start)
+    return dataset
+
+def prepare_rank_test(spark, dataset, verbose=True):
+    return prepare_rank_train(spark, dataset, verbose=verbose, mode='test')
+
+def write_dataset_to_s3(rank_train_dataset, rank_test_dataset):
+    start = time.time()
+    rank_train_dataset.write.parquet(rank_train_dataset_out_path, mode="overwrite")
     print('Debug -- write_dataset_to_s3 train cost time:', time.time() - start)
     start = time.time()
-    match_test_dataset.write.parquet(match_test_dataset_out_path, mode="overwrite")
+    rank_test_dataset.write.parquet(rank_test_dataset_out_path, mode="overwrite")
     print('Debug -- write_dataset_to_s3 test cost time:', time.time() - start)
-    start = time.time()
     return True
 
 if __name__=="__main__":
-    print('Debug -- MovieLens 1M Match Dataset')
+    print('Debug -- Movielens 1M Rank Dataset')
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
     parser.add_argument('--verbose', dest='verbose', action='store_true', default=True, help='verbose')
@@ -142,12 +126,13 @@ if __name__=="__main__":
 
     ## split train and test
     train_fg_dataset, test_fg_dataset = split_train_test(fg_dataset)
-    
-    ## for collaborative filtering model
-    train_dataset = prepare_train(spark, train_fg_dataset, verbose)
-    test_dataset = prepare_test(spark, test_fg_dataset, verbose)
+   
+    # for rank model
+    # Ref: AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks
+    rank_train_dataset = prepare_rank_train(spark, train_fg_dataset, verbose)
+    rank_test_dataset = prepare_rank_test(spark, test_fg_dataset, verbose)
 
-    ## write to s3
-    write_dataset_to_s3(train_dataset, test_dataset)
+    # write to s3
+    write_dataset_to_s3(rank_train_dataset, rank_test_dataset)
     
     stop_spark(spark)
