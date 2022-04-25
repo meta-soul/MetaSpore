@@ -28,7 +28,8 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark():
+def init_spark(app_name, executor_memory, executor_instances, executor_cores, 
+               default_parallelism, **kwargs):
     spark = (SparkSession.builder
         .appName(app_name)
         .config("spark.executor.memory", executor_memory)
@@ -52,8 +53,8 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(**kwargs):
-    fg_dataset = spark.read.parquet(fg_datset_path)
+def read_dataset(fg_dataset_path, **kwargs):
+    fg_dataset = spark.read.parquet(fg_dataset_path)
     print('Debug -- fg dataset sample:')
     fg_dataset.show(10)
     return fg_dataset
@@ -98,7 +99,8 @@ def prepare_rank_train(spark, dataset, verbose=True, mode='train'):
 def prepare_rank_test(spark, dataset, verbose=True):
     return prepare_rank_train(spark, dataset, verbose=verbose, mode='test')
 
-def write_dataset_to_s3(rank_train_dataset, rank_test_dataset):
+def write_dataset_to_s3(rank_train_dataset, rank_test_dataset, 
+                        rank_train_dataset_out_path, rank_test_dataset_out_path, **kwargs):
     start = time.time()
     rank_train_dataset.write.parquet(rank_train_dataset_out_path, mode="overwrite")
     print('Debug -- write_dataset_to_s3 train cost time:', time.time() - start)
@@ -118,8 +120,7 @@ if __name__=="__main__":
     ## init spark
     verbose = args.verbose
     params = load_config(args.conf)
-    locals().update(params)
-    spark = init_spark()
+    spark = init_spark(**params)
 
     ## read datasets
     fg_dataset = read_dataset(**params)
@@ -133,6 +134,6 @@ if __name__=="__main__":
     rank_test_dataset = prepare_rank_test(spark, test_fg_dataset, verbose)
 
     # write to s3
-    write_dataset_to_s3(rank_train_dataset, rank_test_dataset)
+    write_dataset_to_s3(rank_train_dataset, rank_test_dataset, **params)
     
     stop_spark(spark)
