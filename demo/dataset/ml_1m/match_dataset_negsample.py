@@ -48,7 +48,7 @@ def init_spark(app_name, executor_memory, executor_instances, executor_cores,
         .config("spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a", "org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory")
         .config("spark.submit.pyFiles", "python.zip")
         .config("spark.network.timeout","500")
-        # .config("spark.ui.showConsoleProgress", "false") ## close stage log
+        .config("spark.ui.showConsoleProgress", "true")
         .getOrCreate())
     
     sc = spark.sparkContext
