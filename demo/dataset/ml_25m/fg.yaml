@@ -1,0 +1,19 @@
+## spark session
+app_name: MovieLens 25M Feature Generation
+local: False
+executor_memory: '10G'
+executor_instances: '8'
+executor_cores: '6'
+default_parallelism: '600'
+
+## processing configuration
+max_reservation_rating_len: 1000
+
+## input dataset configuration
+movies_path: ${MY_S3_BUCKET}/movielens/ml-25m/movies.csv
+ratings_path: ${MY_S3_BUCKET}/movielens/ml-25m/ratings.csv
+genome_path: ${MY_S3_BUCKET}/movielens/ml-25m/genome-scores.csv
+links_path: ${MY_S3_BUCKET}/movielens/ml-25m/links.csv
+
+## output dataset configuration
+fg_datast_out_path: ${MY_S3_BUCKET}/movielens/25m/fg/fg_dataset.parquet
