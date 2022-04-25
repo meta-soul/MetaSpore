@@ -79,7 +79,7 @@ def transform(row):
     return row_list
 
 def feature_generation(dataset, debug=False):
-    ''' Spark version of feature generation of `3 Idiots' Approach` described in https://www.csie.ntu.edu.tw/~r01922136/kaggle-2014-criteo.pdf
+    ''' PySpark version of feature generation of `3 Idiots' Approach` described in https://www.csie.ntu.edu.tw/~r01922136/kaggle-2014-criteo.pdf
 
     Args
       - dataset: original dataset provided in Display Advertising Challenge

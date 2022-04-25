@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from cgi import test
+
 import sys
 import yaml
 import time
@@ -63,13 +63,15 @@ def read_dataset(**kwargs):
     test_dataset = read_crieto_files(s3_root_dir, test_day_count, 'test')
     return train_dataset, test_dataset
 
-def write_dataset_to_s3(fg_train_dataset, fg_test_dataset, **kwargs):
+def write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, **kwargs):
+    start = time.time()
     train_out_path = output_root_dir + '/train_%d.parquet' % train_day_count
     test_out_path = output_root_dir + '/test_%d.parquet' % test_day_count
     print('Debug write_dataset_to_s3 --train:%s'%train_out_path)
     print('Debug write_dataset_to_s3 --test:%s'%test_out_path)
     fg_train_dataset.write.parquet(train_out_path, mode="overwrite")
     fg_test_dataset.write.parquet(test_out_path, mode="overwrite")
+    print('Debug -- write_fg_dataset_to_s3 cost time:', time.time() - start)
     return True
 
 if __name__=="__main__":
@@ -93,6 +95,6 @@ if __name__=="__main__":
     fg_test_dataset = feature_generation(test_dataset, verbose)
 
     ## write to s3
-    write_dataset_to_s3(fg_train_dataset, fg_test_dataset, **params)
+    write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, **params)
     
     stop_spark(spark)
