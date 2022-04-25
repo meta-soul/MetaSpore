@@ -37,18 +37,16 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                                    Integer window,
                                    Integer tolerance
     ) {
-        if (itemModels.size() <= window) return itemModels;
+        if (itemModels.size() <= window || itemModels.size() == 0) return itemModels;
         Double lambda = recommendContext.getLambda();
         if (lambda == null) {
             lambda = DEFAULT_LAMBDA;
         }
-        LinkList itemLinkList = new LinkList();
+        LinkList itemLinkList = new LinkList(itemModels);
         int genreCount = Utils.groupByType(itemModels).size();
         if (window == null || window > genreCount) {
             window = genreCount;
         }
-
-        itemLinkList.addAll(itemModels);
 
         // label the visited
         HashMap<ItemModel, Integer> itemVisited = new HashMap<>();
@@ -171,6 +169,19 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         public LinkList() {
             size = 0;
             head = new ListNode(null);
+        }
+
+        public LinkList(List<ItemModel> itemList) {
+            int length = itemList.size();
+            head = new ListNode(null);
+            size = length;
+            for (int i = length - 1; i >= 0; i--) {
+                ListNode addHead = new ListNode(itemList.get(i));
+                addHead.next = head.next;
+                head.next.prev = addHead;
+                head.next = addHead;
+                addHead.prev = head;
+            }
         }
 
         public void addAll(List<ItemModel> itemList) {
