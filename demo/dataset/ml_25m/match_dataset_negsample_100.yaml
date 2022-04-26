@@ -10,7 +10,7 @@ default_parallelism: '400'
 num_negs: 100
 
 ## input dataset path
-fg_datset_path: ${MY_S3_BUCKET}/movielens/25m/fg/fg_dataset.parquet
+fg_dataset_path: ${MY_S3_BUCKET}/movielens/25m/fg/fg_dataset.parquet
 
 ## output dataset path
 match_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/25m/negsample/num_negs_100/train.parquet

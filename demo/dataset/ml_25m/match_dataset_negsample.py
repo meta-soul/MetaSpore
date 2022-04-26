@@ -34,7 +34,8 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark():
+def init_spark(app_name, executor_memory, executor_instances, executor_cores, 
+               default_parallelism, **kwargs):
     subprocess.run(['zip', '-r', 'ml_25m/python.zip', 'common'], cwd='../')
     spark = (SparkSession.builder
         .appName(app_name)
@@ -61,13 +62,13 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(**kwargs):
-    fg_dataset = spark.read.parquet(fg_datset_path)
+def read_dataset(fg_dataset_path, **kwargs):
+    fg_dataset = spark.read.parquet(fg_dataset_path)
     print('Debug -- fg dataset sample:')
     fg_dataset.show(10)
     return fg_dataset
 
-def negative_sampling_train_dataset(spark, train_fg_dataset, num_negs, verbose=True):
+def negative_sampling_train_dataset(spark, train_fg_dataset, num_negs, verbose=True, **kwargs):
     start = time.time()
     # negative sampling
     neg_sample_df = negative_sampling(spark, dataset=train_fg_dataset, user_column='user_id', item_column='movie_id', time_column='timestamp', \
@@ -170,7 +171,9 @@ def split_train_test(dataset):
     train_dataset = dataset.exceptAll(test_dataset)
     return train_dataset, test_dataset
 
-def write_dataset_to_s3(match_train_dataset, match_test_dataset, match_item_dataset):
+def write_dataset_to_s3(match_train_dataset, match_test_dataset, match_item_dataset,
+                        match_train_dataset_out_path, match_test_dataset_out_path, match_item_dataset_out_path,
+                        **kwargs):
     start = time.time()
     match_train_dataset.write.parquet(match_train_dataset_out_path, mode="overwrite")
     print('Debug -- write_dataset_to_s3 train cost time:', time.time() - start)
@@ -194,7 +197,7 @@ if __name__=="__main__":
     verbose = args.verbose
     params = load_config(args.conf)
     locals().update(params)
-    spark = init_spark()
+    spark = init_spark(**params)
 
     ## read datasets
     fg_dataset = read_dataset(**params)
@@ -203,7 +206,7 @@ if __name__=="__main__":
     train_fg_dataset, test_fg_dataset = split_train_test(fg_dataset)
 
     ## negtive sampling
-    train_neg_sample = negative_sampling_train_dataset(spark, train_fg_dataset, num_negs, verbose)
+    train_neg_sample = negative_sampling_train_dataset(spark, train_fg_dataset, verbose, **params)
     
     ## for match model
     train_dataset = prepare_train(spark, train_fg_dataset, train_neg_sample, verbose)
@@ -211,6 +214,6 @@ if __name__=="__main__":
     item_dataset = prepare_item(spark, train_fg_dataset, test_fg_dataset, verbose)
 
     ## write to s3
-    write_dataset_to_s3(train_dataset, test_dataset, item_dataset)
+    write_dataset_to_s3(train_dataset, test_dataset, item_dataset, **params)
     
     stop_spark(spark)
