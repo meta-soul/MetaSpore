@@ -36,9 +36,8 @@ class PyTorchAgent(Agent):
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.model = None
-        # new
         self.model_name = None
-
+        self.scene = None
         self.trainer = None
         self.is_training_mode = None
         self.validation_result = None
@@ -325,9 +324,8 @@ class PyTorchLauncher(PSLauncher):
         self.model_export_path = None
         self.model_version = None
         self.experiment_name = None
-        # new
         self.model_name = None
-
+        self.scene = None
         self.training_epoches = None
         self.shuffle_training_dataset = None
         self.max_sparse_feature_age = None
@@ -367,9 +365,8 @@ class PyTorchLauncher(PSLauncher):
         self._agent_attributes['model_export_path'] = self.model_export_path
         self._agent_attributes['model_version'] = self.model_version
         self._agent_attributes['experiment_name'] = self.experiment_name
-        # new
         self._agent_attributes['model_name'] = self.model_name
-
+        self._agent_attributes['scene'] = self.scene
         self._agent_attributes['training_epoches'] = self.training_epoches
         self._agent_attributes['shuffle_training_dataset'] = self.shuffle_training_dataset
         self._agent_attributes['max_sparse_feature_age'] = self.max_sparse_feature_age
@@ -398,9 +395,8 @@ class PyTorchHelperMixin(object):
                  model_out_path=None,
                  model_export_path=None,
                  model_version=None,
-                 # new
                  model_name = None,
-
+                 scene = None,
                  experiment_name=None,
                  training_epoches=1,
                  shuffle_training_dataset=False,
@@ -426,9 +422,8 @@ class PyTorchHelperMixin(object):
         self.model_out_path = model_out_path
         self.model_export_path = model_export_path
         self.model_version = model_version
-        # new
         self.model_name = model_name
-
+        self.scene = scene
         self.experiment_name = experiment_name
         self.training_epoches = training_epoches
         self.shuffle_training_dataset = shuffle_training_dataset
@@ -475,9 +470,10 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"model_version must be string; {self.model_version!r} is invalid")
         if self.experiment_name is not None and not isinstance(self.experiment_name, str):
             raise TypeError(f"experiment_name must be string; {self.experiment_name!r} is invalid")
-        # new
         if self.model_name is not None and not isinstance(self.model_name, str):
             raise TypeError(f"model_name must be string; {self.model_name!r} is invalid")
+        if self.scene is not None and not isinstance(self.scene, str):
+            raise TypeError(f"scene must be string; {self.scene!r} is invalid")
 
         if not isinstance(self.training_epoches, int) or self.training_epoches <= 0:
             raise TypeError(f"training_epoches must be positive integer; {self.training_epoches!r} is invalid")
@@ -507,8 +503,8 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"output_prediction_column_name must be string; {self.output_prediction_column_name!r} is invalid")
         if not isinstance(self.output_prediction_column_type, str):
             raise TypeError(f"output_prediction_column_type must be string; {self.output_prediction_column_type!r} is invalid")
-        if self.model_export_path is not None and (self.model_version is None or self.experiment_name is None):
-            raise RuntimeError("model_version and experiment_name are required when model_export_path is specified")
+        if self.model_export_path is not None and (self.experiment_name is None): # model_version could be none since the one-off run has no model_version
+            raise RuntimeError("experiment_name are required when model_export_path is specified")
         if self.consul_endpoint_prefix is not None and (self.consul_host is None or self.consul_port is None):
             raise RuntimeError("consul_host and consul_port are required when consul_endpoint_prefix is specified")
         if self.consul_endpoint_prefix is not None and self.model_export_path is None:
@@ -541,9 +537,8 @@ class PyTorchHelperMixin(object):
         launcher.model_export_path = self.model_export_path
         launcher.model_version = self.model_version
         launcher.experiment_name = self.experiment_name
-        # new
         launcher.model_name = self.model_name
-
+        launcher.scene = self.scene
         launcher.training_epoches = self.training_epoches
         launcher.shuffle_training_dataset = self.shuffle_training_dataset
         launcher.max_sparse_feature_age = self.max_sparse_feature_age
@@ -571,9 +566,8 @@ class PyTorchHelperMixin(object):
         args['model_export_path'] = self.model_export_path
         args['model_version'] = self.model_version
         args['experiment_name'] = self.experiment_name
-        # new
         args['model_name'] = self.model_name
-
+        args['scene'] = self.scene
         args['metric_update_interval'] = self.metric_update_interval
         args['consul_host'] = self.consul_host
         args['consul_port'] = self.consul_port
@@ -619,7 +613,7 @@ class PyTorchModel(PyTorchHelperMixin, pyspark.ml.base.Model):
         if response is None:
             consul_client.kv.put(self.consul_endpoint_prefix + '/', value=None)
             print("init consul endpoint dir: %s" % self.consul_endpoint_prefix)
-        endpoint = '%s/%s/%s' % (self.consul_endpoint_prefix, self.experiment_name, self.model_name)
+        endpoint = '%s/%s/%s/%s' % (self.consul_endpoint_prefix, self.scene, self.experiment_name, self.model_name)
         consul_path = f'{self.consul_host}:{self.consul_port}/{endpoint}'
         try:
             consul_client.kv.put(endpoint, string)
@@ -653,7 +647,6 @@ class PyTorchEstimator(PyTorchHelperMixin, pyspark.ml.base.Estimator):
         module.eval()
         model = self._create_model(module)
         self.final_metric = launcher.agent_object._metric
-
-        model.publish()
-        
+        if model.consul_endpoint_prefix is not None:
+            model.publish()
         return model

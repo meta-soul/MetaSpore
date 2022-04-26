@@ -32,9 +32,9 @@ def to_component_func(
             
             # parse pipeline parameters
             dic = dict(eval(input_string))
-            experiment_dic = dic["experiment"]
+            experiment_dic = dic["scheduled_parameter"]
             exp_obj_for_runner = Experiment(experiment_dic)
-            user_argo_para_dic = dic["user_argo_parameter"]
+            user_argo_para_dic = dic["algo_parameter"]
 
             func(exp_obj_for_runner,**user_argo_para_dic)
         component_func.component_name = kwargs["component_name"]

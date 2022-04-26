@@ -4,7 +4,7 @@ from ..file_utils import file_exists
 def load_component(name: str, use_builin_component = True):
     import os
     default_image = 'python:3.7'
-    unified_pipeline_image = ' ' # give a unified image
+    unified_pipeline_image = os.environ['PIPELINE_IMAGE'] # give a unified image, read from local env
 
     if use_builin_component:
         builin_dir = os.path.abspath(os.path.join(__file__,'../../kubeflow_components')) 
