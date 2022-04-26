@@ -1,0 +1,13 @@
+ARG DEV_IMAGE
+FROM ${DEV_IMAGE} as build_serving
+
+COPY . /opt/metaspore-src
+
+RUN cmake -B /opt/metaspore-build-release -S /opt/metaspore-src -DCMAKE_INSTALL_PREFIX=/opt/metaspore-serving \
+    -DCMAKE_PREFIX_PATH=/opt/vcpkg_installed/x64-linux \
+    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DENABLE_TESTS=OFF -DBUILD_SERVING_BIN=ON -DBUILD_TRAIN_PKG=OFF
+RUN cmake --build /opt/metaspore-build-release --target install -- -j8
+RUN mkdir -p /opt/metaspore/debug
+RUN objcopy --only-keep-debug /opt/metaspore-serving/bin/metaspore-serving-bin /opt/metaspore/debug/metaspore-serving-bin.debug
+RUN objcopy --strip-debug --add-gnu-debuglink=/opt/metaspore/debug/metaspore-serving-bin.debug /opt/metaspore-serving/bin/metaspore-serving-bin /opt/metaspore-serving/bin/metaspore-serving-bin

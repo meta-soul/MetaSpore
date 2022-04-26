@@ -32,6 +32,11 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++")
 endif()
 
+# GCC 11 gives false warning about non-heap object free
+if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-free-nonheap-object")
+endif()
+
 option(BUILD_TRAIN_PKG "Enable training package build" ON)
 option(BUILD_SERVING_BIN "Enable serving binary build" ON)
 option(ENABLE_TESTS "Enable tests build" OFF)

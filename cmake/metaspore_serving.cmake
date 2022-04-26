@@ -17,9 +17,8 @@
 find_package(range-v3 CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
 find_package(asio-grpc CONFIG REQUIRED)
-find_package(grpc)
-find_package(protobuf)
-find_package(gflags REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 find_package(Arrow CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 
@@ -86,7 +85,6 @@ target_compile_options(metaspore-serving PUBLIC
 target_link_libraries(metaspore-serving PUBLIC
     metaspore-common
     asio-grpc::asio-grpc
-    gflags::gflags
     fmt::fmt
     onnxruntime-cpu-default
     arrow_static
@@ -95,10 +93,9 @@ target_link_libraries(metaspore-serving PUBLIC
 )
 
 add_executable(metaspore-serving-bin ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/main.cpp)
-target_link_libraries(metaspore-serving-bin PRIVATE metaspore-serving mimalloc)
+target_link_libraries(metaspore-serving-bin PRIVATE metaspore-serving mimalloc-static)
 
 set_target_properties(metaspore-serving-bin PROPERTIES
-        BUILD_WITH_INSTALL_RPATH FALSE
         LINK_FLAGS "-Wl,-rpath,$ORIGIN/")
 
 add_custom_command(TARGET metaspore-serving-bin
@@ -108,3 +105,5 @@ add_custom_command(TARGET metaspore-serving-bin
             cut -f 3 -d ' ' |
             xargs -L 1 -I so_file cp -n so_file ${CMAKE_CURRENT_BINARY_DIR}/
 )
+
+install(TARGETS metaspore-serving-bin)
