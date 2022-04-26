@@ -31,6 +31,7 @@ public class MovielensRecommendDiverseTests {
             "Horror",
             "Documentary",
             "Thriller",
+            "","","",
             "Documentary\u0001Thriller",
             "Documentary\u0001Comedy",
             "Drama\u0001Comedy",

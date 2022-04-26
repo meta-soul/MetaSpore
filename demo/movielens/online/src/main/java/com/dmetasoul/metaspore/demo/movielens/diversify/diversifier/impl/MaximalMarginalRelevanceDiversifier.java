@@ -46,6 +46,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         }
 
         LinkedList itemLinkedList = new LinkedList(itemModels);
+
         if (itemLinkedList.isEmpty()) return itemModels;
 
         int genreCount = Utils.groupByType(itemModels).size();
@@ -98,8 +99,9 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 itemNodePrev = itemMaxMMR;
                 itemNode = itemNodePrev.next;
             } else {
-                listNodeInWindow.offer(itemNode.itemModel.getGenre());
-                genreInWindow.put(itemNode.itemModel.getGenre(), 1);
+                String dibersifyGenre = itemNode.itemModel.getGenre();
+                listNodeInWindow.offer(dibersifyGenre);
+                genreInWindow.put(dibersifyGenre, 1);
                 List<String> genreList=getGenreList(itemNode.itemModel);
                 for (String genre : genreList) {
                     int defaultcount = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
@@ -177,6 +179,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             size = itemList.size();
             head = new ListNode(null);
             for (int i = itemList.size() - 1; i >= 0; i--) {
+                if(itemList.get(i).getGenre().length()==0)itemList.get(i).setGenre("null");
                 ListNode insertHead = new ListNode(itemList.get(i));
                 insertHead.next = head.next;
                 head.next = insertHead;
