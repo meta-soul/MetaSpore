@@ -78,7 +78,8 @@ public class ItemModel {
     }
 
     public void setGenre(String genre) {
-        this.genre = genre;
+        if(StringUtils.isEmpty(genre))this.genre="null";
+        else this.genre = genre;
     }
 
     public String getImdbUrl() {

@@ -23,6 +23,8 @@ import com.dmetasoul.metaspore.demo.movielens.diversify.Utils;
 
 import java.util.*;
 
+import com.dmetasoul.metaspore.demo.movielens.common.Constants;
+
 // References:
 // * The Use of MMR, Diversity-Based Reranking for Reordering Documents and Producing Summaries
 
@@ -31,106 +33,102 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
     public static final String ALGO_NAME = "MaximalMarginalRelevanceDiversifier";
     public static final double DEFAULT_LAMBDA = 0.7;
 
-
     public List<ItemModel> diverse(RecommendContext recommendContext,
                                    List<ItemModel> itemModels,
                                    Integer window,
                                    Integer tolerance
     ) {
         if (itemModels.size() <= window || itemModels.size() == 0) return itemModels;
+
         Double lambda = recommendContext.getLambda();
         if (lambda == null) {
             lambda = DEFAULT_LAMBDA;
         }
-        LinkList itemLinkList = new LinkList(itemModels);
+
+        LinkedList itemLinkedList = new LinkedList(itemModels);
+        if (itemLinkedList.isEmpty()) return itemModels;
+
         int genreCount = Utils.groupByType(itemModels).size();
         if (window == null || window > genreCount) {
             window = genreCount;
         }
-
-        // label the visited
-        HashMap<ItemModel, Integer> itemVisited = new HashMap<>();
-        for (int i = 0; i < itemModels.size(); i++) {
-            itemVisited.put(itemModels.get(i), 0);
-        }
         // compute the genre in the window
-        HashMap<String, Integer> genreInWindow = new HashMap();
         HashMap<String, Integer> genreSplitedInWindow = new HashMap<>();
-        // start diverse
-        ListNode itemNode = itemLinkList.head.next;
-        for (int i = 0; i < itemModels.size(); i++) {
-            //compute the count of genre in window
-            int genreInWindowNum = 0;
-            if (!genreInWindow.isEmpty()) {
-                for (String genre : genreInWindow.keySet()) {
-                    genreInWindowNum += genreInWindow.get(genre);
-                }
-            }
+        HashMap<String, Integer> genreInWindow = new HashMap<>();
+        Queue<String> listNodeInWindow = new ArrayDeque<>();
 
+        ListNode itemNode = itemLinkedList.head.next;
+        ListNode itemNodePrev = itemLinkedList.head;
+        // start diverse
+        while (itemNode.next != null) {
             if (genreInWindow.containsKey(itemNode.itemModel.getGenre())) {
-                int maxIndex = i;
                 double maxMMR = Double.MIN_VALUE;
-                ListNode itemNodefind = itemNode;
+                ListNode itemNodefind = itemNode.next;
+                ListNode itemNodefindPrev = itemNode;
                 ListNode itemMaxMMR = new ListNode();
+                ListNode itemMaxMMRPrev = new ListNode();
                 for (int startFound = 0; startFound < tolerance && itemNodefind != null; startFound++) {
                     // MMR rate=ArgMax[lambda*sim(Di,Q)-(i-lambda)*SimScore]
                     // SimScore:itemModel's final simscore
                     // sim(Di,Q):the jaccard Coefficient between itemModel and the genres that were already in the window
-
                     double rankingScore = itemNodefind.itemModel.getFinalRankingScore() * lambda;
                     double simScore = getSimScore(itemNodefind.itemModel, genreSplitedInWindow) * (1 - lambda);
                     if ((rankingScore - simScore) > maxMMR) {
                         itemMaxMMR = itemNodefind;
+                        itemMaxMMRPrev = itemNodefindPrev;
                         maxMMR = rankingScore - simScore;
                     }
+                    itemNodefind = itemNodefind.next;
+                    itemNodefindPrev = itemNodefindPrev.next;
                 }
-                String minGenre = itemModels.get(maxIndex).getGenre();
-                renewHashMap(genreInWindow, minGenre);
+
+                String maxGenre = itemMaxMMR.itemModel.getGenre();
+                int genreValue = genreInWindow.containsKey(maxGenre) ? genreInWindow.get(maxGenre) + 1 : 1;
+                genreInWindow.put(maxGenre, genreValue);
+                listNodeInWindow.offer(maxGenre);
                 // renew genreSplitedWindow;
-                List<String> genreList = itemModels.get(maxIndex).getGenreList();
+                List<String> genreList=getGenreList(itemMaxMMR.itemModel);
                 for (String genre : genreList) {
-                    renewHashMap(genreSplitedInWindow, genre);
+                    int defaultcount = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
+                    genreSplitedInWindow.put(genre, defaultcount);
                 }
-                // exchange location
-                itemLinkList.swap(itemNode, itemMaxMMR);
+
+                itemLinkedList.swap(itemNode, itemNodePrev, itemMaxMMR, itemMaxMMRPrev);
+
+                itemNodePrev = itemMaxMMR;
+                itemNode = itemNodePrev.next;
             } else {
-                genreInWindow.put(itemModels.get(i).getGenre(), 1);
-                itemVisited.put(itemModels.get(i), 1);
-                List<String> genreList = itemModels.get(i).getGenreList();
+                listNodeInWindow.offer(itemNode.itemModel.getGenre());
+                genreInWindow.put(itemNode.itemModel.getGenre(), 1);
+                List<String> genreList=getGenreList(itemNode.itemModel);
                 for (String genre : genreList) {
-                    renewHashMap(genreSplitedInWindow, genre);
+                    int defaultcount = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
+                    genreSplitedInWindow.put(genre, defaultcount);
                 }
+                itemNodePrev = itemNode;
                 itemNode = itemNode.next;
             }
-            if (genreInWindowNum == window) {
-                ItemModel itemDelete = itemModels.get(i - window + 1);
-                List<String> itemGenreDelete = itemDelete.getGenreList();
+            if (listNodeInWindow.size() == window) {
+                String deleteItemGenre = listNodeInWindow.poll();
+                genreInWindow.put(deleteItemGenre, genreInWindow.get(deleteItemGenre) - 1);
+                if (genreInWindow.get(deleteItemGenre) == 0) genreInWindow.remove(deleteItemGenre);
+
+                List<String> itemGenreDelete = List.of(deleteItemGenre.split(Constants.SEQUENCE_FEATURE_SPLITTER));
                 for (String genre : itemGenreDelete) {
                     genreSplitedInWindow.put(genre, genreSplitedInWindow.get(genre) - 1);
-                    if (genreSplitedInWindow.get(genre) == 0) {
-                        genreSplitedInWindow.remove(genre);
-                    }
-                }
-                String deleteGenre = itemDelete.getGenre();
-                genreInWindow.put(deleteGenre, genreInWindow.get(deleteGenre) - 1);
-                if (genreInWindow.get(deleteGenre) == 0) {
-                    genreInWindow.remove(deleteGenre);
+                    if (genreSplitedInWindow.get(genre) == 0) genreSplitedInWindow.remove(genre);
                 }
             }
         }
-        ListNode getList = itemLinkList.head.next;
+        ListNode getAnsList = itemLinkedList.head.next;
         List<ItemModel> itemDiverdified = new ArrayList<>();
-        while (getList != null) {
-            itemDiverdified.add(getList.itemModel);
-            getList = getList.next;
+        while (getAnsList != null) {
+            itemDiverdified.add(getAnsList.itemModel);
+            getAnsList = getAnsList.next;
         }
         return itemDiverdified;
     }
 
-    public static void renewHashMap(HashMap<String, Integer> genreMap, String genre) {
-        int defaultcount = genreMap.containsKey(genre) ? genreMap.get(genre) + 1 : 1;
-        genreMap.put(genre, defaultcount);
-    }
 
     // simScore= \frac{A \cup B}{A \cup B}
     public static Double getSimScore(ItemModel item, HashMap<String, Integer> itemInWindow) {
@@ -148,11 +146,15 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         }
         return intersection / (differentSet + itemGenre.size());
     }
+    public static List getGenreList(ItemModel itemModel){
+        List<String> genreList=itemModel.getGenreList();
+        if(genreList.size()==0)genreList.add("null");
+        return genreList;
+    }
 
     public class ListNode {
         ItemModel itemModel;
         ListNode next;
-        ListNode prev;
 
         ListNode() {
         }
@@ -162,59 +164,29 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         }
     }
 
-    class LinkList {
+    class LinkedList {
         int size;
         ListNode head;
 
-        public LinkList() {
+        public LinkedList() {
             size = 0;
             head = new ListNode(null);
         }
 
-        public LinkList(List<ItemModel> itemList) {
-            int length = itemList.size();
+        public LinkedList(List<ItemModel> itemList) {
+            size = itemList.size();
             head = new ListNode(null);
-            size = length;
-            for (int i = length - 1; i >= 0; i--) {
-                ListNode addHead = new ListNode(itemList.get(i));
-                addHead.next = head.next;
-                head.next.prev = addHead;
-                head.next = addHead;
-                addHead.prev = head;
+            for (int i = itemList.size() - 1; i >= 0; i--) {
+                ListNode insertHead = new ListNode(itemList.get(i));
+                insertHead.next = head.next;
+                head.next = insertHead;
             }
         }
 
-        public void addAll(List<ItemModel> itemList) {
-            int length = itemList.size();
-            for (int i = length - 1; i >= 0; i--) {
-                ListNode addToHead = new ListNode(itemList.get(i));
-                addToHead.next = head.next;
-                head.next.prev = addToHead;
-                head.next = addToHead;
-                addToHead.prev = head;
-                size++;
-            }
-        }
-
-        public void add(ItemModel itemModel) {
-            ListNode addToHead = new ListNode(itemModel);
-            addToHead.next = head.next;
-            head.next.prev = addToHead;
-            head.next = addToHead;
-            addToHead.prev = head;
-            size++;
-        }
-
-        public void swap(ListNode i, ListNode j) {
-            ListNode tempNext = j.next;
-            ListNode tempPrev = j.prev;
-            i.prev.next = j;
-            i.prev = j.prev;
+        public void swap(ListNode i, ListNode iPrev, ListNode j, ListNode jPrev) {
+            jPrev.next = j.next;
+            iPrev.next = j;
             j.next = i;
-            j.prev = i.prev;
-            i.prev = j;
-            tempNext.prev = tempPrev;
-            tempPrev.next = tempNext;
         }
 
         public boolean isEmpty() {
