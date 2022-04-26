@@ -183,10 +183,10 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             }
         }
 
-        public void swap(ListNode i, ListNode iPrev, ListNode j, ListNode jPrev) {
-            jPrev.next = j.next;
-            iPrev.next = j;
-            j.next = i;
+        public void swap(ListNode raw, ListNode rawPrev, ListNode swapNode, ListNode swapNodePrev) {
+            swapNodePrev.next = swapNode.next;
+            rawPrev.next = swapNode;
+            swapNode.next = raw;
         }
 
         public boolean isEmpty() {
