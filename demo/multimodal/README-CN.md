@@ -12,14 +12,14 @@
 多模态 Demo 线上服务部分由以下几部分构成：
 
 1. [multimodal_web](online/multimodal_web)，多模态示例的前端服务，提供 web UI 界面供用户体验多模态检索能力
-2. [multimodal_serving](multimodal_serving)，多模态示例的检索算法服务，含有实验配置、预处理、召回、排序等整个算法处理链路
-3. [multimodal_preprocess](multimodal_preprocess)，对多模态大模型预处理逻辑（含文本/图像等）的封装，以 gRPC 接口提供服务
+2. [multimodal_serving](online/multimodal_serving)，多模态示例的检索算法服务，含有实验配置、预处理、召回、排序等整个算法处理链路
+3. [multimodal_preprocess](online/multimodal_preprocess)，对多模态大模型预处理逻辑（含文本/图像等）的封装，以 gRPC 接口提供服务
 
 **注：**以上几个服务从前往后依次形成依赖关系，所以要把多模态 Demo 搭建起来，就需要**从后往前**依次把各个服务先跑起来，详见线上服务具体[操作指南](online/README-CN.md)。当然做这些之前，要记得先把[离线](./offline)的模型导出、上线和建库先搞定哈！
 
 ## 2. 离线处理
 
-离线处理部分，主要包含了各个应用场景 demo 的离线模型导出、数据建库推送等内容。由于以文搜文和以文搜图场景离线部分较为类似，这里重点介绍基于**百科问答**数据的[以文搜文离线部分](offline/QA)。
+离线处理部分，主要包含了各个应用场景 demo 的离线模型导出、数据建库推送等内容。由于以文搜文和以文搜图场景离线部分较为类似，这里重点介绍基于**百科问答**数据的[以文搜文离线部分](offline/QA/README-CN.md)。
 
 ### 2.1 数据建库
 

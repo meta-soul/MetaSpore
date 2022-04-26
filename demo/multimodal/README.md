@@ -14,14 +14,14 @@ The demo will provide a whole of solution from offline data processing to online
 The Multimodal Demo online service consists of the following parts:
 
 1. [multimodal_web](online/multimodal_web), a front-end service for multimodal demo, providing a web UI interface for users to experience multimodal retrieval service.
-2. [multimodal_serving](multimodal_serving), retrieval online service for multimodal demo, including the entire algorithm pipeline such as a/b experimental configuration, query preprocessing, matching, ranking, summary, etc.
-3. [multimodal_preprocess](multimodal_preprocess), wrap the multimodal pretrained model preprocessing methods (including text/image, etc.), and provides service through the gRPC api.
+2. [multimodal_serving](online/multimodal_serving), retrieval online service for multimodal demo, including the entire algorithm pipeline such as a/b experimental configuration, query preprocessing, matching, ranking, summary, etc.
+3. [multimodal_preprocess](online/multimodal_preprocess), wrap the multimodal pretrained model preprocessing methods (including text/image, etc.), and provides service through the gRPC api.
 
-**Note:** The above services form dependencies in sequence from front to back, so to build a multimodal demo, you need to run each service in sequence from back to front, see more in the online [guide](online/READ.md). Of course, before doing this, remember to take done the [offline](./offline) part.
+**Note:** The above services form dependencies in sequence from front to back, so to build a multimodal demo, you need to run each service in sequence from back to front, see more in the online [guide](online/README.md). Of course, before doing this, remember to take done the [offline](./offline) part.
 
 ## 2. Offline Processing
 
-The offline processing mainly includes the offline model export, data indexing and pushing and so on. Since the offline part of the T2T and the T2I demo is similar, here we focus on the [offline part of the T2T](offline/QA) based on the **Encyclopedia Q&A** [database](https://github.com/brightmart/nlp_chinese_corpus#3%E7%99%BE%E7%A7%91%E7%B1%BB%E9%97%AE%E7%AD%94json%E7%89%88baike2018qa).
+The offline processing mainly includes the offline model export, data indexing and pushing and so on. Since the offline part of the T2T and the T2I demo is similar, here we focus on the [offline part of the T2T](offline/QA/README.md) based on the **Encyclopedia Q&A** [database](https://github.com/brightmart/nlp_chinese_corpus#3%E7%99%BE%E7%A7%91%E7%B1%BB%E9%97%AE%E7%AD%94json%E7%89%88baike2018qa).
 
 ### 2.1 Database Indexing
 
