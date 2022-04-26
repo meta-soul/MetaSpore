@@ -1,4 +1,4 @@
-## [中文介绍](docs/README-CN.md)
+## [中文介绍](README-CN.md)
 
 # Multimodal Retrieval Demo — Online Services
 
@@ -16,16 +16,16 @@ When you setup the above services, an end-to-end multimodal retrieval service wi
 
 Next, we will describe in detail how to build those online services step by step.
 
-- [prepare](#0. prepare)
-- [multimodal_preprocess](1. multimodal_preprocess)
-  - [Setup](1.1 Setup)
-  - [Test](1.2 Test)
-- [multimodal_serving](#2. multimodal_serving)
-  - [Setup](2.1 Setup)
-  - [Test](2.2 Test)
-- [multimodal_web](#3. multimodal_web)
-  - [Setup](3.1 Setup)
-  - [Test](3.2 Test)
+- [prepare](#0-prepare)
+- [multimodal_preprocess](#1-multimodal_preprocess)
+  - [Setup](#11-Setup)
+  - [Test](#12-Test)
+- [multimodal_serving](#2-multimodal_serving)
+  - [Setup](#21-Setup)
+  - [Test](#22-Test)
+- [multimodal_web](#3-multimodal_web)
+  - [Setup](#31-Setup)
+  - [Test](#32-Test)
 
 
 ## 0. offline prepare
@@ -124,7 +124,7 @@ There are some highlights should be noted:
 
 **(4)** Launch recommend online service
 
-You could run online service entry point ([MultiModalRetrievalApplication.java](multimodal_serving/src/main/java/com/dmetasoul/metaspore/demo/multimodal/MultiModalRetrievalApplication.java) ).
+You could run online service via entry point ([MultiModalRetrievalApplication.java](multimodal_serving/src/main/java/com/dmetasoul/metaspore/demo/multimodal/MultiModalRetrievalApplication.java) ).
 
 ### 2.2 Test
 
@@ -197,7 +197,7 @@ Then get results:
 
 ## 3. multimodal_web
 
-This is the UI entry service for multimodal retrieval. It provides a search bar and a page for displaying search results. This service will call the `multimodal_serving` service and display the returned results on the page, so remember start that first.
+This is the UI entry service for multimodal retrieval. It provides a search bar and a page for displaying search results. This service will call the `multimodal_serving` service and display the returned results on the page, so remember start `multimodal_serving` first.
 
 ### 3.1 Setup
 
@@ -205,6 +205,7 @@ The service is developed based on the [Flask](https://flask.palletsprojects.com/
 
 ```bash
 cd online/multimodal_web
+
 pip install -r requirements.txt
 
 sh start.sh
