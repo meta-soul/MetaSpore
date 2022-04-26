@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>
+    Search Bar
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet">
+  <style>
+.custom-file {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    height: calc(2.25rem + 2px);
+    margin-bottom: 0;
+}
+input[type="file" i] {
+    appearance: none;
+    background-color: initial;
+    cursor: default;
+    align-items: baseline;
+    color: inherit;
+    text-overflow: ellipsis;
+    white-space: pre;
+    text-align: start !important;
+    padding: initial;
+    border: initial;
+    overflow: hidden !important;
+}
+.custom-file-input {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: calc(2.25rem + 2px);
+    margin: 0;
+    opacity: 0;
+}
+
+.custom-file-label {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1;
+    height: calc(2.25rem + 2px);
+    padding: 0.375rem 0.75rem;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+.custom-input-group {
+    position: relative;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-box-align: stretch;
+    -ms-flex-align: stretch;
+    align-items: stretch;
+    width: 100%;
+}
+.input-group-prepend {
+    margin-right: -1px;
+    display: flex;
+}
+.input-group-append {
+    margin-left: -1px;
+    display: flex;
+}
+
+  </style>
+</head>
+<body>
+  
+<div class="row">
+  <div class="col">
+    <form action="/img" method="POST" enctype="multipart/form-data">
+        <div class="custom-input-group">
+          <div class="input-group-prepend">
+              <select name="search_type" class="input-group-text">
+                <option value="txt" {% if search_type=="txt" %}selected{% endif %}>搜文本</option>
+                <option value="img" {% if search_type=="img" %}selected{% endif %}>搜图片</option>
+              </select>
+          </div>
+          <div class="custom-file">
+            <input type="file" name="image" class="custom-file-input" id="inputGroupFile04">
+            <label class="custom-file-label" for="inputGroupFile04">上传图片</label>
+          </div>
+          <div class="input-group-append">
+            <button class="btn btn-outline-secondary" type="submit">搜索</button>
+          </div>
+        </div>
+    </form>
+  </div>
+</div>
+
+<div class="row">
+<div class="col">
+{% if results %}
+<table class="table">
+<thead>
+<tr>
+<th scope="col">#</th>
+<th scope="col">Title</th>
+<th scope="col">Content</th>
+<th scope="col">Score</th>
+<th scope="col">Link</th>
+</tr>
+</thead>
+<tbody>
+{% for res in results %}
+<tr>
+<th scope="row">{{loop.index}}</th>
+<td>{{res.title}}</td>
+<td>{{res.content|safe}}</td>
+<td>{{res.score}}</td>
+<td><a href="{{res.url}}">url</a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
+</div>
+</div>
+
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+</body>
+
+</html>       
+

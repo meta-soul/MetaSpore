@@ -1,0 +1,47 @@
+scene-config:
+  scenes:
+    - name: questionAnswer
+      layers:
+        - name: qp.qa
+          normalLayerArgs:
+            - experimentName: qp.qa.base
+              ratio: 1.0
+        - name: match.qa
+          normalLayerArgs:
+            - experimentName: match.qa.base
+              ratio: 1.0
+        - name: rank.qa
+          normalLayerArgs:
+            - experimentName: rank.qa.base
+              ratio: 1.0
+        - name: summary.qa
+          normalLayerArgs:
+            - experimentName: summary.qa.base
+              ratio: 1.0
+
+  experiments:
+    - layerName: qp.qa
+      experimentName: qp.qa.base
+      extraExperimentArgs:
+        modelName: sbert-chinese-qmc-domain-v1
+        processorName: HfTokenizerProcessor
+    - layerName: match.qa
+      experimentName: match.qa.base
+      extraExperimentArgs:
+        modelName: sbert-chinese-qmc-domain-v1
+        vectorName: sentence_embedding
+        matcherNames: [ANNMatcher]
+        maxReservation: 200
+        milvusArgs:
+          collectionName: baike_qa_demo
+          outFields: id
+          vectorField: question_emb
+          searchParams: "{\"nprobe\":128}"
+    - layerName: rank.qa
+      experimentName: rank.qa.base
+      extraExperimentArgs:
+        maxReservation: 50
+    - layerName: summary.qa
+      experimentName: summary.qa.base
+      extraExperimentArgs:
+        summaryFields: [question, answer, category]

@@ -1,0 +1,7 @@
+*.log
+venv
+__pycache__
+data/baike/*.json
+data/baike/*.shard.*
+!data/baike/baike_qa_1w.json
+env_dev.sh

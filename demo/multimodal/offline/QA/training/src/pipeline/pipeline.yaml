@@ -1,0 +1,125 @@
+experiment: &exp-name sts-b
+version: &version v1
+working_dir: ~/embeddings/src
+input_dir: &indir ~/embeddings/datasets/processed
+output_dir: &outdir ~/embeddings/output/sts-b/v1
+log_dir: ~/embeddings/output/sts-b/v1/logs
+python: /opt/anaconda3/envs/pytorch-1.10.1/bin/python
+
+pipeline:
+
+-
+  name: &train-name train
+  status: 1
+  script: train.py
+  args:
+    exp_name: *exp-name
+    task_type: sts
+    loss_type: default
+    train_file: sts_benchmark/train.tsv
+    dev_file: sts_benchmark/dev.tsv
+    test_file: sts_benchmark/test.tsv
+    model: bert-base-uncased
+    max_seq_len: 256
+    device: "cuda:0"
+    num_epochs: 1
+    train_batch_size: 128
+    eval_batch_size: 32
+    learning_rate: 2e-05
+    model_save_dir: &train-model train_sts_default
+-
+  name: train-eval
+  status: 1
+  script: eval.py
+  args:
+    eval_list:
+      - 
+        name: sts_test
+        path: sts_benchmark/test.tsv
+    model_list: 
+      - 
+        name: *train-name
+        path: *train-model
+
+-
+  name: train-bench
+  status: 1
+  script: encode.py
+  args:
+    model: *train-model
+    input_file: sts_benchmark/dev.corpus.wiki
+    batch_size: 1
+    device: cpu
+    max_seq_len: 256
+    disable_progress: ~
+
+-
+  name: &distill-name distill
+  status: 1
+  script: distill.py
+  args:
+    exp_name: *exp-name
+    train_file: sts_benchmark/train.corpus.wiki
+    dev_file: sts_benchmark/dev.corpus.wiki
+    test_file: sts_benchmark/test.tsv
+    teacher_model: *train-model
+    student_model: none
+    student_keep_layers: 1,4,7,10
+    max_seq_len: 256
+    device: "cuda:0"
+    num_epochs: 1
+    train_batch_size: 256
+    learning_rate: 1e-4
+    model_save_dir: &distill-model train_sts_default_distill
+
+-
+  name: distill-eval
+  status: 1
+  script: eval.py
+  args:
+    eval_list:
+      - 
+        name: sts_test
+        path: sts_benchmark/test.tsv
+    model_list: 
+      - 
+        name: *distill-name
+        path: *distill-model
+
+-
+  name: distill-bench
+  status: 1
+  script: encode.py
+  args:
+    model: *distill-model
+    input_file: sts_benchmark/dev.corpus.wiki
+    batch_size: 1
+    device: cpu
+    max_seq_len: 256
+    disable_progress: ~
+
+-
+  name: export
+  status: 1
+  script: infer/modeling.py
+  args:
+    model_name: *distill-model
+    onnx_path: &onnx-model train_sts_default_distill_export
+
+-
+  name: export-bench
+  status: 1
+  script: infer/bench.py
+  args:
+    model_name: *distill-model
+    onnx_path: *onnx-model
+
+-
+  name: export-push
+  status: 1
+  script: infer/infer_server.py
+  args:
+    action: push
+    model: *exp-name
+    tag: *version
+    onnx_path: *onnx-model

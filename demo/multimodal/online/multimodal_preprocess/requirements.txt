@@ -1,0 +1,5 @@
+transformers==4.17.0
+grpcio==1.45.0
+grpcio-tools==1.45.0
+requests==2.27.1
+pyarrow==6.0.1
