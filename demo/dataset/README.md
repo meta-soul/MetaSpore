@@ -1,7 +1,7 @@
 ## [中文介绍](README-CN.md)
 
 # Data Processing and Preparation
-In this project, data processing is unified for MovieLens-1M, MovieLens-25M, Criteo-5d and other datasets, including feature generation,  matching dataset generation, ranking dataset generation, negative sampling, etc.  If you are Chinese developer, you may like to visit our [CN Doc](README-CN.md).
+In this project, data processing is unified for MovieLens-1M, MovieLens-25M, Criteo-5d and other datasets, including feature generation,  matching dataset generation, ranking dataset generation, negative sampling, etc. If you are Chinese developer, you may like to visit our [CN Doc](README-CN.md).
 
 ## Initialize the Configuration Files
 First of all, we should initialize the config files from their YAML template for substituting some variables. For example
