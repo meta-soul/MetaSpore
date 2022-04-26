@@ -37,7 +37,7 @@ python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --v
 ```
 
 ### 3. 排序样本生成
-假设我们位于dataset项目的根目录，我们可以通过执行以下命令准备好 CTR 模型训练所使用的样本数据：
+假设我们位于dataset项目的根目录，我们可以通过执行以下命令准备好 [CTR 模型](../ctr/README-CN.md) 训练所使用的样本数据：
 
 ```shell
 python rank_dataset.py --conf rank.yaml.dev --verbose
@@ -62,7 +62,7 @@ python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --v
 ```
 
 ### 3. 排序样本生成
-假设我们位于dataset项目的根目录，我们可以通过执行以下命令准备好 CTR 模型训练所使用的样本数据：
+假设我们位于dataset项目的根目录，我们可以通过执行以下命令准备好 [CTR 模型](../ctr/README-CN.md) 训练所使用的样本数据：
 
 ```shell
 python rank_dataset.py --conf rank.yaml.dev --verbose
@@ -76,7 +76,7 @@ import metaspore
 metaspore.demo.download_dataset()
 ```
 
-数据集比较大，如果您下载失败，可以重试或者通过 [MetaSpore Demo Dataset](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/criteo/index.html) 来进行手动下载。 根据2014年 [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge) 优胜团队提供的方法 [3 Idiots' Approach](https://github.com/ycjuan/kaggle-2014-criteo) ，我们对里面对数值特征进行离散处理：
+数据集比较大，如果您下载失败，可以重试或者通过 [MetaSpore Demo Dataset](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/criteo/index.html) 来进行手动下载。 根据2014年 [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge) 优胜团队提供的方法 [3 Idiots' Approach](https://github.com/ycjuan/kaggle-2014-criteo) ，我们对里面的数值特征进行离散处理：
 
 ```python
 import numpy as np
@@ -90,7 +90,7 @@ def transform_number(x):
     return int(np.floor(np.log(value) ** 2)) if value>2.0 else int(value)
 ```
 
-由于原始数据较大，我们只是验证 CTR 模型，这里选取了训练集前 5 天对样本，测试集第 1 天的样本进行验证。假设我们位于dataset项目的根目录，我们可以通过执行以下命令准备好 CTR 模型训练所使用的样本数据：
+这里选取了原始训练集前 5 天的日志作为训练数据，测试集第 1 天的日志作为测试数据，进行验证。假设我们位于dataset项目的根目录，我们可以通过执行以下命令准备好 [CTR 模型](../ctr/README-CN.md) 训练所使用的样本数据：
 
 ```shell
 cd criteo

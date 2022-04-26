@@ -38,7 +38,7 @@ python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --v
 ```
 
 ### 3. Ranking Dataset
-Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of CTR models:
+Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of [CTR models](../ctr/README.md):
 
 ```shell
 python rank_dataset.py --conf rank.yaml.dev --verbose
@@ -65,7 +65,7 @@ python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --v
 ```
 
 ### 3. Ranking Dataset
-Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of CTR models:
+Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of [CTR models](../ctr/README.md):
 
 ```shell
 cd ml_25m
@@ -79,7 +79,7 @@ import metaspore
 metaspore.demo.download_dataset()
 ```
 
-If the downloading fails, please refer to [MetaSpore Demo Dataset](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/criteo/index.html) and download the dataset manually. We normalize numerical values by transforming from a value z to log(z) if z > 2, which is proposed by the winner of [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge) in [3 Idiots' Approach](https://github.com/ycjuan/kaggle-2014-criteo). 
+If the downloading fails, please refer to [MetaSpore Demo Dataset](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/criteo/index.html) and download the dataset manually. We normalize numerical values by transforming from a value `z` to `floor(log(z)^2)` if `z > 2`, which is proposed by the winner of [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge) in [3 Idiots' Approach](https://github.com/ycjuan/kaggle-2014-criteo). 
 
 ```python
 import numpy as np
@@ -95,7 +95,7 @@ def transform_number(x):
 
 Moreover, we use the training data of the first 5 days provided by the competition as the training set, and the test data provided by the first day as the test set.
 
-Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of CTR models:
+Assuming we are in root directory of this project, we can execute the following commands to get the train and test dataset of [CTR models](../ctr/README.md):
 
 ```shell
 cd criteo
