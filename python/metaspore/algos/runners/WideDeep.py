@@ -100,5 +100,5 @@ def experiment_run_me(experiment,**kwargs):
         test_result = transform(spark, model, test_dataset)
         ## evaluate
         test_auc = evaluate(spark, test_result)
-    print('Test AUC: ', test_auc)
+        print('Test AUC: ', test_auc)
     stop_spark(spark)

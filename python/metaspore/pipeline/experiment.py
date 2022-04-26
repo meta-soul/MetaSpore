@@ -1,38 +1,31 @@
 class Experiment(object):
-    def __init__(self,
-                dic:dict,
-                consul_endpoint_prefix=None,
-                experiment_name = None,
-                scene=None,
-                model_name=None,
-                scheduled_time=None,
-                train_path=None,
-                train_name=None,
-                model_in_path=None,
-                model_out_path=None,
-                model_export_path=None,
-                ):
+    def __init__(self, **kwargs):
         import os
-        self.consul_endpoint_prefix = dic['consul_endpoint_prefix']
-        self.experiment_name = dic['experiment_name']
-        self.scene = dic['scene']
-        self.model_name = dic['model_name']
-        self.train_path = dic['train_path']
-        self.test_path = dic['test_path']                   # orgin input, not add version yet                  
-        self.model_in_path = dic['model_in_path']           # orgin input, not add version yet
-        self.model_out_path = dic['model_out_path']        # orgin input, not add version yet
-        self.model_export_path = dic['model_export_path']
-        self.consul_host = os.environ.get('CONSUL_HOST')        # use local env
-        self.consul_port = int(os.environ.get('CONSUL_PORT'))   # str -> int
-        self.scheduled_time = self.time_unifier(dic['ScheduledTime'])
+        self.consul_endpoint_prefix = kwargs['consul_endpoint_prefix']
+        self.experiment_name = kwargs['experiment_name']
+        self.scene = kwargs['scene']
+        self.model_name = kwargs['model_name']
+        self.train_path = kwargs['train_path']
+        self.test_path = kwargs['test_path']            
+        self.model_in_path = kwargs['model_in_path']          
+        self.model_out_path = kwargs['model_out_path']
+        self.model_export_path = kwargs['model_export_path']
+        self.consul_host = os.environ.get('CONSUL_HOST')        # local env
+        self.consul_port = int(os.environ.get('CONSUL_PORT'))   # local env, str -> int
+        self.scheduled_time = self.time_unifier(kwargs['ScheduledTime'],kwargs.get('time_format','%Y%m%d'))
         
-    def time_unifier(self, input_time):
+    def time_unifier(self, input_time, unified_format):
         if input_time is not None:
-            # recurring run -> accurate to minutes, remove the second info
-            # notice that Kubeflow's [[ScheduledTime]] type is int
-            input_time = str(input_time)[:-2]
-        # is none return none
-        return input_time
+            from datetime import datetime
+            # Notice that Kubeflow's [[ScheduledTime]] type is int,
+            # and its default format is '%Y%m%d%M%S'
+            default_format = '%Y%m%d%M%S' 
+            datetime_obj = datetime.strptime(str(input_time),default_format)
+            # transform to customized format
+            unified_time = datetime.strftime(datetime_obj, unified_format)
+        else:
+            unified_time = None
+        return unified_time
 
     def fill_parameter(self, estimator):
         estimator.consul_endpoint_prefix= self.consul_endpoint_prefix

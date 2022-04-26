@@ -32,11 +32,11 @@ def to_component_func(
             
             # parse pipeline parameters
             dic = dict(eval(input_string))
-            experiment_dic = dic["scheduled_parameter"]
-            exp_obj_for_runner = Experiment(experiment_dic)
-            user_argo_para_dic = dic["algo_parameter"]
+            scheduled_parameter_dic = dic["scheduled_parameter"]
+            exp_obj_for_runner = Experiment(**scheduled_parameter_dic)
+            algo_para_dic = dic["algo_parameter"]
 
-            func(exp_obj_for_runner,**user_argo_para_dic)
+            func(exp_obj_for_runner,**algo_para_dic)
         component_func.component_name = kwargs["component_name"]
         component_func.is_decorated = True
         return component_func
