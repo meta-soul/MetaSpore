@@ -206,7 +206,7 @@ if __name__=="__main__":
     train_fg_dataset, test_fg_dataset = split_train_test(fg_dataset)
 
     ## negtive sampling
-    train_neg_sample = negative_sampling_train_dataset(spark, train_fg_dataset, verbose, **params)
+    train_neg_sample = negative_sampling_train_dataset(spark, train_fg_dataset, verbose=verbose, **params)
     
     ## for match model
     train_dataset = prepare_train(spark, train_fg_dataset, train_neg_sample, verbose)
