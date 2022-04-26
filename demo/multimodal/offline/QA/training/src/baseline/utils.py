@@ -37,10 +37,11 @@ class STSDataset(object):
         return texts1, texts2, labels
 
 def compute_kernel_bias(vecs, n_components=256):
-    """计算kernel和bias
+    """compute kernel and bias
     vecs.shape = [num_samples, embedding_size]，
-    最后的变换：y = (x + bias).dot(kernel)
-    引用自：https://kexue.fm/archives/8069
+    y = (x + bias).dot(kernel)
+    
+    adopted from：https://kexue.fm/archives/8069
     """
     mu = vecs.mean(axis=0, keepdims=True)
     cov = np.cov(vecs.T)
@@ -49,8 +50,9 @@ def compute_kernel_bias(vecs, n_components=256):
     return W[:, :n_components], -mu
 
 def transform_and_normalize(vecs, kernel=None, bias=None):
-    """应用变换，然后标准化
-    引用自：https://kexue.fm/archives/8069
+    """transform and normalize
+    
+    adopted from：https://kexue.fm/archives/8069
     """
     if not (kernel is None or bias is None):
         vecs = (vecs + bias).dot(kernel)

@@ -15,8 +15,8 @@
 #
 
 ###############
-# 中文表示学习
-# - 多任务监督组合学习
+# chinese supervised
+# - multi-task
 ###############
 log_dir=../logs
 output_dir=../output
@@ -24,10 +24,10 @@ dataset_dir=../datasets/processed
 mkdir -p ${log_dir}
 mkdir -p ${output_dir}
 
-# 中文语义相似数据集benchmark
+# chinese sts benchmark
 eval_list=csts_dev#${dataset_dir}/Chinese-STS-B/dev.tsv,csts_test#${dataset_dir}/Chinese-STS-B/test.tsv,afqmc_dev#${dataset_dir}/afqmc_public/dev.tsv,lcqmc_dev#${dataset_dir}/lcqmc/dev.tsv,bqcorpus_dev#${dataset_dir}/bq_corpus/dev.tsv,pawsx_dev#${dataset_dir}/paws-x-zh/dev.tsv,xiaobu_dev#${dataset_dir}/oppo-xiaobu/dev.tsv
 
-# 1. 从难到易串行训练
+# 1. from hard to easy task
 :<<EOF
 model_path=${output_dir}/training-pawsx-qmc-default
 exp_name=pkuparaph_pawsx
@@ -74,7 +74,7 @@ model_list=csts#${output_dir}/training_csts_benchmark-sts,pawsx#${output_dir}/tr
 python eval.py --model-list ${model_list} --eval-list ${eval_list} --device cuda:0 --batch-size 64 > ${log_file} 2>&1
 EOF
 
-# 2. 从易到难训练
+# 2. from easy to hard task
 :<<EOF
 exp_name=allnlizh
 task_type=nli
@@ -133,7 +133,7 @@ model_list=csts#${output_dir}/training_csts_benchmark-sts,allnlizh#${output_dir}
 python eval.py --model-list ${model_list} --eval-list ${eval_list} --device cuda:0 --batch-size 64 > ${log_file} 2>&1
 EOF
 
-# 3. 仅使用NLI数据训练
+# 3. train only with NLI
 :<<EOF
 model_path=${output_dir}/training_allnlizh-nli_ranking
 exp_name=csts_allnlizh
@@ -149,12 +149,12 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 EOF
 
-# Eval 通用模型-仅保留NLI
+# Eval 
 log_file=${log_dir}/eval.log-zh_sup_general_v2_3.log
 model_list=csts#${output_dir}/training_csts_benchmark-sts,allnlizh#${output_dir}/training_allnlizh-nli_ranking,csts_allnlizh#${output_dir}/training_csts_allnlizh-sts_default
 python eval.py --model-list ${model_list} --eval-list ${eval_list} --device cuda:0 --batch-size 64 > ${log_file} 2>&1
 
-# 4. 全部正样本对数据集
+# 4. train with all datasets' positive pairs
 exp_name=pospair_zh
 task_type=qmc
 loss_type=ranking
@@ -180,7 +180,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training_csts_pospair_zh-sts_default \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# Eval 通用模型-混合正样本
+# Eval
 log_file=${log_dir}/eval.log-zh_sup_general_v2_4.log
 model_list=csts#${output_dir}/training_csts_benchmark-sts,allpospair#${output_dir}/training_pospair_zh-qmc_ranking,csts_allpospair#${output_dir}/training_csts_pospair_zh-sts_default
 nohup python eval.py --model-list ${model_list} --eval-list ${eval_list} > ${log_file} 2>&1 &

@@ -22,7 +22,7 @@ output_dir=../output
 data_dir=./datasets/processed
 
 ###############
-# 英文蒸馏轻量模型
+# english distill
 ##############
 exp_name="sts_distill_en"
 log_file=${log_dir}/train.log-${exp_name}

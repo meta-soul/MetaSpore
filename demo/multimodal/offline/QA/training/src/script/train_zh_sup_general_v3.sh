@@ -15,8 +15,8 @@
 #
 
 #######################
-# 中文表示学习
-# - 基于 SimCLUE 语义数据集
+# chinese supervised
+# - based SimCLUE dataset
 #######################
 log_dir=../logs
 output_dir=../output
@@ -24,7 +24,7 @@ dataset_dir=../datasets/processed
 mkdir -p ${log_dir}
 mkdir -p ${output_dir}
 
-# 中文语义相似数据集benchmark
+# chinese sts benchmark
 eval_list=csts_dev#${dataset_dir}/Chinese-STS-B/dev.tsv,csts_test#${dataset_dir}/Chinese-STS-B/test.tsv,afqmc_dev#${dataset_dir}/afqmc_public/dev.tsv,lcqmc_dev#${dataset_dir}/lcqmc/dev.tsv,bqcorpus_dev#${dataset_dir}/bq_corpus/dev.tsv,pawsx_dev#${dataset_dir}/paws-x-zh/dev.tsv,xiaobu_dev#${dataset_dir}/oppo-xiaobu/dev.tsv
 
 :<<EOF

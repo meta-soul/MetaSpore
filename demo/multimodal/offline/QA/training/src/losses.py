@@ -40,6 +40,8 @@ class SoftmaxLoss(losses.SoftmaxLoss):
 
 class LogisticLoss(nn.Module):
     """
+    adopted from: https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformers/losses/SoftmaxLoss.py
+
     :param model: SentenceTransformer model
     :param num_labels: Number of different labels
     :param concatenation_sent_rep: Concatenate vectors u,v for the softmax classifier?

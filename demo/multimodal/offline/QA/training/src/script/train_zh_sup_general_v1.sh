@@ -15,8 +15,7 @@
 #
 
 ###############
-# 中文表示学习
-# - 各个任务监督学习
+# chinese supervised
 ###############
 log_dir=../logs
 output_dir=../output
@@ -192,7 +191,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training-qbqtc-qmc-default \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# Eval 各任务之间zero-shot能力
+# Eval zero-shot between all kinds of task
 model_list=csts#${output_dir}/training-csts_benchmark-sts_default,ocnli#${output_dir}/training-ocnli-nli-default,ocnli_rank#${output_dir}/training-ocnli_rank-nli-ranking,cmnli#${output_dir}/training-cmnli-nli-default,cmnli_rank#${output_dir}/training-cmnli_rank-nli-ranking,csnli#${output_dir}/training-csnli-nli-default,csnli_rank#${output_dir}/training-csnli_rank-nli-ranking,pku#${output_dir}/training-pkuparaph-qmc-ranking,afqmc#${output_dir}/training-afqmc-qmc-default,lcqmc#${output_dir}/training-lcqmc-qmc-default,bqcorpus#${output_dir}/training-bqcorpus-qmc-default,pawsx#${output_dir}/training-pawsx-qmc-default,xiaobu#${output_dir}/training-xiaobu-qmc-default,qbqtc#${output_dir}/training-qbqtc-qmc-default
 eval_list=csts_test#${dataset_dir}/Chinese-STS-B/test.tsv,ocnli_dev#${dataset_dir}/ocnli_public/dev.tsv,afqmc_dev#${dataset_dir}/afqmc_public/dev.tsv,lcqmc_dev#${dataset_dir}/lcqmc/dev.tsv,bqcorpus_dev#${dataset_dir}/bq_corpus/dev.tsv,pawsx_dev#${dataset_dir}/paws-x-zh/dev.tsv,xiaobu_dev#${dataset_dir}/oppo-xiaobu/dev.tsv,cmnli_dev#${dataset_dir}/cmnli_public/dev.tsv,csnli_dev#${dataset_dir}/csnli_public/dev.tsv
 

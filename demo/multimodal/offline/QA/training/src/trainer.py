@@ -69,6 +69,8 @@ class Trainer(object):
             weight_decay: float = 0.01, max_grad_norm: float = 1,
             collate_fn: Callable=None, device=None, logger=None):
         """
+        adopted from: https://github.com/UKPLab/sentence-transformers/blob/master/sentence_transformers/SentenceTransformer.py#L564
+
         Train the model with the given training objective
         Each training objective is sampled in turn for one batch.
         We sample only as many batches from each objective as there are in the smallest one

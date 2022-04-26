@@ -14,7 +14,9 @@
 # limitations under the License.
 #
 
-# 单脚本启动完整训练流程：train -> train-eval -> train-bench -> distill -> distill-eval -> distill-bench -> export
+####
+# pipeline: train -> train-eval -> train-bench -> distill -> distill-eval -> distill-bench -> export
+####
 
 data_dir=../datasets/processed
 output_dir=../output/sts-b

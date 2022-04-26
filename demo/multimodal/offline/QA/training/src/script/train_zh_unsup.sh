@@ -15,7 +15,7 @@
 #
 
 ##################
-# 中文无监督方法
+# chinese unsupervised
 #################
 log_dir=../logs
 output_dir=../output
@@ -23,7 +23,7 @@ dataset_dir=../datasets/processed
 mkdir -p ${log_dir}
 mkdir -p ${output_dir}
 
-# 中文语义相似数据集benchmark
+# chinese sts benchmark
 eval_list=csts_dev#${dataset_dir}/Chinese-STS-B/dev.tsv,csts_test#${dataset_dir}/Chinese-STS-B/test.tsv,afqmc_dev#${dataset_dir}/afqmc_public/dev.tsv,lcqmc_dev#${dataset_dir}/lcqmc/dev.tsv,bqcorpus_dev#${dataset_dir}/bq_corpus/dev.tsv,pawsx_dev#${dataset_dir}/paws-x-zh/dev.tsv,xiaobu_dev#${dataset_dir}/oppo-xiaobu/dev.tsv
 
 :<<EOF
@@ -105,7 +105,7 @@ python src/train_mlm.py --exp-name $exp_name --task-type ${task_type} --loss-typ
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 EOF
 
-# 中文语义相似数据集benchmark
+# Eval
 model_list=csts_base#${output_dir}/training_csts_benchmark-sts,csts_best#${output_dir}/training_csts_allnlizh_pkuparaph_pawsx-sts_default,simclue_v1#${output_dir}/training_simclue-qmc_default,simcse#${output_dir}/training_simclue-single_simcse,esimcse#${output_dir}/training_simclue-single_esimcse,tsdae#${output_dir}/training_simclue-single_tsdae,mlm#${output_dir}/training_simclue-single_mlm,ct#${output_dir}/training_simclue-single_ct,ct2#${output_dir}/training_simclue-single_ct2
 log_file=${log_dir}/eval.log-zh_unsup.log
 nohup python eval.py --model-list ${model_list} --eval-list ${eval_list} --device cuda:0 --batch-size 64 > ${log_file} 2>&1 &

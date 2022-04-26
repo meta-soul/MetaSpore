@@ -21,9 +21,9 @@ mkdir -p ${log_dir}
 mkdir -p ${output_dir}
 
 ###############
-# 英文无监督表示学习
+# english unsupervised
 ###############
-# 1. 无监督-simcse
+# 1. simcse
 exp_name=en_unsup
 task_type=single
 loss_type=simcse
@@ -36,7 +36,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training_en_unsup-single-simcse \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# 2. 无监督-esimcse
+# 2. esimcse
 exp_name=en_unsup
 task_type=single
 loss_type=esimcse
@@ -49,7 +49,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training_en_unsup-single-esimcse-v2 \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# 3. 无监督-tsdae
+# 3. tsdae
 # pooling with cls
 exp_name=en_unsup
 task_type=single
@@ -63,7 +63,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training_en_unsup-single-tsdae \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# 4. 无监督-ct
+# 4. ct
 exp_name=en_unsup
 task_type=single
 loss_type=ct
@@ -76,7 +76,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training_en_unsup-single-ct \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# 5. 无监督-ct2
+# 5. ct2
 exp_name=en_unsup
 task_type=single
 loss_type=ct2
@@ -89,7 +89,7 @@ python train.py --exp-name $exp_name --task-type ${task_type} --loss-type ${loss
     --model-save-dir ${output_dir}/training_en_unsup-single-ct2 \
     > ${log_dir}/train.log-${exp_name}-${task_type}-${loss_type} 2>&1
 
-# 6. 无监督-mlm
+# 6. mlm
 exp_name=en_unsup
 task_type=single
 loss_type=mlm

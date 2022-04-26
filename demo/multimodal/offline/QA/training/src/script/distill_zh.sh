@@ -24,7 +24,7 @@ eval_list=csts_dev#${data_dir}/Chinese-STS-B/dev.tsv,csts_test#${data_dir}/Chine
 bench_file=${data_dir}/sentences_zh/dev.tsv
 
 ###############
-# 中文蒸馏轻量模型
+# chinese distill
 ###############
 # 1. general-best
 # 1.1 Distill
