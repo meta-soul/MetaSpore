@@ -10,7 +10,9 @@
 
 当把上述服务运行起来后，就得到一个完整的多模态检索服务，拿**百科问答以文搜文**为例，运行效果如下：
 
-![](docs/text-to-text_QA.png)
+<p align="center">
+   <img width="800" alt="image" src="./docs/text-to-text_QA.png">
+</p>
 
 接下来，我们将详细描述如何把各个线上服务搭建起来，内容安排如下：
 
@@ -127,7 +129,9 @@ mvn clean install
 
 Consul 配置文件有如下标黄几点要重点关注：
 
-![](docs/consul-cfg.png)
+<p align="center">
+   <img width="700" alt="image" src="./docs/consul-cfg.png">
+</p>
 
 四、启动在线服务
 
@@ -220,6 +224,8 @@ sh start.sh
 
 启动完成后，前往 `http://127.0.0.1:8090` 去查看搜索 UI 服务是否运行正常，结果如下：
 
-![](docs/web-UI.png)
+<p align="center">
+   <img width="800" alt="image" src="./docs/web-UI.png">
+</p>
 
 点击入口链接就可以进入对应的检索 demo 啦！

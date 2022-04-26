@@ -12,7 +12,10 @@ The Multimodal Retrieval Demo online service, while supporting application scena
 
 When you setup the above services, an end-to-end multimodal retrieval service will be obtained. Take **Q&A text-to-text** as an example, the demo search results as following:
 
-![](docs/text-to-text_QA.png)
+<p align="center">
+   <img width="800" alt="image" src="./docs/text-to-text_QA.png">
+</p>
+
 
 Next, we will describe in detail how to build those online services step by step.
 
@@ -120,7 +123,9 @@ You could modify Consul's Key/Value pair to dynamically change the online A/B te
 
 There are some highlights should be noted:
 
-![](docs/consul-cfg.png)
+<p align="center">
+   <img width="700" alt="image" src="./docs/consul-cfg.png">
+</p>
 
 **(4)** Launch recommend online service
 
@@ -215,4 +220,6 @@ sh start.sh
 
 Go  `http://127.0.0.1:8090` to check the UI service!
 
-![](docs/web-UI.png)
+<p align="center">
+   <img width="800" alt="image" src="./docs/web-UI.png">
+</p>
