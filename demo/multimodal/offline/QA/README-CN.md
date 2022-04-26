@@ -63,4 +63,4 @@ sh export.sh
 
 ### 3. 模型优化
 
-百科问答检索能力的基础 **Sentence Embedding** 模型，模型优化结果将决定检索效果，这里使用的语义检索模型正是我们在多个开源数据集上调优过的，这些模型已经开放到 [HuggingFace Hub](https://huggingface.co/DMetaSoul)，用户可以直接下载使用。同时我们也提供了一套模型离线优化的 [pipeline](training/README-CN.md)，只需要提供简单的配置就可以训练调优用户自己的模型。
+百科问答检索能力的基础 **Sentence Embedding** 模型，模型优化结果将决定检索效果，这里使用的语义检索模型正是我们在多个开源数据集上调优过的，这些模型已经开放到 [HuggingFace Hub](https://huggingface.co/DMetaSoul)，用户可以直接下载使用。同时我们也提供了一套模型[离线优化的 pipeline](training/README-CN.md)，只需要提供简单的配置就可以训练调优用户自己的模型。

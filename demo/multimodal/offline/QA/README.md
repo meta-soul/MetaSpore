@@ -57,4 +57,4 @@ sh export.sh
 
 ### 3. Model Training
 
-We open our sentence embedding models in the [HuggingFace Hub](https://huggingface.co/DMetaSoul). Everyone can use those pre-trained model to build their own text-to-text retrieval system. At the same time, we provide a model training [pipeline](training) for community to train their own models on the custom tasks.
+We open our sentence embedding models in the [HuggingFace Hub](https://huggingface.co/DMetaSoul). Everyone can use those pre-trained model to build their own text-to-text retrieval system. At the same time, we provide a model [training pipeline](training) for community to train their own models on the custom tasks.

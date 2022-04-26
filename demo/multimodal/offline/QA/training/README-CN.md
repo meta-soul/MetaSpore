@@ -1,3 +1,5 @@
+# Sentence Embedding Training Pipeline
+
 **Sentence Embedding** 模型是实现语义检索的模型基石，决定了检索效果的优劣，这里提供了完整的一套 Sentence Embedding 模型离线训练调优的代码，含训练（有监督/无监督）、蒸馏、评测、导出。
 
 整个离线模型调优过程都是可配置低代码模式的，只要指定一些参数就可以完成离线优化流程的装配，这里以 [LCQMC 问题匹配数据集](https://www.luge.ai/#/luge/dataDetail?id=14)为例来介绍如何完成模型离线训练优化：
