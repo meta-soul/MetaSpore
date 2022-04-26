@@ -16,4 +16,4 @@ genome_path: ${MY_S3_BUCKET}/movielens/ml-25m/genome-scores.csv
 links_path: ${MY_S3_BUCKET}/movielens/ml-25m/links.csv
 
 ## output dataset configuration
-fg_datast_out_path: ${MY_S3_BUCKET}/movielens/25m/fg/fg_dataset.parquet
+fg_dataset_out_path: ${MY_S3_BUCKET}/movielens/25m/fg/fg_dataset.parquet
