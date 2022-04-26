@@ -36,6 +36,7 @@ def init_spark(app_name, executor_memory, executor_instances, executor_cores,
         .config("spark.executor.memory", executor_memory)
         .config("spark.executor.instances", executor_instances)
         .config("spark.executor.cores", executor_cores)
+        .config("spark.default.parallelism", default_parallelism)
         .config("spark.executor.memoryOverhead", "2G")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.autoBroadcastJoinThreshold", "64MB")
