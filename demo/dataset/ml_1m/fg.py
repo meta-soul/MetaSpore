@@ -125,9 +125,9 @@ def merge_dataset(users, movies, ratings):
     dataset.show(10)
     return dataset
 
-def write_dataset_to_s3(fg_dataset, fg_datast_out_path, **kwargs):
+def write_dataset_to_s3(fg_dataset, fg_dataset_out_path, **kwargs):
     start = time.time()
-    fg_dataset.write.parquet(fg_datast_out_path, mode="overwrite")
+    fg_dataset.write.parquet(fg_dataset_out_path, mode="overwrite")
     print('Debug -- write_fg_dataset_to_s3 cost time:', time.time() - start)
 
 if __name__=="__main__":

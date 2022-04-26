@@ -35,7 +35,8 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark():
+def init_spark(app_name, executor_memory, executor_instances, executor_cores, 
+               default_parallelism, **kwargs):
     subprocess.run(['zip', '-r', 'ml_25m/python.zip', 'common'], cwd='../')
     spark = (SparkSession.builder
         .appName(app_name)
@@ -62,7 +63,7 @@ def stop_spark(spark):
     print('Debug -- spark stop')
     spark.sparkContext.stop()
 
-def read_dataset(**kwargs):
+def read_dataset(movies_path, ratings_path, genome_path, links_path, **kwargs):
     ### read movies
     movies_schema = StructType([
             StructField("movie_id", LongType(), True),
@@ -123,7 +124,7 @@ def merge_dataset(movies, ratings):
     dataset.show(10)
     return dataset
 
-def downsample_user_ratings(spark, dataset):
+def downsample_user_ratings(spark, dataset, max_reservation_rating_len, **kwargs):
     if max_reservation_rating_len <= 0:
         print('Debug -- max_reservation_len is 0, there is no downsampling user ratings.')
         return dataset
@@ -145,7 +146,7 @@ def downsample_user_ratings(spark, dataset):
     dataset_ = spark.sql(query)
     return dataset_.drop('sample_id')
 
-def write_dataset_to_s3(fg_dataset):
+def write_dataset_to_s3(fg_dataset, fg_datast_out_path, **kwargs):
     start = time.time()
     fg_dataset.write.parquet(fg_datast_out_path, mode="overwrite")
     print('Debug -- write_fg_dataset_to_s3 cost time:', time.time() - start)
@@ -161,18 +162,17 @@ if __name__=="__main__":
     ## init spark
     verbose = args.verbose
     params = load_config(args.conf)
-    locals().update(params)
-    spark = init_spark()
+    spark = init_spark(**params)
 
     ## preprocessing
     movies, ratings, genomes, links = read_dataset(**params)
     merged_dataset = merge_dataset(movies, ratings)
-    merged_dataset = downsample_user_ratings(spark, merged_dataset)
+    merged_dataset = downsample_user_ratings(spark, merged_dataset, **params)
 
     ## generate sparse features
     fg_dataset = generate_sparse_features_25m(merged_dataset, verbose=verbose)
 
     ## write to s3
-    write_dataset_to_s3(fg_dataset)
+    write_dataset_to_s3(fg_dataset, **params)
        
     stop_spark(spark)

@@ -12,5 +12,5 @@ users_path: ${MY_S3_BUCKET}/movielens/ml-1m/users.dat
 imdb_path: ${MY_S3_BUCKET}/movielens/ml-25m/movie_ml_imdb.csv
 
 ## output dataset configuration
-fg_datast_out_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
+fg_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
 
