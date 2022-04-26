@@ -85,7 +85,7 @@ Client received: payload={'attention_mask': [[1, 1, 1, 1, 1, 1, 1, 1]], 'input_i
 
 ### 2.1 启动
 
-**一、**安装 online-serving 组件
+一、安装 online-serving 组件
 
 首先， 我们需要使用 `maven` 来安装 [online-serving 组件](../../../java/online-serving/README-CN.md)：
 
@@ -103,7 +103,7 @@ cd MetaSpore/java/online-serving
 mvn clean install 
 ```
 
-**二、**建立 application-dev.properties
+二、建立 application-dev.properties
 
 我们需要从模版文件[application-template.properties](multimodal_serving/src/main/resources/application-template.properties) 创建一个 resources/**application-dev.properties** 文件，主要用来配置：
 
@@ -115,7 +115,7 @@ mvn clean install
 
 文件创建好写入相关配置信息后，放在 `multimodal_serving/src/main/resources` 目录中即可。
 
-**三、**安装和配置 Consul
+三、安装和配置 Consul
 
 我们可以通过更改 `Consul` 中的 Key/Value 的字典值，实时更改在线的 A/B 实验的策略，具体安装和配置的方法：
 
@@ -129,7 +129,7 @@ Consul 配置文件有如下标黄几点要重点关注：
 
 ![](docs/consul-cfg.png)
 
-**四、**启动在线服务
+四、启动在线服务
 
 当以上的配置工作都完成之后，我们可以从 [MultiModalRetrievalApplication.java](multimodal_serving/src/main/java/com/dmetasoul/metaspore/demo/multimodal/MultiModalRetrievalApplication.java) 服务入口，启动我们的应用。
 
