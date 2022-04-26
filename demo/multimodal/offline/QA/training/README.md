@@ -1,6 +1,6 @@
 The **Sentence Embedding** model is the basestone for semantic retrieval, which determines the quality of the retrieval system. Here is a whole of model offline training pipeline, including training (supervised/unsupervised), distillation, evaluation, export, etc.
 
-The offline pipeline is configurable in low-code mode. The assembly of the offline pipeline can be completed as long as some configurable parameters are specified. Here, the [LCQMC problem matching data set](https://www.luge.ai/#/ luge/dataDetail?id=14) as an example to introduce how to complete the offline training and optimization of the model:
+The offline pipeline is configurable in low-code mode. The assembly of the offline pipeline can be completed as long as some configurable parameters are specified. Here, the [LCQMC problem matching data set](https://www.luge.ai/#/luge/dataDetail?id=14) as an example to introduce how to complete the offline training and optimization of the model:
 
 1. Create an offline experiment configuration file. Because `conf/lcqmc_experiment.yaml` has been created here, which can be used directly. If you have custom requirements, you can refer to this file to create own.
 
