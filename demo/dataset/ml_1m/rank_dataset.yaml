@@ -1,0 +1,15 @@
+## spark session
+app_name: MovieLens 1M Rank Dataset
+local: False
+executor_memory: '10G'
+executor_instances: '4'
+executor_cores: '4'
+default_parallelism: '400'
+
+## input dataset path
+fg_dataset_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
+
+## output dataset path
+rank_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/rank/train.parquet
+rank_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/rank/test.parquet
+

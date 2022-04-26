@@ -1,0 +1,18 @@
+## spark session
+app_name: MovieLens 25M Match Dataset
+local: False
+executor_memory: '10G'
+executor_instances: '8'
+executor_cores: '4'
+default_parallelism: '400'
+
+## negative sampling count
+num_negs: 100
+
+## input dataset path
+fg_dataset_path: ${MY_S3_BUCKET}/movielens/25m/fg/fg_dataset.parquet
+
+## output dataset path
+match_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/25m/negsample/num_negs_10/train.parquet
+match_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/25m/negsample/num_negs_10/test.parquet
+match_item_dataset_out_path: ${MY_S3_BUCKET}/movielens/25m/negsample/num_negs_10/item.parquet
