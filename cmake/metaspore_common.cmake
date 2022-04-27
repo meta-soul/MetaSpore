@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-find_package(gflags REQUIRED)
+find_package(gflags CONFIG REQUIRED)
 
 set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/globals.cpp
@@ -34,5 +34,5 @@ target_include_directories(metaspore-common PUBLIC
 )
 
 target_link_libraries(metaspore-common PUBLIC
-    gflags::gflags
+    gflags
 )
