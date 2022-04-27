@@ -106,6 +106,9 @@ def train(spark, train_dataset, item_dataset, **model_params):
     ## dnn learning rate
     estimator.updater = ms.AdamTensorUpdater(model_params['adam_learning_rate'])
     ## model train
+    print('Debug -- user tower module:\n', user_module)
+    print('Debug -- item tower module:\n', item_module)
+    print('Debug -- similarity module:\n', similarity_module)
     model = estimator.fit(train_dataset)
     print('Debug -- traing is completed')
     return model
