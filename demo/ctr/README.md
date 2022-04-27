@@ -36,9 +36,9 @@ We are continuously adding models:
 ## How to run
 
 ### Data preprocessing and feature generation
-For MovieLens dataset, we just use `user_id` and `movie_id` of as model's features for now.
+For MovieLens dataset, we just use `user_id` and `movie_id` of as model's features for now. Please refer to this [guide](../dataset/README.md) to processing and prepare the dataset.
 
-For Criteo dataset, we normalize numerical values by transforming from a value `z` to `log(z)` if `z > 2`, which is proposed by the winner of Criteo Competition.
+For Criteo dataset, we normalize numerical values by transforming from a value `z` to `floor(log(z)^2)` if `z > 2`, which is proposed by the winner of Criteo Competition. 
 ```python
 import numpy as np
 def transform_number(x):
@@ -50,9 +50,7 @@ def transform_number(x):
         pass
     return int(np.floor(np.log(value) ** 2)) if value>2.0 else int(value)
 ```
-Moreover, we use the training data of the first 5 days provided by the competition as the training set, and the test data provided by the first day as the test set.
-
-We will update the related code as soon as possible.
+Moreover, we use the training data of the first 5 days provided by the competition as the training set, and the test data provided by the first day as the test set. Please refer to this [guide](../dataset/README.md) to processing and prepare the dataset.
 
 ### Initialize the configuration files for models
 First, upload the [schema](schema) to you S3 storage.
