@@ -16,6 +16,7 @@
 
 package com.dmetasoul.metaspore.demo.movielens;
 
+import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.MaximalMarginalRelevanceDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.diversify.diversifier.impl.SimpleDiversifier;
 import com.dmetasoul.metaspore.demo.movielens.model.ItemModel;
 import com.dmetasoul.metaspore.demo.movielens.model.RecommendContext;
@@ -28,7 +29,9 @@ public class MovielensRecommendDiverseTests {
             "Drama",
             "Comedy",
             "Horror",
-            "Horror\u0001Comedy",
+            "Documentary",
+            "Thriller",
+            "","","",
             "Documentary\u0001Thriller",
             "Documentary\u0001Comedy",
             "Drama\u0001Comedy",
@@ -38,7 +41,7 @@ public class MovielensRecommendDiverseTests {
 //                "Sci-Fi",
 //                "Animation",
 //                "Children's",
-//                "Drama|Mystery",
+                "Drama\u0001Mystery",
             "Animation\u0001Children's"};
     String[] movie_title = {
             "Man of Her Dreams",
@@ -67,7 +70,7 @@ public class MovielensRecommendDiverseTests {
     public List<ItemModel> getInput() {
         List<ItemModel> input = new ArrayList<>();
         Random r = new Random();
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 10; i++) {
             Integer movie_id = r.nextInt(1000);
             ItemModel peek = new ItemModel();
             peek.setId(movie_id.toString());
@@ -95,10 +98,11 @@ public class MovielensRecommendDiverseTests {
 
     @Test
     public void testDiverse() {
-        SimpleDiversifier diversfier = new SimpleDiversifier();
+        MaximalMarginalRelevanceDiversifier diversfier = new MaximalMarginalRelevanceDiversifier();
         for (int i = 0; i < 100; i++) {
             System.out.println("第" + (i + 1) + "轮测试");
             List<ItemModel> input = getInput();
+            //List<ItemModel> input=new ArrayList<>();
             for (int j = 0; j < input.size(); j++) {
                 System.out.print(input.get(j).getGenre()+" ");
             }
