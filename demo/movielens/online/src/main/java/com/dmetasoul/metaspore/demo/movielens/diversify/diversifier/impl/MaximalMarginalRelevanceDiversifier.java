@@ -88,13 +88,13 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 genreInWindow.put(maxGenre, genreValue);
                 listNodeInWindow.offer(maxGenre);
                 // renew genreSplitedWindow;
-                List<String> genreList=getGenreList(itemMaxMMR.itemModel);
+                List<String> genreList = getGenreList(itemMaxMMR.itemModel);
                 for (String genre : genreList) {
                     int defaultcount = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
                     genreSplitedInWindow.put(genre, defaultcount);
                 }
 
-                itemLinkedList.swap(itemNode, itemNodePrev, itemMaxMMR, itemMaxMMRPrev);
+                itemLinkedList.insertBeforeDiverisfyNode(itemNode, itemNodePrev, itemMaxMMR, itemMaxMMRPrev);
 
                 itemNodePrev = itemMaxMMR;
                 itemNode = itemNodePrev.next;
@@ -102,7 +102,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                 String dibersifyGenre = itemNode.itemModel.getGenre();
                 listNodeInWindow.offer(dibersifyGenre);
                 genreInWindow.put(dibersifyGenre, 1);
-                List<String> genreList=getGenreList(itemNode.itemModel);
+                List<String> genreList = getGenreList(itemNode.itemModel);
                 for (String genre : genreList) {
                     int defaultcount = genreSplitedInWindow.containsKey(genre) ? genreSplitedInWindow.get(genre) + 1 : 1;
                     genreSplitedInWindow.put(genre, defaultcount);
@@ -148,9 +148,10 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
         }
         return intersection / (differentSet + itemGenre.size());
     }
-    public static List getGenreList(ItemModel itemModel){
-        List<String> genreList=itemModel.getGenreList();
-        if(genreList.size()==0)genreList.add("null");
+
+    public static List getGenreList(ItemModel itemModel) {
+        List<String> genreList = itemModel.getGenreList();
+        if (genreList.size() == 0) genreList.add("null");
         return genreList;
     }
 
@@ -179,17 +180,17 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             size = itemList.size();
             head = new ListNode(null);
             for (int i = itemList.size() - 1; i >= 0; i--) {
-                if(itemList.get(i).getGenre().length()==0)itemList.get(i).setGenre("null");
+                if (itemList.get(i).getGenre().length() == 0) itemList.get(i).setGenre("null");
                 ListNode insertHead = new ListNode(itemList.get(i));
                 insertHead.next = head.next;
                 head.next = insertHead;
             }
         }
 
-        public void swap(ListNode raw, ListNode rawPrev, ListNode swapNode, ListNode swapNodePrev) {
+        public void insertBeforeDiverisfyNode(ListNode originNode, ListNode originPrevNode, ListNode swapNode, ListNode swapNodePrev) {
             swapNodePrev.next = swapNode.next;
-            rawPrev.next = swapNode;
-            swapNode.next = raw;
+            originPrevNode.next = swapNode;
+            swapNode.next = originNode;
         }
 
         public boolean isEmpty() {
