@@ -77,8 +77,8 @@ ENV SPARK_HOME /opt/spark
 ENV SPARK_CONF_DIR /opt/spark/conf
 ENV PATH=$SPARK_HOME/bin:$PATH
 ENV PYTHONPATH=$SPARK_HOME/python:$PYTHONPATH
-COPY docker/ubuntu20.04/pom.xml docker/ubuntu20.04/settings.xml .
-RUN mvn -s settings.xml dependency:copy-dependencies -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 settings.xml pom.xml
+COPY docker/ubuntu20.04/release-copy-deps-pom.xml docker/ubuntu20.04/maven-proxy-settings.xml .
+RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
 ARG SPARK_FILE="pyspark"
@@ -87,7 +87,7 @@ ENV SPARK_HOME /usr/local/lib/python3.8/dist-packages/pyspark
 RUN mkdir -p /opt/spark/conf
 ENV SPARK_CONF_DIR /opt/spark/conf
 ENV PATH=$SPARK_HOME/bin:$PATH
-COPY docker/ubuntu20.04/pom.xml docker/ubuntu20.04/settings.xml .
-RUN mvn -s settings.xml dependency:copy-dependencies -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 settings.xml pom.xml
+COPY docker/ubuntu20.04/release-copy-deps-pom.xml docker/ubuntu20.04/maven-proxy-settings.xml .
+RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
 
 FROM spark-${SPARK_RELEASE}-install as release
