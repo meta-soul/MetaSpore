@@ -36,7 +36,7 @@ def load_config(path):
 def init_spark(local, app_name, batch_size, worker_count, server_count,
                worker_memory, server_memory, coordinator_memory, 
                executor_cores, default_parallelism, **kwargs):
-    subprocess.run(['zip', '-r', os.getcwd(), 'python'], cwd='../../../')
+    subprocess.run(['zip', '-r', os.getcwd() + '/python.zip', 'python'], cwd='../../../')
     spark_confs={
         "spark.executor.cores":executor_cores,
         "spark.default.parallelism":default_parallelism,
