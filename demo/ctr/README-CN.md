@@ -33,9 +33,9 @@
 ## 如何运行
 
 ### 数据预处理和特征生成
-对于MovieLens数据集, 我们目前仅用了`user_id`和`movie_id`作为模型的特征。
+对于MovieLens数据集, 我们目前仅用了`user_id`和`movie_id`作为模型的特征。可以参考我们的数据处理和准备的[说明](../dataset/README.md) 。
 
-对于Criteo数据集，我们标准化所有数值型特征`z`，具体方法是用`log(z)`代替所有大于2的`z`。此方法由Criteo竞赛的获胜者提出。
+对于Criteo数据集，我们标准化所有数值型特征`z`，具体方法是用`floor(log(z)^2)`代替所有大于2的`z`。此方法由Criteo竞赛的获胜者提出。
 ```python
 import numpy as np
 def transform_number(x):
@@ -47,9 +47,7 @@ def transform_number(x):
         pass
     return int(np.floor(np.log(value) ** 2)) if value>2.0 else int(value)
 ```
-此外，我们用比赛提供的训练集中的头部五天训练数据，作为我们的训练集。用比赛提供的测试集中的头部一天测试数据，作为我们的测试集。
-
-我们会尽快更新这部分代码。
+此外，我们用比赛提供的训练集中的头部五天训练数据，作为我们的训练集。用比赛提供的测试集中的头部一天测试数据，作为我们的测试集。可以参考我们的数据处理和准备的[说明](../dataset/README.md) 。
 
 ### 初始化模型配置文件
 首先, 上传 [schema](schema) 到你的S3云存储。
