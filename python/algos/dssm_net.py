@@ -1,21 +1,8 @@
 import torch
-import metaspore as ma
+import metaspore as ms
 import torch.nn.functional as F
 
-class DSSMDense(torch.nn.Module):
-    def __init__(self, emb_out_size, dense_structure):
-        super().__init__()
-        self._emb_bn = ma.nn.Normalization(emb_out_size, momentum=0.01, eps=1e-5)
-        self._d1 = torch.nn.Linear(emb_out_size, dense_structure[0])
-        self._d2 = torch.nn.Linear(dense_structure[0], dense_structure[1])
-        self._d3 = torch.nn.Linear(dense_structure[1], dense_structure[2])
-        
-    def forward(self, x):
-        x = self._emb_bn(x)
-        x = F.relu(self._d1(x))
-        x = F.relu(self._d2(x))
-        x = self._d3(x)
-        return x
+from .layers import MLPLayer
 
 class SimilarityModule(torch.nn.Module):
     def __init__(self, tau):
@@ -28,36 +15,92 @@ class SimilarityModule(torch.nn.Module):
         return s
 
 class UserModule(torch.nn.Module):
-    def __init__(self, column_name_path, combine_schema_path, emb_size, alpha, beta, l1, l2, dense_structure):
+    def __init__(self, 
+                 column_name_path, 
+                 combine_schema_path, 
+                 embedding_dim, 
+                 sparse_init_var=1e-2,
+                 dnn_hidden_units=[1024, 512, 256],
+                 dnn_hidden_activations="ReLU",
+                 use_bias=True,
+                 net_dropout=0,
+                 batch_norm=False,
+                 embedding_regularizer=None,
+                 net_regularizer=None,
+                 ftrl_l1=1.0,
+                 ftrl_l2=120.0,
+                 ftrl_alpha=0.5,
+                 ftrl_beta=1.0,
+                 **kwargs):
         super().__init__()
-        self._embedding_size = emb_size
-        self._column_name_path = column_name_path
-        self._combine_schema_path = combine_schema_path
-        self._sparse = ma.EmbeddingSumConcat(self._embedding_size, self._column_name_path, self._combine_schema_path)
-        self._sparse.updater = ma.FTRLTensorUpdater(alpha = 0.01)
-        self._sparse.initializer = ma.NormalTensorInitializer(var = 0.0001)
-        self._sparse.output_batchsize1_if_only_level0 = True
-        self._emb_out_size = self._sparse.feature_count * self._embedding_size
-        self._dense = DSSMDense(self._emb_out_size, dense_structure)
+        self.embedding_dim = embedding_dim
+        self.column_name_path = column_name_path
+        self.combine_schema_path = combine_schema_path
+        ## sparse layers
+        self.sparse = ms.EmbeddingSumConcat(self.embedding_dim, self.column_name_path, self.combine_schema_path)
+        self.sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha = ftrl_alpha, beta=ftrl_beta)
+        self.sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
+        self.sparse.output_batchsize1_if_only_level0 = True
+        ## sparse normalization
+        self.sparse_output_dim = self.sparse.feature_count * self.embedding_dim
+        self.sparse_embedding_bn = ms.nn.Normalization(self.sparse_output_dim, momentum=0.01, eps=1e-5)
+        ## dense layers
+        self.dense = MLPLayer(input_dim = self.sparse_output_dim,
+                              output_dim = None,
+                              hidden_units = dnn_hidden_units,
+                              hidden_activations = dnn_hidden_activations,
+                              final_activation = None, 
+                              dropout_rates = net_dropout, 
+                              batch_norm = batch_norm, 
+                              use_bias = use_bias)
 
     def forward(self, x):
-        x = self._sparse(x)
-        x = self._dense(x)
+        x = self.sparse(x)
+        x = self.sparse_embedding_bn(x)
+        x = self.dense(x)
         return x
 
 class ItemModule(torch.nn.Module):
-    def __init__(self, column_name_path, combine_schema_path, emb_size, alpha, beta, l1, l2, dense_structure):
+    def __init__(self, 
+                 column_name_path, 
+                 combine_schema_path, 
+                 embedding_dim, 
+                 sparse_init_var=1e-2,
+                 dnn_hidden_units=[1024, 512, 256],
+                 dnn_hidden_activations="ReLU",
+                 use_bias=True,
+                 net_dropout=0,
+                 batch_norm=False,
+                 embedding_regularizer=None,
+                 net_regularizer=None,
+                 ftrl_l1=1.0,
+                 ftrl_l2=120.0,
+                 ftrl_alpha=0.5,
+                 ftrl_beta=1.0,
+                 **kwargs):
         super().__init__()
-        self._embedding_size = emb_size
-        self._column_name_path = column_name_path
-        self._combine_schema_path = combine_schema_path
-        self._sparse = ma.EmbeddingSumConcat(self._embedding_size, self._column_name_path, self._combine_schema_path)
-        self._sparse.updater = ma.FTRLTensorUpdater(alpha = 0.01)
-        self._sparse.initializer = ma.NormalTensorInitializer(var = 0.0001)
-        self._emb_out_size = self._sparse.feature_count * self._embedding_size
-        self._dense = DSSMDense(self._emb_out_size, dense_structure)
+        self.embedding_dim = embedding_dim
+        self.column_name_path = column_name_path
+        self.combine_schema_path = combine_schema_path
+        ## sparse layers
+        self.sparse = ms.EmbeddingSumConcat(self.embedding_dim, self.column_name_path, self.combine_schema_path)
+        self.sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha = ftrl_alpha, beta=ftrl_beta)
+        self.sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
+        ## sparse normalization
+        self.sparse_output_dim = self.sparse.feature_count * self.embedding_dim
+        self.sparse_embedding_bn = ms.nn.Normalization(self.sparse_output_dim, momentum=0.01, eps=1e-5)
+        ## dense layers
+        self.dense = MLPLayer(input_dim = self.sparse_output_dim,
+                              output_dim = None,
+                              hidden_units = dnn_hidden_units,
+                              hidden_activations = dnn_hidden_activations,
+                              final_activation = None, 
+                              dropout_rates = net_dropout, 
+                              batch_norm = batch_norm, 
+                              use_bias = use_bias)
 
     def forward(self, x):
-        x = self._sparse(x)
-        x = self._dense(x)
+        x = self.sparse(x)
+        x = self.sparse_embedding_bn(x)
+        x = self.dense(x)
         return x

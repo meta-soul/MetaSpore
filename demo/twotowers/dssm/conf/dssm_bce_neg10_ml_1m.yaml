@@ -43,13 +43,15 @@ milvus_nprobe: 128
 
 ## model hyper params
 tau: 0.05
-vector_embedding_size: 32
-item_embedding_size: 128
+sparse_init_var: 0.0001
 net_dropout: 0.0
 batch_size: 128
-dense_structure: [512, 256, 128]
+vector_embedding_size: 32
+item_embedding_size: 128
+dnn_hidden_units: [512, 256, 128]
+dnn_hidden_activations: 'ReLU'
 adam_learning_rate: 0.0001
-ftrl_learning_rate: 0.02
+ftrl_learning_rate: 0.01
 ftrl_smothing_rate: 1.0
 ftrl_l1_regularization: 1.0
 ftrl_l2_regularization: 1.0
