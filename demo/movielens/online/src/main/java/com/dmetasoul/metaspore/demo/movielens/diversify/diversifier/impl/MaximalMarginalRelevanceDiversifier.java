@@ -94,7 +94,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
                     genreSplitedInWindow.put(genre, defaultcount);
                 }
 
-                itemLinkedList.insertBeforeDiverisfyNode(itemNode, itemNodePrev, itemMaxMMR, itemMaxMMRPrev);
+                itemLinkedList.insertBefore(itemNode, itemNodePrev, itemMaxMMR, itemMaxMMRPrev);
 
                 itemNodePrev = itemMaxMMR;
                 itemNode = itemNodePrev.next;
@@ -187,7 +187,7 @@ public class MaximalMarginalRelevanceDiversifier implements Diversifier {
             }
         }
 
-        public void insertBeforeDiverisfyNode(ListNode originNode, ListNode originPrevNode, ListNode swapNode, ListNode swapNodePrev) {
+        public void insertBefore(ListNode originNode, ListNode originPrevNode, ListNode swapNode, ListNode swapNodePrev) {
             swapNodePrev.next = swapNode.next;
             originPrevNode.next = swapNode;
             swapNode.next = originNode;
