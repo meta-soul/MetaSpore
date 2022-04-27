@@ -43,32 +43,32 @@ RUN apt-get install -y python3.8 python3-setuptools ca-certificates maven vim su
 ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
-RUN python3 -m easy_install install pip
-RUN pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple/
+RUN python -m easy_install install pip
+RUN python -m pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple/
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
     apt-get install -y tini libpam-modules krb5-user libnss3 procps && \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su
 
-RUN pip install --upgrade pip setuptools wheel && \
-    pip install numpy && \
-    pip install torch==1.11.0+cpu torchvision==0.12.0+cpu torchaudio==0.11.0+cpu \
+RUN python -m pip install --upgrade pip setuptools wheel && \
+    python -m pip install numpy && \
+    python -m pip install torch==1.11.0+cpu torchvision==0.12.0+cpu torchaudio==0.11.0+cpu \
      -f https://download.pytorch.org/whl/cpu/torch_stable.html && \
-    pip install awscli awscli-plugin-endpoint && \
-    pip install onnx onnxmltools onnxruntime xgboost lightgbm tabulate && \
-    pip install pymilvus faiss-cpu && \
-    pip install https://github.com/sllynn/spark-xgboost/releases/download/v0.9/spark_xgboost-0.90-py3-none-any.whl && \
-    pip cache purge && \
+    python -m pip install awscli awscli-plugin-endpoint && \
+    python -m pip install onnx onnxmltools onnxruntime xgboost lightgbm tabulate && \
+    python -m pip install pymilvus faiss-cpu && \
+    python -m pip install https://github.com/sllynn/spark-xgboost/releases/download/v0.9/spark_xgboost-0.90-py3-none-any.whl && \
+    python -m pip cache purge && \
     echo OK: python
 
 FROM env as metaspore_http_install
 ARG METASPORE_WHEEL="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B295d07c-cp38-cp38-linux_x86_64.whl"
-RUN pip install ${METASPORE_WHEEL} && pip cache purge
+RUN python -m pip install ${METASPORE_WHEEL} && pip cache purge
 
 FROM ${METASPORE_BUILD_IMAGE} as metaspore_build
 FROM env as metaspore_build_install
 COPY --from=metaspore_build /opt/metaspore-build-release/metaspore-*.whl .
-RUN pip install metaspore-*.whl && pip cache purge && rm -f metaspore-*.whl
+RUN python -m pip install metaspore-*.whl && pip cache purge && rm -f metaspore-*.whl
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-tarball-install
 ARG SPARK_FILE="https://dlcdn.apache.org/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz"
@@ -82,7 +82,7 @@ RUN mvn -s settings.xml dependency:copy-dependencies -DoutputDirectory=${SPARK_H
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
 ARG SPARK_FILE="pyspark"
-RUN pip install ${SPARK_FILE}
+RUN python -m pip install ${SPARK_FILE}
 ENV SPARK_HOME /usr/local/lib/python3.8/dist-packages/pyspark
 RUN mkdir -p /opt/spark/conf
 ENV SPARK_CONF_DIR /opt/spark/conf
