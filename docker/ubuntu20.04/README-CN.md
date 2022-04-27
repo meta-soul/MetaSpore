@@ -30,8 +30,22 @@ export REPOSITORY=...
             ```
 
     1. Training Build 镜像，基于 Dev 镜像生成 Training Wheel 安装包：`Dockerfile_training_build`
-
-        1. Training Release 镜像：基于 Training Build，生成训练镜像，包含 Spark 等依赖：`Dockerfile_training_release`
+        ```bash
+        DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_training_build --build-arg DEV_IMAGE=$REPOSITORY/metaspore-dev:v1.0.0 -t $REPOSITORY/metaspore-training-build:v1.0.0 .
+        ```
+        1. Training Release 镜像：基于 Training Build，生成训练镜像，包含 Spark 等依赖：`Dockerfile_training_release`。该镜像构建支持多种选项以安装 MetaSpore 和 Spark，默认从 http 下载它们的安装包：
             ```bash
+            DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_training_release -t $REPOSITORY/metaspore-training-release:v1.0.0 --target release .
 
+            # 可以通过 --build-arg METASPORE_WHEEL="http://..." 和 --build-arg SPARK_FILE="http://" 来指定 MetaSpore 的 wheel 包路径和 Spark 的 tgz 安装包路径
             ```
+
+            1. 从 MetaSpore build 镜像生成 Release 镜像：
+                ```bash
+                # 通过 METASPORE_RELEASE=build 指定从 build 镜像安装 MetaSpore，同时需要通过 METASPORE_BUILD_IMAGE 指定镜像名。
+                DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_training_release --build-arg METASPORE_RELEASE=build --build-arg METASPORE_BUILD_IMAGE=$REPOSITORY/metaspore-training-build:v1.0.0 -t $REPOSITORY/metaspore-training-release:v1.0.0 --target release .
+                ```
+            2. 使用 PySpark 安装 Spark 环境：
+                ```bash
+                DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_training_release --build-arg METASPORE_RELEASE=build --build-arg METASPORE_BUILD_IMAGE=$REPOSITORY/metaspore-training-build:v1.0.0 --build-arg SPARK_RELEASE=pyspark --build-arg SPARK_FILE="pyspark==3.2.1" -t $REPOSITORY/metaspore-training-release:v1.0.0 --target release .
+                ```

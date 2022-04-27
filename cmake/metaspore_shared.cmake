@@ -18,7 +18,7 @@ get_project_version(project_version)
 message(STATUS "project_version: ${project_version}")
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
-message("Found Python at "${Python_EXECUTABLE})
+message("Found Python at " ${Python_EXECUTABLE})
 find_package(Boost REQUIRED COMPONENTS)
 find_package(PkgConfig REQUIRED)
 find_package(pybind11 REQUIRED CONFIG)
@@ -56,7 +56,7 @@ file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/gen/thrift/cpp/metaspore)
 add_custom_command(
     OUTPUT ${PROJECT_BINARY_DIR}/gen/thrift/cpp/metaspore/message_meta_types.h
            ${PROJECT_BINARY_DIR}/gen/thrift/cpp/metaspore/message_meta_types.cpp
-    COMMAND thrift -gen cpp:cob_style,moveable_types
+    COMMAND ${THRIFT_BIN_DIR}/thrift -gen cpp:cob_style,moveable_types
             -out ${PROJECT_BINARY_DIR}/gen/thrift/cpp/metaspore
             ${PROJECT_SOURCE_DIR}/thrift/metaspore/message_meta.thrift
     DEPENDS ${PROJECT_SOURCE_DIR}/thrift/metaspore/message_meta.thrift)
