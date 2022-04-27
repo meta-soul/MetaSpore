@@ -1,0 +1,12 @@
+tableName: "txt_to_img_demo"
+collectionName: "txt_to_img_demo"
+dbType: "mongodb"
+columns:
+  - colName: "queryid"
+    colType: "String"
+  - colName: "id"
+    colType: "Long"
+  - colName: "name"
+    colType: "String"
+  - colName: "url"
+    colType: "String"
