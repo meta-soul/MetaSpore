@@ -13,6 +13,6 @@ num_negs: 10
 fg_dataset_path: ${MY_S3_BUCKET}/movielens/1m/fg/fg_dataset.parquet
 
 ## output dataset path
-match_train_dataset_out_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/train.parquet
-match_test_dataset_out_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/test.parquet
-match_item_dataset_out_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/item.parquet
+match_train_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/train.parquet
+match_test_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+match_item_dataset_out_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
