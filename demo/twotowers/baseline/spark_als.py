@@ -61,10 +61,11 @@ def read_dataset(spark, train_path, test_path, **kwargs):
 
     return train_dataset, test_dataset
 
-def convert_datatype(dataset, user_id_column_name, item_id_column_name, rating_coloumn_name):
+def convert_datatype(dataset, user_id_column_name, item_id_column_name, rating_coloumn_name=None):
     dataset = dataset.withColumn(user_id_column_name, dataset[user_id_column_name].cast(LongType())) \
-                     .withColumn(item_id_column_name, dataset[item_id_column_name].cast(LongType())) \
-                     .withColumn(rating_coloumn_name, dataset[rating_coloumn_name].cast(FloatType()))
+                     .withColumn(item_id_column_name, dataset[item_id_column_name].cast(LongType()))
+    dataset = dataset.withColumn(rating_coloumn_name, dataset[rating_coloumn_name].cast(FloatType())) \
+                     if rating_coloumn_name is not None else dataset
     return dataset
 
 def train(spark, train_dataset, user_id_column_name, item_id_column_name, rating_column_name,
