@@ -10,7 +10,7 @@ coordinator_memory: '10G'
 
 ## dataset
 train_path: ${MY_S3_BUCKET}/movielens/1m/cf/train.parquet
-test_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/test.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
 
 ## recall configuration
 max_recommendation_count: 20
