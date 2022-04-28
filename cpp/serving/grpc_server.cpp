@@ -192,7 +192,7 @@ void GrpcServer::run() {
                                    " version " + metaspore::ToSource(version) +
                                    " from " + metaspore::ToSource(dir_path) + ".";
                 spdlog::info("Loading" + desc);
-                auto status = co_await ModelManager::get_model_manager().load(model_name, dir_path);
+                auto status = co_await ModelManager::get_model_manager().load(dir_path, model_name);
                 if (!status.ok()) {
                     spdlog::error("Fail to load" + desc);
                     co_await respond_error(writer, status);
