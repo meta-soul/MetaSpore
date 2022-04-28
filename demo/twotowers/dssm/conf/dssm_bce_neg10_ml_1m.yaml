@@ -9,9 +9,9 @@ server_memory: '10G'
 coordinator_memory: '10G'
 
 ## datasets
-train_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/train.parquet
-test_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/test.parquet
-item_path: ${MY_S3_BUCKET}/demo/movielens/1m/negsample/num_negs_10/item.parquet
+train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
 
 ## model configuratio
 two_tower_module: metaspore
