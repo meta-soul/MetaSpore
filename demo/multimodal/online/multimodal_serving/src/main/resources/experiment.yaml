@@ -18,8 +18,27 @@ scene-config:
           normalLayerArgs:
             - experimentName: summary.qa.base
               ratio: 1.0
+    - name: textToImage
+      layers:
+        - name: qp.t2i
+          normalLayerArgs:
+            - experimentName: qp.t2i.base
+              ratio: 1.0
+        - name: match.t2i
+          normalLayerArgs:
+            - experimentName: match.t2i.base
+              ratio: 1.0
+        - name: rank.t2i
+          normalLayerArgs:
+            - experimentName: rank.t2i.base
+              ratio: 1.0
+        - name: summary.t2i
+          normalLayerArgs:
+            - experimentName: summary.t2i.base
+              ratio: 1.0
 
   experiments:
+    # QuestionAnswer experiments
     - layerName: qp.qa
       experimentName: qp.qa.base
       extraExperimentArgs:
@@ -40,8 +59,34 @@ scene-config:
     - layerName: rank.qa
       experimentName: rank.qa.base
       extraExperimentArgs:
-        maxReservation: 50
+        maxReservation: 5
     - layerName: summary.qa
       experimentName: summary.qa.base
       extraExperimentArgs:
         summaryFields: [question, answer, category]
+    # TxtToImg experiments
+    - layerName: qp.t2i
+      experimentName: qp.t2i.base
+      extraExperimentArgs:
+        modelName: clip-text-encoder-v1
+        processorName: HfTokenizerProcessor
+    - layerName: match.t2i
+      experimentName: match.t2i.base
+      extraExperimentArgs:
+        modelName: clip-text-encoder-v1
+        vectorName: sentence_embedding
+        matcherNames: [ANNMatcher]
+        maxReservation: 200
+        milvusArgs:
+          collectionName: txt_to_img_demo
+          outFields: id
+          vectorField: image_emb
+          searchParams: "{\"nprobe\":128}"
+    - layerName: rank.t2i
+      experimentName: rank.t2i.base
+      extraExperimentArgs:
+        maxReservation: 20
+    - layerName: summary.t2i
+      experimentName: summary.t2i.base
+      extraExperimentArgs:
+        summaryFields: [name, url]
