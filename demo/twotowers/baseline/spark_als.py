@@ -99,7 +99,10 @@ def transform(spark, model, train_dataset, test_dataset, user_id_column_name, it
     recall_topk = recall_result.withColumn("row_number", F.row_number().over(w))\
                                .filter(F.col('row_number') < max_recommendation_count)\
                                .select('pred.' + user_id_column_name, 'pred.' + item_id_column_name, 'prediction')\
-                               .withColumn('rec_info', F.collect_list('pred.' + item_id_column_name).over(w)) \
+                               .withColumn('rec_info', F.collect_list(F.struct(
+                                   F.col('pred.' + item_id_column_name).alias('_1'), 
+                                   F.col('prediction').alias('_2'))).over(w)
+                                ) \
                                .groupBy('pred.' + user_id_column_name)\
                                .agg(F.max('rec_info').alias('rec_info'))
     ## join with the original result
