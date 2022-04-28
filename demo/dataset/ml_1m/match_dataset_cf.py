@@ -70,7 +70,7 @@ def read_dataset(fg_dataset_path, **kwargs):
 
 def prepare_train(spark, train_dataset, verbose=True):
     train_dataset = train_dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
-    train_dataset = train_dataset.drop('rand', 'rating')
+    train_dataset = train_dataset.drop('rand')
     train_dataset = train_dataset.select(*(F.col(c).cast('string').alias(c) for c in train_dataset.columns))
     if verbose:
         print('Debug -- match train dataset size: %d'%train_dataset.count())
@@ -81,7 +81,7 @@ def prepare_train(spark, train_dataset, verbose=True):
 
 def prepare_test(spark, test_fg_dataset, verbose=True):
     test_dataset = test_fg_dataset.withColumn('rand', F.rand(seed=100)).orderBy('rand')
-    test_dataset = test_dataset.drop('rand', 'timestamp', 'rating')
+    test_dataset = test_dataset.drop('rand', 'timestamp')
     test_dataset = test_dataset.select(*(F.col(c).cast('string').alias(c) for c in test_dataset.columns))
     if verbose:
         print('Debug -- match test dataset size: %d'%test_dataset.count())
