@@ -54,6 +54,6 @@ adam_learning_rate: 0.0001
 ftrl_learning_rate: 0.01
 ftrl_smothing_rate: 1.0
 ftrl_l1_regularization: 1.0
-ftrl_l2_regularization: 1.0
+ftrl_l2_regularization: 120.0
 training_epoches: 3
 shuffle_training_dataset: True
