@@ -81,9 +81,10 @@ def train(spark, train_dataset, user_id_column_name, item_id_column_name, rating
 def transform(spark, model, train_dataset, test_dataset, user_id_column_name, item_id_column_name, rating_column_name,
               last_item_col_name, max_recommendation_count, **kwargs):
     train_dataset = convert_datatype(train_dataset, user_id_column_name, item_id_column_name, rating_column_name)
-    test_dataset = convert_datatype(test_dataset, user_id_column_name, item_id_column_name, rating_column_name)
+    test_dataset = convert_datatype(test_dataset, user_id_column_name, item_id_column_name)
     ## score all userxitem combinations
-    dataset = train_dataset.union(test_dataset)
+    dataset = train_dataset.select(user_id_column_name, item_id_column_name)\
+                           .union(test_dataset.select(user_id_column_name, item_id_column_name))
     users = dataset.select(user_id_column_name).distinct()
     items = dataset.select(item_id_column_name).distinct()
     user_item = users.crossJoin(items)
@@ -98,19 +99,19 @@ def transform(spark, model, train_dataset, test_dataset, user_id_column_name, it
     recall_topk = recall_result.withColumn("row_number", F.row_number().over(w))\
                                .filter(F.col('row_number') < max_recommendation_count)\
                                .select('pred.' + user_id_column_name, 'pred.' + item_id_column_name, 'prediction')\
-                               .withColumn('rec_info', F.collect_list('pred' + item_id_column_name).over(w)) \
-                               .groupBy('pred' + user_id_column_name)\
+                               .withColumn('rec_info', F.collect_list('pred.' + item_id_column_name).over(w)) \
+                               .groupBy('pred.' + user_id_column_name)\
                                .agg(F.max('rec_info').alias('rec_info'))
     ## join with the original result
     test_df = test_dataset.select(user_id_column_name, last_item_col_name, item_id_column_name)\
-            .groupBy(user_id_column_name, last_item_col_name)\
-            .agg(F.collect_set(item_id_column_name).alias('label_items'))
+                          .groupBy(user_id_column_name, last_item_col_name)\
+                          .agg(F.collect_set(item_id_column_name).alias('label_items'))
 
     test_result = test_df.alias('test').join(
         recall_topk.alias('recall'),
-        recall_topk['recall.' + user_id_column_name] == test_dataset['test.' + user_id_column_name],
+        recall_topk[user_id_column_name] == test_dataset[user_id_column_name],
         how='inner'
-    )
+    ).select('test.' + user_id_column_name, last_item_col_name, 'label_items', 'rec_info')
     return test_result
 
 def evaluate(spark, test_result, test_user=100):
