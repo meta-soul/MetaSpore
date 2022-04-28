@@ -12,6 +12,7 @@ test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
 ## Spark ALS model configuration
 user_id_column_name: user_id
 item_id_column_name: movie_id
+rating_column_name: rating
 last_item_col_name: last_movie
 
 ## model hyper params

@@ -1,3 +1,5 @@
+from cgi import test
+from ctypes import cast
 import os
 import argparse
 import yaml
@@ -6,6 +8,7 @@ import numpy as np
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql import Window
+from pyspark.sql.types import FloatType, LongType
 from pyspark.ml.recommendation import ALS
 from pyspark.mllib.evaluation import RankingMetrics
 
@@ -58,17 +61,26 @@ def read_dataset(spark, train_path, test_path, **kwargs):
 
     return train_dataset, test_dataset
 
-def train(spark, train_dataset, user_id_column_name, item_id_column_name,
+def convert_datatype(dataset, user_id_column_name, item_id_column_name, rating_coloumn_name):
+    dataset = dataset.withColumn(user_id_column_name, dataset[user_id_column_name].cast(LongType())) \
+                     .withColumn(item_id_column_name, dataset[item_id_column_name].cast(LongType())) \
+                     .withColumn(rating_coloumn_name, dataset[rating_coloumn_name].cast(FloatType()))
+    return dataset
+
+def train(spark, train_dataset, user_id_column_name, item_id_column_name, rating_column_name,
           max_iter, rank, reg_param, **kwargs):
+    train_dataset = convert_datatype(train_dataset, user_id_column_name, item_id_column_name, rating_column_name)
     als = ALS(maxIter=max_iter, rank=rank, regParam=reg_param, 
               userCol=user_id_column_name, itemCol=item_id_column_name, 
-              ratingCol="rating", coldStartStrategy="drop", nonnegative = True)
+              ratingCol=rating_column_name, coldStartStrategy="drop", nonnegative = True)
     model = als.fit(train_dataset)
     print('Debug -- train Spark ALS model:', model)
     return model
 
-def transform(spark, model, train_dataset, test_dataset, user_id_column_name, item_id_column_name,
+def transform(spark, model, train_dataset, test_dataset, user_id_column_name, item_id_column_name, rating_column_name,
               last_item_col_name, max_recommendation_count, **kwargs):
+    train_dataset = convert_datatype(train_dataset, user_id_column_name, item_id_column_name, rating_column_name)
+    test_dataset = convert_datatype(test_dataset, user_id_column_name, item_id_column_name, rating_column_name)
     ## score all userxitem combinations
     dataset = train_dataset.union(test_dataset)
     users = dataset.select(user_id_column_name).distinct()
