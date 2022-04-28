@@ -24,7 +24,10 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include <future>
+#include <vector>
 #include <filesystem>
+#include <boost/asio/use_future.hpp>
 
 namespace metaspore::serving {
 
@@ -33,27 +36,30 @@ void ModelManager::init(const std::string &dir_path) {
     namespace fs = std::filesystem;
     auto d = fs::path(dir_path);
     spdlog::info("Scan {} and load model", fs::absolute(d));
+    std::vector<std::future<void>> futures;
     for (const auto &dir_entry : fs::directory_iterator(d)) {
         if (dir_entry.is_directory()) {
-            boost::asio::co_spawn(
-                Threadpools::get_background_threadpool(),
-                [this, dir_entry]() -> awaitable<void> {
-                    auto sub_dir = dir_entry.path();
-                    auto name = dir_entry.path().filename();
-                    spdlog::info("ModelManager: Try to load model from {} with name {} during init",
-                                 sub_dir, name);
-                    auto s = co_await load(dir_entry.path(), dir_entry.path().filename());
-                    if (!s.ok()) {
-                        spdlog::info(
-                            "ModelManager: Load model from {} during init failed {}, ignored",
-                            sub_dir, s);
-                    }
-                },
-                boost::asio::detached);
+            std::future<void> future = boost::asio::co_spawn(
+                                           Threadpools::get_background_threadpool(),
+                                           [this, dir_entry]() -> awaitable<void> {
+                                               auto sub_dir = dir_entry.path();
+                                               auto name = dir_entry.path().filename();
+                                               spdlog::info("ModelManager: Try to load model from {} with name {} during init",
+                                                            sub_dir, name);
+                                               auto s = co_await load(dir_entry.path(), dir_entry.path().filename());
+                                               if (!s.ok()) {
+                                                   spdlog::info(
+                                                       "ModelManager: Load model from {} during init failed {}, ignored",
+                                                       sub_dir, s);
+                                               }
+                                           },
+                                           boost::asio::use_future);
+            futures.push_back(std::move(future));
         }
     }
     // wait until all loading tasks finished
-    Threadpools::get_background_threadpool().join();
+    for (size_t i = 0; i < futures.size(); i++)
+        futures.at(i).get();
 }
 
 awaitable_status ModelManager::load(const std::string &dir_path, const std::string &name) {
