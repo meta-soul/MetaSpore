@@ -20,6 +20,7 @@
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
+#include <metaspore/string_utils.h>
 
 #include <agrpc/asioGrpc.hpp>
 #include <boost/asio/bind_executor.hpp>
@@ -78,17 +79,19 @@ struct ServerShutdown {
 
 class GrpcServerContext {
   public:
-    GrpcServerContext() : builder(), service(), grpc_context(builder.AddCompletionQueue()) {
+    GrpcServerContext() : builder(), predict_service(), load_service(), grpc_context(builder.AddCompletionQueue()) {
         spdlog::info("Listening on {}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port);
         builder.AddListeningPort(
             fmt::format("{}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port),
             grpc::InsecureServerCredentials());
-        builder.RegisterService(&service);
+        builder.RegisterService(&predict_service);
+        builder.RegisterService(&load_service);
         server = builder.BuildAndStart();
     }
 
     grpc::ServerBuilder builder;
-    Predict::AsyncService service;
+    Predict::AsyncService predict_service;
+    Load::AsyncService load_service;
     agrpc::GrpcContext grpc_context;
     std::unique_ptr<grpc::Server> server;
 };
@@ -136,11 +139,18 @@ awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<PredictReply> &wri
         boost::asio::use_awaitable);
 }
 
+awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<LoadReply> &writer,
+                              const status &s) {
+    co_await agrpc::finish_with_error(
+        writer, grpc::Status(static_cast<grpc::StatusCode>(s.code()), s.ToString()),
+        boost::asio::use_awaitable);
+}
+
 void GrpcServer::run() {
     ServerShutdown server_shutdown{*context_->server, context_->grpc_context};
 
     agrpc::repeatedly_request(
-        &Predict::AsyncService::RequestPredict, context_->service,
+        &Predict::AsyncService::RequestPredict, context_->predict_service,
         CoSpawner{boost::asio::bind_executor(
             context_->grpc_context,
             [&](grpc::ServerContext &ctx, PredictRequest &req,
@@ -165,6 +175,33 @@ void GrpcServer::run() {
                     }
                     if (!ex.empty())
                         co_await respond_error(writer, absl::UnknownError(std::move(ex)));
+                }
+                co_return;
+            })});
+
+    agrpc::repeatedly_request(
+        &Load::AsyncService::RequestLoad, context_->load_service,
+        CoSpawner{boost::asio::bind_executor(
+            context_->grpc_context,
+            [&](grpc::ServerContext &ctx, LoadRequest &req,
+                grpc::ServerAsyncResponseWriter<LoadReply> writer) -> awaitable<void> {
+                const std::string &model_name = req.model_name();
+                const std::string &version = req.version();
+                const std::string &dir_path = req.dir_path();
+                std::string desc = " model " + metaspore::ToSource(model_name) +
+                                   " version " + metaspore::ToSource(version) +
+                                   " from " + metaspore::ToSource(dir_path) + ".";
+                spdlog::info("Loading" + desc);
+                auto status = co_await ModelManager::get_model_manager().load(model_name, dir_path);
+                if (!status.ok()) {
+                    spdlog::error("Fail to load" + desc);
+                    co_await respond_error(writer, status);
+                } else {
+                    LoadReply reply;
+                    reply.set_msg("Successfully loaded" + desc);
+                    spdlog::info(reply.msg());
+                    co_await agrpc::finish(writer, reply, grpc::Status::OK,
+                                           boost::asio::use_awaitable);
                 }
                 co_return;
             })});
