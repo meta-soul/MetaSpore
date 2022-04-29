@@ -5,8 +5,8 @@ In this project, we will implement and benchmark the algorithms of two-tower mod
 
 ## Model List
 
-| Model | Training script | Implementation | Paper |
-|:---------:|:---------:|:---------:|:-------------------------------------|
+| Model | Training | Implementation | Paper |
+|:---------:|:---------:|:---------:|:------------------------------------|
 | Global Hot | [global_hot.py](baseline/global_hot.py) | - | -                                     |
 | Item CF I2I  |    [item_cf.py](baseline/item_cf.py)    |   [item_cf_retrieval.py](../../python/algos/item_cf_retrieval.py)   | [WWW 2010] [Item-Based Collaborative Filtering Recommendation Algorithms](https://www.ra.ethz.ch/cdstore/www10/papers/pdf/p519.pdf)  |
 | Swing I2I  |   [swing.py](baseline/swing.py)    |  [swing_retrieval.py](../../python/metaspore/swing_retrieval.py)   | [arxiv 2020] [Large Scale Product Graph Construction for Recommendation in E-commerce](https://arxiv.org/abs/2109.12613)  | 
