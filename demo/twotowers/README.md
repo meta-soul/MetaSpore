@@ -1,6 +1,10 @@
 ## [中文介绍](README-CN.md)
 In the recommendation system, generally speaking, the resources of serving are always limited, and the user's patience with the system response time is also limited. The recall algorithms are used to quickly filter out those items that do not match the user's needs from the item collection in the order of `million` ~ `billion`, and feed the remaining related items to the ranking algorithms. In recent years, with the development of deep networks, the use of neural networks for recall has also emerged, especially the two-towers model, which has simple structure and good effect, and has become the standard algorithm in the recall phase. Meanwhile, some classic [Collaborative Filtering](https://en.wikipedia.org/wiki/Collaborative_filtering) algorithms have been around for a long time, but some [new research](https://arxiv.org/abs/1907.06902) shows that these methods are still very strong baselines and have practical application value.
 
+<p align="center">
+<img width="600" alt="image" src="https://user-images.githubusercontent.com/7464971/165916173-49d26410-91cd-408d-bbb3-18ca43d877b6.png">
+</p>
+
 In this project, we will implement and benchmark the algorithms of two-tower model, such as [DSSM](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf), [SimpleX](https://arxiv.org/abs/2109.12613) and other classic collaborative filtering algorithms, as well as [Swing](https://arxiv.org/abs/2010.05525), [Item CF](https://www.ra.ethz.ch/cdstore/www10/papers/pdf/p519.pdf) for comparison on the MovieLens datasets. It should be noted that some algorithms have not yet been implemented, and we have not sufficiently tuned the parameters of the model. We will continue to enrich our algorithm package and provide experimental results.
 
 ## Model List
