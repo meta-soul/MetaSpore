@@ -19,6 +19,7 @@
 | ALS MF  |   [spark_als.py](baseline/spark_als.py)    |   [Spark Mllib ALS](https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.mllib.recommendation.ALS.html)   | [ICDM 2008] [Collaborative Filtering for Implicit Feedback Datasets](http://www.yifanhu.net/PUB/cf.pdf)  | 
 | DSSM  |   [dssm.py](dssm/dssm.py)    |   [dssm_net.py](../../python/algos/dssm_net.py)   | [CIKM 2013] [Learning Deep Structured Semantic Models for Web Search using Clickthrough Data](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf)  |
 | SimpleX  |   -    |   [simplex_net.py](../../python/algos/simplex/simplex_net.py)   | [CIKM 2021] [SimpleX: A Simple and Strong Baseline for Collaborative Filtering](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf)  |
+
 我们正在不断的添加新模型。
 
 ## 测试结果
