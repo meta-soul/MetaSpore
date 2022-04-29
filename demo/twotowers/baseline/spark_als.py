@@ -28,6 +28,8 @@ def init_spark(app_name, executor_memory, executor_instances, executor_cores,
         .config("spark.executor.cores", executor_cores)
         .config("spark.default.parallelism", default_parallelism)
         .config("spark.executor.memoryOverhead", "2G")
+        .config("spark.executor.extraJavaOptions","-Xss30M")
+        .config("spark.driver.extraJavaOptions","-Xss30M")
         .config("spark.sql.autoBroadcastJoinThreshold", "64MB")
         .config("spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a", "org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory")
         .config("spark.network.timeout","500")
@@ -97,7 +99,7 @@ def transform(spark, model, train_dataset, test_dataset, user_id_column_name, it
     )
     w = Window.partitionBy('pred.' + user_id_column_name).orderBy(F.col('prediction').desc())
     recall_topk = recall_result.withColumn("row_number", F.row_number().over(w))\
-                               .filter(F.col('row_number') < max_recommendation_count)\
+                               .filter(F.col('row_number') <= max_recommendation_count)\
                                .select('pred.' + user_id_column_name, 'pred.' + item_id_column_name, 'prediction')\
                                .withColumn('rec_info', F.collect_list(F.struct(
                                    F.col('pred.' + item_id_column_name).alias('_1'), 
