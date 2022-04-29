@@ -39,17 +39,19 @@ def txt2txt_search_service(query, top_k=10):
     return items
 
 def txt2img_search_service(query, top_k=10):
-    # not impl
-    return []
     params = {'query': query}
-    res = requests.post(TXT2IMG_SEARCH_SERVICE_URL, json=params)
-    #print(res.text)
-    res = res.json()
-    return res
-    if res['errno'] != 0:
-        return []
-    return [{'title': x['name'], 'content': '<img src="{}" />'.format(x['url']), 'url': x['url'], 'score': x['score']} for x in res['data']]
-
+    res = requests.post(TXT2IMG_SEARCH_SERVICE_URL, json=params).json()
+    items = []
+    if not res.get('searchItemModels'):
+        return items
+    for item in res['searchItemModels'][0]:
+        items.append({
+            'title': item['summary']['name'],
+            'content': '<img width="100" height="auto" src="{}" />'.format(item['summary']['url']),
+            'url': item['summary']['url'],
+            'score': item['score']
+        })
+    return items
 
 def img2img_search_service(img, top_k=10):
     # not impl
