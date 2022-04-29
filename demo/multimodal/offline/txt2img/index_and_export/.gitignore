@@ -1,0 +1,6 @@
+env_dev.sh
+data/unsplash-25k/*.json
+*.log
+*.pyc
+venv
+__pycache__
