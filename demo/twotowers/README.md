@@ -34,7 +34,7 @@ For the two-tower model based on neural network, we give the respective experime
 For the MovieLens dataset, we currently only use `user_id`, `movie_id`, `recent_movie_id`, `last_movie` as model features. The feature generation process can refer to our data processing and preparation [description](../dataset/README.md).
 
 ### 2. Upload the schema file of features
-For the neural network model, in MetaSpore, it is necessary to describe the feature column and feature combination column in [schema](schema) file, and upload these files to S3 storage. For example, taking the `DSSM` model as an example, suppose we are in the root directory of this project,
+For the neural network model, in MetaSpore, it is necessary to describe the feature column and feature combination column in [schema](dssm/schema) file, and upload these files to S3 storage. For example, taking the `DSSM` model as an example, suppose we are in the root directory of this project,
 we need to execute the following commands:
 
 ```shell

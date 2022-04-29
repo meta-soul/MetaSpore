@@ -36,7 +36,7 @@
 对于MovieLens数据集, 我们目前仅用了`user_id`，`movie_id`，`recent_movie_id`，`last_movie`作为模型的特征。特征的生成过程可以参考我们的数据处理和准备的[说明](../dataset/README-CN.md) 。
 
 ### 2. 特征描述文件上传
-对于神经网络模型而言，在MetaSpore中需要对数据对特征列、特征交叉的情况进行描述，并上[schema](schema)文件上传到S3存储中。比如以`DSSM`模型为例，假设我们在这个项目的根目录中，
+对于神经网络模型而言，在MetaSpore中需要对数据对特征列、特征交叉的情况进行描述，并上[schema](dssm/schema)文件上传到S3存储中。比如以`DSSM`模型为例，假设我们在这个项目的根目录中，
 我们需要执行以下命令：
 
 ```shell
