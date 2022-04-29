@@ -5,7 +5,7 @@ In this project, we will implement and benchmark the algorithms of two-tower mod
 
 ## Model List
 
-| Model |  Training Script | Implementation | Paper |
+| Model | Training script | Implementation | Paper |
 |:---------:|:---------:|:---------:|:-------------------------------------|
 | Global Hot | [global_hot.py](baseline/global_hot.py) | - | -                                     |
 | Item CF I2I  |    [item_cf.py](baseline/item_cf.py)    |   [item_cf_retrieval.py](../../python/algos/item_cf_retrieval.py)   | [WWW 2010] [Item-Based Collaborative Filtering Recommendation Algorithms](https://www.ra.ethz.ch/cdstore/www10/papers/pdf/p519.pdf)  |
