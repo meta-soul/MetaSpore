@@ -107,7 +107,7 @@ set_target_properties(metaspore-serving-bin PROPERTIES
 
 add_custom_command(TARGET metaspore-serving-bin
     POST_BUILD
-    COMMAND ldd ${CMAKE_CURRENT_BINARY_DIR}/metaspore-serving-bin | 
+    COMMAND ldd ${CMAKE_CURRENT_BINARY_DIR}/metaspore-serving-bin |
             egrep -v 'linux-vdso|ld-linux-x86-64|libpthread|libdl|libm|libc|librt' |
             cut -f 3 -d ' ' |
             xargs -L 1 -I so_file cp -n so_file ${CMAKE_CURRENT_BINARY_DIR}/
@@ -129,6 +129,7 @@ add_custom_command(TARGET metaspore-serving-bin
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/preprocessor_service.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/consul_watch_load.py
             ${CMAKE_CURRENT_BINARY_DIR}
 )
 
