@@ -2,6 +2,10 @@
 
 在推荐系统中，一般说来我们服务器的资源永远是有限的，同时用户对系统响应时长的耐心也是有限的。召回阶段会从 `百万`～`亿` 数量级的物料集合中，快速筛选出那些与用户需求并不匹配的物料，而让剩余相关的物料进入到系统的之后处理流程中。近些年随着深度网络的推陈出新，使用神经网路做召回的工作也不断涌现出来，尤其是双塔模型，结构简单，效果好，已经成为召回阶段的标配算法。 同时，一些经典的 [协同过滤](https://en.wikipedia.org/wiki/Collaborative_filtering) 算法，虽然已经出现了很长时间了，但是一些 [新的研究](https://arxiv.org/abs/1907.06902) 表明，这些方法依然是非常强的baseline，具有实际的应用价值。 
 
+<p align="center">
+ <img width="600" alt="image" src="https://user-images.githubusercontent.com/7464971/165916173-49d26410-91cd-408d-bbb3-18ca43d877b6.png">
+</p>
+
 在这个项目中，我们会对双塔结构的算法，比如 [DSSM](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf) 、[SimpleX](https://arxiv.org/abs/2109.12613) 等经典双塔结构，以及[Swing](https://arxiv.org/abs/2010.05525) 、[Item CF](https://www.ra.ethz.ch/cdstore/www10/papers/pdf/p519.pdf) ，在MovieLens数据集上进行对比。需要说明对是，有些经典的算法还没实现，我们也并没有对模型进行充分调参，我们会持续丰富我们算法包和对比实验结果。
 
 ## 模型列表
