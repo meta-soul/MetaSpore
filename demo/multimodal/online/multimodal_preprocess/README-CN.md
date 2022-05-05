@@ -60,7 +60,7 @@ message HfTokenizerPushResponse {
 
 ------
 
-当前多模态检索 Demo 进入预处理服务命令如下：
+本项目多模态检索 Demo 相关的模型推送到预处理服务命令如下：
 
 ```bash
 MY_S3_PATH='your S3 bucket'

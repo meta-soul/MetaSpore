@@ -2,7 +2,11 @@
 
 # Multimodal Retrieval Demo
 
-Deep learning has made innovative breakthroughs in computer vision (CV), natural language processing (NLP) and other fields, and the multimodal understanding technology of joint modeling between different modal data has become more and more mature. The SOTA technologies have made it possible to bridge the semantic gap between multimodal data, but factors such as complicated offline model optimization, data processing, high online inference and experimental costs have hindered the landing and popularization of multimodal technology. The demo of this project will focus on *search text by text* (**T2T**), *search image by text* (**T2I**) and other multimodal retrieval scenarios, to demonstrate to you how to easily access [HuggingFace](https://huggingface.co/) multimodal pretrained models with our **MetaSpore** technology ecology.
+Deep learning has made innovative breakthroughs in computer vision (CV), natural language processing (NLP) and other fields, and the multimodal understanding technology of joint modeling between different modal data has become more and more mature. The SOTA technologies have made it possible to bridge the semantic gap between multimodal data, but factors such as complicated offline model optimization, data processing, high online inference and experimental costs have hindered the landing and popularization of multimodal technology. 
+
+This project will focus on *search text by text* (**T2T**), *search image by text* (**T2I**) and other multimodal retrieval scenarios, to demonstrate to you how to easily access [HuggingFace](https://huggingface.co/) multimodal pretrained models with our [**MetaSpore**](https://github.com/meta-soul/MetaSpore) technology ecology.
+
+![](./online/docs/homepage.png)
 
 The demo will provide a whole of solution from offline data processing to online retrieval services:
 
@@ -28,3 +32,22 @@ The offline processing mainly includes:
 
 Since the offline part of the **T2T** and the **T2I** demo is similar, here we can mainly refer the [T2T offline guide](offline/QA/README.md).
 
+## 3. Demo Showcases
+
+When the offline and online work is ready according to the above document guidelines, you can open the [multimodal_web](online/multimodal_web) service [default url](http://127.0.0.1:8090) to access the multimodal retrieval service!
+
+**T2T** demo:
+
+| Query="如何补办身份证"                       |
+| -------------------------------------------- |
+| <img src="online/docs/txt2txt_case1.png"  /> |
+| **Query="怎么买火车票"**                     |
+| <img src="online/docs/txt2txt_case2.png"  /> |
+
+**T2I** demo:
+
+| Query="两只猫"                               |
+| -------------------------------------------- |
+| <img src="online/docs/txt2img_case1.png"  /> |
+| **Query="两只猫在草地"**                     |
+| <img src="online/docs/txt2img_case2.png"  /> |

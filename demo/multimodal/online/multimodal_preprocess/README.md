@@ -1,4 +1,6 @@
-# Intro
+## [中文介绍](README-CN.md)
+
+# Introduction
 
 This project provides a NLP/CV preprocess service based on Python gRPC framework.
 
