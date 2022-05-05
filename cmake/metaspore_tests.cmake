@@ -62,6 +62,7 @@ if(BUILD_SERVING_BIN)
     add_cpp_test(test_schema_parser serving/schema_parser_test.cpp)
     add_cpp_test(test_sparse_ctr_model serving/sparse_ctr_model_test.cpp)
     add_cpp_test(test_tabular_xgboost_model serving/tabular_xgboost_test.cpp)
+    add_cpp_test(test_py_preprocessing_process serving/py_preprocessing_process_test.cpp)
 
     add_executable(map-dumper-float
         ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/hashmap/mdumper-float.cpp

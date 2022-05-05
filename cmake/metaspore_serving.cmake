@@ -65,6 +65,7 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_model_runner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/model_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_embedding_bag_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_process.cpp
 )
 
 add_library(metaspore-serving STATIC
