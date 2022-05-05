@@ -4,7 +4,9 @@
 
 本项目将围绕**以文搜文**、**以文搜图**等多模态检索场景，来向大家演示，如何基于 [**MetaSpore**](https://github.com/meta-soul/MetaSpore) 技术体系低成本接入 [HuggingFace](https://huggingface.co/) 社区多模态预训练模型。
 
-![](./online/docs/homepage.png)
+<p align="center">
+   <img width="700" alt="image" src="./online/docs/homepage.png">
+</p>
 
 本项目 Demo 将提供从*离线数据处理到在线检索服务*一整套解决方案
 
@@ -36,19 +38,31 @@
 
 **以文搜文**示例：
 
-| Query="如何补办身份证"                       |
-| -------------------------------------------- |
-| <img src="online/docs/txt2txt_case1.png"  /> |
-| **Query="怎么买火车票"**                     |
-| <img src="online/docs/txt2txt_case2.png"  /> |
+（1）**Query="如何补办身份证"**
+
+<p align="center">
+  <img width="600" src="./online/docs/txt2txt_case1.png">
+</p>
+
+（2）**Query="怎么买火车票"**
+
+<p align="center">
+  <img width="600" src="./online/docs/txt2txt_case2.png">
+</p>
 
 **以文搜图**示例：
 
-| Query="两只猫"                               |
-| -------------------------------------------- |
-| <img src="online/docs/txt2img_case1.png"  /> |
-| **Query="两只猫在草地"**                     |
-| <img src="online/docs/txt2img_case2.png"  /> |
+（1）**Query="两只猫" **
+
+<p align="center">
+  <img width="600" src="./online/docs/txt2img_case1.png">
+</p>
+
+（2）**Query="两只猫在草地"**
+
+<p align="center">
+  <img width="600" src="./online/docs/txt2img_case2.png">
+</p>
 
 
 
