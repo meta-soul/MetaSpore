@@ -25,9 +25,9 @@ using namespace metaspore::serving;
 TEST(PyPreprocessingProcessTestSuite, LaunchTest) {
     PyPreprocessingProcess proc;
     proc.set_python_executable("/usr/bin/python");
-    proc.set_virtual_env_dir((fs::current_path() / "test_venv").string());
+    proc.set_virtual_env_dir((fs::current_path() / "preprocessor_venv").string());
     proc.set_requirement_file((fs::current_path() / "requirements.txt").string());
-    proc.set_python_script_file((fs::current_path() / "python_script.py").string());
+    proc.set_python_script_file((fs::current_path() / "preprocessor_service.py").string());
     absl::Status status = proc.launch();
     ASSERT_TRUE(status.ok());
 }

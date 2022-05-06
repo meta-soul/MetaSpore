@@ -23,7 +23,7 @@ namespace metaspore::serving {
 status PyPreprocessingProcess::launch() {
     namespace bp = boost::process;
     namespace fs = std::filesystem;
-    int rc = bp::system(python_executable_, "-m", "venv", "--clear", virtual_env_dir_);
+    int rc = bp::system(python_executable_, "-m", "venv", virtual_env_dir_);
     if (rc != 0)
         return absl::FailedPreconditionError("fail to create virtual env \"" + virtual_env_dir_ + "\"");
     fs::path venv_py = fs::path{virtual_env_dir_} / "bin" / "python";
