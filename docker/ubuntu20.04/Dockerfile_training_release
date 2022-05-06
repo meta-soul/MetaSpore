@@ -44,7 +44,7 @@ ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://mirrors.cloud.tencent.com/pypi/simple/
+RUN python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
     apt-get install -y tini libpam-modules krb5-user libnss3 procps && \
@@ -62,7 +62,7 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     echo OK: python
 
 FROM env as metaspore_http_install
-ARG METASPORE_WHEEL="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B295d07c-cp38-cp38-linux_x86_64.whl"
+ARG METASPORE_WHEEL="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B48beee4-cp38-cp38-linux_x86_64.whl"
 RUN python -m pip install ${METASPORE_WHEEL} && pip cache purge
 
 FROM ${METASPORE_BUILD_IMAGE} as metaspore_build
