@@ -155,6 +155,30 @@ inline std::string ToSource(std::string_view str, char delimiter = '"') {
     return sout;
 }
 
+inline std::string ToSource(const std::vector<std::string> &strs, char delimiter = '"') {
+    std::string sout;
+    sout.push_back('[');
+    for (const std::string &str: strs) {
+        if (sout.size() > 1)
+            sout.append(", ");
+        sout.append(ToSource(str, delimiter));
+    }
+    sout.push_back(']');
+    return sout;
+}
+
+inline std::string ToSource(const std::vector<std::string_view> &strs, char delimiter = '"') {
+    std::string sout;
+    sout.push_back('[');
+    for (const std::string_view &str: strs) {
+        if (sout.size() > 1)
+            sout.append(", ");
+        sout.append(ToSource(str, delimiter));
+    }
+    sout.push_back(']');
+    return sout;
+}
+
 inline bool EndsWith(std::string_view str, std::string_view sub) {
     const size_t i = str.size() - sub.size();
     return str.size() >= sub.size() && str.compare(i, sub.size(), sub) == 0;

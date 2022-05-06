@@ -16,6 +16,10 @@
 
 #include <filesystem>
 #include <boost/process/system.hpp>
+#include <boost/process/pipe.hpp>
+#include <boost/process/io.hpp>
+#include <common/logger.h>
+#include <metaspore/string_utils.h>
 #include <serving/py_preprocessing_process.h>
 
 namespace metaspore::serving {
@@ -30,11 +34,37 @@ status PyPreprocessingProcess::launch() {
     rc = bp::system(venv_py.string(), "-m", "pip", "install", "-r", requirement_file_);
     if (rc != 0)
         return absl::FailedPreconditionError("fail to install requirement file \"" + requirement_file_ + "\"");
-    bp::child child{venv_py.string(), python_script_file_};
-    child.wait();
-    if (child.exit_code() != 0)
-        return absl::FailedPreconditionError("fail to launch python script \"" + python_script_file_ + "\"");
+    bp::ipstream pipe_stream;
+    bp::child child{venv_py.string(), python_script_file_,
+                    "--config-dir", preprocessor_config_dir_,
+                    "--listen-addr", preprocessor_listen_addr_,
+                    bp::std_out > pipe_stream
+                   };
+    std::string line;
+    while (pipe_stream && std::getline(pipe_stream, line) && !line.empty()) {
+        if (line.starts_with("input_names=")) {
+            input_names_ = parse_name_list(line);
+        } else if (line.starts_with("output_names=")) {
+            output_names_ = parse_name_list(line);
+        }
+        if (!input_names_.empty() && !output_names_.empty())
+            break;
+    }
+    if (input_names_.empty() || output_names_.empty()) {
+        return absl::FailedPreconditionError("fail to parse input and output names; conf_dir = \"" +
+                                             preprocessor_config_dir_ + "\"");
+    }
+    spdlog::info("input_names: {}", metaspore::ToSource(input_names_));
+    spdlog::info("output_names: {}", metaspore::ToSource(output_names_));
+    child_process_ = std::move(child);
     return absl::OkStatus();
+}
+
+std::vector<std::string> PyPreprocessingProcess::parse_name_list(const std::string &line) {
+    std::string::size_type i = line.find('=') + 1;
+    std::string_view str{line.data() + i, line.size() - i};
+    auto names = metaspore::SplitStringView(str, ",");
+    return {names.begin(), names.end()};
 }
 
 } // namespace metaspore::serving

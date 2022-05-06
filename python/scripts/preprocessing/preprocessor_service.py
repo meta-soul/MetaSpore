@@ -89,6 +89,7 @@ class PreprocessorService(object):
         output_names = ','.join(self._preprocessor_object.output_names)
         print('input_names=%s' % input_names)
         print('output_names=%s' % output_names)
+        sys.stdout.flush()
 
     async def _serve(self):
         servicer = PreprocessorServicer(self._preprocessor_object)

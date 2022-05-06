@@ -35,14 +35,29 @@ public:
     const std::string &get_python_script_file() const { return python_script_file_; }
     void set_python_script_file(std::string value) { python_script_file_ = std::move(value); }
 
+    const std::string &get_preprocessor_config_dir() const { return preprocessor_config_dir_; }
+    void set_preprocessor_config_dir(std::string value) { preprocessor_config_dir_ = std::move(value); }
+
+    const std::string &get_preprocessor_listen_addr() const { return preprocessor_listen_addr_; }
+    void set_preprocessor_listen_addr(std::string value) { preprocessor_listen_addr_ = std::move(value); }
+
+    const std::vector<std::string> &get_input_names() const { return input_names_; }
+    const std::vector<std::string> &get_output_names() const { return output_names_; }
+
     status launch();
 
 private:
+    static std::vector<std::string> parse_name_list(const std::string &line);
+
     std::string python_executable_;
     std::string virtual_env_dir_;
     std::string requirement_file_;
     std::string python_script_file_;
+    std::string preprocessor_config_dir_;
+    std::string preprocessor_listen_addr_;
     boost::process::child child_process_;
+    std::vector<std::string> input_names_;
+    std::vector<std::string> output_names_;
 };
 
 } // namespace metaspore::serving

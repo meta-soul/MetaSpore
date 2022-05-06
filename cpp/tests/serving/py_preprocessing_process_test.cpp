@@ -15,7 +15,6 @@
 //
 
 #include <filesystem>
-#include <boost/process/system.hpp>
 #include <serving/test_utils.h>
 #include <serving/py_preprocessing_process.h>
 
@@ -28,6 +27,8 @@ TEST(PyPreprocessingProcessTestSuite, LaunchTest) {
     proc.set_virtual_env_dir((fs::current_path() / "preprocessor_venv").string());
     proc.set_requirement_file((fs::current_path() / "requirements.txt").string());
     proc.set_python_script_file((fs::current_path() / "preprocessor_service.py").string());
+    proc.set_preprocessor_config_dir((fs::current_path() / "preprocessor_conf").string());
+    proc.set_preprocessor_listen_addr("unix://" + (fs::current_path() / "preprocessor_conf" / "listen_addr.sock").string());
     absl::Status status = proc.launch();
     ASSERT_TRUE(status.ok());
 }
