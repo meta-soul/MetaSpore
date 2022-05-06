@@ -32,8 +32,8 @@ public:
     const std::string &get_requirement_file() const { return requirement_file_; }
     void set_requirement_file(std::string value) { requirement_file_ = std::move(value); }
 
-    const std::string &get_python_script_file() const { return python_script_file_; }
-    void set_python_script_file(std::string value) { python_script_file_ = std::move(value); }
+    const std::string &get_service_script_file() const { return service_script_file_; }
+    void set_service_script_file(std::string value) { service_script_file_ = std::move(value); }
 
     const std::string &get_preprocessor_config_dir() const { return preprocessor_config_dir_; }
     void set_preprocessor_config_dir(std::string value) { preprocessor_config_dir_ = std::move(value); }
@@ -52,7 +52,7 @@ private:
     std::string python_executable_;
     std::string virtual_env_dir_;
     std::string requirement_file_;
-    std::string python_script_file_;
+    std::string service_script_file_;
     std::string preprocessor_config_dir_;
     std::string preprocessor_listen_addr_;
     boost::process::child child_process_;

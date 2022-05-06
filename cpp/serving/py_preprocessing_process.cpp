@@ -18,7 +18,6 @@
 #include <boost/process/system.hpp>
 #include <boost/process/pipe.hpp>
 #include <boost/process/io.hpp>
-#include <common/logger.h>
 #include <metaspore/string_utils.h>
 #include <serving/py_preprocessing_process.h>
 
@@ -31,11 +30,13 @@ status PyPreprocessingProcess::launch() {
     if (rc != 0)
         return absl::FailedPreconditionError("fail to create virtual env \"" + virtual_env_dir_ + "\"");
     fs::path venv_py = fs::path{virtual_env_dir_} / "bin" / "python";
-    rc = bp::system(venv_py.string(), "-m", "pip", "install", "-r", requirement_file_);
-    if (rc != 0)
-        return absl::FailedPreconditionError("fail to install requirement file \"" + requirement_file_ + "\"");
+    if (!requirement_file_.empty()) {
+        rc = bp::system(venv_py.string(), "-m", "pip", "install", "-r", requirement_file_);
+        if (rc != 0)
+            return absl::FailedPreconditionError("fail to install requirement file \"" + requirement_file_ + "\"");
+    }
     bp::ipstream pipe_stream;
-    bp::child child{venv_py.string(), python_script_file_,
+    bp::child child{venv_py.string(), service_script_file_,
                     "--config-dir", preprocessor_config_dir_,
                     "--listen-addr", preprocessor_listen_addr_,
                     bp::std_out > pipe_stream
@@ -54,8 +55,6 @@ status PyPreprocessingProcess::launch() {
         return absl::FailedPreconditionError("fail to parse input and output names; conf_dir = \"" +
                                              preprocessor_config_dir_ + "\"");
     }
-    spdlog::info("input_names: {}", metaspore::ToSource(input_names_));
-    spdlog::info("output_names: {}", metaspore::ToSource(output_names_));
     child_process_ = std::move(child);
     return absl::OkStatus();
 }

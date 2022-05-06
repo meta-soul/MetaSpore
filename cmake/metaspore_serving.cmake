@@ -66,6 +66,7 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/model_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_embedding_bag_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_process.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_model.cpp
 )
 
 add_library(metaspore-serving STATIC
@@ -85,6 +86,8 @@ target_compile_options(metaspore-serving PUBLIC
 
 target_link_libraries(metaspore-serving PUBLIC
     metaspore-common
+    Boost::filesystem
+    Boost::system
     asio-grpc::asio-grpc
     fmt::fmt
     onnxruntime-cpu-default
@@ -105,6 +108,13 @@ add_custom_command(TARGET metaspore-serving-bin
             egrep -v 'linux-vdso|ld-linux-x86-64|libpthread|libdl|libm|libc|librt' |
             cut -f 3 -d ' ' |
             xargs -L 1 -I so_file cp -n so_file ${CMAKE_CURRENT_BINARY_DIR}/
+)
+
+add_custom_command(TARGET metaspore-serving-bin
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/preprocessor_service.py
+            ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 install(TARGETS metaspore-serving-bin)

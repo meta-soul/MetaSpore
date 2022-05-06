@@ -21,7 +21,8 @@ import metaspore_pb2
 import metaspore_pb2_grpc
 
 async def main():
-    server_addr = 'unix://' + os.getcwd() + '/listen_addr.sock'
+    conf_dir = os.path.dirname(__file__)
+    server_addr = 'unix://' + conf_dir + '/listen_addr.sock'
     async with grpc.aio.insecure_channel(server_addr) as channel:
         stub = metaspore_pb2_grpc.PredictStub(channel)
         request = metaspore_pb2.PredictRequest()

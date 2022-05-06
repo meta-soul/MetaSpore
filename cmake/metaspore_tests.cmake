@@ -62,7 +62,6 @@ if(BUILD_SERVING_BIN)
     add_cpp_test(test_schema_parser serving/schema_parser_test.cpp)
     add_cpp_test(test_sparse_ctr_model serving/sparse_ctr_model_test.cpp)
     add_cpp_test(test_tabular_xgboost_model serving/tabular_xgboost_test.cpp)
-    add_cpp_test(test_py_preprocessing_process serving/py_preprocessing_process_test.cpp)
 
     add_executable(map-dumper-float
         ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/hashmap/mdumper-float.cpp
@@ -86,6 +85,29 @@ add_custom_command(
         ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
     DEPENDS testing_venv ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto)
 add_custom_target(py_grpc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/metaspore_pb2_grpc.py)
+
+if(BUILD_SERVING_BIN)
+    add_cpp_test(test_py_preprocessing_process serving/py_preprocessing_process_test.cpp)
+    add_custom_command(TARGET test_py_preprocessing_process
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/example_requirements.txt
+                ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/requirements.txt
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/example_preprocessor.py
+                ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/preprocessor.py
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/test_example_preprocessor.py
+                ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/test_example_preprocessor.py
+        COMMAND ${PYTHON_EXE} -m grpc_tools.protoc
+                -I ${CMAKE_CURRENT_SOURCE_DIR}/protos
+                --python_out ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
+                --grpc_python_out ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
+                ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
+    )
+    add_cpp_test(test_py_preprocessing_model serving/py_preprocessing_model_test.cpp)
+endif()
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py

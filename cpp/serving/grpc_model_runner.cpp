@@ -58,4 +58,24 @@ awaitable_result<PredictReply> GrpcOrtModelRunner::predict(PredictRequest &reque
     co_return reply;
 }
 
+awaitable_result<PredictReply> GrpcPreprocessingOrtModelRunner::predict(PredictRequest &request) {
+    // TODO: cf: implement
+
+    // convert grpc request to ort value input
+    auto req = std::make_unique<GrpcRequestOutput>(request);
+    auto input = std::make_unique<OrtModelInput>();
+    CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(input_conveter->convert_input(std::move(req), input.get()));
+
+    // do prediction
+    CO_ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(auto predict_result, model->predict(std::move(input)));
+
+    // convert prediction output to grpc reply
+    PredictReply reply;
+    auto reply_ptr = std::make_unique<GrpcReplyInput>(reply);
+    CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(
+        output_conveter->convert_input(std::move(predict_result), reply_ptr.get()));
+
+    co_return reply;
+}
+
 } // namespace metaspore::serving

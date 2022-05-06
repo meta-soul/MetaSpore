@@ -42,4 +42,9 @@ class GrpcOrtModelRunner : public GrpcModelRunner {
     awaitable_result<PredictReply> predict(PredictRequest &request) override;
 };
 
+class GrpcPreprocessingOrtModelRunner : public GrpcModelRunner {
+  public:
+    awaitable_result<PredictReply> predict(PredictRequest &request) override;
+};
+
 } // namespace metaspore::serving

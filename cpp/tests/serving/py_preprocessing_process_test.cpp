@@ -14,22 +14,28 @@
 // limitations under the License.
 //
 
-#include <filesystem>
+#include <boost/dll/runtime_symbol_info.hpp>
+#include <boost/process/system.hpp>
+#include <boost/process/search_path.hpp>
 #include <serving/test_utils.h>
 #include <serving/py_preprocessing_process.h>
 
-namespace fs = std::filesystem;
 using namespace metaspore::serving;
 
-TEST(PyPreprocessingProcessTestSuite, LaunchTest) {
+TEST(PyPreprocessingProcessTestSuite, LaunchProcessTest) {
+    auto prog_dir = boost::dll::program_location().parent_path();
+    auto conf_dir = prog_dir / "testing_preprocessor_conf";
     PyPreprocessingProcess proc;
-    proc.set_python_executable("/usr/bin/python");
-    proc.set_virtual_env_dir((fs::current_path() / "preprocessor_venv").string());
-    proc.set_requirement_file((fs::current_path() / "requirements.txt").string());
-    proc.set_python_script_file((fs::current_path() / "preprocessor_service.py").string());
-    proc.set_preprocessor_config_dir((fs::current_path() / "preprocessor_conf").string());
-    proc.set_preprocessor_listen_addr("unix://" + (fs::current_path() / "preprocessor_conf" / "listen_addr.sock").string());
+    proc.set_python_executable(boost::process::search_path("python").string());
+    proc.set_virtual_env_dir((prog_dir / "testing_preprocessor_venv").string());
+    proc.set_requirement_file((conf_dir / "requirements.txt").string());
+    proc.set_service_script_file((prog_dir / "preprocessor_service.py").string());
+    proc.set_preprocessor_config_dir(conf_dir.string());
+    proc.set_preprocessor_listen_addr("unix://" + (conf_dir / "listen_addr.sock").string());
     absl::Status status = proc.launch();
+    int rc = boost::process::system(prog_dir / "testing_preprocessor_venv" / "bin" / "python",
+                                    conf_dir / "test_example_preprocessor.py");
+    ASSERT_EQ(rc, 0);
     ASSERT_TRUE(status.ok());
 }
 

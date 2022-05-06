@@ -5,6 +5,11 @@
         "arrow",
         "range-v3",
         "boost-asio",
+        "boost-dll",
+        "boost-process",
+        "boost-filesystem",
+        "boost-system",
+        "boost-uuid",
         "boost-spirit",
         {
             "name": "asio-grpc",
