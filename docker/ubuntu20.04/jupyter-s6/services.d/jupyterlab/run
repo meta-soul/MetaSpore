@@ -10,4 +10,5 @@ exec ${HOME}/.local/bin/jupyter lab \
   --ServerApp.password="" \
   --ServerApp.allow_origin="*" \
   --ServerApp.base_url="${NB_PREFIX}" \
-  --ServerApp.authenticate_prometheus=False
+  --ServerApp.authenticate_prometheus=False \
+  --NotebookApp.terminado_settings="{'shell_command': ['/bin/zsh']}"
