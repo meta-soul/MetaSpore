@@ -21,6 +21,7 @@
 #include <serving/converters.h>
 #include <serving/dense_feature_extraction_model.h>
 #include <serving/grpc_input_output.h>
+#include <serving/py_preprocessing_model.h>
 #include <serving/ort_model.h>
 #include <serving/sparse_feature_extraction_model.h>
 #include <serving/sparse_lookup_model.h>
@@ -184,6 +185,23 @@ status OrtToGrpcReplyConverter::convert(std::unique_ptr<OrtModelOutput> from, Gr
         CALL_AND_RETURN_IF_STATUS_NOT_OK(
             ArrowTensorSerde::serialize_to(name, *arrow_tensor_result, to->reply));
     }
+    return absl::OkStatus();
+}
+
+status GrpcRequestToPyPreprocessingConverter::convert(std::unique_ptr<GrpcRequestOutput> from, PyPreprocessingModelInput *to) {
+    *to->request.mutable_payload() = std::move(*from->request.mutable_payload());
+    return absl::OkStatus();
+}
+
+status PyPreprocessingToOrtConverter::convert(std::unique_ptr<PyPreprocessingModelOutput> from, OrtModelInput *to) {
+    for (const auto &name : names_) {
+        ASSIGN_RESULT_OR_RETURN_NOT_OK(auto r,
+                                       ArrowTensorSerde::deserialize_from(name, from->reply));
+        to->inputs.emplace(name, OrtModelInput::Value{.value = arrow_to_ort_tensor<void>(*r)});
+    }
+    // move from to the first element to hold all memories
+    if (!to->inputs.empty())
+        to->inputs.begin()->second.holder = std::move(from);
     return absl::OkStatus();
 }
 

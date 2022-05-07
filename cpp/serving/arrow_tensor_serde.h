@@ -29,6 +29,12 @@ class ArrowTensorSerde {
     static result<std::shared_ptr<arrow::Tensor>>
     deserialize_from(const std::string &name, PredictRequest &request);
 
+    static result<std::shared_ptr<arrow::Tensor>>
+    deserialize_from(const std::string &name, PredictReply &reply);
+
+    static status serialize_to(const std::string &name, const arrow::Tensor &tensor,
+                               PredictRequest &request);
+
     static status serialize_to(const std::string &name, const arrow::Tensor &tensor,
                                PredictReply &reply);
 };
