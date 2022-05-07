@@ -92,53 +92,151 @@ WARNING: All illegal access operations will be denied in a future release
 Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
 Setting default log level to "WARN".
 To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
-[Stage 0:>                                                                                                                 (0 + 1) / 1]                                                                                                                                       [Stage 1:>                                                                                                                 (0 + 1) / 1]                                                                                                                                       [Stage 2:>                                                                                                                 (0 + 1) / 1]                                                                                                                                       [Stage 3:>                                                                                                                 (0 + 1) / 1]                                                                                                                                       [Stage 4:>                                                                                                                 (0 + 1) / 1]                                                                                                                                       [Stage 5:>                                                                                                                 (0 + 1) / 1]                                                                                                                                       [Stage 6:>                                                                                                                (0 + 8) / 11][Stage 6:==========>                                                                                                      (1 + 8) / 11][Stage 6:====================>                                                                                            (2 + 8) / 11][Stage 6:==============================>                                                                                  (3 + 8) / 11][Stage 6:=========================================>                                                                       (4 + 7) / 11][Stage 6:===================================================>                                                             (5 + 6) / 11][Stage 6:=============================================================>                                                   (6 + 5) / 11][Stage 6:==================================================================================>                              (8 + 3) / 11][Stage 6:============================================================================================>                    (9 + 2) / 11][Stage 6:=====================================================================================================>          (10 + 1) / 11]                                                                                                                                       [Stage 8:>                                                                                                                (0 + 8) / 11][Stage 8:==========>                                                                                                      (1 + 8) / 11][Stage 8:====================>                                                                                            (2 + 8) / 11][Stage 8:==============================>                                                                                  (3 + 8) / 11][Stage 8:=========================================>                                                                       (4 + 7) / 11][Stage 8:===================================================>                                                             (5 + 6) / 11][Stage 8:=============================================================>                                                   (6 + 5) / 11][Stage 8:=======================================================================>                                         (7 + 4) / 11][Stage 8:==================================================================================>                              (8 + 3) / 11][Stage 8:============================================================================================>                    (9 + 2) / 11][Stage 8:=====================================================================================================>          (10 + 1) / 11]                                                                                                                                       [Stage 10:>                                                                                                                (0 + 8) / 8][Stage 10:==============>                                                                                                  (1 + 7) / 8][Stage 10:==========================================>                                                                      (3 + 5) / 8][Stage 10:======================================================================>                                          (5 + 3) / 8][Stage 10:====================================================================================>                            (6 + 2) / 8][Stage 10:==================================================================================================>              (7 + 1) / 8]                                                                                                                                       [Stage 12:>                                                                                                                (0 + 8) / 8][Stage 12:==============>                                                                                                  (1 + 7) / 8][Stage 12:==========================================>                                                                      (3 + 5) / 8][Stage 12:======================================================================>                                          (5 + 3) / 8][Stage 12:====================================================================================>                            (6 + 2) / 8][Stage 12:==================================================================================================>              (7 + 1) / 8]                                                                                                                                       Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
+
+[Stage 0:>                                                                                                                 (0 + 1) / 1]
+
+                                                                                                                                       
+
+[Stage 1:>                                                                                                                 (0 + 1) / 1]
+
+                                                                                                                                       
+
+[Stage 2:>                                                                                                                 (0 + 1) / 1]
+
+                                                                                                                                       
+
+[Stage 3:>                                                                                                                 (0 + 1) / 1]
+
+                                                                                                                                       
+
+[Stage 4:>                                                                                                                 (0 + 1) / 1]
+
+                                                                                                                                       
+
+[Stage 5:>                                                                                                                 (0 + 1) / 1]
+
+                                                                                                                                       
+
+[Stage 6:>                                                                                                                (0 + 8) / 11]
+
+[Stage 6:==========>                                                                                                      (1 + 8) / 11]
+
+[Stage 6:====================>                                                                                            (2 + 8) / 11]
+
+[Stage 6:==============================>                                                                                  (3 + 8) / 11]
+
+[Stage 6:=========================================>                                                                       (4 + 7) / 11]
+
+[Stage 6:===================================================>                                                             (5 + 6) / 11]
+
+[Stage 6:=============================================================>                                                   (6 + 5) / 11]
+
+[Stage 6:==================================================================================>                              (8 + 3) / 11]
+
+[Stage 6:============================================================================================>                    (9 + 2) / 11]
+
+[Stage 6:=====================================================================================================>          (10 + 1) / 11]
+
+                                                                                                                                       
+
+[Stage 8:>                                                                                                                (0 + 8) / 11]
+
+[Stage 8:==========>                                                                                                      (1 + 8) / 11]
+
+[Stage 8:====================>                                                                                            (2 + 8) / 11]
+
+[Stage 8:==============================>                                                                                  (3 + 8) / 11]
+
+[Stage 8:=========================================>                                                                       (4 + 7) / 11]
+
+[Stage 8:===================================================>                                                             (5 + 6) / 11]
+
+[Stage 8:=============================================================>                                                   (6 + 5) / 11]
+
+[Stage 8:=======================================================================>                                         (7 + 4) / 11]
+
+[Stage 8:==================================================================================>                              (8 + 3) / 11]
+
+[Stage 8:============================================================================================>                    (9 + 2) / 11]
+
+[Stage 8:=====================================================================================================>          (10 + 1) / 11]
+
+                                                                                                                                       
+
+[Stage 10:>                                                                                                                (0 + 8) / 8]
+
+[Stage 10:==============>                                                                                                  (1 + 7) / 8]
+
+[Stage 10:==========================================>                                                                      (3 + 5) / 8]
+
+[Stage 10:======================================================================>                                          (5 + 3) / 8]
+
+[Stage 10:====================================================================================>                            (6 + 2) / 8]
+
+[Stage 10:==================================================================================================>              (7 + 1) / 8]
+
+                                                                                                                                       
+
+[Stage 12:>                                                                                                                (0 + 8) / 8]
+
+[Stage 12:==============>                                                                                                  (1 + 7) / 8]
+
+[Stage 12:==========================================>                                                                      (3 + 5) / 8]
+
+[Stage 12:======================================================================>                                          (5 + 3) / 8]
+
+[Stage 12:====================================================================================>                            (6 + 2) / 8]
+
+[Stage 12:==================================================================================================>              (7 + 1) / 8]
+
+                                                                                                                                       
+Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
 [WARN] 2022-04-28 08:41:56.557 STSAssumeRoleWithWebIdentityCredentialsProvider [140268918105920] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-28 08:41:56.557] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: $MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema, read_only: true
+[2022-04-28 08:41:56.557] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema, read_only: true
 
-[2022-04-28 08:41:56.588] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: $MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema with total length: 116
+[2022-04-28 08:41:56.588] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema with total length: 116
 
-[2022-04-28 08:41:56.592] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema with size 116 at position 0 larger than total size: 116, change size to 116
+[2022-04-28 08:41:56.592] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema with size 116 at position 0 larger than total size: 116, change size to 116
 
-[2022-04-28 08:41:56.633] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema reached end 116
+[2022-04-28 08:41:56.633] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema reached end 116
 
-[2022-04-28 08:41:56.633] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema reached end 116
+[2022-04-28 08:41:56.633] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema reached end 116
 
 [WARN] 2022-04-28 08:41:56.634 STSAssumeRoleWithWebIdentityCredentialsProvider [140268918105920] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-28 08:41:56.634] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: $MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema, read_only: true
+[2022-04-28 08:41:56.634] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema, read_only: true
 
-[2022-04-28 08:41:56.681] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: $MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema with total length: 36
+[2022-04-28 08:41:56.681] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema with total length: 36
 
-[2022-04-28 08:41:56.685] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema with size 36 at position 0 larger than total size: 36, change size to 36
+[2022-04-28 08:41:56.685] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema with size 36 at position 0 larger than total size: 36, change size to 36
 
-[2022-04-28 08:41:56.725] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema reached end 36
+[2022-04-28 08:41:56.725] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema reached end 36
 
-[2022-04-28 08:41:56.725] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema reached end 36
+[2022-04-28 08:41:56.725] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema reached end 36
 
 [WARN] 2022-04-28 08:41:56.779 STSAssumeRoleWithWebIdentityCredentialsProvider [140268918105920] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-28 08:41:56.779] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: $MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema, read_only: true
+[2022-04-28 08:41:56.779] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema, read_only: true
 
-[2022-04-28 08:41:56.796] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: $MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema with total length: 117
+[2022-04-28 08:41:56.796] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema with total length: 117
 
-[2022-04-28 08:41:56.797] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema with size 117 at position 0 larger than total size: 117, change size to 117
+[2022-04-28 08:41:56.797] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema with size 117 at position 0 larger than total size: 117, change size to 117
 
-[2022-04-28 08:41:56.837] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema reached end 117
+[2022-04-28 08:41:56.837] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema reached end 117
 
-[2022-04-28 08:41:56.837] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema reached end 117
+[2022-04-28 08:41:56.837] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema reached end 117
 
 [WARN] 2022-04-28 08:41:56.837 STSAssumeRoleWithWebIdentityCredentialsProvider [140268918105920] Token file must be specified to use STS AssumeRole web identity creds provider.
-[2022-04-28 08:41:56.837] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: $MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema, read_only: true
+[2022-04-28 08:41:56.837] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema, read_only: true
 
-[2022-04-28 08:41:56.857] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: $MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema with total length: 9
+[2022-04-28 08:41:56.857] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema with total length: 9
 
-[2022-04-28 08:41:56.857] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema with size 9 at position 0 larger than total size: 9, change size to 9
+[2022-04-28 08:41:56.857] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema with size 9 at position 0 larger than total size: 9, change size to 9
 
-[2022-04-28 08:41:56.896] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema reached end 9
+[2022-04-28 08:41:56.896] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema reached end 9
 
-[2022-04-28 08:41:56.896] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object $MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema reached end 9
+[2022-04-28 08:41:56.896] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema reached end 9
 
 Debug -- TwoTowers DSSM Demo
-Debug -- load config:  {'app_name': 'DSSM Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 128, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': '$MY_S3_BUCKET/movielens/1m/negsample/num_negs_100/train.parquet', 'test_path': '$MY_S3_BUCKET/movielens/1m/negsample/num_negs_100/test.parquet', 'item_path': '$MY_S3_BUCKET/demo/movielens/1m/negsample/num_negs_10/item.parquet', 'two_tower_module': 'metaspore', 'two_tower_module_class': 'TwoTowerRetrievalModule', 'two_tower_estimator_class': 'TwoTowerRetrievalEstimator', 'user_column_name': '$MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema', 'user_combine_schema': '$MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema', 'item_column_name': '$MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema', 'item_combine_schema': '$MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema', 'model_in_path': None, 'model_out_path': '$MY_S3_BUCKET/movielens/1m/model/dssm/model_out/', 'model_export_path': None, 'model_version': '0.1', 'experiment_name': 'two_towers_dssm', 'input_label_column_index': 0, 'milvus_description': 'ml_1m_dssm', 'milvus_host': 'my-milvus-release.milvus.svc.cluster.local', 'milvus_port': '19530', 'milvus_embedding_field': 'embedding_vector', 'milvus_index_type': 'IVF_FLAT', 'milvus_metric_type': 'IP', 'milvus_nlist': 1024, 'milvus_nprobe': 128, 'tau': 0.05, 'sparse_init_var': 0.0001, 'net_dropout': 0.0, 'vector_embedding_size': 32, 'item_embedding_size': 128, 'dnn_hidden_units': [512, 256, 128], 'dnn_hidden_activations': 'ReLU', 'adam_learning_rate': 0.0001, 'ftrl_learning_rate': 0.01, 'ftrl_smothing_rate': 1.0, 'ftrl_l1_regularization': 1.0, 'ftrl_l2_regularization': 120.0, 'training_epoches': 3, 'shuffle_training_dataset': True}
+Debug -- load config:  {'app_name': 'DSSM Demo', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 128, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': '${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_100/train.parquet', 'test_path': '${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_100/test.parquet', 'item_path': '${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet', 'two_tower_module': 'metaspore', 'two_tower_module_class': 'TwoTowerRetrievalModule', 'two_tower_estimator_class': 'TwoTowerRetrievalEstimator', 'user_column_name': '${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema', 'user_combine_schema': '${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema', 'item_column_name': '${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema', 'item_combine_schema': '${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema', 'model_in_path': None, 'model_out_path': '${MY_S3_BUCKET}/movielens/1m/model/dssm/model_out/', 'model_export_path': None, 'model_version': '0.1', 'experiment_name': 'two_towers_dssm', 'input_label_column_index': 0, 'milvus_description': 'ml_1m_dssm', 'milvus_host': 'my-milvus-release.milvus.svc.cluster.local', 'milvus_port': '19530', 'milvus_embedding_field': 'embedding_vector', 'milvus_index_type': 'IVF_FLAT', 'milvus_metric_type': 'IP', 'milvus_nlist': 1024, 'milvus_nprobe': 128, 'tau': 0.05, 'sparse_init_var': 0.0001, 'net_dropout': 0.0, 'vector_embedding_size': 32, 'item_embedding_size': 128, 'dnn_hidden_units': [512, 256, 128], 'dnn_hidden_activations': 'ReLU', 'adam_learning_rate': 0.0001, 'ftrl_learning_rate': 0.01, 'ftrl_smothing_rate': 1.0, 'ftrl_l1_regularization': 1.0, 'ftrl_l2_regularization': 120.0, 'training_epoches': 3, 'shuffle_training_dataset': True}
 Debug -- spark init
 Debug -- version: 3.1.2
 Debug -- applicaitonId: spark-application-1651135224683
@@ -198,16 +296,52 @@ Debug -- train dataset positive count: 821498
 Debug -- train dataset negative count: 13961896
 Debug -- test dataset count: 15009
 Debug -- item dataset count: 3706
-[32mloaded combine schema from[m [32mcolumn name file [m'$MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema' [32mand combine schema file [m'$MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema'
+[32mloaded combine schema from[m [32mcolumn name file [m'${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema' [32mand combine schema file [m'${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema'
 [2022-04-28 08:41:59.750] [info] PS job with coordinator address 10.0.50.56:35353 started.
 [2022-04-28 08:41:59.750] [info] PSRunner::RunPS: pid: 30444, tid: 30732, thread: 0x7f929b7fe700
 [2022-04-28 08:41:59.750] [info] PSRunner::RunPSCoordinator: pid: 30444, tid: 30732, thread: 0x7f929b7fe700
 [2022-04-28 08:41:59.752] [info] ActorProcess::Receiving: Coordinator pid: 30444, tid: 30736, thread: 0x7f9299ffb700
-[Stage 14:>                                            (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4][2022-04-28 08:42:02.959] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
-                                                                                                                                       [Stage 15:>                                                                                                                (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4][Stage 19:>                                           (0 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:====>                                       (1 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:========>                                   (2 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:============>                               (3 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:================>                           (4 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:====================>                       (5 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:========================>                   (6 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:============================>               (7 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:================================>           (8 + 3) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 19:====================================>       (9 + 2) / 11][Stage 15:>                                                                                                                (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][32mloaded combine schema from[m [32mcolumn name file [m'$MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema' [32mand combine schema file [m'$MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema'
+
+[Stage 14:>                                            (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4]
+[2022-04-28 08:42:02.959] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+
+                                                                                                                                       
+
+[Stage 15:>                                                                                                                (0 + 4) / 4]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:>                                           (0 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:====>                                       (1 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:========>                                   (2 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:============>                               (3 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:================>                           (4 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:====================>                       (5 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:========================>                   (6 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:============================>               (7 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:================================>           (8 + 3) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 19:====================================>       (9 + 2) / 11]
+
+[Stage 15:>                                                                                                                (0 + 4) / 4]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+[32mloaded combine schema from[m [32mcolumn name file [m'${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema' [32mand combine schema file [m'${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema'
 Debug -- user tower module:
  UserModule(
-  (sparse): EmbeddingSumConcat(32, column_name_file_path='$MY_S3_BUCKET/movielens/1m/schema/dssm/user_column_schema', combine_schema_file_path='$MY_S3_BUCKET/movielens/1m/schema/dssm/user_combine_schema', updater=FTRLTensorUpdater(1.0, 120.0, 0.01, 1.0), initializer=NormalTensorInitializer(0.0, 0.0001), output_batchsize1_if_only_level0=True)
+  (sparse): EmbeddingSumConcat(32, column_name_file_path='${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema', combine_schema_file_path='${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema', updater=FTRLTensorUpdater(1.0, 120.0, 0.01, 1.0), initializer=NormalTensorInitializer(0.0, 0.0001), output_batchsize1_if_only_level0=True)
   (sparse_embedding_bn): Normalization(96, eps=1e-05, momentum=0.01, affine=True, track_running_stats=True)
   (dense): MLPLayer(
     (dnn): Sequential(
@@ -221,7 +355,7 @@ Debug -- user tower module:
 )
 Debug -- item tower module:
  ItemModule(
-  (sparse): EmbeddingSumConcat(32, column_name_file_path='$MY_S3_BUCKET/movielens/1m/schema/dssm/item_column_schema', combine_schema_file_path='$MY_S3_BUCKET/movielens/1m/schema/dssm/item_combine_schema', updater=FTRLTensorUpdater(1.0, 120.0, 0.01, 1.0), initializer=NormalTensorInitializer(0.0, 0.0001))
+  (sparse): EmbeddingSumConcat(32, column_name_file_path='${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema', combine_schema_file_path='${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema', updater=FTRLTensorUpdater(1.0, 120.0, 0.01, 1.0), initializer=NormalTensorInitializer(0.0, 0.0001))
   (sparse_embedding_bn): Normalization(32, eps=1e-05, momentum=0.01, affine=True, track_running_stats=True)
   (dense): MLPLayer(
     (dnn): Sequential(
@@ -278,7 +412,13 @@ shuffle df to partitions 8
 2022-04-28 08:45:00.929 -- auc: 0.8945689605035753, Δauc: 0.9263505690589883, pcoc: 1.0033717766113808, Δpcoc: 1.01318953057994, #instance: 2496000
 2022-04-28 08:45:03.369 -- auc: 0.8954845834838769, Δauc: 0.9271846540731995, pcoc: 1.0029856132685013, Δpcoc: 0.9877137357166835, #instance: 2560000
 2022-04-28 08:45:14.248 -- auc: 0.8963213329457964, Δauc: 0.9261804757909351, pcoc: 1.0030689935617283, Δpcoc: 1.0063697135265568, #instance: 2624000
-[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]2022-04-28 08:45:14.421 -- auc: 0.8972249089504687, Δauc: 0.9296939611187888, pcoc: 1.0033093401075468, Δpcoc: 1.0130968864578644, #instance: 2688000
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+2022-04-28 08:45:14.421 -- auc: 0.8972249089504687, Δauc: 0.9296939611187888, pcoc: 1.0033093401075468, Δpcoc: 1.0130968864578644, #instance: 2688000
 2022-04-28 08:45:16.007 -- auc: 0.8980860558494607, Δauc: 0.9298841946937828, pcoc: 1.0030813117332107, Δpcoc: 0.9936805014721061, #instance: 2752000
 2022-04-28 08:45:18.320 -- auc: 0.898910817349969, Δauc: 0.929935999761873, pcoc: 1.0032528662333897, Δpcoc: 1.0105535429855652, #instance: 2816000
 2022-04-28 08:45:29.190 -- auc: 0.8997652853100754, Δauc: 0.9328606138529009, pcoc: 1.0027405761717807, Δpcoc: 0.9805816560117551, #instance: 2880000
@@ -332,7 +472,25 @@ shuffle df to partitions 8
 2022-04-28 08:48:28.698 -- auc: 0.9215850489055019, Δauc: 0.9450989565040782, pcoc: 1.0024833948244445, Δpcoc: 1.0134245492184468, #instance: 5952000
 2022-04-28 08:48:29.804 -- auc: 0.9218489237335241, Δauc: 0.9440013166358437, pcoc: 1.0025395513386834, Δpcoc: 1.007733368980331, #instance: 6016000
 2022-04-28 08:48:30.895 -- auc: 0.922106943707405, Δauc: 0.9440246479936196, pcoc: 1.0026266508389634, Δpcoc: 1.0108060478963097, #instance: 6080000
-[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:=====>                                       (1 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:===========>                                 (2 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:================>                            (3 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]2022-04-28 08:48:33.216 -- auc: 0.9223764648445976, Δauc: 0.9453352274796846, pcoc: 1.002534073881481, Δpcoc: 0.993845399649293, #instance: 6144000
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:=====>                                       (1 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:===========>                                 (2 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:================>                            (3 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+2022-04-28 08:48:33.216 -- auc: 0.9223764648445976, Δauc: 0.9453352274796846, pcoc: 1.002534073881481, Δpcoc: 0.993845399649293, #instance: 6144000
 2022-04-28 08:48:43.738 -- auc: 0.9226499874908713, Δauc: 0.9462584675004678, pcoc: 1.0026308936480255, Δpcoc: 1.012058266083286, #instance: 6208000
 2022-04-28 08:48:44.885 -- auc: 0.9229447814758114, Δauc: 0.9481310576361026, pcoc: 1.002461245583048, Δpcoc: 0.986457793591939, #instance: 6272000
 2022-04-28 08:48:45.975 -- auc: 0.9232193192244161, Δauc: 0.9473215751954627, pcoc: 1.0023959347088325, Δpcoc: 0.9959908919437751, #instance: 6336000
@@ -386,7 +544,13 @@ shuffle df to partitions 8
 2022-04-28 08:51:51.262 -- auc: 0.9322366530218202, Δauc: 0.9492998928605718, pcoc: 1.0022402846947396, Δpcoc: 1.0046930692103355, #instance: 9407573
 2022-04-28 08:51:52.557 -- auc: 0.9323937322790662, Δauc: 0.9530373243415177, pcoc: 1.002227339656759, Δpcoc: 1.0003360235954646, #instance: 9471573
 2022-04-28 08:52:01.757 -- auc: 0.9325609693030672, Δauc: 0.9545573802734416, pcoc: 1.002169951828238, Δpcoc: 0.9937632907194437, #instance: 9535573
-[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]2022-04-28 08:52:04.383 -- auc: 0.9326952946872391, Δauc: 0.9507984784907273, pcoc: 1.0021741814911325, Δpcoc: 1.0028082582835773, #instance: 9599573
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+2022-04-28 08:52:04.383 -- auc: 0.9326952946872391, Δauc: 0.9507984784907273, pcoc: 1.0021741814911325, Δpcoc: 1.0028082582835773, #instance: 9599573
 2022-04-28 08:52:06.924 -- auc: 0.9328483897377794, Δauc: 0.9536319297189442, pcoc: 1.0022379983675995, Δpcoc: 1.0118905999049892, #instance: 9663573
 2022-04-28 08:52:08.305 -- auc: 0.93299954303109, Δauc: 0.9536333291723963, pcoc: 1.0021537443904265, Δpcoc: 0.9895052457977116, #instance: 9727573
 2022-04-28 08:52:17.423 -- auc: 0.9331565316598303, Δauc: 0.9544363755218228, pcoc: 1.0021949963711725, Δpcoc: 1.0084890482316522, #instance: 9791573
@@ -439,7 +603,51 @@ shuffle df to partitions 8
 2022-04-28 08:55:18.960 -- auc: 0.9385374710487463, Δauc: 0.9559932448432322, pcoc: 1.0020347803069383, Δpcoc: 1.0019808740520157, #instance: 12799573
 2022-04-28 08:55:27.588 -- auc: 0.9386414082327277, Δauc: 0.9570759791204925, pcoc: 1.0019797414828644, Δpcoc: 0.9912002589091782, #instance: 12863573
 2022-04-28 08:55:30.398 -- auc: 0.9387462341522285, Δauc: 0.9579002397493648, pcoc: 1.0020005763709208, Δpcoc: 1.0062434003372822, #instance: 12927573
-[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:============================>                (5 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:=================================>           (6 + 2) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 20:=======================================>     (7 + 1) / 8]                                                                                                                                       [Stage 15:>                                                                                                                (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4][Stage 21:>                                           (0 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:====>                                       (1 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:========>                                   (2 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:============>                               (3 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:================>                           (4 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:====================>                       (5 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:========================>                   (6 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:============================>               (7 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:================================>           (8 + 3) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:====================================>       (9 + 2) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 21:=======================================>   (10 + 1) / 11][Stage 15:>                                                                                                                (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]2022-04-28 08:55:32.744 -- auc: 0.9388382437449849, Δauc: 0.9558645734114477, pcoc: 1.0020206133258918, Δpcoc: 1.0061151485383408, #instance: 12991573
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:============================>                (5 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:=================================>           (6 + 2) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 20:=======================================>     (7 + 1) / 8]
+
+                                                                                                                                       
+
+[Stage 15:>                                                                                                                (0 + 4) / 4]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:>                                           (0 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:====>                                       (1 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:========>                                   (2 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:============>                               (3 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:================>                           (4 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:====================>                       (5 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:========================>                   (6 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:============================>               (7 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:================================>           (8 + 3) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:====================================>       (9 + 2) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 21:=======================================>   (10 + 1) / 11]
+
+[Stage 15:>                                                                                                                (0 + 4) / 4]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+2022-04-28 08:55:32.744 -- auc: 0.9388382437449849, Δauc: 0.9558645734114477, pcoc: 1.0020206133258918, Δpcoc: 1.0061151485383408, #instance: 12991573
 2022-04-28 08:55:34.660 -- auc: 0.9389273465590007, Δauc: 0.9553695204494955, pcoc: 1.0020187085909185, Δpcoc: 1.0016333844971181, #instance: 13055573
 2022-04-28 08:55:43.253 -- auc: 0.939020295314333, Δauc: 0.9560826616440743, pcoc: 1.0020000553249737, Δpcoc: 0.9982488969928743, #instance: 13119573
 2022-04-28 08:55:46.049 -- auc: 0.9391047500127138, Δauc: 0.9547112991987913, pcoc: 1.0019964757150939, Δpcoc: 1.0012712290395058, #instance: 13183573
@@ -493,7 +701,15 @@ shuffle df to partitions 8
 2022-04-28 08:59:36.674 -- auc: 0.9432631714275366, Δauc: 0.9613847866844591, pcoc: 1.001758680718967, Δpcoc: 0.9898119709119593, #instance: 16191266
 2022-04-28 08:59:37.015 -- auc: 0.9433385663644335, Δauc: 0.9606471318911574, pcoc: 1.0017671332137172, Δpcoc: 1.003957079604311, #instance: 16255266
 2022-04-28 08:59:37.657 -- auc: 0.9434346031092655, Δauc: 0.9650895503671413, pcoc: 1.0018186218850567, Δpcoc: 1.0151909780845367, #instance: 16319266
-[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]2022-04-28 08:59:42.142 -- auc: 0.9435142978595641, Δauc: 0.9618582371232289, pcoc: 1.0017877251619483, Δpcoc: 0.9937556144325771, #instance: 16383266
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+2022-04-28 08:59:42.142 -- auc: 0.9435142978595641, Δauc: 0.9618582371232289, pcoc: 1.0017877251619483, Δpcoc: 0.9937556144325771, #instance: 16383266
 2022-04-28 08:59:52.477 -- auc: 0.9435923400477008, Δauc: 0.9615868452743855, pcoc: 1.001805637328853, Δpcoc: 1.0063984037823566, #instance: 16447266
 2022-04-28 08:59:52.818 -- auc: 0.9436742637984403, Δauc: 0.9624085482935729, pcoc: 1.001817434686823, Δpcoc: 1.004853275945786, #instance: 16511266
 2022-04-28 08:59:53.529 -- auc: 0.9437610617526816, Δauc: 0.963300008655089, pcoc: 1.0017927807074565, Δpcoc: 0.9955488112988015, #instance: 16575266
@@ -546,7 +762,23 @@ shuffle df to partitions 8
 2022-04-28 09:03:03.707 -- auc: 0.9468640239182597, Δauc: 0.9611248800553811, pcoc: 1.0016195977495332, Δpcoc: 0.9884868087241923, #instance: 19583266
 2022-04-28 09:03:05.103 -- auc: 0.9469113785695024, Δauc: 0.9602450877726134, pcoc: 1.0016301814235158, Δpcoc: 1.0048512972739108, #instance: 19647266
 2022-04-28 09:03:08.325 -- auc: 0.9469708521741764, Δauc: 0.9633907816720216, pcoc: 1.0016506861067993, Δpcoc: 1.007873426856517, #instance: 19711266
-[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:=====>                                       (1 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:===========>                                 (2 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:================>                            (3 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]2022-04-28 09:03:18.560 -- auc: 0.9470255491271009, Δauc: 0.9622894366758767, pcoc: 1.0016442426762333, Δpcoc: 0.9996563644393052, #instance: 19775266
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:=====>                                       (1 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:===========>                                 (2 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:================>                            (3 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+2022-04-28 09:03:18.560 -- auc: 0.9470255491271009, Δauc: 0.9622894366758767, pcoc: 1.0016442426762333, Δpcoc: 0.9996563644393052, #instance: 19775266
 2022-04-28 09:03:19.364 -- auc: 0.9470715493576366, Δauc: 0.9600911787321788, pcoc: 1.0016625521897204, Δpcoc: 1.0073152348537409, #instance: 19839266
 2022-04-28 09:03:20.815 -- auc: 0.9471307492484822, Δauc: 0.9634059952344373, pcoc: 1.0016559093102873, Δpcoc: 0.9996458827319691, #instance: 19903266
 2022-04-28 09:03:23.912 -- auc: 0.947187324070848, Δauc: 0.9634682880326738, pcoc: 1.0017417518226526, Δpcoc: 1.0295756765389659, #instance: 19967266
@@ -599,7 +831,13 @@ shuffle df to partitions 8
 2022-04-28 09:06:31.349 -- auc: 0.9495027369163049, Δauc: 0.9638549325368707, pcoc: 1.0016277995713472, Δpcoc: 1.0016238998820763, #instance: 22974982
 2022-04-28 09:06:36.203 -- auc: 0.949550719395667, Δauc: 0.9649356054716921, pcoc: 1.0015810389928783, Δpcoc: 0.9852118995643486, #instance: 23038982
 2022-04-28 09:06:45.286 -- auc: 0.9495945014297765, Δauc: 0.963819818547007, pcoc: 1.0015745823840396, Δpcoc: 0.9992693388977476, #instance: 23102982
-[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]2022-04-28 09:06:45.356 -- auc: 0.9496428936022155, Δauc: 0.9651262919727044, pcoc: 1.0015312921358, Δpcoc: 0.9863328153768828, #instance: 23166982
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+2022-04-28 09:06:45.356 -- auc: 0.9496428936022155, Δauc: 0.9651262919727044, pcoc: 1.0015312921358, Δpcoc: 0.9863328153768828, #instance: 23166982
 2022-04-28 09:06:47.151 -- auc: 0.9496805377273926, Δauc: 0.9624288831344903, pcoc: 1.0015591312898982, Δpcoc: 1.0119310573627567, #instance: 23230982
 2022-04-28 09:06:52.266 -- auc: 0.9497279897848023, Δauc: 0.9652133436432412, pcoc: 1.0015767501757682, Δpcoc: 1.0079198980264916, #instance: 23294982
 2022-04-28 09:07:01.223 -- auc: 0.9497758836234148, Δauc: 0.9656218015144671, pcoc: 1.0015806177376894, Δpcoc: 1.0030063127595386, #instance: 23358982
@@ -652,7 +890,49 @@ shuffle df to partitions 8
 2022-04-28 09:10:03.530 -- auc: 0.9515495512348456, Δauc: 0.9626481675916956, pcoc: 1.0015256340599135, Δpcoc: 1.002466173850902, #instance: 26366982
 2022-04-28 09:10:12.443 -- auc: 0.9515857560719925, Δauc: 0.9651683979079823, pcoc: 1.0015154244021798, Δpcoc: 0.9972961667359918, #instance: 26430982
 2022-04-28 09:10:12.564 -- auc: 0.9516213928300095, Δauc: 0.9650781992679573, pcoc: 1.001514259545287, Δpcoc: 1.0010344106965163, #instance: 26494982
-[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:============================>                (5 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:=================================>           (6 + 2) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 22:=======================================>     (7 + 1) / 8]                                                                                                                                       [Stage 15:>                                            (0 + 4) / 4][Stage 23:>                                           (0 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:====>                                       (1 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:========>                                   (2 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:============>                               (3 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:================>                           (4 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:====================>                       (5 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:========================>                   (6 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:============================>               (7 + 4) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:================================>           (8 + 3) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:====================================>       (9 + 2) / 11][Stage 15:>                                            (0 + 4) / 4][Stage 23:=======================================>   (10 + 1) / 11][Stage 15:>                                                                                                                (0 + 4) / 4][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]2022-04-28 09:10:14.656 -- auc: 0.9516513647751015, Δauc: 0.9631368124412649, pcoc: 1.0014988184727394, Δpcoc: 0.9951244000129282, #instance: 26558982
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:============================>                (5 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:=================================>           (6 + 2) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 22:=======================================>     (7 + 1) / 8]
+
+                                                                                                                                       
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:>                                           (0 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:====>                                       (1 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:========>                                   (2 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:============>                               (3 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:================>                           (4 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:====================>                       (5 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:========================>                   (6 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:============================>               (7 + 4) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:================================>           (8 + 3) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:====================================>       (9 + 2) / 11]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 23:=======================================>   (10 + 1) / 11]
+
+[Stage 15:>                                                                                                                (0 + 4) / 4]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+2022-04-28 09:10:14.656 -- auc: 0.9516513647751015, Δauc: 0.9631368124412649, pcoc: 1.0014988184727394, Δpcoc: 0.9951244000129282, #instance: 26558982
 2022-04-28 09:10:19.637 -- auc: 0.9516829003041276, Δauc: 0.9638645349455863, pcoc: 1.0014850434997413, Δpcoc: 0.9955810676745283, #instance: 26622982
 2022-04-28 09:10:28.228 -- auc: 0.9517126553362308, Δauc: 0.9632791401961687, pcoc: 1.0014863011198358, Δpcoc: 1.0020174770534906, #instance: 26686982
 2022-04-28 09:10:28.443 -- auc: 0.9517433870226272, Δauc: 0.9637841961816427, pcoc: 1.0015109010872516, Δpcoc: 1.0121878124937036, #instance: 26750982
@@ -706,7 +986,15 @@ shuffle df to partitions 8
 2022-04-28 09:14:33.175 -- auc: 0.9531660768038973, Δauc: 0.9708230364298205, pcoc: 1.001418005309424, Δpcoc: 0.9920684896859765, #instance: 29758660
 2022-04-28 09:14:35.969 -- auc: 0.9532069887936588, Δauc: 0.9702284836965561, pcoc: 1.0014356244179339, Δpcoc: 1.0096667990846149, #instance: 29822660
 2022-04-28 09:14:37.086 -- auc: 0.953241473787947, Δauc: 0.9678217987133252, pcoc: 1.0014556016988156, Δpcoc: 1.0108695928434233, #instance: 29886660
-[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]2022-04-28 09:14:42.255 -- auc: 0.9532788438406917, Δauc: 0.9689651995363348, pcoc: 1.0014387648262237, Δpcoc: 0.993581636463132, #instance: 29950660
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+2022-04-28 09:14:42.255 -- auc: 0.9532788438406917, Δauc: 0.9689651995363348, pcoc: 1.0014387648262237, Δpcoc: 0.993581636463132, #instance: 29950660
 2022-04-28 09:14:48.910 -- auc: 0.9533164619852548, Δauc: 0.9689397327501735, pcoc: 1.001396099590384, Δpcoc: 0.9817848312890981, #instance: 30014660
 2022-04-28 09:14:51.698 -- auc: 0.9533572474620432, Δauc: 0.9705436984604604, pcoc: 1.0014093921072356, Δpcoc: 1.0077954280760981, #instance: 30078660
 2022-04-28 09:14:52.857 -- auc: 0.953397032403103, Δauc: 0.9700648440481436, pcoc: 1.0014249042908603, Δpcoc: 1.0087618159923974, #instance: 30142660
@@ -759,7 +1047,13 @@ shuffle df to partitions 8
 2022-04-28 09:18:01.692 -- auc: 0.955053407605353, Δauc: 0.9707642194183668, pcoc: 1.001387438742438, Δpcoc: 1.0248756000824595, #instance: 33150660
 2022-04-28 09:18:03.376 -- auc: 0.955083342299981, Δauc: 0.9688791223499473, pcoc: 1.0013336445263024, Δpcoc: 0.9740891807874917, #instance: 33214660
 2022-04-28 09:18:08.434 -- auc: 0.9551142164894799, Δauc: 0.9695819129010766, pcoc: 1.0013527671565492, Δpcoc: 1.0114768974275756, #instance: 33278660
-[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]2022-04-28 09:18:14.778 -- auc: 0.9551438919540565, Δauc: 0.9690690702916875, pcoc: 1.0013536998072303, Δpcoc: 1.0018400391424613, #instance: 33342660
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:>                                            (0 + 4) / 8]
+2022-04-28 09:18:14.778 -- auc: 0.9551438919540565, Δauc: 0.9690690702916875, pcoc: 1.0013536998072303, Δpcoc: 1.0018400391424613, #instance: 33342660
 2022-04-28 09:18:17.246 -- auc: 0.9551749960354675, Δauc: 0.9699802927080555, pcoc: 1.0013570869601944, Δpcoc: 1.0031717578328803, #instance: 33406660
 2022-04-28 09:18:19.022 -- auc: 0.9552018892810661, Δauc: 0.9680496623571032, pcoc: 1.0013522503008283, Δpcoc: 0.9988148532435193, #instance: 33470660
 2022-04-28 09:18:24.057 -- auc: 0.9552240920770304, Δauc: 0.9659620438188287, pcoc: 1.0013257175411319, Δpcoc: 0.9875277849692754, #instance: 33534660
@@ -812,7 +1106,21 @@ shuffle df to partitions 8
 2022-04-28 09:21:29.953 -- auc: 0.9564758879310717, Δauc: 0.967307126159276, pcoc: 1.0012893982527957, Δpcoc: 0.9809942446208126, #instance: 36542660
 2022-04-28 09:21:34.387 -- auc: 0.9565010815367821, Δauc: 0.969466198902541, pcoc: 1.0012823377685158, Δpcoc: 0.997301287334583, #instance: 36606660
 2022-04-28 09:21:41.482 -- auc: 0.9565253606394909, Δauc: 0.9691711362717836, pcoc: 1.001277184364216, Δpcoc: 0.9983194691063857, #instance: 36670660
-[Stage 15:>                                            (0 + 4) / 4][Stage 24:=====>                                       (1 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:===========>                                 (2 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:================>                            (3 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]2022-04-28 09:21:43.453 -- auc: 0.9565495121706438, Δauc: 0.9692320144568157, pcoc: 1.0012847274610348, Δpcoc: 1.0056251864149153, #instance: 36734660
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:=====>                                       (1 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:===========>                                 (2 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:================>                            (3 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+2022-04-28 09:21:43.453 -- auc: 0.9565495121706438, Δauc: 0.9692320144568157, pcoc: 1.0012847274610348, Δpcoc: 1.0056251864149153, #instance: 36734660
 2022-04-28 09:21:45.967 -- auc: 0.9565725147129392, Δauc: 0.9684262781408429, pcoc: 1.0012726793516764, Δpcoc: 0.994524190768714, #instance: 36798660
 2022-04-28 09:21:50.104 -- auc: 0.9565984958917826, Δauc: 0.9700632671702942, pcoc: 1.0012685950439268, Δpcoc: 0.9989087768920096, #instance: 36862660
 2022-04-28 09:22:01.000 -- auc: 0.9566215259929312, Δauc: 0.9687093248488482, pcoc: 1.0012839967876037, Δpcoc: 1.010223428059246, #instance: 36926582
@@ -865,7 +1173,13 @@ shuffle df to partitions 8
 2022-04-28 09:25:03.665 -- auc: 0.9576185918892839, Δauc: 0.969528794094684, pcoc: 1.0012683152079007, Δpcoc: 1.029400782889218, #instance: 39934363
 2022-04-28 09:25:11.795 -- auc: 0.9576379620953246, Δauc: 0.9683893339841418, pcoc: 1.0012347418633718, Δpcoc: 0.9810590800185401, #instance: 39998363
 2022-04-28 09:25:12.725 -- auc: 0.9576586654897131, Δauc: 0.969751522189706, pcoc: 1.0012755116737582, Δpcoc: 1.0277678441039584, #instance: 40062363
-[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]2022-04-28 09:25:14.723 -- auc: 0.9576703922208114, Δauc: 0.9647591050598673, pcoc: 1.00124080298922, Δpcoc: 0.9796615579680203, #instance: 40126363
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+2022-04-28 09:25:14.723 -- auc: 0.9576703922208114, Δauc: 0.9647591050598673, pcoc: 1.00124080298922, Δpcoc: 0.9796615579680203, #instance: 40126363
 2022-04-28 09:25:19.341 -- auc: 0.9576880626763818, Δauc: 0.9679746572984105, pcoc: 1.0012471929390416, Δpcoc: 1.0052656478553725, #instance: 40190363
 2022-04-28 09:25:27.615 -- auc: 0.9577074227550733, Δauc: 0.9689869075293813, pcoc: 1.0012434008898012, Δpcoc: 0.9988095993968262, #instance: 40254363
 2022-04-28 09:25:28.521 -- auc: 0.9577265141288678, Δauc: 0.9687243116928801, pcoc: 1.0012366120074634, Δpcoc: 0.9969622663400759, #instance: 40318363
@@ -918,23 +1232,123 @@ shuffle df to partitions 8
 2022-04-28 09:28:39.540 -- auc: 0.9585843739139591, Δauc: 0.9712196765256992, pcoc: 1.0012188431421059, Δpcoc: 1.0224091139581377, #instance: 43326363
 2022-04-28 09:28:40.330 -- auc: 0.9586022125860797, Δauc: 0.9696885091889783, pcoc: 1.00122151117251, Δpcoc: 1.0030270696289423, #instance: 43390363
 2022-04-28 09:28:42.532 -- auc: 0.958619011331654, Δauc: 0.9691791520300098, pcoc: 1.001223301472666, Δpcoc: 1.0024528990984303, #instance: 43454363
-[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:============================>                (5 + 3) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:=================================>           (6 + 2) / 8][Stage 15:>                                            (0 + 4) / 4][Stage 24:=======================================>     (7 + 1) / 8]                                                                                                                                       [Stage 15:>                                            (0 + 4) / 4][Stage 26:>                                            (0 + 4) / 4]                                                                                                                                       [2022-04-28 09:29:47.932] [info] C[0]:9 has stopped.
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:======================>                      (4 + 4) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:============================>                (5 + 3) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:=================================>           (6 + 2) / 8]
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 24:=======================================>     (7 + 1) / 8]
+
+                                                                                                                                       
+
+[Stage 15:>                                            (0 + 4) / 4][Stage 26:>                                            (0 + 4) / 4]
+
+                                                                                                                                       
+[2022-04-28 09:29:47.932] [info] C[0]:9 has stopped.
 [2022-04-28 09:29:47.934] [info] PS job with coordinator address 10.0.50.56:35353 stopped.
 [2022-04-28 09:29:47.950] [info] PS job with coordinator address 10.0.50.56:55049 started.
 [2022-04-28 09:29:47.950] [info] PSRunner::RunPS: pid: 30444, tid: 31380, thread: 0x7f927e7fc700
 [2022-04-28 09:29:47.950] [info] PSRunner::RunPSCoordinator: pid: 30444, tid: 31380, thread: 0x7f927e7fc700
 [2022-04-28 09:29:47.952] [info] ActorProcess::Receiving: Coordinator pid: 30444, tid: 31383, thread: 0x7f929a7fc700
 [2022-04-28 09:29:48.063] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
-[Stage 28:>                                            (0 + 4) / 4][Stage 31:>                                            (0 + 4) / 4]                                                                                                                                       [Stage 28:>                                                                                                                (0 + 4) / 4][Stage 28:>                                            (0 + 4) / 4][Stage 32:>                                            (0 + 4) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:=====>                                       (1 + 4) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:===========>                                 (2 + 4) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:================>                            (3 + 4) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:======================>                      (4 + 4) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:============================>                (5 + 3) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:=================================>           (6 + 2) / 8][Stage 28:>                                            (0 + 4) / 4][Stage 32:=======================================>     (7 + 1) / 8]                                                                                                                                       [2022-04-28 09:30:10.080] [info] C[0]:9 has stopped.
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 31:>                                            (0 + 4) / 4]
+
+                                                                                                                                       
+
+[Stage 28:>                                                                                                                (0 + 4) / 4]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:>                                            (0 + 4) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:=====>                                       (1 + 4) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:===========>                                 (2 + 4) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:================>                            (3 + 4) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:======================>                      (4 + 4) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:============================>                (5 + 3) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:=================================>           (6 + 2) / 8]
+
+[Stage 28:>                                            (0 + 4) / 4][Stage 32:=======================================>     (7 + 1) / 8]
+
+                                                                                                                                       
+[2022-04-28 09:30:10.080] [info] C[0]:9 has stopped.
 [2022-04-28 09:30:10.081] [info] PS job with coordinator address 10.0.50.56:55049 stopped.
 [2022-04-28 09:30:10.170] [info] PS job with coordinator address 10.0.50.56:46979 started.
 [2022-04-28 09:30:10.170] [info] PSRunner::RunPS: pid: 30444, tid: 31522, thread: 0x7f927ffff700
 [2022-04-28 09:30:10.170] [info] PSRunner::RunPSCoordinator: pid: 30444, tid: 31522, thread: 0x7f927ffff700
 [2022-04-28 09:30:10.171] [info] ActorProcess::Receiving: Coordinator pid: 30444, tid: 31525, thread: 0x7f9299ffb700
 [2022-04-28 09:30:10.200] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
-[Stage 34:>                                            (0 + 4) / 4][Stage 38:>                                            (0 + 4) / 4]                                                                                                                                       [Stage 34:>                                                                                                                (0 + 4) / 4]                                                                                                                                       [Stage 34:>                                                                                                                (0 + 4) / 4][Stage 34:>                                            (0 + 4) / 4][Stage 40:>                                            (0 + 4) / 8][Stage 34:>                                            (0 + 4) / 4][Stage 40:===========>                                 (2 + 4) / 8][Stage 34:>                                            (0 + 4) / 4][Stage 40:================>                            (3 + 4) / 8][Stage 34:>                                            (0 + 4) / 4][Stage 40:======================>                      (4 + 4) / 8][Stage 34:>                                            (0 + 4) / 4][Stage 40:============================>                (5 + 3) / 8]                                                                                                                                       [2022-04-28 09:30:31.522] [info] C[0]:9 has stopped.
+
+[Stage 34:>                                            (0 + 4) / 4][Stage 38:>                                            (0 + 4) / 4]
+
+                                                                                                                                       
+
+[Stage 34:>                                                                                                                (0 + 4) / 4]
+
+                                                                                                                                       
+
+[Stage 34:>                                                                                                                (0 + 4) / 4]
+
+[Stage 34:>                                            (0 + 4) / 4][Stage 40:>                                            (0 + 4) / 8]
+
+[Stage 34:>                                            (0 + 4) / 4][Stage 40:===========>                                 (2 + 4) / 8]
+
+[Stage 34:>                                            (0 + 4) / 4][Stage 40:================>                            (3 + 4) / 8]
+
+[Stage 34:>                                            (0 + 4) / 4][Stage 40:======================>                      (4 + 4) / 8]
+
+[Stage 34:>                                            (0 + 4) / 4][Stage 40:============================>                (5 + 3) / 8]
+
+                                                                                                                                       
+[2022-04-28 09:30:31.522] [info] C[0]:9 has stopped.
 [2022-04-28 09:30:31.524] [info] PS job with coordinator address 10.0.50.56:46979 stopped.
-[Stage 42:>                                            (0 + 8) / 8][Stage 43:>                                            (0 + 0) / 4][Stage 42:=====>                                       (1 + 7) / 8][Stage 43:>                                            (0 + 1) / 4][Stage 42:============================>                (5 + 3) / 8][Stage 43:>                                            (0 + 4) / 4]                                                                                                                                       [Stage 45:=================>                                                                                            (31 + 4) / 200][Stage 45:=====================================>                                                                        (69 + 4) / 200][Stage 45:==============================================================>                                              (115 + 4) / 200][Stage 45:=======================================================================================>                     (161 + 4) / 200]                                                                                                                                       [Stage 47:>                                                                                                                (0 + 8) / 8][Stage 47:==========================================>                                                                      (3 + 5) / 8][Stage 47:====================================================================================>                            (6 + 2) / 8][Stage 47:==================================================================================================>              (7 + 1) / 8]                                                                                                                                       [Stage 49:=================================================================================================>           (179 + 4) / 200]                                                                                                                                       [Stage 51:==================================================>                                                           (92 + 4) / 200][Stage 51:======================================================================>                                      (130 + 5) / 200][Stage 51:=============================================================================================>               (172 + 4) / 200]                                                                                                                                       2022-04-28 09:28:47.138 -- auc: 0.9586381848686767, Δauc: 0.9705718862947399, pcoc: 1.0012281323145091, Δpcoc: 1.004533890118576, #instance: 43518363
+
+[Stage 42:>                                            (0 + 8) / 8][Stage 43:>                                            (0 + 0) / 4]
+
+[Stage 42:=====>                                       (1 + 7) / 8][Stage 43:>                                            (0 + 1) / 4]
+
+[Stage 42:============================>                (5 + 3) / 8][Stage 43:>                                            (0 + 4) / 4]
+
+                                                                                                                                       
+
+[Stage 45:=================>                                                                                            (31 + 4) / 200]
+
+[Stage 45:=====================================>                                                                        (69 + 4) / 200]
+
+[Stage 45:==============================================================>                                              (115 + 4) / 200]
+
+[Stage 45:=======================================================================================>                     (161 + 4) / 200]
+
+                                                                                                                                       
+
+[Stage 47:>                                                                                                                (0 + 8) / 8]
+
+[Stage 47:==========================================>                                                                      (3 + 5) / 8]
+
+[Stage 47:====================================================================================>                            (6 + 2) / 8]
+
+[Stage 47:==================================================================================================>              (7 + 1) / 8]
+
+                                                                                                                                       
+
+[Stage 49:=================================================================================================>           (179 + 4) / 200]
+
+                                                                                                                                       
+
+[Stage 51:==================================================>                                                           (92 + 4) / 200]
+
+[Stage 51:======================================================================>                                      (130 + 5) / 200]
+
+[Stage 51:=============================================================================================>               (172 + 4) / 200]
+
+                                                                                                                                       
+2022-04-28 09:28:47.138 -- auc: 0.9586381848686767, Δauc: 0.9705718862947399, pcoc: 1.0012281323145091, Δpcoc: 1.004533890118576, #instance: 43518363
 2022-04-28 09:28:55.704 -- auc: 0.958652565452538, Δauc: 0.9678060727082549, pcoc: 1.0012005973184956, Δpcoc: 0.9828153010694313, #instance: 43582363
 2022-04-28 09:28:56.473 -- auc: 0.9586700365857266, Δauc: 0.9698377482844869, pcoc: 1.0012145944677375, Δpcoc: 1.0110326846233493, #instance: 43646363
 2022-04-28 09:28:58.641 -- auc: 0.9586859004504973, Δauc: 0.968654107575006, pcoc: 1.0012242277027559, Δpcoc: 1.0078621506013654, #instance: 43710363
@@ -991,7 +1405,83 @@ Debug -- test result sample:
 only showing top 20 rows
 
 Debug -- test sample:
-[Stage 54:>                                                                                                                (0 + 8) / 8][Stage 54:============================>                                                                                    (2 + 6) / 8][Stage 54:========================================================>                                                        (4 + 4) / 8][Stage 54:==================================================================================================>              (7 + 1) / 8]                                                                                                                                       [Stage 58:==========================================================================================================>  (195 + 4) / 200]                                                                                                                                       [Stage 64:>                                                                                                                (0 + 8) / 8][Stage 64:============================>                                                                                    (2 + 6) / 8][Stage 64:========================================================>                                                        (4 + 4) / 8][Stage 64:======================================================================>                                          (5 + 3) / 8]                                                                                                                                       [Stage 68:===================================================>                                                          (93 + 4) / 200][Stage 68:====================================================================>                                        (126 + 4) / 200][Stage 68:======================================================================================>                      (158 + 4) / 200][Stage 68:======================================================================================================>      (188 + 4) / 200]                                                                                                                                       [Stage 72:>                                                                                                              (0 + 4) / 200][Stage 72:==>                                                                                                            (4 + 4) / 200][Stage 72:============>                                                                                                 (23 + 4) / 200][Stage 72:===========================>                                                                                  (50 + 4) / 200][Stage 72:============================================>                                                                 (80 + 4) / 200][Stage 72:============================================================>                                                (111 + 4) / 200][Stage 72:==============================================================================>                              (144 + 4) / 200][Stage 72:===============================================================================================>             (175 + 4) / 200]                                                                                                                                       [Stage 75:==============================================================>                                              (115 + 3) / 200][Stage 75:=================================================================================>                           (149 + 3) / 200][Stage 75:===================================================================================================>         (183 + 3) / 200]                                                                                                                                       [Stage 78:=====================================================================>                                       (127 + 3) / 200][Stage 78:========================================================================================>                    (162 + 3) / 200][Stage 78:==========================================================================================================>  (196 + 3) / 200]                                                                                                                                       [Stage 81:===========================================================>                                                 (110 + 3) / 200][Stage 81:==============================================================================>                              (144 + 3) / 200][Stage 81:==================================================================================================>          (180 + 3) / 200]                                                                                                                                       22/04/28 09:31:12 WARN ExecutorPodsWatchSnapshotSource: Kubernetes client has been closed (this is expected if the application is shutting down.)
+
+[Stage 54:>                                                                                                                (0 + 8) / 8]
+
+[Stage 54:============================>                                                                                    (2 + 6) / 8]
+
+[Stage 54:========================================================>                                                        (4 + 4) / 8]
+
+[Stage 54:==================================================================================================>              (7 + 1) / 8]
+
+                                                                                                                                       
+
+[Stage 58:==========================================================================================================>  (195 + 4) / 200]
+
+                                                                                                                                       
+
+[Stage 64:>                                                                                                                (0 + 8) / 8]
+
+[Stage 64:============================>                                                                                    (2 + 6) / 8]
+
+[Stage 64:========================================================>                                                        (4 + 4) / 8]
+
+[Stage 64:======================================================================>                                          (5 + 3) / 8]
+
+                                                                                                                                       
+
+[Stage 68:===================================================>                                                          (93 + 4) / 200]
+
+[Stage 68:====================================================================>                                        (126 + 4) / 200]
+
+[Stage 68:======================================================================================>                      (158 + 4) / 200]
+
+[Stage 68:======================================================================================================>      (188 + 4) / 200]
+
+                                                                                                                                       
+
+[Stage 72:>                                                                                                              (0 + 4) / 200]
+
+[Stage 72:==>                                                                                                            (4 + 4) / 200]
+
+[Stage 72:============>                                                                                                 (23 + 4) / 200]
+
+[Stage 72:===========================>                                                                                  (50 + 4) / 200]
+
+[Stage 72:============================================>                                                                 (80 + 4) / 200]
+
+[Stage 72:============================================================>                                                (111 + 4) / 200]
+
+[Stage 72:==============================================================================>                              (144 + 4) / 200]
+
+[Stage 72:===============================================================================================>             (175 + 4) / 200]
+
+                                                                                                                                       
+
+[Stage 75:==============================================================>                                              (115 + 3) / 200]
+
+[Stage 75:=================================================================================>                           (149 + 3) / 200]
+
+[Stage 75:===================================================================================================>         (183 + 3) / 200]
+
+                                                                                                                                       
+
+[Stage 78:=====================================================================>                                       (127 + 3) / 200]
+
+[Stage 78:========================================================================================>                    (162 + 3) / 200]
+
+[Stage 78:==========================================================================================================>  (196 + 3) / 200]
+
+                                                                                                                                       
+
+[Stage 81:===========================================================>                                                 (110 + 3) / 200]
+
+[Stage 81:==============================================================================>                              (144 + 3) / 200]
+
+[Stage 81:==================================================================================================>          (180 + 3) / 200]
+
+                                                                                                                                       
+22/04/28 09:31:12 WARN ExecutorPodsWatchSnapshotSource: Kubernetes client has been closed (this is expected if the application is shutting down.)
 +-------+---+--------------------+
 |user_id|pos|            rec_info|
 +-------+---+--------------------+
