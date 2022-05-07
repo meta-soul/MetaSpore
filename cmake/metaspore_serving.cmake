@@ -67,6 +67,7 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_embedding_bag_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_process.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_ort_model.cpp
 )
 
 add_library(metaspore-serving STATIC

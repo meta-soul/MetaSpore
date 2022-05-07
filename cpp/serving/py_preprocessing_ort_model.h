@@ -16,45 +16,40 @@
 
 #pragma once
 
-#include <serving/metaspore.pb.h>
 #include <serving/model_base.h>
 
 namespace metaspore::serving {
 
-class PyPreprocessingModelContext;
+class PyPreprocessingOrtModelContext;
 
-class PyPreprocessingModelInput : public ModelInputBase {
-  public:
-    PredictRequest request;
-};
+class PyPreprocessingModelInput;
+class OrtModelOutput;
 
-class PyPreprocessingModelOutput : public ModelOutputBase {
-  public:
-    PredictReply reply;
-};
-
-class PyPreprocessingModel : public ModelBaseCRTP<PyPreprocessingModel> {
+/**
+ * @brief PyPreprocessingOrtModel is a compound model consists of
+ * one Python preprocessing model and one onnx model.
+ *
+ */
+class PyPreprocessingOrtModel : public ModelBaseCRTP<PyPreprocessingOrtModel> {
   public:
     using InputType = PyPreprocessingModelInput;
-    using OutputType = PyPreprocessingModelOutput;
+    using OutputType = OrtModelOutput;
 
-    PyPreprocessingModel();
-    PyPreprocessingModel(PyPreprocessingModel &&);
+    PyPreprocessingOrtModel();
+    PyPreprocessingOrtModel(PyPreprocessingOrtModel &&);
+    ~PyPreprocessingOrtModel();
 
     awaitable_status load(std::string dir_path) override;
 
-    awaitable_result<std::unique_ptr<PyPreprocessingModelOutput>>
-    do_predict(std::unique_ptr<PyPreprocessingModelInput> input);
+    awaitable_result<std::unique_ptr<OutputType>> do_predict(std::unique_ptr<InputType> input);
 
     std::string info() const override;
 
     const std::vector<std::string> &input_names() const override;
     const std::vector<std::string> &output_names() const override;
 
-    ~PyPreprocessingModel();
-
   private:
-    std::unique_ptr<PyPreprocessingModelContext> context_;
+    std::unique_ptr<PyPreprocessingOrtModelContext> context_;
 };
 
 } // namespace metaspore::serving

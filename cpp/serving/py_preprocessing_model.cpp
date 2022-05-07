@@ -116,8 +116,8 @@ awaitable_status PyPreprocessingModel::load(std::string dir_path) {
             spdlog::info("PyPreprocessingModel loaded from {}, required inputs [{}], "
                          "producing outputs [{}]",
                          context_->process_.get_preprocessor_config_dir(),
-                         fmt::join(context_->process_.get_input_names(), ", "),
-                         fmt::join(context_->process_.get_output_names(), ", "));
+                         fmt::join(input_names(), ", "),
+                         fmt::join(output_names(), ", "));
             co_return absl::OkStatus();
         },
         boost::asio::use_awaitable);
