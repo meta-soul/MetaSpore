@@ -229,3 +229,56 @@ sh start.sh
 </p>
 
 点击入口链接就可以进入对应的检索 demo 啦！
+
+## 4. 参考资料和代码路径
+### 4.1 代码路径
+- MetaSpore一站式机器学习开发平台：
+  https://github.com/meta-soul/MetaSpore
+
+- 多模态语义检索线上部分：
+  https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/online
+
+- 多模态语义检索离线部分：
+  https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/offline
+
+### 参考资料
+
+[1] HuggingFace: https://huggingface.co/
+
+[2] Timm: https://github.com/rwightman/pytorch-image-models
+
+[3] CLIP: https://github.com/openai/CLIP
+
+[4] MetaSpore: https://github.com/meta-soul/MetaSpore
+
+[5] Model sbert-chinese-qmc-domain-v1: https://huggingface.co/DMetaSoul/sbert-chinese-qmc-domain-v1
+
+[6] Model clip-vit-base-patch32: https://huggingface.co/openai/clip-vit-base-patch32
+
+[7] Sentence-BERT: https://arxiv.org/pdf/1908.10084.pdf
+
+[8] 以文搜文离线文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/QA/index_and_export/README-CN.md
+
+[9] 以文搜文数据集: https://github.com/brightmart/nlp_chinese_corpus#3百科类问答json版baike2018qa
+
+[10] Milvus: https://milvus.io/cn/
+
+[11] MongoDB: https://www.mongodb.org.cn/
+
+[12] Model clip-ViT-B-32-multilingual-v1: https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1
+
+[13] 以文搜图离线文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img
+
+[14] 以文搜图数据集 Unsplash Lite: https://unsplash.com/data
+
+[15] 以文搜图说明文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img/README.md
+
+[16] CLIP's ViT: https://huggingface.co/openai/clip-vit-base-patch32
+
+[17] Query 预处理服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_preprocess
+
+[18] 检索算法服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_serving
+
+[19] 用户入口服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_web
+
+[20] 多模态线上服务整体介绍: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/README-CN.md
