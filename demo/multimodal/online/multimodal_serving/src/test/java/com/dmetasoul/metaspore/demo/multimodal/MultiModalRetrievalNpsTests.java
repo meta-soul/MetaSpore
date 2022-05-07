@@ -38,9 +38,48 @@ public class MultiModalRetrievalNpsTests {
     }
 
     @Test
-    public void testHfPreprocessorWithNps() {
+    public void testHfPreprocessorWithNpsModel1() {
         System.out.println("Test HuggingFace tokenizer and MetaSpore NPS:");
         String modelName = "sbert-chinese-qmc-domain-v1";
+
+        HfPreprocessorServiceImpl serviceHf = context.getBean(HfPreprocessorServiceImpl.class);
+        NpsServiceImpl serviceNps = context.getBean(NpsServiceImpl.class);
+
+        List<String> texts = new ArrayList<>();
+        texts.add("hello world!");
+        texts.add("我在中国北京");
+
+        System.out.println("Input: "+texts.toString());
+
+        Map<String, ByteString> serviceResults = new HashMap<>();
+        Map<String, ArrowTensor> arrowResults = new HashMap<>();
+        try {
+            serviceResults = serviceHf.predictBlocking(modelName, texts, Collections.emptyMap());
+            arrowResults = serviceHf.pbToArrow(serviceResults);
+        } catch (IOException e) {
+            System.out.println("Hf-Preprocessor Exception: " + e.getMessage());
+            return;
+        }
+
+        System.out.println("Hf-Preprocessor Results: ");
+        System.out.println(serviceHf.getIntPredictFromArrowTensorResult(arrowResults));
+
+        Map<String, ArrowTensor> npsResults = new HashMap<>();
+        try {
+            npsResults = serviceNps.predictBlocking(modelName, serviceResults, Collections.emptyMap());
+        } catch (IOException e) {
+            System.out.println("NPS Exception: " + e.getMessage());
+            return;
+        }
+
+        System.out.println("NPS Results:");
+        System.out.println(serviceNps.getFloatVectorsFromNpsResult(npsResults, "sentence_embedding"));
+    }
+
+    @Test
+    public void testHfPreprocessorWithNpsModel2() {
+        System.out.println("Test HuggingFace tokenizer and MetaSpore NPS:");
+        String modelName = "clip-text-encoder-v1";
 
         HfPreprocessorServiceImpl serviceHf = context.getBean(HfPreprocessorServiceImpl.class);
         NpsServiceImpl serviceNps = context.getBean(NpsServiceImpl.class);

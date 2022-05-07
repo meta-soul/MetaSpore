@@ -48,12 +48,28 @@ message HfTokenizerPushResponse {
 
     ```shell
     sh client.sh
-
+    
     # push model
     MY_S3_PATH='your S3 bucket'
     aws s3 cp ${MY_S3_PATH}/demo/nlp-algos-transformer/models/sbert-chinese-qmc-domain-v1/sbert-chinese-qmc-domain-v1.tar.gz ./
     python client.py push bert-qmc-v1 ./sbert-chinese-qmc-domain-v1.tar.gz
-
+    
     # call service
     python client.py tokenize bert-qmc-v1 "预处理服务——基于 Python gRPC 框架"
     ```
+
+------
+
+本项目多模态检索 Demo 相关的模型推送到预处理服务命令如下：
+
+```bash
+MY_S3_PATH='your S3 bucket'
+
+# 以文搜文 —— 百科问答
+aws s3 cp ${MY_S3_PATH}/demo/nlp-algos-transformer/models/sbert-chinese-qmc-domain-v1/sbert-chinese-qmc-domain-v1.tar.gz ./
+python client.py push sbert-chinese-qmc-domain-v1 ./sbert-chinese-qmc-domain-v1.tar.gz
+
+# 以文搜图 —— 用自然语言搜索图库
+aws s3 cp ${MY_S3_PATH}/demo/nlp-algos-transformer/models/clip-text-encoder-v1/clip-text-encoder-v1.tar.gz ./
+python client.py push clip-text-encoder-v1 ./clip-text-encoder-v1.tar.gz
+```

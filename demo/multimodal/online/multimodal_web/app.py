@@ -35,8 +35,8 @@ def get_extname(filename):
 
 @app.route('/')
 def index():
-    #pages = ['txt2txt', 'txt2img']
-    pages = ['txt2txt']
+    pages = ['txt2txt', 'txt2img']
+    #pages = ['txt2txt']
     return render_template('index.html', pages=pages)
 
 @app.route('/txt', methods=['GET', 'POST'])

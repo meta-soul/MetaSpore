@@ -40,8 +40,8 @@ public class MultiModalRetrievalMilvusTests {
     }
 
     @Test
-    public void testQueryMilvusByEmbedding() {
-        System.out.println("Test query Milvus Service by embeddings:");
+    public void testQueryMilvusByEmbeddingOfBaikeQa() {
+        System.out.println("Test query Milvus Service(baike-qa) by embeddings:");
         MilvusService service = context.getBean(MilvusService.class);
 
         Map<String, String> args = new HashMap<>();
@@ -52,6 +52,23 @@ public class MultiModalRetrievalMilvusTests {
 
         // List<List<Float>> vectors = generateFloatVectors(3, 768);
         List<List<Float>> vectors = generateFloatVectors();
+        Map<Integer, List<SearchResultsWrapper.IDScore>> result = service.findByEmbeddingVectors(vectors, 5);
+        System.out.println(result);
+    }
+
+    @Test
+    public void testQueryMilvusByEmbeddingOfTxtToImg() {
+        System.out.println("Test query Milvus Service(txt2img) by embeddings:");
+        MilvusService service = context.getBean(MilvusService.class);
+
+        Map<String, String> args = new HashMap<>();
+        args.put("collectionName", "txt_to_img_demo");
+        args.put("outFields", "id");
+        args.put("vectorField", "image_emb");
+        service.setMilvusArgs(args);
+
+        // Note the emb dim must be same with data stored in Milvus
+        List<List<Float>> vectors = generateFloatVectors(1, 512);
         Map<Integer, List<SearchResultsWrapper.IDScore>> result = service.findByEmbeddingVectors(vectors, 5);
         System.out.println(result);
     }
