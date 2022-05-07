@@ -161,6 +161,7 @@ RUN mkdir -p ${HOME}/.local/share/jupyter/lab/staging && \
    rm -rf ${HOME}/.cache/yarn
 
 RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN mkdir -p ${HOME}/workspace
 
 ENV SHELL /bin/zsh
 ENV USER ${NB_USER}

@@ -1,7 +1,7 @@
 #!/usr/bin/with-contenv bash
 cd "${HOME}"
 exec ${HOME}/.local/bin/jupyter lab \
-  --notebook-dir="${HOME}" \
+  --notebook-dir="${HOME}/workspace" \
   --ip=0.0.0.0 \
   --no-browser \
   --allow-root \
