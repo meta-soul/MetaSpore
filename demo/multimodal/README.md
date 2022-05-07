@@ -54,7 +54,7 @@ When the offline and online work is ready according to the above document guidel
 
 **T2I** demo:
 
-（1）**Query="两只猫" **
+（1）**Query="两只猫"**
 
 <p align="center">
   <img width="600" src="./online/docs/txt2img_case1.png">

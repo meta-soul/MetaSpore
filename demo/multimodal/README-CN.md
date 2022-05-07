@@ -52,7 +52,7 @@
 
 **以文搜图**示例：
 
-（1）**Query="两只猫" **
+（1）**Query="两只猫"**
 
 <p align="center">
   <img width="600" src="./online/docs/txt2img_case1.png">
