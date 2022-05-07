@@ -16,6 +16,7 @@
 
 #include <serving/feature_extraction_model_input.h>
 #include <serving/grpc_model_runner.h>
+#include <serving/py_preprocessing_model.h>
 #include <serving/ort_model.h>
 
 namespace metaspore::serving {
@@ -40,10 +41,10 @@ awaitable_result<PredictReply> GrpcTabularModelRunner::predict(PredictRequest &r
     co_return reply;
 }
 
-awaitable_result<PredictReply> GrpcOrtModelRunner::predict(PredictRequest &request) {
+awaitable_result<PredictReply> GrpcPreprocessingOrtModelRunner::predict(PredictRequest &request) {
     // convert grpc request to ort value input
     auto req = std::make_unique<GrpcRequestOutput>(request);
-    auto input = std::make_unique<OrtModelInput>();
+    auto input = std::make_unique<PyPreprocessingModelInput>();
     CALL_AND_CO_RETURN_IF_STATUS_NOT_OK(input_conveter->convert_input(std::move(req), input.get()));
 
     // do prediction
@@ -58,9 +59,7 @@ awaitable_result<PredictReply> GrpcOrtModelRunner::predict(PredictRequest &reque
     co_return reply;
 }
 
-awaitable_result<PredictReply> GrpcPreprocessingOrtModelRunner::predict(PredictRequest &request) {
-    // TODO: cf: implement
-
+awaitable_result<PredictReply> GrpcOrtModelRunner::predict(PredictRequest &request) {
     // convert grpc request to ort value input
     auto req = std::make_unique<GrpcRequestOutput>(request);
     auto input = std::make_unique<OrtModelInput>();

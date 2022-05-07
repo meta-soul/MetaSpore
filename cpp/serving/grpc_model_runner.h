@@ -37,12 +37,12 @@ class GrpcTabularModelRunner : public GrpcModelRunner {
     awaitable_result<PredictReply> predict(PredictRequest &request) override;
 };
 
-class GrpcOrtModelRunner : public GrpcModelRunner {
+class GrpcPreprocessingOrtModelRunner : public GrpcModelRunner {
   public:
     awaitable_result<PredictReply> predict(PredictRequest &request) override;
 };
 
-class GrpcPreprocessingOrtModelRunner : public GrpcModelRunner {
+class GrpcOrtModelRunner : public GrpcModelRunner {
   public:
     awaitable_result<PredictReply> predict(PredictRequest &request) override;
 };

@@ -189,6 +189,12 @@ status OrtToGrpcReplyConverter::convert(std::unique_ptr<OrtModelOutput> from, Gr
 }
 
 status GrpcRequestToPyPreprocessingConverter::convert(std::unique_ptr<GrpcRequestOutput> from, PyPreprocessingModelInput *to) {
+    for (const auto &name : names_) {
+        auto find = from->request.payload().find(name);
+        if (find == from->request.payload().end())
+            return absl::NotFoundError(
+                fmt::format("Cannot find {} from rpc request", name));
+    }
     *to->request.mutable_payload() = std::move(*from->request.mutable_payload());
     return absl::OkStatus();
 }
