@@ -20,10 +20,15 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <agrpc/asioGrpc.hpp>
+#include <grpcpp/client_context.h>
+#include <grpcpp/create_channel.h>
 #include <fmt/format.h>
 #include <common/logger.h>
 #include <serving/threadpool.h>
 #include <serving/utils.h>
+#include <serving/metaspore.pb.h>
+#include <serving/metaspore.grpc.pb.h>
 #include <serving/py_preprocessing_process.h>
 #include <serving/py_preprocessing_model.h>
 
@@ -32,6 +37,8 @@ namespace metaspore::serving {
 class PyPreprocessingModelContext {
   public:
     PyPreprocessingProcess process_;
+    std::shared_ptr<grpc::Channel> channel_;
+    std::unique_ptr<Predict::Stub> stub_;
     std::filesystem::path temp_dir_;
 
     ~PyPreprocessingModelContext() {
@@ -103,6 +110,9 @@ awaitable_status PyPreprocessingModel::load(std::string dir_path) {
             absl::Status status = context_->process_.launch();
             if (!status.ok())
                 co_return std::move(status);
+            context_->channel_ = grpc::CreateChannel(listen_addr, grpc::InsecureChannelCredentials());
+            context_->stub_ = Predict::NewStub(context_->channel_);
+
             spdlog::info("PyPreprocessingModel loaded from {}, required inputs [{}], "
                          "producing outputs [{}]",
                          context_->process_.get_preprocessor_config_dir(),
@@ -114,9 +124,21 @@ awaitable_status PyPreprocessingModel::load(std::string dir_path) {
     co_return r;
 }
 
+// TODO: cf: delete
+agrpc::GrpcContext *get_global_grpc_context();
+
 awaitable_result<std::unique_ptr<PyPreprocessingModelOutput>>
 PyPreprocessingModel::do_predict(std::unique_ptr<PyPreprocessingModelInput> input) {
     auto output = std::make_unique<PyPreprocessingModelOutput>();
+    grpc::ClientContext client_context;
+    // TODO: cf: fix
+    agrpc::GrpcContext &grpc_context = *get_global_grpc_context();
+    std::unique_ptr<grpc::ClientAsyncResponseReader<PredictReply>> reader =
+        context_->stub_->AsyncPredict(&client_context, input->request, agrpc::get_completion_queue(grpc_context));
+    grpc::Status status;
+    co_await agrpc::finish(*reader, output->reply, status);
+    if (!status.ok())
+        co_return absl::FailedPreconditionError(fmt::format("preprocessing failed: {}", status.error_message()));
     co_return output;
 }
 

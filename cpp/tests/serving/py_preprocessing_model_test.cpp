@@ -17,6 +17,7 @@
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/system.hpp>
 #include <boost/process/search_path.hpp>
+#include <boost/asio/use_future.hpp>
 #include <serving/test_utils.h>
 #include <serving/py_preprocessing_model.h>
 
@@ -30,7 +31,7 @@ using namespace metaspore::serving;
 
 TEST(PyPreprocessingModelTestSuite, LoadModelTest) {
     auto &tp = Threadpools::get_background_threadpool();
-    boost::asio::co_spawn(
+    std::future<void> future = boost::asio::co_spawn(
         tp,
         []() -> awaitable<void> {
             auto prog_dir = boost::dll::program_location().parent_path();
@@ -39,7 +40,8 @@ TEST(PyPreprocessingModelTestSuite, LoadModelTest) {
             auto status = co_await model.load(conf_dir.string());
             EXPECT_TRUE_COROUTINE(status);
         },
-        boost::asio::detached);
+        boost::asio::use_future);
+    future.get();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

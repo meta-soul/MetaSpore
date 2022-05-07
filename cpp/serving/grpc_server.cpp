@@ -77,6 +77,14 @@ struct ServerShutdown {
     }
 };
 
+// TODO: cf: delete
+static agrpc::GrpcContext *_global_grpc_context;
+
+// TODO: cf: delete
+agrpc::GrpcContext *get_global_grpc_context() {
+    return _global_grpc_context;
+}
+
 class GrpcServerContext {
   public:
     GrpcServerContext() : builder(), predict_service(), load_service(), grpc_context(builder.AddCompletionQueue()) {
@@ -87,6 +95,9 @@ class GrpcServerContext {
         builder.RegisterService(&predict_service);
         builder.RegisterService(&load_service);
         server = builder.BuildAndStart();
+
+        // TODO: cf: delete
+        _global_grpc_context = &grpc_context;
     }
 
     grpc::ServerBuilder builder;
