@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "movielens-chart.fullname" . }}
+  labels:
+    {{- include "movielens-chart.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "movielens-chart.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "movielens-chart.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "movielens-chart.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            # CONSUL
+            - name: CONSUL_HOST
+              valueFrom: 
+                fieldRef: 
+                  fieldPath: status.hostIP
+            - name: CONSUL_PORT
+              value: "8500"
+            # MONGODB
+            - name: MONGODB_HOST
+              value: "{{ .Values.mongodb.host }}"
+            - name: MONGODB_PORT
+              value: "{{ .Values.mongodb.port }}"
+            - name: MONGODB_DATABASE
+              value: "{{ .Values.mongodb.database }}"
+            - name: MONGODB_USERNAME
+              value: "{{ .Values.mongodb.username }}"
+            - name: MONGODB_PASSWORD
+              value: "{{ .Values.mongodb.password }}"
+            # SERVING
+            - name: SERVING_NEGOTIATIONTYPE
+              value: PLAINTEXT
+            - name: SERVING_ADDRESS
+              value: "{{ .Values.serving.address }}"
+            # MILVUS
+            - name: MILVUS_HOST
+              value: "{{ .Values.milvus.host }}"
+            - name: MILVUS_PORT
+              value: "{{ .Values.milvus.port }}"
+            # JVM PARAMS
+            - name: JVM_OPTS
+              value: "{{ .Values.jvmParams.jvm_opts }}"
+            - name: JAVA_OPTS
+              value: "{{ .Values.jvmParams.java_opts }}"
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
