@@ -1,0 +1,59 @@
+## spark session
+app_name: 'TwoTowers-DSSM'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 512
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+
+## datasets
+train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
+
+## model configuratio
+two_tower_module: metaspore
+# two_tower_module: python.two_tower_retrieval_milvus 
+two_tower_module_class: TwoTowerRetrievalModule
+two_tower_estimator_class: TwoTowerRetrievalEstimator
+
+user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema
+user_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema
+item_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema
+item_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema
+model_in_path: null
+model_out_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_out/
+# model_export_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_export/
+model_export_path: null
+model_version: '0.1'
+experiment_name: two_towers_dssm
+input_label_column_index: 0
+
+## milvus
+milvus_description: 'ml_1m_dssm'
+milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
+milvus_port: '19530'
+milvus_embedding_field: 'embedding_vector'
+milvus_index_type: 'IVF_FLAT'
+milvus_metric_type: 'IP'
+milvus_nlist: 1024
+milvus_nprobe: 128
+
+## model hyper params
+tau: 0.05
+sparse_init_var: 0.0001
+net_dropout: 0.0
+batch_size: 128
+vector_embedding_size: 32
+item_embedding_size: 128
+dnn_hidden_units: [512, 256, 128]
+dnn_hidden_activations: 'ReLU'
+adam_learning_rate: 0.0001
+ftrl_learning_rate: 0.01
+ftrl_smothing_rate: 1.0
+ftrl_l1_regularization: 1.0
+ftrl_l2_regularization: 120.0
+training_epoches: 3
+shuffle_training_dataset: True
