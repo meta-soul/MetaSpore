@@ -80,8 +80,7 @@ class PreprocessorService(object):
 
     def _load_preprocessor(self):
         preprocessor_class = self._get_preprocessor_class()
-        preprocessor = preprocessor_class()
-        preprocessor.load(self._config_dir)
+        preprocessor = preprocessor_class(self._config_dir)
         self._preprocessor_object = preprocessor
 
     def _print_input_output_names(self):
