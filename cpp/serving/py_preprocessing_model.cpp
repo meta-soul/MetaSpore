@@ -133,10 +133,16 @@ PyPreprocessingModel::do_predict(std::unique_ptr<PyPreprocessingModelInput> inpu
     grpc::ClientContext client_context;
     // TODO: cf: fix
     agrpc::GrpcContext &grpc_context = *get_global_grpc_context();
-    std::unique_ptr<grpc::ClientAsyncResponseReader<PredictReply>> reader =
-        context_->stub_->AsyncPredict(&client_context, input->request, agrpc::get_completion_queue(grpc_context));
     grpc::Status status;
-    co_await agrpc::finish(*reader, output->reply, status);
+    co_await boost::asio::co_spawn(
+        grpc_context,
+        [&]() -> boost::asio::awaitable<void>
+        {
+            std::unique_ptr<grpc::ClientAsyncResponseReader<PredictReply>> reader =
+                context_->stub_->AsyncPredict(&client_context, input->request, agrpc::get_completion_queue(grpc_context));
+            co_await agrpc::finish(*reader, output->reply, status);
+        },
+        boost::asio::use_awaitable);
     if (!status.ok())
         co_return absl::FailedPreconditionError(fmt::format("preprocessing failed: {}", status.error_message()));
     co_return output;
