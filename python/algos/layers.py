@@ -60,7 +60,7 @@ class MLPLayer(torch.nn.Module):
         ## batchnorm + linear + activation + dropout...
         for idx in range(len(hidden_units) - 1):
             if batch_norm:
-                dense_layers.append(torch.nn.BatchNorm1d(hidden_units[idx]))
+                dense_layers.append(ms.nn.Normalization(hidden_units[idx]))
             dense_layers.append(torch.nn.Linear(hidden_units[idx], hidden_units[idx + 1], bias = use_bias))
             if hidden_activations[idx] is not None \
                 and (idx < len(hidden_units) - 2 or output_dim is not None):
