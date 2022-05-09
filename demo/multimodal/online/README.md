@@ -4,9 +4,9 @@
 
 The Multimodal Retrieval Demo online service, while supporting application scenarios such as text-to-text search, text-to-image search, etc. It consists of the following parts:
 
-1. [multimodal_web](multimodal_web), a front-end service for multimodal demo, providing a web UI interface for users to experience multimodal retrieval service.
-2. [multimodal_serving](multimodal_serving), retrieval online service for multimodal demo, including the entire algorithm pipeline such as a/b experimental configuration, query preprocessing, matching, ranking, summary, etc.
-3. [multimodal_preprocess](multimodal_preprocess), wrap the multimodal pretrained model preprocessing methods (including text/image, etc.), and provides service through the gRPC api.
+1. [multimodal_web](multimodal_web)<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_web">1</a>]</sup>, a front-end service for multimodal demo, providing a web UI interface for users to experience multimodal retrieval service.
+2. [multimodal_serving](multimodal_serving)<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_serving">2</a>]</sup>, retrieval online service for multimodal demo, including the entire algorithm pipeline such as a/b experimental configuration, query preprocessing, matching, ranking, summary, etc.
+3. [multimodal_preprocess](multimodal_preprocess)<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_preprocess">3</a>]</sup>, wrap the multimodal pretrained model preprocessing methods (including text/image, etc.), and provides service through the gRPC api.
 
 **Note:** The above services form dependencies in sequence from front to back, so to build a multimodal demo, you need to run each service in sequence from back to front. Of course, before doing this, remember to take done the [offline](../offline) part.
 
@@ -35,8 +35,22 @@ Next, we will describe in detail how to build those online services step by step
 
 Please go [here](../offline) to prepare the demo offline processing includes:
 
-- database indexing and push to online services like `Milvus`, `MongoDB`
-- model export and push to online services like `MetaSpore Serving`, `mulitmodal_preprocess`
+- database indexing and push to online services like `Milvus`<sup>[<a href="https://milvus.io/cn/">4</a>]</sup>, `MongoDB`<sup>[<a href="https://www.mongodb.org.cn/">5</a>]</sup>
+- model export and push to online services like `MetaSpore Serving`<sup>[<a href="https://github.com/meta-soul/MetaSpore">6</a>]</sup>, `mulitmodal_preprocess`
+
+**Text-to-Text Demo**
+
+| Model backbone                                               | Pretrained Model                                             | Dataset                                                      | Doc                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Sentence-BERT<sup>[<a href="https://arxiv.org/pdf/1908.10084.pdf">7</a>]</sup> | sbert-chinese-qmc-domain-v1<sup>[<a href="https://huggingface.co/DMetaSoul/sbert-chinese-qmc-domain-v1">8</a>]</sup> | Baike Q&A<sup>[<a href="https://github.com/brightmart/nlp_chinese_corpus#3%E7%99%BE%E7%A7%91%E7%B1%BB%E9%97%AE%E7%AD%94json%E7%89%88baike2018qa">9</a>]</sup> | More<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/QA/index_and_export/README-CN.md">10</a>]</sup> |
+
+**以文搜图**
+
+| 模型结构                                                     | 预训练                                                       | 数据集                                                       | 文档                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| CLIP<sup>[<a href="https://github.com/openai/CLIP">11</a>]</sup> | clip-ViT-B-32-multilingual-v1<sup>[<a href="https://huggingface.co/openai/clip-vit-base-patch32">12</a>,<a href="https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1">13</a>]</sup> | Unsplash Lite<sup>[<a href="https://unsplash.com/data">14</a>]</sup> | More<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img">15</a>]</sup> |
+
+More details go to offline [code](https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/offline).
 
 ## 1. multimodal_preprocess
 
@@ -223,3 +237,35 @@ Go  `http://127.0.0.1:8090` to check the UI service!
 <p align="center">
    <img width="800" alt="image" src="./docs/web-UI.png">
 </p>
+
+## 4. Reference
+
+[1] Web UI: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_web
+
+[2] Online Search Pipeline: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_serving
+
+[3] Query Preprocess: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_preprocess
+
+[4] Milvus: https://milvus.io/cn/
+
+[5] MongoDB: https://www.mongodb.org.cn/
+
+[6] MetaSpore: https://github.com/meta-soul/MetaSpore
+
+[7] Sentence-BERT: https://arxiv.org/pdf/1908.10084.pdf
+
+[8] Model sbert-chinese-qmc-domain-v1: https://huggingface.co/DMetaSoul/sbert-chinese-qmc-domain-v1
+
+[9] Text-to-Text Dataset Baike QA: <https://github.com/brightmart/nlp_chinese_corpus#3%E7%99%BE%E7%A7%91%E7%B1%BB%E9%97%AE%E7%AD%94json%E7%89%88baike2018qa>
+
+[10] Text-to-Text Guide: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/QA/index_and_export/README-CN.md
+
+[11] CLIP: https://github.com/openai/CLIP
+
+[12] Model clip-vit-base-patch32: https://huggingface.co/openai/clip-vit-base-patch32
+
+[13] Model clip-ViT-B-32-multilingual-v1: https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1
+
+[14] Text-to-Image Dataset Unsplash Lite: https://unsplash.com/data
+
+[15] Text-to-Image Guide: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img

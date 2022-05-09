@@ -2,9 +2,9 @@
 
 多模态检索 Demo 线上服务，同时支撑**以文搜文**、**以文搜图**等应用场景，整套线上服务由以下几部分构成：
 
-1. [multimodal_web](multimodal_web)，检索前端服务，提供 web UI 界面供用户体验多模态检索能力
-2. [multimodal_serving](multimodal_serving)，多模态示例的算法服务，含有实验配置、预处理、召回、排序等整个算法处理链路
-3. [multimodal_preprocess](multimodal_preprocess)，对多模态大模型预处理逻辑（含文本/图像等）的封装，以 gRPC 接口提供服务
+1. [multimodal_web](multimodal_web)<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_web">1</a>]</sup>，检索前端服务，提供 web UI 界面供用户体验多模态检索能力
+2. [multimodal_serving](multimodal_serving)<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_serving">2</a>]</sup>，多模态示例的算法服务，含有实验配置、预处理、召回、排序等整个算法处理链路
+3. [multimodal_preprocess](multimodal_preprocess)<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_preprocess">3</a>]</sup>，对多模态大模型预处理逻辑（含文本/图像等）的封装，以 gRPC 接口提供服务
 
 从用户请求视角看，以上几个服务从前往后依次形成调用依赖关系。所以要把多模态 Demo 搭建起来，就需要**从后往前**依次把各个服务先跑起来。当然做这些之前，要记得先把[离线](../offline)的模型导出、上线和建库先搞定哈！
 
@@ -31,10 +31,24 @@
 
 准备工作主要有：
 
-- **数据建库**并把索引数据推送到服务组件中（如：Milvus/MongoDB等）
-- **模型导出**并把模型推送到服务组件中（如：MetaSpore Serving/multimodal_preprocess等）
+- **数据建库**并把索引数据推送到服务组件中（如：Milvus<sup>[<a href="https://milvus.io/cn/">4</a>]</sup>/MongoDB<sup>[<a href="https://www.mongodb.org.cn/">5</a>]</sup>等）
+- **模型导出**并把模型推送到服务组件中（如：MetaSpore Serving<sup>[<a href="https://github.com/meta-soul/MetaSpore">6</a>]</sup>/multimodal_preprocess等）
 
-更多离线准备工作细节，见[参考文档](../offline)。
+离线使用到的模型和数据集概要如下：
+
+**以文搜文**
+
+| 模型结构                                                     | 预训练                                                       | 数据集                                                       | 文档                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| Sentence-BERT<sup>[<a href="https://arxiv.org/pdf/1908.10084.pdf">7</a>]</sup> | sbert-chinese-qmc-domain-v1<sup>[<a href="https://huggingface.co/DMetaSoul/sbert-chinese-qmc-domain-v1">8</a>]</sup> | 百科问答<sup>[<a href="https://github.com/brightmart/nlp_chinese_corpus#3%E7%99%BE%E7%A7%91%E7%B1%BB%E9%97%AE%E7%AD%94json%E7%89%88baike2018qa">9</a>]</sup> | 说明文档<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/QA/index_and_export/README-CN.md">10</a>]</sup> |
+
+**以文搜图**
+
+| 模型结构                                                     | 预训练                                                       | 数据集                                                       | 文档                                                         |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| CLIP<sup>[<a href="https://github.com/openai/CLIP">11</a>]</sup> | clip-ViT-B-32-multilingual-v1<sup>[<a href="https://huggingface.co/openai/clip-vit-base-patch32">12</a>,<a href="https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1">13</a>]</sup> | Unsplash Lite<sup>[<a href="https://unsplash.com/data">14</a>]</sup> | 说明文档<sup>[<a href="https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img">15</a>]</sup> |
+
+更多细节参考多模态语义搜索[离线部分](https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/offline)。
 
 ## 1. multimodal_preprocess
 
@@ -230,55 +244,33 @@ sh start.sh
 
 点击入口链接就可以进入对应的检索 demo 啦！
 
-## 4. 参考资料和代码路径
-### 4.1 代码路径
-- MetaSpore一站式机器学习开发平台：
-  https://github.com/meta-soul/MetaSpore
+## 4. 参考资料
+[1] 用户入口服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_web
 
-- 多模态语义检索线上部分：
-  https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/online
+[2] 检索算法服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_serving
 
-- 多模态语义检索离线部分：
-  https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/offline
+[3] Query 预处理服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_preprocess
 
-### 参考资料
+[4] Milvus: https://milvus.io/cn/
 
-[1] HuggingFace: https://huggingface.co/
+[5] MongoDB: https://www.mongodb.org.cn/
 
-[2] Timm: https://github.com/rwightman/pytorch-image-models
-
-[3] CLIP: https://github.com/openai/CLIP
-
-[4] MetaSpore: https://github.com/meta-soul/MetaSpore
-
-[5] Model sbert-chinese-qmc-domain-v1: https://huggingface.co/DMetaSoul/sbert-chinese-qmc-domain-v1
-
-[6] Model clip-vit-base-patch32: https://huggingface.co/openai/clip-vit-base-patch32
+[6] MetaSpore: https://github.com/meta-soul/MetaSpore
 
 [7] Sentence-BERT: https://arxiv.org/pdf/1908.10084.pdf
 
-[8] 以文搜文离线文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/QA/index_and_export/README-CN.md
+[8] Model sbert-chinese-qmc-domain-v1: https://huggingface.co/DMetaSoul/sbert-chinese-qmc-domain-v1
 
-[9] 以文搜文数据集: https://github.com/brightmart/nlp_chinese_corpus#3百科类问答json版baike2018qa
+[9] 以文搜文数据集: <https://github.com/brightmart/nlp_chinese_corpus#3%E7%99%BE%E7%A7%91%E7%B1%BB%E9%97%AE%E7%AD%94json%E7%89%88baike2018qa>
 
-[10] Milvus: https://milvus.io/cn/
+[10] 以文搜文离线文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/QA/index_and_export/README-CN.md
 
-[11] MongoDB: https://www.mongodb.org.cn/
+[11] CLIP: https://github.com/openai/CLIP
 
-[12] Model clip-ViT-B-32-multilingual-v1: https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1
+[12] Model clip-vit-base-patch32: https://huggingface.co/openai/clip-vit-base-patch32
 
-[13] 以文搜图离线文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img
+[13] Model clip-ViT-B-32-multilingual-v1: https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1
 
 [14] 以文搜图数据集 Unsplash Lite: https://unsplash.com/data
 
-[15] 以文搜图说明文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img/README.md
-
-[16] CLIP's ViT: https://huggingface.co/openai/clip-vit-base-patch32
-
-[17] Query 预处理服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_preprocess
-
-[18] 检索算法服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_serving
-
-[19] 用户入口服务: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/multimodal_web
-
-[20] 多模态线上服务整体介绍: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/online/README-CN.md
+[15] 以文搜图离线文档: https://github.com/meta-soul/MetaSpore/blob/main/demo/multimodal/offline/txt2img
