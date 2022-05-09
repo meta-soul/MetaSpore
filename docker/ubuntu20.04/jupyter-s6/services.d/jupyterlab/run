@@ -1,0 +1,14 @@
+#!/usr/bin/with-contenv bash
+cd "${HOME}"
+exec ${HOME}/.local/bin/jupyter lab \
+  --notebook-dir="${HOME}/workspace" \
+  --ip=0.0.0.0 \
+  --no-browser \
+  --allow-root \
+  --port=8888 \
+  --ServerApp.token="" \
+  --ServerApp.password="" \
+  --ServerApp.allow_origin="*" \
+  --ServerApp.base_url="${NB_PREFIX}" \
+  --ServerApp.authenticate_prometheus=False \
+  --NotebookApp.terminado_settings="{'shell_command': ['/bin/zsh']}"

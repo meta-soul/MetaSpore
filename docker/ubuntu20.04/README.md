@@ -11,7 +11,7 @@ First set the mirror warehouse address:
 export REPOSITORY=...
 ````
 
-1. Dev image, package the basic environment, build the environment for offline C++, Python compilation: `Dockerfile_dev`
+1. Dev image, package the basic environment, build the environment for C++ and Python compilation: `Dockerfile_dev`
     ```bash
     DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_dev -t $REPOSITORY/metaspore-dev:v1.0.0 .
     ````
@@ -49,3 +49,8 @@ export REPOSITORY=...
                 ```bash
                 DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_training_release --build-arg METASPORE_RELEASE=build --build-arg METASPORE_BUILD_IMAGE=$REPOSITORY/metaspore-training-build:v1.0.0 --build- arg SPARK_RELEASE=pyspark --build-arg SPARK_FILE="pyspark==3.2.1" -t $REPOSITORY/metaspore-training-release:v1.0.0 --target release .
                 ````
+            3. Generate Jupyter Image：
+                Jupyter image requires Training Release build with pyspark installation.
+                ```bash
+                DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_jupyter --build-arg RELEASE_IMAGE=$REPOSITORY/metaspore-training-release:v1.0.0 -t $REPOSITORY/metaspore-training-jupyter:v1.0.0 docker/ubuntu20.04
+                ```

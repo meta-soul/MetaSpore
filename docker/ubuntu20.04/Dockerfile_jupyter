@@ -1,0 +1,171 @@
+#
+# Copyright 2022 DMetaSoul
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+ARG RELEASE_IMAGE
+
+FROM ${RELEASE_IMAGE}
+
+# The following is modified from: https://github.com/kubeflow/kubeflow/blob/master/components/example-notebook-servers/base/Dockerfile
+
+ENV NB_USER jovyan
+ENV NB_UID 1000
+ENV NB_PREFIX /
+ENV HOME /home/$NB_USER
+ENV SHELL /bin/bash
+
+# args - software versions
+ARG KUBECTL_ARCH="amd64"
+ARG KUBECTL_VERSION=v1.21.0
+ARG S6_ARCH="amd64"
+ # renovate: datasource=github-tags depName=just-containers/s6-overlay versioning=loose
+ARG S6_VERSION=v2.2.0.3
+
+# set shell to bash
+SHELL ["/bin/bash", "-c"]
+
+# install - useful linux packages
+# install gcc 11 because MetaSpore is built on it
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && apt-get -yq update \
+ && apt-get -yq install --no-install-recommends \
+    software-properties-common \
+ && add-apt-repository ppa:ubuntu-toolchain-r/test \
+ && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+ && apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" \
+ && apt-get -yq update \
+ && apt-get -yq install --no-install-recommends \
+    apt-transport-https \
+    bash \
+    bzip2 \
+    gnupg \
+    gnupg2 \
+    locales \
+    lsb-release \
+    nano \
+    unzip \
+    zip \
+    zsh \
+    vim \
+    openjdk-11-jdk \
+ && apt-get -yq install manpages-dev binutils tar pkg-config bison flex \
+ && apt-get -yq install gcc-11 g++-11 cmake \ 
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11
+
+# install - s6 overlay
+RUN export GNUPGHOME=/tmp/ \
+ && curl -sL "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${S6_ARCH}-installer" -o /tmp/s6-overlay-${S6_VERSION}-installer \
+ && curl -sL "https://github.com/just-containers/s6-overlay/releases/download/${S6_VERSION}/s6-overlay-${S6_ARCH}-installer.sig" -o /tmp/s6-overlay-${S6_VERSION}-installer.sig \
+ && gpg --keyserver keys.gnupg.net --keyserver pgp.surfnet.nl --recv-keys 6101B2783B2FD161 \
+ && gpg -q --verify /tmp/s6-overlay-${S6_VERSION}-installer.sig /tmp/s6-overlay-${S6_VERSION}-installer \
+ && chmod +x /tmp/s6-overlay-${S6_VERSION}-installer \
+ && /tmp/s6-overlay-${S6_VERSION}-installer / \
+ && rm /tmp/s6-overlay-${S6_VERSION}-installer.sig /tmp/s6-overlay-${S6_VERSION}-installer
+
+# install - kubectl
+RUN curl -sL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${KUBECTL_ARCH}/kubectl" -o /usr/local/bin/kubectl \
+ && curl -sL "https://dl.k8s.io/${KUBECTL_VERSION}/bin/linux/${KUBECTL_ARCH}/kubectl.sha256" -o /tmp/kubectl.sha256 \
+ && echo "$(cat /tmp/kubectl.sha256) /usr/local/bin/kubectl" | sha256sum --check \
+ && rm /tmp/kubectl.sha256 \
+ && chmod +x /usr/local/bin/kubectl
+
+# create user and set required ownership
+# enable sudo for user to be able to install system packages
+RUN useradd -M -s /bin/zsh -N -u ${NB_UID} ${NB_USER} \
+ && mkdir -p ${HOME} \
+ && chown -R ${NB_USER}:users ${HOME} \
+ && chown -R ${NB_USER}:users /usr/local/bin \
+ && chown -R ${NB_USER}:users /etc/s6 \
+ && passwd -d ${NB_USER} \
+ && usermod -aG sudo ${NB_USER} \
+ && echo ${NB_USER}' ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+
+# The following is modified from https://github.com/kubeflow/kubeflow/blob/master/components/example-notebook-servers/jupyter/Dockerfile
+USER root
+
+# install -- node.js
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && curl -sL "https://deb.nodesource.com/gpgkey/nodesource.gpg.key" | apt-key add - \
+ && echo "deb https://deb.nodesource.com/node_14.x focal main" > /etc/apt/sources.list.d/nodesource.list \
+ && apt-get -yq update \
+ && apt-get -yq install --no-install-recommends \
+    nodejs \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+
+# switch to NB_UID for installs
+USER ${NB_UID}
+
+ENV PATH ${HOME}/.local/bin:$PATH
+
+# install manually without requirements.txt to make pip deps resolver happy
+RUN python3 -m pip install --upgrade setuptools --no-cache-dir && \
+ python3 -m pip install --upgrade pyasn1-modules --no-cache-dir && \
+ python3 -m pip install --upgrade kfp==1.8.11 --no-cache-dir && \
+ python3 -m pip install --upgrade jupyterlab notebook ipykernel --no-cache-dir && \
+ python3 -m pip install --upgrade jupyterlab-git ipython-sql ipywidgets --no-cache-dir && \
+ python3 -m pip install --upgrade widgetsnbextension plotly ipympl --no-cache-dir && \
+ python3 -m pip install --upgrade elyra[all] --no-cache-dir && \
+ python3 -m pip install --upgrade jupyterlab-sparkmonitor --no-cache-dir \
+ && jupyter lab --generate-config \
+ && ipython profile create --ipython-dir=${HOME}/.ipython \
+ && echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >> ${HOME}/.ipython/profile_default/ipython_config.py \
+ && rm -rf ${HOME}/.cache/yarn
+
+ENV IPYTHONDIR=${HOME}/.ipython
+
+# s6 - copy scripts
+COPY --chown=jovyan:users jupyter-s6/ /etc
+
+USER root
+RUN mkdir -p /var/run/s6 \
+ && chown -R ${NB_USER}:users /var/run/s6 \
+ && npm config set registry https://registry.npm.taobao.org \
+ && chown -R ${NB_USER}:users ${HOME}/.config
+USER ${NB_UID}
+
+WORKDIR ${HOME}
+
+ENV NPM_CONFIG_PREFIX=${HOME}/.local/share/jupyter/lab/staging
+
+# We should build first then install nodejs based language servers
+RUN mkdir -p ${HOME}/.local/share/jupyter/lab/staging && \
+   npm config set prefix=${HOME}/.local/share/jupyter/lab/staging && \
+   jlpm config set registry https://registry.npm.taobao.org && \
+   python3 -m pip install -U jedi-language-server && \
+   jupyter lab build --debug && \
+   npm install --prefix ${HOME}/.local/share/jupyter/lab/staging --save-dev yaml-language-server && \
+   npm install --prefix ${HOME}/.local/share/jupyter/lab/staging --save-dev bash-language-server && \
+   npm install --prefix ${HOME}/.local/share/jupyter/lab/staging --save-dev sql-language-server && \
+   npm install --prefix ${HOME}/.local/share/jupyter/lab/staging --save-dev vscode-json-languageserver-bin && \
+   rm -rf ${HOME}/.cache/yarn
+
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+RUN mkdir -p ${HOME}/workspace
+
+ENV SHELL /bin/zsh
+ENV USER ${NB_USER}
+
+EXPOSE 8888
+
+ENTRYPOINT ["/init"]
