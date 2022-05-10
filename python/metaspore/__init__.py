@@ -101,6 +101,8 @@ from . import output
 from . import spark
 from . import patching_pickle
 from . import demo
+from . import kubeflow
+from . import pipeline
 
 patching_pickle._patch_lookup_module_and_qualname()
 patching_pickle._patch_getsourcelines()
