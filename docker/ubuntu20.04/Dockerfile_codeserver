@@ -24,6 +24,12 @@ SHELL ["/bin/bash", "-c"]
 RUN export DEBIAN_FRONTEND=noninteractive \
  && apt-get -yq update \
  && apt-get -yq install --no-install-recommends \
+    software-properties-common \
+ && add-apt-repository ppa:ubuntu-toolchain-r/test \
+ && wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | gpg --dearmor - | tee /etc/apt/trusted.gpg.d/kitware.gpg >/dev/null \
+ && apt-add-repository "deb https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" \
+ && apt-get -yq update \
+ && apt-get -yq install --no-install-recommends \
     apt-transport-https \
     bash \
     bzip2 \
@@ -32,12 +38,17 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     locales \
     lsb-release \
     nano \
-    software-properties-common \
     unzip \
     zip \
     zsh \
+    vim \
+    openjdk-11-jdk \
+ && apt-get -yq install manpages-dev binutils tar pkg-config bison flex \
+ && apt-get -yq install gcc-11 g++-11 cmake \ 
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
+
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /usr/bin/g++ g++ /usr/bin/g++-11 --slave /usr/bin/gcov gcov /usr/bin/gcov-11 --slave /usr/bin/gcc-ar gcc-ar /usr/bin/gcc-ar-11 --slave /usr/bin/gcc-ranlib gcc-ranlib /usr/bin/gcc-ranlib-11
 
 # install - s6 overlay
 RUN export GNUPGHOME=/tmp/ \
@@ -57,15 +68,31 @@ RUN curl -sL "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/${KUBECTL_A
  && chmod +x /usr/local/bin/kubectl
 
 # create user and set required ownership
+# enable sudo for user to be able to install system packages
 RUN useradd -M -s /bin/zsh -N -u ${NB_UID} ${NB_USER} \
  && mkdir -p ${HOME} \
  && chown -R ${NB_USER}:users ${HOME} \
  && chown -R ${NB_USER}:users /usr/local/bin \
- && chown -R ${NB_USER}:users /etc/s6
+ && chown -R ${NB_USER}:users /etc/s6 \
+ && passwd -d ${NB_USER} \
+ && usermod -aG sudo ${NB_USER} \
+ && echo ${NB_USER}' ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
+
+# install -- node.js
+RUN export DEBIAN_FRONTEND=noninteractive \
+ && curl -sL "https://deb.nodesource.com/gpgkey/nodesource.gpg.key" | apt-key add - \
+ && echo "deb https://deb.nodesource.com/node_14.x focal main" > /etc/apt/sources.list.d/nodesource.list \
+ && apt-get -yq update \
+ && apt-get -yq install --no-install-recommends \
+    nodejs \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
 
 USER root
 
@@ -78,27 +105,40 @@ RUN curl -sL "https://github.com/cdr/code-server/releases/download/${CODESERVER_
  && dpkg -i /tmp/code-server.deb \
  && rm -f /tmp/code-server.deb
 
-RUN code-server --install-extension "ms-python.python" \
-    && code-server --install-extension "" \
-
-RUN python3 -m pip install --upgrade setuptools --no-cache-dir && \
- python3 -m pip install --upgrade pyasn1-modules --no-cache-dir && \
- python3 -m pip install --upgrade kfp kfp-server-api --no-cache-dir && \
- python3 -m pip install --upgrade plotly jupyter-dash --no-cache-dir && \
- python3 -m pip install --upgrade elyra[all] --no-cache-dir && \
- python3 -m pip install --upgrade jupyterlab-sparkmonitor --no-cache-dir \
- && jupyter nbextension install --py widgetsnbextension --user \
- && jupyter nbextension enable --py widgetsnbextension --user \
- && jupyter lab --generate-config \
- && ipython profile create --ipython-dir=${HOME}/.ipython \
- && echo "c.InteractiveShellApp.extensions.append('sparkmonitor.kernelextension')" >> ${HOME}/.ipython/profile_default/ipython_config.py \
- && rm -rf ${HOME}/.cache/yarn
-
 # s6 - copy scripts
-COPY --chown=jovyan:users s6/ /etc
-
+COPY --chown=jovyan:users codeserver_s6/ /etc
+RUN mkdir -p /var/run/s6 \
+ && mkdir -p /home/jovyan/.config \
+ && chown -R ${NB_USER}:users /var/run/s6 \
+ && npm config set registry https://registry.npm.taobao.org \
+ && chown -R ${NB_USER}:users ${HOME}
 
 USER $NB_UID
+
+WORKDIR ${HOME}
+
+RUN code-server --install-extension "ms-python.python" \
+    && code-server --install-extension "ms-toolsai.jupyter-renderers" \
+    && code-server --install-extension "ms-toolsai.jupyter" \
+    && code-server --install-extension "MS-CEINTL.vscode-language-pack-zh-hans" \
+    && code-server --install-extension "redhat.vscode-yaml" \
+    && code-server --install-extension "vscode.json"
+
+ENV PATH ${HOME}/.local/bin:$PATH
+
+# install manually without requirements.txt to make pip deps resolver happy
+RUN python3 -m pip install --upgrade setuptools --no-cache-dir && \
+ python3 -m pip install --upgrade pyasn1-modules --no-cache-dir && \
+ python3 -m pip install --upgrade kfp==1.8.11 --no-cache-dir && \
+ python3 -m pip install --upgrade jupyterlab notebook ipykernel --no-cache-dir && \
+ python3 -m pip install --upgrade ipython-sql ipywidgets --no-cache-dir && \
+ python3 -m pip install --upgrade widgetsnbextension plotly ipympl --no-cache-dir && \
+ rm -rf ${HOME}/.cache/yarn
+
+RUN sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+ENV SHELL /bin/zsh
+ENV USER ${NB_USER}
 
 EXPOSE 8888
 
