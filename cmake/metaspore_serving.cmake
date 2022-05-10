@@ -113,6 +113,18 @@ add_custom_command(TARGET metaspore-serving-bin
             xargs -L 1 -I so_file cp -n so_file ${CMAKE_CURRENT_BINARY_DIR}/
 )
 
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
+message("Found Python at " ${Python_EXECUTABLE})
+
+add_custom_command(TARGET metaspore-serving-bin
+    POST_BUILD
+    COMMAND ${Python_EXECUTABLE} -m grpc.tools.protoc
+            -I=${CMAKE_CURRENT_SOURCE_DIR}/protos
+            --python_out=${CMAKE_CURRENT_BINARY_DIR}
+            --grpc_python_out=${CMAKE_CURRENT_BINARY_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
+)
+
 add_custom_command(TARGET metaspore-serving-bin
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
