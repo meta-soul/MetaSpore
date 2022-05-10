@@ -20,6 +20,8 @@
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
+#include <serving/shared_grpc_server_builder.h>
+#include <serving/shared_grpc_context.h>
 #include <metaspore/string_utils.h>
 
 #include <agrpc/asioGrpc.hpp>
@@ -77,33 +79,26 @@ struct ServerShutdown {
     }
 };
 
-// TODO: cf: delete
-static agrpc::GrpcContext *_global_grpc_context;
-
-// TODO: cf: delete
-agrpc::GrpcContext *get_global_grpc_context() {
-    return _global_grpc_context;
-}
-
 class GrpcServerContext {
   public:
-    GrpcServerContext() : builder(), predict_service(), load_service(), grpc_context(builder.AddCompletionQueue()) {
+    GrpcServerContext()
+            : builder(SharedGrpcServerBuilder::get_instance())
+            , predict_service()
+            , load_service()
+            , grpc_context(SharedGrpcContext::get_instance()) {
         spdlog::info("Listening on {}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port);
-        builder.AddListeningPort(
+        builder->AddListeningPort(
             fmt::format("{}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port),
             grpc::InsecureServerCredentials());
-        builder.RegisterService(&predict_service);
-        builder.RegisterService(&load_service);
-        server = builder.BuildAndStart();
-
-        // TODO: cf: delete
-        _global_grpc_context = &grpc_context;
+        builder->RegisterService(&predict_service);
+        builder->RegisterService(&load_service);
+        server = builder->BuildAndStart();
     }
 
-    grpc::ServerBuilder builder;
+    std::shared_ptr<grpc::ServerBuilder> builder;
     Predict::AsyncService predict_service;
     Load::AsyncService load_service;
-    agrpc::GrpcContext grpc_context;
+    std::shared_ptr<agrpc::GrpcContext> grpc_context;
     std::unique_ptr<grpc::Server> server;
 };
 
@@ -158,12 +153,12 @@ awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<LoadReply> &writer
 }
 
 void GrpcServer::run() {
-    ServerShutdown server_shutdown{*context_->server, context_->grpc_context};
+    ServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
 
     agrpc::repeatedly_request(
         &Predict::AsyncService::RequestPredict, context_->predict_service,
         CoSpawner{boost::asio::bind_executor(
-            context_->grpc_context,
+            *context_->grpc_context,
             [&](grpc::ServerContext &ctx, PredictRequest &req,
                 grpc::ServerAsyncResponseWriter<PredictReply> writer) -> awaitable<void> {
                 auto find_model = ModelManager::get_model_manager().get_model(req.model_name());
@@ -193,7 +188,7 @@ void GrpcServer::run() {
     agrpc::repeatedly_request(
         &Load::AsyncService::RequestLoad, context_->load_service,
         CoSpawner{boost::asio::bind_executor(
-            context_->grpc_context,
+            *context_->grpc_context,
             [&](grpc::ServerContext &ctx, LoadRequest &req,
                 grpc::ServerAsyncResponseWriter<LoadReply> writer) -> awaitable<void> {
                 const std::string &model_name = req.model_name();
@@ -218,7 +213,7 @@ void GrpcServer::run() {
             })});
 
     spdlog::info("Start to accept grpc requests");
-    context_->grpc_context.run();
+    context_->grpc_context->run();
 }
 
 } // namespace metaspore::serving

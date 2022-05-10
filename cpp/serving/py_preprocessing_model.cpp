@@ -29,6 +29,7 @@
 #include <serving/utils.h>
 #include <serving/metaspore.pb.h>
 #include <serving/metaspore.grpc.pb.h>
+#include <serving/shared_grpc_context.h>
 #include <serving/py_preprocessing_process.h>
 #include <serving/py_preprocessing_model.h>
 
@@ -40,6 +41,7 @@ class PyPreprocessingModelContext {
     std::shared_ptr<grpc::Channel> channel_;
     std::unique_ptr<Predict::Stub> stub_;
     std::filesystem::path temp_dir_;
+    std::shared_ptr<agrpc::GrpcContext> grpc_context_;
 
     ~PyPreprocessingModelContext() {
         if (!temp_dir_.empty())
@@ -112,6 +114,7 @@ awaitable_status PyPreprocessingModel::load(std::string dir_path) {
                 co_return std::move(status);
             context_->channel_ = grpc::CreateChannel(listen_addr, grpc::InsecureChannelCredentials());
             context_->stub_ = Predict::NewStub(context_->channel_);
+            context_->grpc_context_ = SharedGrpcContext::get_instance();
 
             spdlog::info("PyPreprocessingModel loaded from {}, required inputs [{}], "
                          "producing outputs [{}]",
@@ -124,22 +127,18 @@ awaitable_status PyPreprocessingModel::load(std::string dir_path) {
     co_return r;
 }
 
-// TODO: cf: delete
-agrpc::GrpcContext *get_global_grpc_context();
-
 awaitable_result<std::unique_ptr<PyPreprocessingModelOutput>>
 PyPreprocessingModel::do_predict(std::unique_ptr<PyPreprocessingModelInput> input) {
     auto output = std::make_unique<PyPreprocessingModelOutput>();
     grpc::ClientContext client_context;
-    // TODO: cf: fix
-    agrpc::GrpcContext &grpc_context = *get_global_grpc_context();
+    std::shared_ptr<agrpc::GrpcContext> grpc_context = context_->grpc_context_;
     grpc::Status status;
     co_await boost::asio::co_spawn(
-        grpc_context,
+        *grpc_context,
         [&]() -> boost::asio::awaitable<void>
         {
             std::unique_ptr<grpc::ClientAsyncResponseReader<PredictReply>> reader =
-                context_->stub_->AsyncPredict(&client_context, input->request, agrpc::get_completion_queue(grpc_context));
+                context_->stub_->AsyncPredict(&client_context, input->request, agrpc::get_completion_queue(*grpc_context));
             co_await agrpc::finish(*reader, output->reply, status);
         },
         boost::asio::use_awaitable);
