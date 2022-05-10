@@ -15,7 +15,8 @@
 #
 
 class ExamplePreprocessor(object):
-    def __init__(self):
+    def __init__(self, config_dir):
+        print(config_dir)
         self._input_names = 'input_key1', 'input_key2'
         self._output_names = 'output_key1', 'output_key2'
 
@@ -26,10 +27,6 @@ class ExamplePreprocessor(object):
     @property
     def output_names(self):
         return self._output_names
-
-    def load(self, config_dir):
-        # Implement loading logic here.
-        print(config_dir)
 
     def _do_predict(self, x, y):
         # Implement actual preprocessing logic here.
