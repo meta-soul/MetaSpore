@@ -17,8 +17,10 @@
 #include <common/logger.h>
 #include <serving/feature_extraction_model_input.h>
 #include <serving/model_manager.h>
-#include <serving/ort_model.h>
 #include <serving/tabular_model.h>
+#include <serving/py_preprocessing_model.h>
+#include <serving/py_preprocessing_ort_model.h>
+#include <serving/ort_model.h>
 #include <serving/threadpool.h>
 
 #include <fmt/format.h>
@@ -66,7 +68,7 @@ awaitable_status ModelManager::load(const std::string &dir_path, const std::stri
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
         [this, &dir_path, &name]() -> awaitable_status {
-            // load order: tabular, ort
+            // load order: tabular, preproc_ort, ort
             auto load_tabular_fn = [this, &dir_path, &name]() -> awaitable_status {
                 TabularModel model;
                 auto status = co_await model.load(dir_path);
@@ -82,6 +84,25 @@ awaitable_status ModelManager::load(const std::string &dir_path, const std::stri
                 runner->output_conveter =
                     std::make_unique<OrtToGrpcReplyConverter>(runner->model->output_names());
                 spdlog::info("ModelManager: Loaded TabularModel {} from {}", name, dir_path);
+                std::unique_lock wl(mu_);
+                models_[name] = runner;
+                co_return absl::OkStatus();
+            };
+            auto load_preproc_ort_fn = [this, &dir_path, &name]() -> awaitable_status {
+                PyPreprocessingOrtModel model;
+                auto status = co_await model.load(dir_path);
+                if (!status.ok()) {
+                    spdlog::error("ModelManager: Cannot load PyPreprocessingOrtModel {} from {}: {}", name,
+                                  dir_path, status);
+                    co_return status;
+                }
+                auto runner = std::make_shared<GrpcPreprocessingOrtModelRunner>();
+                runner->model = std::make_unique<PyPreprocessingOrtModel>(std::move(model));
+                runner->input_conveter =
+                    std::make_unique<GrpcRequestToPyPreprocessingConverter>(runner->model->input_names());
+                runner->output_conveter =
+                    std::make_unique<OrtToGrpcReplyConverter>(runner->model->output_names());
+                spdlog::info("ModelManager: Loaded PyPreprocessingOrtModel {} from {}", name, dir_path);
                 std::unique_lock wl(mu_);
                 models_[name] = runner;
                 co_return absl::OkStatus();
@@ -107,9 +128,16 @@ awaitable_status ModelManager::load(const std::string &dir_path, const std::stri
             };
 
             auto status = co_await load_tabular_fn();
-            if (!status.ok()) {
-                status = co_await load_ort_fn();
-            }
+            if (status.ok())
+                co_return status;
+            status = co_await load_preproc_ort_fn();
+            if (status.ok())
+                co_return status;
+            status = co_await load_ort_fn();
+            if (status.ok())
+                co_return status;
+            spdlog::error("ModelManager: Cannot load model {} from {}: {}", name,
+                          dir_path, status);
             co_return status;
         },
         boost::asio::use_awaitable);

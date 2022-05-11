@@ -140,4 +140,25 @@ class OrtToGrpcReplyConverter : public ConverterCRTP<OrtToGrpcReplyConverter> {
     status convert(std::unique_ptr<OrtModelOutput> from, GrpcReplyInput *to);
 };
 
+class PyPreprocessingModelInput;
+class PyPreprocessingModelOutput;
+
+class GrpcRequestToPyPreprocessingConverter : public ConverterCRTP<GrpcRequestToPyPreprocessingConverter> {
+  public:
+    using InputType = GrpcRequestOutput;
+    using OutputType = PyPreprocessingModelInput;
+    using ConverterCRTP<GrpcRequestToPyPreprocessingConverter>::ConverterCRTP;
+
+    status convert(std::unique_ptr<GrpcRequestOutput> from, PyPreprocessingModelInput *to);
+};
+
+class PyPreprocessingToOrtConverter : public ConverterCRTP<PyPreprocessingToOrtConverter> {
+  public:
+    using InputType = PyPreprocessingModelOutput;
+    using OutputType = OrtModelInput;
+    using ConverterCRTP<PyPreprocessingToOrtConverter>::ConverterCRTP;
+
+    status convert(std::unique_ptr<PyPreprocessingModelOutput> from, OrtModelInput *to);
+};
+
 } // namespace metaspore::serving

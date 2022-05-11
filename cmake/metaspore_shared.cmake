@@ -19,7 +19,6 @@ message(STATUS "project_version: ${project_version}")
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 message("Found Python at " ${Python_EXECUTABLE})
-find_package(Boost REQUIRED COMPONENTS)
 find_package(PkgConfig REQUIRED)
 find_package(pybind11 REQUIRED CONFIG)
 find_package(AWSSDK REQUIRED CONFIG COMPONENTS s3)

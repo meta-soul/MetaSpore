@@ -44,6 +44,7 @@ option(ENABLE_TESTS "Enable tests build" OFF)
 find_package(Git REQUIRED)
 find_package(fmt REQUIRED)
 find_package(spdlog REQUIRED CONFIG)
+find_package(Boost COMPONENTS filesystem system REQUIRED)
 
 include(cmake/metaspore_common.cmake)
 

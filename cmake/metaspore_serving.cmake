@@ -61,10 +61,15 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_feature_extraction_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/schema_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/dense_feature_extraction_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/shared_grpc_server_builder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/shared_grpc_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_model_runner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/model_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_embedding_bag_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_process.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_model.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/py_preprocessing_ort_model.cpp
 )
 
 add_library(metaspore-serving STATIC
@@ -84,6 +89,8 @@ target_compile_options(metaspore-serving PUBLIC
 
 target_link_libraries(metaspore-serving PUBLIC
     metaspore-common
+    Boost::filesystem
+    Boost::system
     asio-grpc::asio-grpc
     fmt::fmt
     onnxruntime-cpu-default
@@ -104,6 +111,25 @@ add_custom_command(TARGET metaspore-serving-bin
             egrep -v 'linux-vdso|ld-linux-x86-64|libpthread|libdl|libm|libc|librt' |
             cut -f 3 -d ' ' |
             xargs -L 1 -I so_file cp -n so_file ${CMAKE_CURRENT_BINARY_DIR}/
+)
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
+message("Found Python at " ${Python_EXECUTABLE})
+
+add_custom_command(TARGET metaspore-serving-bin
+    POST_BUILD
+    COMMAND ${Python_EXECUTABLE} -m grpc.tools.protoc
+            -I=${CMAKE_CURRENT_SOURCE_DIR}/protos
+            --python_out=${CMAKE_CURRENT_BINARY_DIR}
+            --grpc_python_out=${CMAKE_CURRENT_BINARY_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
+)
+
+add_custom_command(TARGET metaspore-serving-bin
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/preprocessor_service.py
+            ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 install(TARGETS metaspore-serving-bin)
