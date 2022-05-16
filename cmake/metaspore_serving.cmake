@@ -133,4 +133,8 @@ add_custom_command(TARGET metaspore-serving-bin
             ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-install(TARGETS metaspore-serving-bin)
+install(TARGETS metaspore-serving-bin RUNTIME DESTINATION bin)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/preprocessor_service.py
+              ${CMAKE_CURRENT_BINARY_DIR}/metaspore_pb2_grpc.py
+              ${CMAKE_CURRENT_BINARY_DIR}/metaspore_pb2.py
+              DESTINATION bin)

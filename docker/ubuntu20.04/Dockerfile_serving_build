@@ -1,6 +1,8 @@
 ARG DEV_IMAGE
 FROM ${DEV_IMAGE} as build_serving
 
+RUN python -m pip install grpcio-tools
+
 COPY . /opt/metaspore-src
 
 RUN cmake -B /opt/metaspore-build-release -S /opt/metaspore-src -DCMAKE_INSTALL_PREFIX=/opt/metaspore-serving \
