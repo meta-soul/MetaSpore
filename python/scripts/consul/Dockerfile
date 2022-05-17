@@ -13,7 +13,7 @@ RUN update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 30
 RUN pip install --upgrade pip
 RUN python -m pip install aiohttp protobuf grpcio cattrs awscli==1.22.19 awscli_plugin_endpoint
 
-ARG WORK_DIR=/opt/scprit
+ARG WORK_DIR=/opt/script
 RUN mkdir -pv "${WORK_DIR}"
 ADD . $WORK_DIR
 RUN chmod -R 777 ${WORK_DIR}
