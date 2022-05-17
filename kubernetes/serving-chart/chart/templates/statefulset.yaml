@@ -54,7 +54,7 @@ spec:
         - name: {{ .Chart.Name }}-watch-load
           image: "{{ .Values.consulWatchLoad.image }}:{{ .Values.consulWatchLoad.tag }}"
           imagePullPolicy: {{ .Values.consulWatchLoad.pullPolicy }}
-          command: ["python", "consul_watch_load.py", "--model-root","/opt/serving/model", "--notify-port", "{{ .Values.serving.port }}"]
+          command: ["python", "consul_watch_load.py", "--model-root","/opt/serving/model", "--notify-port", "{{ .Values.serving.port }}", "--prefix", "{{ .Values.consulWatchLoad.keyPrefix }}"]
           ports:
             - name: http
               containerPort: {{ .Values.consulWatchLoad.port }}
@@ -100,6 +100,8 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
+            - name: CONSUL_KEY_PREFIX
+              value: {{ .Values.consulWatchLoad.keyPrefix }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

@@ -19,6 +19,3 @@ ADD . $WORK_DIR
 RUN chmod -R 777 ${WORK_DIR}
 
 WORKDIR $WORK_DIR
-
-
-

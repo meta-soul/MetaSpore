@@ -74,3 +74,4 @@ consulWatchLoad:
   pullPolicy: Always
   tag: "v1.0.0"
   port: 8080
+  keyPrefix: "dev/"
