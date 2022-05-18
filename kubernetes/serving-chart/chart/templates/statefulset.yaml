@@ -19,14 +19,6 @@ spec:
       name: data
       annotations:
         volume.beta.kubernetes.io/storage-class: {{ .Values.storageclass }}
-      labels:
-        app.kubernetes.io/name: {{ include "serving-chart.name" . }}
-        helm.sh/chart: {{ include "serving-chart.chart" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/managed-by: {{ .Release.Service }}
-        # Revision should change with each helm upgrade, so if we use it here
-        # and don't specify spec.selector, we run into https://github.com/helm/charts/issues/7726
-        revision: {{ .Release.Revision | quote }}
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
@@ -38,17 +30,78 @@ spec:
         app.kubernetes.io/name: {{ include "serving-chart.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      volumes:
+        - name: aws-config-volume
+          configMap:
+            name: aws-configmap
+            items:
+              - key: config
+                path: config
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command: ["/opt/metaspore-serving/bin/metaspore-serving-bin","-grpc_listen_port","{{ .Values.serving.port }}"]
+          command: ["/opt/metaspore-serving/bin/metaspore-serving-bin","-grpc_listen_port","{{ .Values.serving.port }}","-init_load_path","/opt/serving/model"]
           ports:
             - name: grpc
               containerPort: {{ .Values.serving.port }}
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /opt/serving
+        - name: {{ .Chart.Name }}-watch-load
+          image: "{{ .Values.consulWatchLoad.image }}:{{ .Values.consulWatchLoad.tag }}"
+          imagePullPolicy: {{ .Values.consulWatchLoad.pullPolicy }}
+          command: ["python", "consul_watch_load.py", "--model-root","/opt/serving/model", "--notify-port", "{{ .Values.serving.port }}", "--prefix", "{{ .Values.consulWatchLoad.keyPrefix }}"]
+          ports:
+            - name: http
+              containerPort: {{ .Values.consulWatchLoad.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: aws-config-volume
+              mountPath: /root/.aws
+            - name: data
+              mountPath: /opt/serving/model
+              subPath: model
+          env:
+            - name: AWS_ENDPOINT
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: aws_endpoint
+                  optional: true
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: aws_access_key_id
+                  optional: true
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: aws-secret
+                  key: aws_secret_access_key
+                  optional: true
+        - name: {{ .Chart.Name }}-curl-watch
+          image: "{{ .Values.consulWatchLoad.image }}:{{ .Values.consulWatchLoad.tag }}"
+          imagePullPolicy: {{ .Values.consulWatchLoad.pullPolicy }}
+          command: ["/bin/sh","create_consul_watch.sh"]
+          env:
+            # CONSUL
+            - name: CONSUL_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+                env:
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: CONSUL_KEY_PREFIX
+              value: {{ .Values.consulWatchLoad.keyPrefix }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -61,3 +114,4 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
     {{- end }}
+

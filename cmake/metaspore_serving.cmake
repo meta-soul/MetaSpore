@@ -129,7 +129,7 @@ add_custom_command(TARGET metaspore-serving-bin
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/preprocessor_service.py
-            ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/consul_watch_load.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/consul/consul_watch_load.py
             ${CMAKE_CURRENT_BINARY_DIR}
 )
 
