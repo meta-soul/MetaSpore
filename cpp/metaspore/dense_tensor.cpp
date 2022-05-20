@@ -135,17 +135,24 @@ void DenseTensor::PullMeta(std::function<void(DenseTensorMeta meta)> cb) {
     req->GetMessageMeta().SetReceiver(ServerGroup);
     req->GetMessageMeta().SetBody(json.dump());
     agent_->BroadcastRequest(req, [this, cb](PSMessage req, std::vector<PSMessage> ress) {
+        std::string body;
+        int nodeId = -1;
         for (size_t k = 0; k < ress.size(); k++) {
-            const std::string &body1 = ress.at(0)->GetMessageMeta().GetBody();
             const std::string &body2 = ress.at(k)->GetMessageMeta().GetBody();
-            if (body1 != body2) {
-                const int nodeId1 = ress.at(0)->GetMessageMeta().GetSender();
+            if (body2.empty())
+                continue;
+            if (body.empty()) {
+                body = body2;
+                nodeId = ress.at(k)->GetMessageMeta().GetSender();
+                continue;
+            }
+            if (body != body2) {
                 const int nodeId2 = ress.at(k)->GetMessageMeta().GetSender();
                 std::string serr;
                 serr.append("Meta of dense tensor '");
                 serr.append(GetMeta().GetName());
                 serr.append("' on node ");
-                serr.append(NodeIdToString(nodeId1));
+                serr.append(NodeIdToString(nodeId));
                 serr.append(" and ");
                 serr.append(NodeIdToString(nodeId2));
                 serr.append(" mismatch.\n\n");
@@ -154,9 +161,12 @@ void DenseTensor::PullMeta(std::function<void(DenseTensorMeta meta)> cb) {
                 throw std::runtime_error(serr);
             }
         }
-        const std::string &body = ress.at(0)->GetMessageMeta().GetBody();
-        DenseTensorMeta meta = DenseTensorMeta::FromJsonString(body);
-        cb(std::move(meta));
+        if (body.empty())
+            cb(GetMeta());
+        else {
+            DenseTensorMeta meta = DenseTensorMeta::FromJsonString(body);
+            cb(std::move(meta));
+        }
     });
 }
 

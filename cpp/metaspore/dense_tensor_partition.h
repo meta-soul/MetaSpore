@@ -44,6 +44,8 @@ class DenseTensorPartition {
     size_t GetOffset() const { return offset_; }
     void SetOffset(size_t value) { offset_ = value; }
 
+    bool IsEmpty() const { return data_.empty(); }
+
     void AllocateDataBlock(bool init);
     void HandlePush(SmartArray<uint8_t> in, bool is_value, bool is_state);
     SmartArray<uint8_t> HandlePull(bool is_state);

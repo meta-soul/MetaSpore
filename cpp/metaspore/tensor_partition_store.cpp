@@ -132,9 +132,11 @@ PSMessage TensorPartitionStore::DensePullMeta(const std::string &name) {
         throw std::runtime_error(serr);
     }
     DenseTensorPartition &part = it->second;
-    const DenseTensorMeta &meta = part.HandlePullMeta();
     PSMessage res = std::make_shared<Message>();
-    res->GetMessageMeta().SetBody(meta.ToJsonString());
+    if (!part.IsEmpty()) {
+        const DenseTensorMeta &meta = part.HandlePullMeta();
+        res->GetMessageMeta().SetBody(meta.ToJsonString());
+    }
     return res;
 }
 
@@ -304,9 +306,11 @@ PSMessage TensorPartitionStore::SparsePullMeta(const std::string &name) {
         throw std::runtime_error(serr);
     }
     SparseTensorPartition &part = it->second;
-    const SparseTensorMeta &meta = part.HandlePullMeta();
     PSMessage res = std::make_shared<Message>();
-    res->GetMessageMeta().SetBody(meta.ToJsonString());
+    if (!part.IsEmpty()) {
+        const SparseTensorMeta &meta = part.HandlePullMeta();
+        res->GetMessageMeta().SetBody(meta.ToJsonString());
+    }
     return res;
 }
 
