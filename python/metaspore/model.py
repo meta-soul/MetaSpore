@@ -339,8 +339,28 @@ class Model(object):
     def forward(self):
         return
 
+    # extract model output names or use user specified names
+    def _extract_model_output_names(self, graph, *, output_names=None):
+        output_nodes = [n for n in graph.nodes if n.op == 'output']
+        if len(output_nodes) != 1:
+            message = f"exactly one output node expected, found {len(output_nodes)}"
+            raise RuntimeError(message)
+        names = [n.name for n in output_nodes[0].args[0]]
+        if output_names is None:
+            if len(names) == 1:
+                return ['output']
+            else:
+                return ['output_%d' % (i + 1) for i in range(len(names))]
+        else:
+            output_names = list(output_names)
+            if len(names) != len(output_names):
+                message = f"user specified {len(output_names)} output names {output_names}, "
+                message += f"but found {len(names)} {names}"
+                raise RuntimeError(message)
+            return output_names
+
     # extract when the module has multiple input eg: wide and deep
-    def __extract_dense_module(self, module, emb_names, emb_fe_count, emb_size):
+    def _extract_dense_module(self, module, emb_names, emb_fe_count, emb_size, *, output_names=None):
         module.eval()
 
         from torch.fx import Tracer, GraphModule
@@ -379,12 +399,13 @@ class Model(object):
                 n._remove_from_list()
 
         symbolic_traced.print_tabular()
+        output_names = self._extract_model_output_names(symbolic_traced, output_names=output_names)
         traced_module = GraphModule(
             my_tracer.root, symbolic_traced, 'my_traced_module')
         traced_module.eval()
-        return traced_module, new_emb_name_ordered, new_emb_fe_count_ordered, new_emb_emb_size_ordered
+        return traced_module, new_emb_name_ordered, new_emb_fe_count_ordered, new_emb_emb_size_ordered, output_names
 
-    def __prepare_module_save(self, model_export_selector=None):
+    def _prepare_module_save(self, model_export_selector=None):
         module = self.module
         name_prefix = None
         if model_export_selector is not None:
@@ -413,7 +434,7 @@ class Model(object):
 
         return name_list, fe_count_list, embedding_size_list
 
-    def _do_export(self, path, *, model_export_selector=None):
+    def _do_export(self, path, *, model_export_selector=None, output_names=None):
         # change the dense dir
         path += '/_dense/model.onnx'
 
@@ -422,13 +443,13 @@ class Model(object):
             func, name_prefix_ = model_export_selector
             module = func(module)
 
-        name_list, fe_count_list, embedding_size_list = self.__prepare_module_save(
+        name_list, fe_count_list, embedding_size_list = self._prepare_module_save(
             model_export_selector)
         print(f'name_list {name_list}')
 
         # use the torch fx Tracer, GraphModule
-        module, name_list, fe_count_list, embedding_size_list = self.__extract_dense_module(
-            module, name_list, fe_count_list, embedding_size_list)
+        module, name_list, fe_count_list, embedding_size_list, output_names = self._extract_dense_module(
+            module, name_list, fe_count_list, embedding_size_list, output_names=output_names)
 
         script = torch.jit.script(module)
         dir_path = os.path.dirname(path)
@@ -455,13 +476,12 @@ class Model(object):
             args_parameter.append(torch.randn(1, fe_count * embedding_size))
 
         torch.onnx.export(script, args_parameter,
-                          fout, input_names=name_list, output_names=[
-                              "output"],
+                          fout, input_names=name_list, output_names=output_names,
                           dynamic_axes=dynamic_axes_parameter,
                           opset_version=14,
                           verbose=True)
 
-    def export(self, path, *, model_export_selector=None):
+    def export(self, path, *, model_export_selector=None, output_names=None):
         if not isinstance(path, str) or not path.strip():
             raise TypeError(
                 f"path must be non-empty string; {path!r} is invalid")
@@ -480,7 +500,7 @@ class Model(object):
         self.agent.barrier()
         asyncio.run(self._pull_tensors(force_mode=True))
         if self.agent.rank == 0:
-            self._do_export(path, model_export_selector=model_export_selector)
+            self._do_export(path, model_export_selector=model_export_selector, output_names=output_names)
         self.agent.barrier()
 
     def sync(self):
@@ -611,10 +631,10 @@ class SparseModel(Model):
                 futures.append(future)
         await asyncio.gather(*futures)
 
-    def _do_export(self, path, *, model_export_selector=None):
+    def _do_export(self, path, *, model_export_selector=None, output_names=None):
         asyncio.run(self._sparse_tensors_export(
             path, model_export_selector=model_export_selector))
-        super()._do_export(path, model_export_selector=model_export_selector)
+        super()._do_export(path, model_export_selector=model_export_selector, output_names=output_names)
 
     def _get_export_meta(self, path, *, model_export_selector=None):
         sparse_data_dir = os.path.basename(path) + '.msd'

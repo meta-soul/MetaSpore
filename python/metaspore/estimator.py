@@ -43,6 +43,7 @@ class PyTorchAgent(Agent):
         self.model_out_path = None
         self.model_export_path = None
         self.model_version = None
+        self.model_output_names = None
         self.experiment_name = None
         self.training_epoches = None
         self.shuffle_training_dataset = None
@@ -190,7 +191,9 @@ class PyTorchAgent(Agent):
             self.model.model_version = self.model_version
             self.model.experiment_name = self.experiment_name
             self.model.prune_small(0.0)
-            self.model.export(self.model_export_path, model_export_selector=self.model_export_selector)
+            self.model.export(self.model_export_path,
+                              model_export_selector=self.model_export_selector,
+                              output_names=self.model_output_names)
 
     def worker_stop(self):
         # Make sure the final metric buffers are pushed.
@@ -321,6 +324,7 @@ class PyTorchLauncher(PSLauncher):
         self.model_out_path = None
         self.model_export_path = None
         self.model_version = None
+        self.model_output_names = None
         self.experiment_name = None
         self.training_epoches = None
         self.shuffle_training_dataset = None
@@ -357,6 +361,7 @@ class PyTorchLauncher(PSLauncher):
         self._agent_attributes['model_out_path'] = self.model_out_path
         self._agent_attributes['model_export_path'] = self.model_export_path
         self._agent_attributes['model_version'] = self.model_version
+        self._agent_attributes['model_output_names'] = self.model_output_names
         self._agent_attributes['experiment_name'] = self.experiment_name
         self._agent_attributes['training_epoches'] = self.training_epoches
         self._agent_attributes['shuffle_training_dataset'] = self.shuffle_training_dataset
@@ -386,6 +391,7 @@ class PyTorchHelperMixin(object):
                  model_out_path=None,
                  model_export_path=None,
                  model_version=None,
+                 model_output_names=None,
                  experiment_name=None,
                  training_epoches=1,
                  shuffle_training_dataset=False,
@@ -411,6 +417,7 @@ class PyTorchHelperMixin(object):
         self.model_out_path = model_out_path
         self.model_export_path = model_export_path
         self.model_version = model_version
+        self.model_output_names = model_output_names
         self.experiment_name = experiment_name
         self.training_epoches = training_epoches
         self.shuffle_training_dataset = shuffle_training_dataset
@@ -455,6 +462,10 @@ class PyTorchHelperMixin(object):
             self.model_export_path += '/'
         if self.model_version is not None and not isinstance(self.model_version, str):
             raise TypeError(f"model_version must be string; {self.model_version!r} is invalid")
+        if self.model_output_names is not None and not isinstance(self.model_output_names, (list, tuple)):
+            raise TypeError(f"model_output_names must be list or tuple; {self.model_output_names!r} is invalid")
+        if self.model_output_names is not None and not all(isinstance(item, str) for item in self.model_output_names):
+            raise TypeError(f"model_output_names must be list or tuple of string; {self.model_output_names!r} is invalid")
         if self.experiment_name is not None and not isinstance(self.experiment_name, str):
             raise TypeError(f"experiment_name must be string; {self.experiment_name!r} is invalid")
         if not isinstance(self.training_epoches, int) or self.training_epoches <= 0:
@@ -518,6 +529,7 @@ class PyTorchHelperMixin(object):
         launcher.model_out_path = self.model_out_path
         launcher.model_export_path = self.model_export_path
         launcher.model_version = self.model_version
+        launcher.model_output_names = self.model_output_names
         launcher.experiment_name = self.experiment_name
         launcher.training_epoches = self.training_epoches
         launcher.shuffle_training_dataset = self.shuffle_training_dataset
@@ -545,6 +557,7 @@ class PyTorchHelperMixin(object):
         args['model_in_path'] = self.model_out_path
         args['model_export_path'] = self.model_export_path
         args['model_version'] = self.model_version
+        args['model_output_names'] = self.model_output_names
         args['experiment_name'] = self.experiment_name
         args['metric_update_interval'] = self.metric_update_interval
         args['consul_host'] = self.consul_host
