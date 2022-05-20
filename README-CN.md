@@ -6,9 +6,12 @@ MetaSpore 是一个一站式端到端的机器学习开发平台，提供从数�
 
 MetaSpore 由[元灵数智](https://www.dmetasoul.com/)团队开发，欢迎关注我们的[公众号和微信交流群](#微信公众号)。
 
-相关介绍：
-* [基于新一代MetaSpore平台快速搭建工业级推荐系统](https://mp.weixin.qq.com/s/vy6aCSGrVNepD9uQZOy9Lg)
-* [新一代一站式机器学习平台MetaSpore的设计理念](https://mp.weixin.qq.com/s/uiqvpQ4VHAlL6V3dgzDwig)
+## 新闻链接：
+* 2022-05-18：[AlphaIDE - 新一代AI开发生产平台开放内测](https://mp.weixin.qq.com/s/W54VLwu6tycPa-45gOvBzg)
+* 2022-05-07：[多模态语义检索 | 基于 MetaSpore 快速部署 HuggingFace 预训练模型](https://mp.weixin.qq.com/s/hZ-z_iFHXvWiFHVBFYB8Gg)
+* 2022-04-12：[重磅！开源湖仓平台 LakeSoul 设计理念详解](https://mp.weixin.qq.com/s/X12CiDgL5kRE4uBPOu15aw)
+* 2022-04-02：[揭秘！新一代一站式机器学习平台MetaSpore的设计理念](https://mp.weixin.qq.com/s/uiqvpQ4VHAlL6V3dgzDwig)
+* 2022-03-31：[重磅！基于新一代MetaSpore平台快速搭建工业级推荐系统](https://mp.weixin.qq.com/s/vy6aCSGrVNepD9uQZOy9Lg)
 
 ## 核心功能
 MetaSpore 具有如下几个特点：
@@ -45,9 +48,9 @@ pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stab
 pip install metaspore-1.0.0+48beee4-cp38-cp38-linux_x86_64.whl
 ```
 
-Spark 官方打包的 PySpark，没有包含 hadoop-cloud 的 jar 包，无法访问 S3 等云存储。我们提供了一个打包好 S3 客户端的 [PySpark 安装包](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2-py2.py3-none-any.whl)，可以从这里下载后安装：
+Spark 官方打包的 PySpark，没有包含 hadoop-cloud 的 jar 包，无法访问 S3 等云存储。我们提供了一个打包好 S3 客户端的 [PySpark 安装包](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2.f8301b97d4-py2.py3-none-any.whl)，可以从这里下载后安装：
 ```bash
-pip install pyspark-3.1.2-py2.py3-none-any.whl
+pip install pyspark-3.1.2.f8301b97d4-py2.py3-none-any.whl
 ```
 
 关于如何设置 S3 等云存储的访问，请参考 [配置 MetaSpore 离线训练 S3 访问权限](docs/s3-access-cn.md)
