@@ -135,7 +135,7 @@ class EmbeddingOperator(torch.nn.Module):
         self._combine_schema = None
         if self._column_name_file_path is not None and self._combine_schema_file_path is not None:
             self._load_combine_schema()
-        
+
         # init a embedding_bag
         self.sparse_embedding_bag = EmbeddingBagModule(self.feature_count, embedding_size, mode=self.embedding_bag_mode)
         self._clean()
@@ -555,6 +555,7 @@ class EmbeddingOperator(torch.nn.Module):
 
     @torch.jit.unused
     def _compute_sum_concat(self):
+        self._check_embedding_bag_mode(self.embedding_bag_mode)
         feature_count = self.feature_count
         minibatch_size = len(self._indices_meta) // feature_count
         embedding_size = self._checked_get_embedding_size()
@@ -565,7 +566,7 @@ class EmbeddingOperator(torch.nn.Module):
 
         # we use the forward method to replace the torch.nn.functional.embedding_bag
         out = self.sparse_embedding_bag.forward(indices_1d, self._data, offsets_1d, minibatch_size)
-        
+
         return out
 
     @torch.jit.unused
@@ -581,10 +582,10 @@ class EmbeddingOperator(torch.nn.Module):
 
     @torch.jit.unused
     def _compute_range_sum(self):
-        self._check_embedding_bag_mode(mode)
+        self._check_embedding_bag_mode(self.embedding_bag_mode)
         t = self._compute_embedding_prepare()
         minibatch_size, embedding_size, indices_1d, offsets_1d = t
-        
+
         # we use the forward method to replace the torch.nn.functional.embedding_bag
         out = self.sparse_embedding_bag.forward(indices_1d, self._data, offsets_1d, minibatch_size)
 

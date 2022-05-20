@@ -345,7 +345,11 @@ class Model(object):
         if len(output_nodes) != 1:
             message = f"exactly one output node expected, found {len(output_nodes)}"
             raise RuntimeError(message)
-        names = [n.name for n in output_nodes[0].args[0]]
+        node = output_nodes[0]
+        args = node.args[0]
+        if not isinstance(args, tuple):
+            args = args,
+        names = [n.name for n in args]
         if output_names is None:
             if len(names) == 1:
                 return ['output']

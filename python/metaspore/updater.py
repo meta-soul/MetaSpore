@@ -175,12 +175,12 @@ class AdaGradTensorUpdater(TensorUpdater):
 class AdamTensorUpdater(TensorUpdater):
     def __init__(self, learning_rate, beta1=0.9, beta2=0.999, epsilon=1e-8):
         super().__init__(learning_rate)
-        if not isinstance(beta1, float) or beta1 < 0.0:
-            message = "beta1 must be non-negative float; "
+        if not isinstance(beta1, float) or beta1 < 0.0 or beta1 >= 1.0:
+            message = "beta1 must be non-negative float less than 1.0; "
             message += "%r is invalid" % beta1
             raise ValueError(message)
-        if not isinstance(beta2, float) or beta2 < 0.0:
-            message = "beta2 must be non-negative float; "
+        if not isinstance(beta2, float) or beta2 < 0.0 or beta2 >= 1.0:
+            message = "beta2 must be non-negative float less than 1.0; "
             message += "%r is invalid" % beta2
             raise ValueError(message)
         if not isinstance(epsilon, float) or epsilon < 0.0:
@@ -215,6 +215,71 @@ class AdamTensorUpdater(TensorUpdater):
         m[indices] = self._beta1 * m[indices] + (1.0 - self._beta1) * grad
         v[indices] = self._beta2 * v[indices] + (1.0 - self._beta2) * grad * grad
         param[indices] -= self.learning_rate * m[indices] / (v[indices].sqrt() + self._epsilon)
+
+class AdamWTensorUpdater(TensorUpdater):
+    def __init__(self, learning_rate, beta1=0.9, beta2=0.999, epsilon=1e-8, weight_decay=1e-2, amsgrad=False):
+        super().__init__(learning_rate)
+        if not isinstance(beta1, float) or beta1 < 0.0 or beta1 >= 1.0:
+            message = "beta1 must be non-negative float less than 1.0; "
+            message += "%r is invalid" % beta1
+            raise ValueError(message)
+        if not isinstance(beta2, float) or beta2 < 0.0 or beta2 >= 1.0:
+            message = "beta2 must be non-negative float less than 1.0; "
+            message += "%r is invalid" % beta2
+            raise ValueError(message)
+        if not isinstance(epsilon, float) or epsilon < 0.0:
+            message = "epsilon must be non-negative float; "
+            message += "%r is invalid" % epsilon
+            raise ValueError(message)
+        if not isinstance(weight_decay, float) or weight_decay < 0.0:
+            message = "weight_decay must be non-negative float; "
+            message += "%r is invalid" % weight_decay
+            raise ValueError(message)
+        self._beta1 = beta1
+        self._beta2 = beta2
+        self._epsilon = epsilon
+        self._weight_decay = weight_decay
+        self._amsgrad = amsgrad
+        self._step = 0
+
+    def __repr__(self):
+        return '%s(%r, %r, %r, %r, %r, %r)' % (self.__class__.__name__,
+                                               self.learning_rate,
+                                               self._beta1,
+                                               self._beta2,
+                                               self._epsilon,
+                                               self._weight_decay,
+                                               self._amsgrad)
+
+    @property
+    def states_per_param(self):
+        return 3 if self._amsgrad else 2
+
+    def update_dense(self, name, param, grad, state):
+        import torch.optim._functional as F
+        m = self.get_dense_state_tensor(state, 0)
+        v = self.get_dense_state_tensor(state, 1)
+        if self._amsgrad:
+            max_v = self.get_dense_state_tensor(state, 2)
+        self._step += 1
+        F.adamw((param,),
+                (grad,),
+                (m,),
+                (v,),
+                (max_v,) if self._amsgrad else (),
+                (self._step,),
+                amsgrad=self._amsgrad,
+                beta1=self._beta1,
+                beta2=self._beta2,
+                lr=self.learning_rate,
+                weight_decay=self._weight_decay,
+                eps=self._epsilon,
+                maximize=False)
+
+    def update_sparse(self, name, param, grad, state, indices, keys):
+        message = "AdamWTensorUpdater does not support sparse tensor; "
+        message += "can not update tensor %r" % name
+        raise RuntimeError(message)
 
 class FTRLTensorUpdater(TensorUpdater):
     def __init__(self, l1=1.0, l2=120.0, alpha=0.5, beta=1.0):
