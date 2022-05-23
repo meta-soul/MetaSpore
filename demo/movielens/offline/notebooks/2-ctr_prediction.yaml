@@ -1,0 +1,39 @@
+## spark session
+app_name: 'MovieLens-1M CTR'
+local: True
+worker_count: 1
+server_count: 1
+batch_size: 128
+worker_memory: '5G'
+server_memory: '5G'
+coordinator_memory: '5G'
+
+## datasets
+movies_path: s3://alphaide-demo/movielens/ml-1m/movies.dat
+ratings_path: s3://alphaide-demo/movielens/ml-1m/ratings.dat
+users_path: s3://alphaide-demo/movielens/ml-1m/users.dat
+
+rank_train_dataset_path: s3://alphaide-demo/movielens/ml-1m/rank/train.parquet
+rank_test_dataset_path: s3://alphaide-demo/movielens/ml-1m/rank/test.parquet
+
+## model configurations
+column_name_path: s3://alphaide-demo/movielens/ml-1m/schema/widedeep/column_schema
+combine_schema_path: s3://alphaide-demo/movielens/ml-1m/schema/widedeep/deep_combine_column_schema
+wide_combine_schema_path: s3://alphaide-demo/movielens/ml-1m/schema/widedeep/wide_combine_column_schema
+
+model_in_path: null
+model_out_path: s3://alphaide-demo/movielens/ml-1m/schema/widedeep/model_out/
+model_export_path: s3://alphaide-demo/movielens/ml-1m/schema/widedeep/model_export/
+model_version: '0.1'
+experiment_name: movielens_wdl_1m
+input_label_column_index: 0
+
+## model hyper params
+embedding_size: 10
+net_dropout: 0.0
+adam_learning_rate: 0.00001
+ftrl_alpha: 0.02
+ftrl_beta: 1.0
+ftrl_l1: 1.0
+ftrl_l2: 1.0
+dnn_hidden_units: [1024,512,256,128]
