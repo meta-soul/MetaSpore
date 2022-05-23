@@ -1,0 +1,14 @@
+## spark session
+app_name: 'MovieLens-1M Data'
+local: True
+worker_count: 2
+server_count: 2
+batch_size: 1024
+worker_memory: '7G'
+server_memory: '7G'
+coordinator_memory: '7G'
+
+## datasets
+movies_path: s3://alphaide-demo/movielens/ml-1m/movies.dat
+ratings_path: s3://alphaide-demo/movielens/ml-1m/ratings.dat
+users_path: s3://alphaide-demo/movielens/ml-1m/users.dat
