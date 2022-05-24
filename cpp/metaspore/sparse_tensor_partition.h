@@ -30,6 +30,8 @@ class SparseTensorPartition {
     int GetPartitionIndex() const { return partition_index_; }
     void SetPartitionIndex(int value) { partition_index_ = value; }
 
+    bool IsEmpty() const { return data_.empty(); }
+
     void AllocateHashMap();
     void Clear();
     void HandlePush(SmartArray<uint8_t> keys, SmartArray<uint8_t> in, bool is_value);

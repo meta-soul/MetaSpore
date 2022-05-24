@@ -36,6 +36,7 @@ from .updater import NoOpUpdater
 from .updater import SGDTensorUpdater
 from .updater import AdaGradTensorUpdater
 from .updater import AdamTensorUpdater
+from .updater import AdamWTensorUpdater
 from .updater import FTRLTensorUpdater
 from .updater import EMATensorUpdater
 

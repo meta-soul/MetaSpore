@@ -45,6 +45,7 @@ class PyTorchAgent(Agent):
         self.model_version = None
         self.model_output_names = None
         self.experiment_name = None
+        self.use_fresh_updaters = None
         self.training_epoches = None
         self.shuffle_training_dataset = None
         self.max_sparse_feature_age = None
@@ -175,8 +176,10 @@ class PyTorchAgent(Agent):
 
     def load_model(self):
         if self.model_in_path is not None:
-            print('\033[38;5;196mloading model from %s\033[m' % self.model_in_path)
-            self.trainer.load(self.model_in_path, keep_meta=True)
+            keep_meta = self.use_fresh_updaters
+            print('\033[38;5;196mloading model from %s (keep_meta=%s)\033[m' %
+                  (self.model_in_path, keep_meta))
+            self.trainer.load(self.model_in_path, keep_meta=keep_meta)
 
     def save_model(self):
         self.model.prune_old(self.max_sparse_feature_age)
@@ -326,6 +329,7 @@ class PyTorchLauncher(PSLauncher):
         self.model_version = None
         self.model_output_names = None
         self.experiment_name = None
+        self.use_fresh_updaters = None
         self.training_epoches = None
         self.shuffle_training_dataset = None
         self.max_sparse_feature_age = None
@@ -363,6 +367,7 @@ class PyTorchLauncher(PSLauncher):
         self._agent_attributes['model_version'] = self.model_version
         self._agent_attributes['model_output_names'] = self.model_output_names
         self._agent_attributes['experiment_name'] = self.experiment_name
+        self._agent_attributes['use_fresh_updaters'] = self.use_fresh_updaters
         self._agent_attributes['training_epoches'] = self.training_epoches
         self._agent_attributes['shuffle_training_dataset'] = self.shuffle_training_dataset
         self._agent_attributes['max_sparse_feature_age'] = self.max_sparse_feature_age
@@ -392,6 +397,7 @@ class PyTorchHelperMixin(object):
                  model_export_path=None,
                  model_version=None,
                  model_output_names=None,
+                 use_fresh_updaters=True,
                  experiment_name=None,
                  training_epoches=1,
                  shuffle_training_dataset=False,
@@ -419,6 +425,7 @@ class PyTorchHelperMixin(object):
         self.model_version = model_version
         self.model_output_names = model_output_names
         self.experiment_name = experiment_name
+        self.use_fresh_updaters = use_fresh_updaters
         self.training_epoches = training_epoches
         self.shuffle_training_dataset = shuffle_training_dataset
         self.max_sparse_feature_age = max_sparse_feature_age
@@ -531,6 +538,7 @@ class PyTorchHelperMixin(object):
         launcher.model_version = self.model_version
         launcher.model_output_names = self.model_output_names
         launcher.experiment_name = self.experiment_name
+        launcher.use_fresh_updaters = self.use_fresh_updaters
         launcher.training_epoches = self.training_epoches
         launcher.shuffle_training_dataset = self.shuffle_training_dataset
         launcher.max_sparse_feature_age = self.max_sparse_feature_age
