@@ -1,0 +1,32 @@
+#
+# Copyright 2022 DMetaSoul
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+ARG RELEASE_IMAGE
+
+FROM ${RELEASE_IMAGE}
+ARG SPARK_VERSION="3.2.1"
+
+RUN useradd --create-home --user-group --no-log-init --shell /bin/bash spark
+RUN mkdir -p /opt/spark/work-dir
+RUN wget https://raw.githubusercontent.com/apache/spark/v${SPARK_VERSION}/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/entrypoint.sh -O /opt/entrypoint.sh
+RUN wget https://raw.githubusercontent.com/apache/spark/v${SPARK_VERSION}/resource-managers/kubernetes/docker/src/main/dockerfiles/spark/decom.sh -O /opt/decom.sh
+WORKDIR /opt/spark/work-dir
+RUN chmod g+w /opt/spark/work-dir
+RUN chmod a+x /opt/decom.sh
+RUN chmod a+x /opt/entrypoint.sh
+RUN chgrp root /etc/passwd && chmod ug+rw /etc/passwd
+RUN chown -R spark:spark /opt
+ENTRYPOINT [ "/opt/entrypoint.sh" ]
+USER spark
