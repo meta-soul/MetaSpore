@@ -101,3 +101,18 @@ Assuming we are in root directory of this project, we can execute the following 
 cd criteo
 python fg.py --conf fg_5d.yaml.dev --verbose
 ```
+
+## Census
+In this section, we use the publicly available dataset [Census](https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/census.tar.gz) as our demo dataset. 
+### Data preprocessing
+```shell
+cd census
+sh data_process.sh
+```
+We extract 'marital_stat' and 'income_50k' as two labels of multitask model. And transform continuous features using:
+```python
+import numpy as np
+def fun3(x):
+    return np.log(x+1).astype(int)
+```
+Moreover, we don't need to transform categorical features to one-hot embeddings because MetaSpore can handle embedding layer automatically.

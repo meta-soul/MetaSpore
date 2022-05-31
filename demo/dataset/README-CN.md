@@ -97,3 +97,17 @@ cd criteo
 python fg.py --conf fg_5d.yaml.dev --verbose
 ```
 
+## Census
+在这一节, 我们使用人口统计公开集 [Census](https://archive.ics.uci.edu/ml/machine-learning-databases/census-income-mld/census.tar.gz) 作为我们Demo的数据集. 
+### 数据预处理
+```shell
+cd census
+sh data_process.sh
+```
+我们提取出 'marital_stat' 以及 'income_50k' 作为多任务模型的两个标签。并且对连续型特征做如下变换:
+```python
+import numpy as np
+def fun3(x):
+    return np.log(x+1).astype(int)
+```
+此外, 我们无需对离散型特征取one-hot编码，因为MetaSpore会自动处理模型的Embedding层。
