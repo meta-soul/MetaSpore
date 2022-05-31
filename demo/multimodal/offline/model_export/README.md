@@ -93,7 +93,7 @@ if [ $? == 0 ]; then
 fi
 ```
 
-The above code exports the HuggingFace pre-trained model [sentence-transformers/clip-ViT-B-32-multilingual-v1](https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual- v1) (including preprocessing and model inference modules and configuration files, etc.), and push the exported model and data files to cloud storage (`${MY_S3_PATH}`).
+The above code exports the HuggingFace pre-trained model [sentence-transformers/clip-ViT-B-32-multilingual-v1](https://huggingface.co/sentence-transformers/clip-ViT-B-32-multilingual-v1) (including preprocessing and model inference modules and configuration files, etc.), and push the exported model and data files to cloud storage (`${MY_S3_PATH}`).
 
 The parameters of the command are described as follows:
 
