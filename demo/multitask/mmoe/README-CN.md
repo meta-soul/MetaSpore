@@ -1,6 +1,6 @@
 # 多任务MMoE模型的演示
 
-<center><img src="img.png" width="1100"></center>
+<center><img src="resources/img.png" width="1100"></center>
 
 [Multi-gate Mixture-of-Experts (MMoE)](https://www.kdd.org/kdd2018/accepted-papers/view/modeling-task-relationships-in-multi-task-learning-with-multi-gate-mixture-)
 是一种多任务学习结构。它显式地学习了从数据中建模任务之间的关系。作者通过共享所有任务的专家子模型，修改传统 Mixture-of-Experts (MoE) 结构，

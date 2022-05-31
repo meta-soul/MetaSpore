@@ -1,7 +1,7 @@
 ## [中文介绍](README-CN.md)
 
 # Multi-Task MMoE Demo
-<center><img src="img.png" width="1100"></center>
+<center><img src="resources/img.png" width="1100"></center>
 
 [Multi-gate Mixture-of-Experts (MMoE)](https://www.kdd.org/kdd2018/accepted-papers/view/modeling-task-relationships-in-multi-task-learning-with-multi-gate-mixture-)
 is a Multi-task learning structure. It explicitly learns to model task 
