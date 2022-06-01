@@ -115,8 +115,8 @@ def fun3(x):
 ## Ali-CCP
 在这一节里，我们将介绍如何处理 [Ali-CCP](https://tianchi.aliyun.com/dataset/dataDetail?dataId=408) 这个数据集。原始的数据集比较大，我们这里只使用了 [PaddleRec](https://github.com/PaddlePaddle/PaddleRec) 项目中使用的两个子集：
 
-* **(小版本子数据集)[https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-ccp]**：包含了大概10万的训练样本和测试样本。
-* **(大版本子数据集)[https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-cpp_aitm]**：包含了大概3800万训练忘本和4300万测试样本。
+* **[小版本子数据集](https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-ccp)**：包含了大概10万的训练样本和测试样本。
+* **[大版本子数据集](https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-cpp_aitm)**：包含了大概3800万训练忘本和4300万测试样本。
 
 ### 下载数据
 假设我们位于dataset项目的根目录，我们可以通过执行以下命令下载这两个版本的数据并上传到S3云存储上：
