@@ -9,16 +9,16 @@ server_memory: '7G'
 coordinator_memory: '7G'
 
 ## datasets
-train_path: s3://dmetasoul-bucket/demo/aliccp/traindata_4000w.parquet/
-test_path: s3://dmetasoul-bucket/demo/aliccp/testdata_4000w.parquet/
+train_path: ${MY_S3_BUCKET}/aliccp/traindata_4000w.parquet/
+test_path: ${MY_S3_BUCKET}/aliccp/testdata_4000w.parquet/
 
 ## model configurations
-column_name_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm_large/column_schema
-combine_schema_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm_large/combine_column_schema
+column_name_path: ${MY_S3_BUCKET}/aliccp/schema/esmm_large/column_schema
+combine_schema_path: ${MY_S3_BUCKET}/aliccp/schema/esmm_large/combine_column_schema
 
 model_in_path: null
-model_out_path: s3://dmetasoul-bucket/demo/aliccp/model/esmm/model_out/
-model_export_path: s3://dmetasoul-bucket/demo/aliccp/model/esmm/model_export/
+model_out_path: ${MY_S3_BUCKET}/aliccp/model/esmm/model_out/
+model_export_path: ${MY_S3_BUCKET}/aliccp/model/esmm/model_export/
 model_version: '0.1'
 experiment_name: aliccp_esmm
 input_label_column_index: 0
