@@ -119,19 +119,21 @@ Moreover, we don't need to transform categorical features to one-hot embeddings 
 
 ## Ali-CCP
 In this section, we will introduce how to process [Ali-CCP](https://tianchi.aliyun.com/dataset/dataDetail?dataId=408) dataset. Original dataset is very large, we will use two subset of this data provided by [PaddleRec](https://github.com/PaddlePaddle/PaddleRec): 
-* **small subset**: a dataset contains 10,000 training and test samples approximately.
-* **large subset**: a dataset contains 38,000,000 training and 43,000,000 test samples approximately.
+* **(small subset)[https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-ccp]**: a dataset contains 10,000 training and test samples approximately.
+* **(large subset)[https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-cpp_aitm]**: a dataset contains 38,000,000 training and 43,000,000 test samples approximately.
 
 ### Download Data
-Assuming we are in root directory of this project, we can execute the following commands to download these two versions of Ali-CCP dataset from PaddleRec cloud storage.
+Assuming we are in root directory of this project, we can execute the following commands to download these two versions of Ali-CCP dataset and upload them into your S3 bucket.
 
  ```shell
- cd aliccp
-sh data_processing.sh
+cd aliccp
+export MY_S3_BUCKET='your S3 bucket directory'
+envsubst < data_processing.sh > data_processing_dev.sh
+data_processing_dev.sh
  ```
 
 ### Feature Generation
-After the download is completed, we can run our provided python scripts to generate features and labels that are able to used in MetaSpore.
+After the download is completed, we can run our provided Python scripts to generate features and labels that are able to used in MetaSpore.
 
 ```python
 # small dataset
