@@ -1,0 +1,14 @@
+## spark session
+app_name: AliCCP Dataset Feature Generation
+executor_memory: '10G'
+executor_instances: '4'
+executor_cores: '4'
+default_parallelism: '400'
+
+## input dataset configuration
+train_path: ${MY_S3_BUCKET}/aliccp/traindata_4000w.csv
+test_path: ${MY_S3_BUCKET}/aliccp/testdata_4000w.csv
+
+## output dataset configuration
+train_output_path: ${MY_S3_BUCKET}/aliccp/traindata_4000w.parquet
+test_output_path: ${MY_S3_BUCKET}/aliccp/testdata_4000w.parquet
