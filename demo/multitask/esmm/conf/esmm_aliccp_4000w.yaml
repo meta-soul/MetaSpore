@@ -1,0 +1,46 @@
+## spark session
+app_name: 'Multi-task Demo ESMM'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 256
+worker_memory: '7G'
+server_memory: '7G'
+coordinator_memory: '7G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/aliccp/traindata_4000w.parquet/
+test_path: s3://dmetasoul-bucket/demo/aliccp/testdata_4000w.parquet/
+
+## model configurations
+column_name_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm_large/column_schema
+combine_schema_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm_large/combine_column_schema
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/aliccp/model/esmm/model_out/
+model_export_path: s3://dmetasoul-bucket/demo/aliccp/model/esmm/model_export/
+model_version: '0.1'
+experiment_name: aliccp_esmm
+input_label_column_index: 0
+input_ctr_label_column_index: 1
+input_cvr_label_column_index: 2
+metric_update_interval: 200
+
+## model hyper params
+ctcvr_loss_weight: 1.0
+ctr_loss_weight: 0.1
+embedding_dim: 10
+adam_learning_rate: 0.0001
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.5
+ftrl_beta: 1.0
+dnn_hidden_units: [380, 200, 80]
+sparse_init_var: 0.01
+dnn_hidden_activations: ReLU
+use_bias: True
+batch_norm: False
+net_dropout: 0
+net_regularizer: null
+training_epoches: 3
+shuffle_training_dataset: False
