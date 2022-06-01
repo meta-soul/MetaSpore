@@ -111,3 +111,29 @@ def fun3(x):
     return np.log(x+1).astype(int)
 ```
 此外, 我们无需对离散型特征取one-hot编码，因为MetaSpore会自动处理模型的Embedding层。
+
+## Ali-CCP
+在这一节里，我们将介绍如何处理 [Ali-CCP](https://tianchi.aliyun.com/dataset/dataDetail?dataId=408) 这个数据集。原始的数据集比较大，我们这里只使用了 [PaddleRec](https://github.com/PaddlePaddle/PaddleRec) 项目中使用的两个子集：
+
+* **(小版本子数据集)[https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-ccp]**：包含了大概10万的训练样本和测试样本。
+* **(大版本子数据集)[https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-cpp_aitm]**：包含了大概3800万训练忘本和4300万测试样本。
+
+### 下载数据
+假设我们位于dataset项目的根目录，我们可以通过执行以下命令下载这两个版本的数据并上传到S3云存储上：
+
+```shell
+cd aliccp
+export MY_S3_BUCKET='your S3 bucket directory'
+envsubst < data_processing.sh > data_processing_dev.sh
+data_processing_dev.sh
+```
+
+### Feature Generation
+在数据下载完成之后，我们可以通过以下的 Python 脚本来生成MetaSpore可以使用特征和 label 的列：
+
+```python
+# small dataset
+python fg_small_dataset.py --conf fg_small_dataset.yaml.dev
+# large dataset
+python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
+```
