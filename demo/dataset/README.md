@@ -3,6 +3,17 @@
 # Data Processing and Preparation
 In this project, data processing is unified for MovieLens-1M, MovieLens-25M, Criteo-5d and other datasets, including feature generation,  matching dataset generation, ranking dataset generation, negative sampling, etc. If you are Chinese developer, you may like to visit our [CN Doc](README-CN.md).
 
+
+Here is the overview of the datasets:
+
+| Datasets | How to use in MetaSpore |  References |
+|:-------|:------------------------------------------------|:------------------------------------------------ |
+| [MovieLens-1M](#MovieLens-1M) | [Movie Recommendation End2End Demo](../movielens/) | [MovieLens 1M Dataset](https://grouplens.org/datasets/movielens/1m/) 
+| [MovieLens-25M](#MovieLens-25M) | [CTR Demo](../ctr/) | [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/1m/) 
+| [Criteo-5D](#Criteo-5D) | [CTR Demo](../ctr/) | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/) 
+| [Census](#Census) | [MMoE Demo](../multitask/mmoe/) | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf) 
+| [Ali-CCP](#Ali-CCP) | [MMoE Demo](../multitask/esmm/) | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) 
+
 ## Initialize the Configuration Files
 First of all, we should initialize the config files from their YAML template for substituting some variables. For example
 ```shell

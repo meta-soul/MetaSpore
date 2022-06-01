@@ -1,6 +1,16 @@
 # 数据预处理与准备
 在这个项目中，我们会统一所有Demo项目的数据处理过程，包括对MovieLens-1M，MovieLens-25M，Criteo-5D等，以及其他等数据集。处理过程包括：特征生成、召回样本生成、排序样本生成、负采样等具体等工作。
 
+以下是数据集的概述：
+
+| Datasets | How to use in MetaSpore |  References |
+|:-------|:------------------------------------------------|:------------------------------------------------ |
+| [MovieLens-1M](#MovieLens-1M) | [Movie Recommendation End2End Demo](../movielens/) | [MovieLens 1M Dataset](https://grouplens.org/datasets/movielens/1m/) 
+| [MovieLens-25M](#MovieLens-25M) | [CTR Demo](../ctr/) | [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/1m/) 
+| [Criteo-5D](#Criteo-5D) | [CTR Demo](../ctr/) | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/) 
+| [Census](#Census) | [MMoE Demo](../multitask/mmoe/) | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf) 
+| [Ali-CCP](#Ali-CCP) | [MMoE Demo](../multitask/esmm/) | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) 
+
 ## 初始化模型配置文件
 首先，我们需要初始化配置文件，我们需要通过给出的 YAML 配置模版对不同阶段的配置文件进行初始化，主要是替换模版中一些需要定制的变量。举例来说，我们需要替换自己具体的 S3 路径 `MY_S3_BUCKET`:
 
