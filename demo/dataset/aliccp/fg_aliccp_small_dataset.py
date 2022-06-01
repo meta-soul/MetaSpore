@@ -48,7 +48,6 @@ def init_spark(app_name, executor_memory, executor_instances, executor_cores,
         .config("spark.sql.autoBroadcastJoinThreshold", "64MB")
         .config("spark.network.timeout","500")
         .config("spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a", "org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory")
-        .config("spark.submit.pyFiles", "python.zip")
         .getOrCreate())
     
     sc = spark.sparkContext
@@ -156,3 +155,4 @@ if __name__=="__main__":
     write_fg_dataset_to_s3(fg_train_dataset, fg_test_dataset, **params)
     
     stop_spark(spark)
+
