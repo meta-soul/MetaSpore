@@ -116,3 +116,26 @@ def fun3(x):
     return np.log(x+1).astype(int)
 ```
 Moreover, we don't need to transform categorical features to one-hot embeddings because MetaSpore can handle embedding layer automatically.
+
+## Ali-CCP
+In this section, we will introduce how to process [Ali-CCP](https://tianchi.aliyun.com/dataset/dataDetail?dataId=408) dataset. Original dataset is very large, we will use two subset of this data provided by [PaddleRec](https://github.com/PaddlePaddle/PaddleRec): 
+* **small subset**: a dataset contains 10,000 training and test samples approximately.
+* **large subset**: a dataset contains 38,000,000 training and 43,000,000 test samples approximately.
+
+### Download Data
+Assuming we are in root directory of this project, we can execute the following commands to download these two versions of Ali-CCP dataset from PaddleRec cloud storage.
+
+ ```shell
+ cd aliccp
+sh data_processing.sh
+ ```
+
+### Feature Generation
+After the download is completed, we can run our provided python scripts to generate features and labels that are able to used in MetaSpore.
+
+```python
+# small dataset
+python fg_small_dataset.py --conf fg_small_dataset.yaml.dev
+# large dataset
+python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
+```
