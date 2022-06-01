@@ -6,9 +6,7 @@
    <img width="600" alt="ESMM" src="resources/esmm.jpeg">
 </p>
 
-[Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate (ESMM)](https://arxiv.org/pdf/1804.07931.pdf) is a Multi-task learning structure that can model click through rate(CTR) and conversion rate(CVR) simultaneously. With the help of two auxiliary tasks of CTR and CTCVR, ESMM tackles challenges of sample selection bias and data sparsity for CVR modeling encountered in e-commerce scenarios.
-
-In this demo, we will implement the ESMM model, and give the benchmarks of Ali-CCP dataset.
+[Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate (ESMM)](https://arxiv.org/pdf/1804.07931.pdf) is a Multi-task learning structure that can model click through rate(CTR) and conversion rate(CVR) simultaneously. With the help of two auxiliary tasks of CTR and CTCVR, ESMM tackles challenges of sample selection bias and data sparsity for CVR modeling encountered in e-commerce scenarios.In this demo, we will implement the ESMM model, and give the benchmarks of Ali-CCP dataset.
 
 ## Benchmarks
 | Dataset |                     pCTCVR AUC |                    pCVR AUC |    pCTR AUC  | Epochs |
