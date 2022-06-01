@@ -23,8 +23,8 @@ import argparse
 import sys 
 
 sys.path.append('../../../') 
-from python.esmm_net import ESMM
-from python.training import ESMMAgent
+from python.algos.multitask import ESMM
+from python.algos.multitask import ESMMAgent
 
 def load_config(path):
     params=dict()
