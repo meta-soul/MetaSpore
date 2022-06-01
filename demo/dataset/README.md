@@ -6,7 +6,7 @@ In this project, data processing is unified for MovieLens-1M, MovieLens-25M, Cri
 
 Here is the overview of the datasets:
 
-| Datasets                        | How to use in MetaSpore                            | References                                                                                                                             |
+| Dataset                        | How to use in MetaSpore                            | Reference                                                                                                                             |
 |:--------------------------------|:---------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
 | [MovieLens-1M](#MovieLens-1M)   | [Movie Recommendation End2End Demo](../movielens/) | [MovieLens 1M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                   |
 | [MovieLens-25M](#MovieLens-25M) | [CTR Demo](../ctr/)                                | [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                  |
