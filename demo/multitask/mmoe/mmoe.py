@@ -24,8 +24,8 @@ import sys
 from operator import itemgetter
 
 sys.path.append('../../../') 
-from python.algos.multitask.mmoe.mmoe_net import MMoE
-from python.algos.multitask.mmoe.mmoe_agent import MMoEAgent
+from python.algos.multitask import MMoE
+from python.algos.multitask import MMoEAgent
 
 
 def load_config(path):

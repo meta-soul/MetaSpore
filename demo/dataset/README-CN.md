@@ -1,6 +1,16 @@
 # 数据预处理与准备
 在这个项目中，我们会统一所有Demo项目的数据处理过程，包括对MovieLens-1M，MovieLens-25M，Criteo-5D等，以及其他等数据集。处理过程包括：特征生成、召回样本生成、排序样本生成、负采样等具体等工作。
 
+以下是数据集的概述：
+
+| 数据集                             | 如何在MetaSpore中使用                                    | 引用链接                                                                                                                                   |
+|:--------------------------------|:---------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
+| [MovieLens-1M](#MovieLens-1M)   | [Movie Recommendation End2End Demo](../movielens/) | [MovieLens 1M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                   |
+| [MovieLens-25M](#MovieLens-25M) | [CTR Demo](../ctr/)                                | [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                  |
+| [Criteo-5D](#Criteo-5D)         | [CTR Demo](../ctr/)                                | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/)                                                 |
+| [Census](#Census)               | [MMoE Demo](../multitask/mmoe/)                    | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
+| [Ali-CCP](#Ali-CCP)             | [ESMM Demo](../multitask/esmm/)                    | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
+
 ## 初始化模型配置文件
 首先，我们需要初始化配置文件，我们需要通过给出的 YAML 配置模版对不同阶段的配置文件进行初始化，主要是替换模版中一些需要定制的变量。举例来说，我们需要替换自己具体的 S3 路径 `MY_S3_BUCKET`:
 
@@ -111,3 +121,29 @@ def fun3(x):
     return np.log(x+1).astype(int)
 ```
 此外, 我们无需对离散型特征取one-hot编码，因为MetaSpore会自动处理模型的Embedding层。
+
+## Ali-CCP
+在这一节里，我们将介绍如何处理 [Ali-CCP](https://tianchi.aliyun.com/dataset/dataDetail?dataId=408) 这个数据集。原始的数据集比较大，我们这里只使用了 [PaddleRec](https://github.com/PaddlePaddle/PaddleRec) 项目中使用的两个子集：
+
+* **[小版本子数据集](https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-ccp)**：包含了大概10万的训练样本和测试样本。
+* **[大版本子数据集](https://github.com/PaddlePaddle/PaddleRec/tree/master/datasets/ali-cpp_aitm)**：包含了大概3800万训练忘本和4300万测试样本。
+
+### 下载数据
+假设我们位于dataset项目的根目录，我们可以通过执行以下命令下载这两个版本的数据并上传到S3云存储上：
+
+```shell
+cd aliccp
+export MY_S3_BUCKET='your S3 bucket directory'
+envsubst < data_processing.sh > data_processing_dev.sh
+data_processing_dev.sh
+```
+
+### Feature Generation
+在数据下载完成之后，我们可以通过以下的 Python 脚本来生成MetaSpore可以使用特征和 label 的列：
+
+```python
+# small dataset
+python fg_small_dataset.py --conf fg_small_dataset.yaml.dev
+# large dataset
+python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
+```
