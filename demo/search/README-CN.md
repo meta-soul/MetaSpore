@@ -51,7 +51,9 @@ sh data/download.sh
 
 此外 DuReaderRetrieval [数据集文献](https://arxiv.org/pdf/2203.10232.pdf)中还给出了其它一些基线模型在**测试集**（并未开放）上的评测效果（DE 全称 DualEncoder，CE 全称 CrossEncoder）：
 
-<img src="./docs/dureader_retrieval_baselines.png" width="600" />
+<p align="center">
+	<img src="./docs/dureader_retrieval_baselines.png" width="600" />
+</p>
 
 其中 Table-4 记录了 BM25 以及结合难负样本挖掘的 DE 模型召回效果，向量召回相比文本召回提升 21.33% (70.00->91.33%)；Table-5 记录了通过 CE 排序模型对 BM25 召回候选或者 DE 召回候选排序后的效果，可见用 DE 做召回再结合 CE 排序取得效果是最优的。由于官方并没有开放测试集，所以这里公布的模型效果可作为辅助参考来指导后续模型迭代。
 

@@ -51,7 +51,9 @@ We also checked the performance of a general semantic representation [model](htt
 
 In addition, DuReaderRetrieval [Dataset paper](https://arxiv.org/pdf/2203.10232.pdf) also gives the evaluation results of some other baseline models on the **test set** (not open) (DE full name DualEncoder, CE full name CrossEncoder):
 
-<img src="./docs/dureader_retrieval_baselines.png" width="600" />
+<p align="center">
+	<img src="./docs/dureader_retrieval_baselines.png" width="600" />
+</p>
 
 # 4. Model Training
 
