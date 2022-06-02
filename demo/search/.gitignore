@@ -1,0 +1,6 @@
+data/*
+!data/download.sh
+__pycache__
+*.pyc
+logs/
+output/

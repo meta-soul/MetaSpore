@@ -1,0 +1,1 @@
+from .modeling_dual_encoder import TransformerDualEncoder

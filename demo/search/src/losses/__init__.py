@@ -1,0 +1,4 @@
+from .cosine_similarity_loss import CosineSimilarityLoss
+from .contrastive_loss import ContrastiveLoss
+from .triplet_loss import TripletLoss
+from .contrastive_in_batch_loss import ContrastiveInBatchLoss
