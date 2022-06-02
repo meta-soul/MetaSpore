@@ -4,7 +4,7 @@
 
 **Information retrieval** is a basic problem in many scenarios such as general/domain search, question and answer, etc. Once retrieval technology builds a semantic bridge between query and item, many application scenarios related to information retrieval will benefit. In real application scenarios, the scale of data to be processed by retrieval system is often very big. For example, the product database of e-commerce search reaches one billion levels, and general search needs to process ten trillion levels of web page data. Therefore, we should trade-off between accuracy and performance, the search pipeline often be divided into two-stage retrieval and reranking. In the **retrieval stage**, it is need to quickly and efficiently search out hundreds of thousands of candidate item sets from a large-scale item database. In the **reranking stage**, richer features and more complex models can be used to refine the retrieval candidate item set.
 
-Here we focus on problems such as model offline optimization and online inference engineering architecture in the retrieval systems. In terms of model offline optimization, we will implement the SoTA **dense vector retrieval** and **deep semantic ranking** methods based on the open source [dataset](https://aistudio.baidu.com/ aistudio/competition/detail/157/0/introduction). In terms of model online inference, we will start from the offline distillation, quantization, and combine [MetaSpore Serving](https://github.com/meta-soul/MetaSpore) to improve the model online inference performance.
+Here we focus on problems such as model offline optimization and online inference engineering architecture in the retrieval systems. In terms of model offline optimization, we will implement the SOTA **dense vector retrieval** and **deep semantic ranking** methods based on the open source [dataset](https://aistudio.baidu.com/aistudio/competition/detail/157/0/introduction). In terms of model online inference, we will start from the offline distillation, quantization, and combine [MetaSpore Serving](https://github.com/meta-soul/MetaSpore) to improve the model online inference performance.
 
 # 2. Dataset
 
@@ -51,7 +51,7 @@ We also checked the performance of a general semantic representation [model](htt
 
 In addition, DuReaderRetrieval [Dataset paper](https://arxiv.org/pdf/2203.10232.pdf) also gives the evaluation results of some other baseline models on the **test set** (not open) (DE full name DualEncoder, CE full name CrossEncoder):
 
-<img src="./docs/dureader_retrieval_baselines.png" style="zoom:50%;" />
+<img src="./docs/dureader_retrieval_baselines.png" width="600" />
 
 # 4. Model Training
 
@@ -169,3 +169,4 @@ python -u src/train/train_dual_encoder.py --name train_de_loss_contrastive_in_ba
 ```
 
 For more training commands for other models, please refer to the script `script/train_dual_encoder.sh`. You can also use the above command (4.1.1) to evaluate this model.
+
