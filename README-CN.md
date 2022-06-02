@@ -59,6 +59,9 @@ pip install pyspark-3.1.2.f8301b97d4-py2.py3-none-any.whl
 
 * [离线训练框架编译](docs/build-offline.md)
 
+## 社区准则
+[社区准则](community-guideline-cn.md)
+
 ## 问题反馈
 
 关于使用上的问题，可以在 [GitHub Discussion](https://github.com/meta-soul/MetaSpore/discussions) 中发帖提问，也可以通过 [GitHub Issue](https://github.com/meta-soul/MetaSpore/issues) 反馈。
