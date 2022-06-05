@@ -87,17 +87,14 @@ def get_vectorassembler(dataset, feature_cols, features='features', label='label
     dataset = featurizer.transform(dataset)[label, features]
     return dataset
 
-def train_dataset(spark, train_dataset, **model_params):
+def train(spark, train_dataset, **model_params):
     print('Debug -- model hyper params:\n', model_params)
-    model = LightGBMClassifier(isProvideTrainingMetric=True, featuresCol="features", labelCol="isDefault", isUnbalance=True, **hyper_params)
+    model = LightGBMClassifier(isProvideTrainingMetric=True, 
+                               featuresCol="features", labelCol="isDefault", 
+                               isUnbalance=True, 
+                               **model_params)
     model = model.fit(train_dataset)
     return model
-
-def transform(spark, model, test_dataset):
-    test_result = model.transform(test_dataset)
-    print('Debug -- test result sample:')
-    test_result.show(20)
-    return test_result
 
 def evaluate(spark, test_result, label_col):
     evaluator = BinaryClassificationEvaluator(labelCol=label_col, metricName="areaUnderROC")
@@ -169,9 +166,7 @@ if __name__=="__main__":
     test_data.show(10, False)
 
     ## fit model and test
-    from synapse.ml.lightgbm import LightGBMClassifier
-    model = LightGBMClassifier(objective="binary", featuresCol="features", labelCol=label_col, isUnbalance=True)
-    model = model.fit(train_data)
+    model = train(spark, train_data, **params['model_params'])
 
     ## check the train dataset auc
     print("Debug -- train sample prediction:") 
