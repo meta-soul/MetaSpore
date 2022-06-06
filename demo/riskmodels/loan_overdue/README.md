@@ -8,7 +8,7 @@ We use the dataset of [Tianchi Competetion](https://tianchi.aliyun.com/competiti
 
 |    Dataset    | Train AUC | Test AUC |
 |:-------------:|:----------:|:--------:|
-| Tianchi |  `0.7580`  | `0.7336` |
+| Tianchi-Loan |  `0.7580`  | `0.7336` |
 
 ## How to run
 ### Initialize the configuration files for models
