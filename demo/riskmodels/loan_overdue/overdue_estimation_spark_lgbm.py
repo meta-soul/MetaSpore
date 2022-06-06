@@ -25,8 +25,6 @@ import pandas as pd
 import time
 
 from lightgbm import Booster, LGBMClassifier
-from synapse.ml.lightgbm import LightGBMClassifier
-from synapse.ml.onnx import ONNXModel
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml.feature import VectorAssembler
 from hyperopt import fmin, tpe, hp, Trials, STATUS_OK
@@ -67,15 +65,14 @@ def read_dataset(spark, train_path, test_path,
                               .option("header",  header)\
                               .option("inferSchema",  inferSchema)\
                               .load(train_path) 
-    test_dataset = spark.read.format(format)\
-                             .option("header",  header)\
-                             .option("inferSchema",  inferSchema)\
-                             .load(test_path)  
+    print('train dataset sample:')
+    train_dataset.show(20, False)
+    train_dataset, test_dataset = train_dataset.randomSplit([0.80, 0.20], seed=2020)
     return train_dataset, test_dataset
 
 def get_feature_and_label_cols(dataset, **params):
-    label_col = params['label']
-    feature_cols = [x for x in dataset.columns if x not in [params['label']]]
+    label_col = params['label_col']
+    feature_cols = [x for x in dataset.columns if x not in [label_col]]
     return feature_cols, label_col
 
 def get_vectorassembler(dataset, feature_cols, features='features', label='label'):
@@ -89,6 +86,7 @@ def get_vectorassembler(dataset, feature_cols, features='features', label='label
 
 def train(spark, train_dataset, **model_params):
     print('Debug -- model hyper params:\n', model_params)
+    from synapse.ml.lightgbm import LightGBMClassifier
     model = LightGBMClassifier(isProvideTrainingMetric=True, 
                                featuresCol="features", labelCol="isDefault", 
                                isUnbalance=True, 
@@ -100,11 +98,6 @@ def evaluate(spark, test_result, label_col):
     evaluator = BinaryClassificationEvaluator(labelCol=label_col, metricName="areaUnderROC")
     auc = evaluator.evaluate(test_result)
     return auc
-
-def write_dataset_to_s3(dataset, data_path, **kwargs):
-    start = time.time()
-    dataset.write.parquet(dataset, mode="overwrite")
-    print('Debug -- write  cost time:', time.time() - start)
 
 def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> bytes:
     initial_types = [("input", FloatTensorType([-1, input_size]))]
@@ -119,7 +112,7 @@ def get_onnx_model(model, len_data_columns):
     onnx_model = convert_model(booster, len_data_columns)
     return onnx_model
 
-def save_onnx_model(onnx_model):
+def save_onnx_model(onnx_model, model_onnx_path, **kwargs):
     onnxmltools.utils.save_model(onnx_model,'lightgbm.onnx')
     loaded_model = onnxmltools.utils.load_model('lightgbm.onnx')
     subprocess.run(['aws', 's3', 'cp', 'lightgbm.onnx', model_onnx_path], cwd='./')
@@ -151,7 +144,7 @@ if __name__=="__main__":
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
     args = parser.parse_args()
     params = load_config(args.conf)
-    spark = init_spark()
+    spark = init_spark(**params)
 
     ## get train and test data
     train_dataset, test_dataset = read_dataset(spark, **params)
@@ -168,24 +161,18 @@ if __name__=="__main__":
     ## fit model and test
     model = train(spark, train_data, **params['model_params'])
 
-    ## check the train dataset auc
-    print("Debug -- train sample prediction:") 
-    predictions = model.transform(train_data)
+    ## eval the test dataset
+    print("Debug -- test sample prediction:") 
+    predictions = model.transform(test_data)
     predictions.show(10, False)
     auc = evaluate(spark, predictions, label_col)
-    print("Debug -- train auc:", auc)
-    
-    ## eval the test dataset
-    print("Debug -- transform test dataset")
-    predictions = model.transform(test_data)
-    print("Debug -- test sample prediction:") 
-    predictions.show(10, False)
-    write_dataset_to_s3(predictions, params['eval_test_path'])
+    print("Debug -- test auc:", auc)
 
     ## convert model to onnx format
     print("Debug -- transform lightgbm model into ONNX format...") 
     onnx_model = get_onnx_model(model,len(train_dataset.columns)-1)
-    loaded_model = save_onnx_model(onnx_model)
+    loaded_model = save_onnx_model(onnx_model, **params)
+    from synapse.ml.onnx import ONNXModel
     onnx_ml = ONNXModel().setModelPayload(loaded_model.SerializeToString())
     print("Model inputs:" + str(onnx_ml.getModelInputs()))
     print("Model outputs:" + str(onnx_ml.getModelOutputs()))

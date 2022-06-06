@@ -6,8 +6,8 @@ executor_cores: '4'
 default_parallelism: '400'
 
 ## input dataset configuration
-train_path: ${MY_S3_BUCKET}/risk/tianchi/fg_train_dataset.parquet
-test_path: ${MY_S3_BUCKET}/risk/tianchi/fg_test_dataset.parquet
+train_path: ${MY_S3_BUCKET}/risk/tianchi/fg_train_data.parquet
+test_path: ${MY_S3_BUCKET}/risk/tianchi/fg_test_data.parquet
 
 ## output dataset configuration
 eval_test_path: ${MY_S3_BUCKET}/risk/tianchi/evl_test_dataset.parquet
