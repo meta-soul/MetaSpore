@@ -161,6 +161,13 @@ if __name__=="__main__":
     ## fit model and test
     model = train(spark, train_data, **params['model_params'])
 
+    ## eval the train dataset
+    print("Debug -- train sample prediction:")
+    predictions = model.transform(train_data)
+    predictions.show(10, False)
+    auc = evaluate(spark, predictions, label_col)
+    print("Debug -- train auc:", auc)
+
     ## eval the test dataset
     print("Debug -- test sample prediction:") 
     predictions = model.transform(test_data)
