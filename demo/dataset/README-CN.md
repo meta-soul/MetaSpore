@@ -10,7 +10,7 @@
 | [Criteo-5D](#Criteo-5D)         | [CTR Demo](../ctr/)                                | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/)                                                 |
 | [Census](#Census)               | [MMoE Demo](../multitask/mmoe/)                    | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
 | [Ali-CCP](#Ali-CCP)             | [ESMM Demo](../multitask/esmm/)                    | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
-| [Tianchi Loan](#Tianchi Loan)             | [Loan Overdue Demo](../riskmodels/loan_overdue/)                    | [Tianchi Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
+| [Tianchi-Loan](#Tianchi-Loan)             | [Loan Overdue Demo](../riskmodels/loan_overdue/)                    | [Tianchi Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
 
 ## 初始化模型配置文件
 首先，我们需要初始化配置文件，我们需要通过给出的 YAML 配置模版对不同阶段的配置文件进行初始化，主要是替换模版中一些需要定制的变量。举例来说，我们需要替换自己具体的 S3 路径 `MY_S3_BUCKET`:
@@ -149,7 +149,7 @@ python fg_small_dataset.py --conf fg_small_dataset.yaml.dev
 python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
 ```
 
-## Tianchi Loan
+## Tianchi-Loan
 在这一节中，我们将介绍如何处理天池社区提供的 [贷款违约率比赛](https://tianchi.aliyun.com/competition/entrance/531830/information) 的数据。
 
 ### Download Data
