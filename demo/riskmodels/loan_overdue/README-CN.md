@@ -13,11 +13,11 @@
 
 ```shell
 export MY_S3_BUCKET='your S3 bucket directory'
-envsubst < conf/overdue_estimation_spark_lgbm.yaml > conf/overdue_estimation_spark_lgbm.yaml.dev
+envsubst < conf/overdue_estimation_spark_lgbm.yaml > conf/overdue_estimation_spark_lgbm_dev.yaml
 ```
 
 ### 训练模型
 假设我们在项目的根目录，我们现在可以运行以下的训练脚本：
 ```shell
-python overdue_estimation_spark_lgbm.py --conf conf/overdue_estimation_spark_lgbm.yaml.dev
+python overdue_estimation_spark_lgbm.py --conf conf/overdue_estimation_spark_lgbm_dev.yaml
 ```

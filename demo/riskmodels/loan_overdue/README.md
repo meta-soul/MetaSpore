@@ -16,11 +16,11 @@ First we should initialize the config files from their `YAML` template for subst
 
 ```shell
 export MY_S3_BUCKET='your S3 bucket directory'
-envsubst < conf/overdue_estimation_spark_lgbm.yaml > conf/overdue_estimation_spark_lgbm.yaml.dev
+envsubst < conf/overdue_estimation_spark_lgbm.yaml > conf/overdue_estimation_spark_lgbm_dev.yaml
 ```
 
 ### Train model
 Suppose we are in root directory of this project, we could run the training script now:
 ```shell
-python overdue_estimation_spark_lgbm.py --conf conf/overdue_estimation_spark_lgbm.yaml.dev
+python overdue_estimation_spark_lgbm.py --conf conf/overdue_estimation_spark_lgbm_dev.yaml
 ```
