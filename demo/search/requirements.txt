@@ -1,0 +1,6 @@
+torch==1.10.2
+sentence-transformers==2.1.0
+transformers==4.16.0
+tqdm==4.62.3
+numpy==1.22.3
+faiss==1.7.2
