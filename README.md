@@ -48,6 +48,9 @@ pip install metaspore-1.0.0+48beee4-cp38-cp38-linux_x86_64.whl
 
 * [Offline training framework compilation](docs/build-offline.md)
 
+## Community guidelines
+[Community guidelines](community-guideline.md)
+
 ## Feedback
 
 For questions about usage, you can post questions in [GitHub Discussion](https://github.com/meta-soul/MetaSpore/discussions), or through [GitHub Issue](https://github.com/meta-soul/MetaSpore/issues).
