@@ -10,10 +10,10 @@ train_path: ${MY_S3_BUCKET}/risk/tianchi/fg_train_data.parquet
 test_path: ${MY_S3_BUCKET}/risk/tianchi/fg_test_data.parquet
 
 ## output dataset configuration
-eval_test_path: ${MY_S3_BUCKET}/risk/tianchi/evl_test_dataset.parquet
+eval_out_path: ${MY_S3_BUCKET}/risk/tianchi/eval_test_dataset.parquet
 
 ## labelCol
-labelCol: isDefault
+label_col: isDefault
 
 ## lightgbm hyper params
 model_params:

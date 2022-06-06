@@ -84,11 +84,11 @@ def get_vectorassembler(dataset, feature_cols, features='features', label='label
     dataset = featurizer.transform(dataset)[label, features]
     return dataset
 
-def train(spark, train_dataset, **model_params):
+def train(spark, train_dataset, label_col, **model_params):
     print('Debug -- model hyper params:\n', model_params)
     from synapse.ml.lightgbm import LightGBMClassifier
     model = LightGBMClassifier(isProvideTrainingMetric=True, 
-                               featuresCol="features", labelCol="isDefault", 
+                               featuresCol="features", labelCol=label_col, 
                                isUnbalance=True, 
                                **model_params)
     model = model.fit(train_dataset)
@@ -98,6 +98,11 @@ def evaluate(spark, test_result, label_col):
     evaluator = BinaryClassificationEvaluator(labelCol=label_col, metricName="areaUnderROC")
     auc = evaluator.evaluate(test_result)
     return auc
+
+def write_dataset_to_s3(eval_dataset, eval_out_path, **kwargs):
+    start = time.time()
+    eval_dataset.write.parquet(eval_out_path, mode="overwrite")
+    print('Debug -- write_dataset_to_s3 cost time:', time.time() - start)
 
 def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> bytes:
     initial_types = [("input", FloatTensorType([-1, input_size]))]
@@ -159,7 +164,7 @@ if __name__=="__main__":
     test_data.show(10, False)
 
     ## fit model and test
-    model = train(spark, train_data, **params['model_params'])
+    model = train(spark, train_data, label_col, **params['model_params'])
 
     ## eval the train dataset
     print("Debug -- train sample prediction:")
@@ -174,6 +179,7 @@ if __name__=="__main__":
     predictions.show(10, False)
     auc = evaluate(spark, predictions, label_col)
     print("Debug -- test auc:", auc)
+    write_dataset_to_s3(predictions, **params)
 
     ## convert model to onnx format
     print("Debug -- transform lightgbm model into ONNX format...") 
