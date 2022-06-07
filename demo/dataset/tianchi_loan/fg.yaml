@@ -1,5 +1,5 @@
 ## spark session
-app_name: Tanchi Loan Overdue Estimation
+app_name: Tanchi Loan Default Estimation
 executor_memory: '10G'
 executor_instances: '2'
 executor_cores: '4'
