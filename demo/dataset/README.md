@@ -13,7 +13,7 @@ Here is the overview of the datasets:
 | [Criteo-5D](#Criteo-5D)         | [CTR Demo](../ctr/)                                | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/)                                                 |
 | [Census](#Census)               | [MMoE Demo](../multitask/mmoe/)                    | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
 | [Ali-CCP](#Ali-CCP)             | [ESMM Demo](../multitask/esmm/)                    | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
-| [Tianchi-Loan](#Tianchi-Loan)             | [Loan Overdue Demo](../riskmodels/loan_overdue/)                    | [Tianchi Loan Overdue Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
+| [Tianchi-Loan](#Tianchi-Loan)             | [Loan Default Demo](../riskmodels/loan_default/)                    | [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
 
 ## Initialize the Configuration Files
 First of all, we should initialize the config files from their YAML template for substituting some variables. For example
@@ -155,10 +155,10 @@ python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
 ```
 
 ## Tianchi-Loan
-In this section, We will introduce how to process the dataset of [Tianchi Loan Overdue Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information).
+In this section, We will introduce how to process the dataset of [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information).
 
 ### Download Data
-First we should download this dataset from [Tianchi Loan Overdue Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) mannually.
+First we should download this dataset from [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) mannually.
 
 ### Feature Generation
 After the download is completed, we can use execute [fg.ipynb](./tianchi_loan/fg.ipynb) to generate numerical features that are using in our models.
