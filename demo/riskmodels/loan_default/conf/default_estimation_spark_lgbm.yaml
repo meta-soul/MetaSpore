@@ -1,0 +1,40 @@
+## spark session
+app_name: Tanchi Loan Default Estimation
+executor_memory: '10G'
+executor_instances: '4'
+executor_cores: '4'
+default_parallelism: '400'
+
+## input dataset configuration
+train_path: ${MY_S3_BUCKET}/risk/tianchi/fg_train_data.csv
+test_path: ${MY_S3_BUCKET}/risk/tianchi/fg_test_data.csv
+
+## output dataset configuration
+eval_out_path: ${MY_S3_BUCKET}/risk/tianchi/eval_test_dataset.parquet
+
+## labelCol
+label_col: isDefault
+
+## lightgbm hyper params
+model_params:
+  boostingType: gbdt
+  objective: binary
+  metric: auc
+  numLeaves: 32
+  lambdaL1: 10
+  lambdaL2: 10
+  maxDepth: -1
+  minDataInLeaf: 20
+  minSumHessianInLeaf: 0.001
+  minGainToSplit: 0.0
+  featureFraction: 0.8
+  baggingFraction: 0.8
+  baggingFreq: 4
+  learningRate: 0.023764779523899424
+  numIterations: 1273
+  earlyStoppingRound: 100
+  verbosity: 1
+  numThreads: 16
+
+## model export
+model_onnx_path: ${MY_S3_BUCKET}/risk/tianchi/model/lightgbm/onnx_out/lightgbm.onnx
