@@ -6,13 +6,8 @@ executor_cores: '8'
 default_parallelism: '400'
 
 ## input dataset configuration
-train_data_path: ${MY_S3_BUCKET}/risk/tianchi/train.csv
-test_data_path: ${MY_S3_BUCKET}/risk/tianchi/testA.csv
-
-
-## output dataset configuration
-fg_train_dataset_out_path: ${MY_S3_BUCKET}/risk/tianchi/fg_train_dataset.parquet
-fg_test_dataset_out_path: ${MY_S3_BUCKET}/risk/tianchi/fg_test_dataset.parquet
+fg_train_dataset_path: ${MY_S3_BUCKET}/risk/tianchi/fg_train_data.csv
+fg_test_dataset_path: ${MY_S3_BUCKET}/risk/tianchi/fg_test_data.csv
 
 ## Label Column
 label: isDefault
