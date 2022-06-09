@@ -8,6 +8,13 @@ The current pre-trained NLP/CV models are mainly composed of two modules: **prep
 
 In this article, we will introduce the model *export specification* in detail, and give the export *examples* of some classic NLP/CV models for your reference.
 
+-----
+
+Update:
+
+- ***2022.06.09*** Support text classification model export
+- ***2022.06.01*** Support text and image vector representation model export
+
 # Specification
 
 When [MetaSpore Serving](https://github.com/meta-soul/MetaSpore) loading NLP/CV models for online inference, the following content should be provided:
@@ -77,6 +84,14 @@ We'll give some examples to help you understand the specification and how to imp
 
 Here we provide export script for the **text vector representation task**. The export model is suitable for use scenarios such as vector recall and feature service, and currently supports the most NLP pre-trained models. The usage of the export script and the specific implementation details will be introduced following. You can also extend the script to support your custom models.
 
+Support models/tasks for now:
+
+| Task                       | Exporter                     | Preprocessor                |
+| -------------------------- | ---------------------------- | --------------------------- |
+| Text vector representation | `text_transformer_encoder`   | `hf_tokenizer_preprocessor` |
+| Two-tower dense retrieval  | `text_transformer_encoder`   | `hf_tokenizer_preprocessor` |
+| Text classification        | `seq_transformer_classifier` | `hf_tokenizer_preprocessor` |
+
 ### Export Model
 
 Export command:
@@ -130,6 +145,12 @@ src/
 ## CV models
 
 Here we provide export script for the **image vector representation task**. The export model is suitable for use scenarios such as vector recall and feature service. Currently, it supports the export of Vision Transformer series models (including **ViT/DeiT/BEiT/DINO/MAE**), the use of the export script and the specific implementation details will be introduced following. You can also extend the script to support your custom models.
+
+Support models/tasks for now:
+
+| 任务                        | Exporter                    | Preprocessor                |
+| --------------------------- | --------------------------- | --------------------------- |
+| Image vector representation | `image_transformer_encoder` | `hf_extractor_preprocessor` |
 
 Export command:
 

@@ -8,6 +8,7 @@ from sentence_transformers import SentenceTransformer
 import transformers
 from PIL import Image
 
+from modeling_seq_clf import SeqTransformerClassifier
 from modeling_clip import CLIPTextEncoder, CLIPImageEncoder
 
 

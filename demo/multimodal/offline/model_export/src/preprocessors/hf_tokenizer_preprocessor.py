@@ -78,10 +78,15 @@ class HfTokenizerPreprocessor(object):
         # decode the raw data
         inputs = self.decode(inputs, self.raw_decoding)
         texts = inputs['texts']
+        texts_pair = None
+        if len(texts) > 0 and isinstance(texts[0], list):
+            texts, texts_pair = zip(*texts)
+            texts, texts_pair = list(texts), list(texts_pair)
         if self.do_lower_case:
             texts = [s.lower() for s in texts]
+            texts_pair = [s.lower() for s in texts_pair] if texts_pair is not None else None
         # preprocess, the dtype must be same with the input of onnx model
-        encoding = self.tokenizer(texts, add_special_tokens=True, 
+        encoding = self.tokenizer(texts, text_pair=texts_pair, add_special_tokens=True, 
             padding=True, truncation=True, return_tensors="np", max_length=self.max_seq_len)
         # encode the processed data
         outputs = self.encode(encoding.data, self.raw_encoding)
@@ -93,6 +98,7 @@ if __name__ == '__main__':
     tokenizer.raw_encoding = 'list'
     params1 = json_encode({'texts': 'a b c'})
     params2 = json_encode({'texts': ['a b c', ' a c']})
+    params2 = json_encode({'texts': [['a b c', ' a c'], ['xyz', 'mpq']]})
     outputs = tokenizer.predict(params1)
     print(outputs)
     outputs = tokenizer.predict(params2)
