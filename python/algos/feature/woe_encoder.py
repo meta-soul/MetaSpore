@@ -16,22 +16,38 @@
 
 import pyspark.sql.functions as F
 
-def woe_encode(dataframe, cols_to_woe, label_col, bad_label_value, output_suffix='_woe'):
-    total_bad = dataframe.filter(F.col(label_col) == bad_label_value).count()
-    total_good = dataframe.filter(F.col(label_col) != bad_label_value).count()
-    for col_to_woe in cols_to_woe:
-        df = dataframe.groupBy(F.col(col_to_woe)).agg(F.count(col_to_woe).alias('total_in_bucket'), F.sum(label_col).alias('label_sum'))
-        if bad_label_value == 1:
-            df = df.withColumnRenamed('label_sum', 'bad_in_bucket')
-            df = df.withColumn('good_in_bucket', df.total_in_bucket - df.bad_in_bucket)
-        elif bad_label_value == 0:
-            df = df.withColumnRenamed('label_sum', 'good_in_bucket')
-            df = df.withColumn('bad_in_bucket', df.total_in_bucket - df.good_in_bucket)
-        else:
-            raise Exception('bad_label_value must be 1.0 or 0.0, but current value is: ', bad_label_value)
-        df = df.withColumn('bad_in_bucket_fixed', F.when(df.bad_in_bucket > 0, df.bad_in_bucket).otherwise(0.5))
-        df = df.withColumn('good_in_bucket_fixed', F.when(df.good_in_bucket > 0, df.good_in_bucket).otherwise(0.5))
-        df = df.withColumn('woe', F.log((df.bad_in_bucket_fixed / total_bad) / (df.good_in_bucket_fixed / total_good)))
-        dataframe = dataframe.withColumn(col_to_woe + output_suffix, F.coalesce(*[F.when(F.col(col_to_woe) == row[col_to_woe], F.lit(row['woe'])) for row in df.collect()]))
-        
-    return dataframe
+class WoeEncoder(object):
+    def __init__(self, colunms_to_woe, label_col, bad_label_value=1.0, output_suffix='_woe'):
+        self.colunms_to_woe = colunms_to_woe
+        self.label_col = label_col
+        self.bad_label_value = bad_label_value
+        self.output_suffix = output_suffix
+        self.data = {}
+
+    def fit(self, dataframe):
+        total_bad = dataframe.filter(F.col(self.label_col) == self.bad_label_value).count()
+        total_good = dataframe.filter(F.col(self.label_col) != self.bad_label_value).count()
+        for colunm_to_woe in self.colunms_to_woe:
+            df = dataframe.groupBy(F.col(colunm_to_woe)).agg(F.count(colunm_to_woe).alias('total_in_bucket'), F.sum(self.label_col).alias('label_sum'))
+            if self.bad_label_value == 1:
+                df = df.withColumnRenamed('label_sum', 'bad_in_bucket')
+                df = df.withColumn('good_in_bucket', df.total_in_bucket - df.bad_in_bucket)
+            elif self.bad_label_value == 0:
+                df = df.withColumnRenamed('label_sum', 'good_in_bucket')
+                df = df.withColumn('bad_in_bucket', df.total_in_bucket - df.good_in_bucket)
+            else:
+                raise Exception('bad_label_value must be 1.0 or 0.0, but current value is: ', bad_label_value)
+            df = df.withColumn('bad_in_bucket_fixed', F.when(df.bad_in_bucket > 0, df.bad_in_bucket).otherwise(0.5))
+            df = df.withColumn('good_in_bucket_fixed', F.when(df.good_in_bucket > 0, df.good_in_bucket).otherwise(0.5))
+            df = df.withColumn('woe', F.log((df.bad_in_bucket_fixed / total_bad) / (df.good_in_bucket_fixed / total_good)))
+
+            col_dict = {row[colunm_to_woe]:row['woe'] for row in df.collect()}
+            self.data[colunm_to_woe] = col_dict
+
+        return self.data
+
+    def transform(self, dataframe):
+        for colunm_to_woe in self.colunms_to_woe:
+            dataframe = dataframe.withColumn(colunm_to_woe + self.output_suffix, F.coalesce(*[F.when(F.col(colunm_to_woe) == key, F.lit(value)) for key, value in self.data[colunm_to_woe].items()]))
+
+        return dataframe
