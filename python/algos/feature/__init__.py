@@ -14,5 +14,4 @@
 # limitations under the License.
 #
 
-from .quantile_bucketizer import quantile_bucket
-from .woe_encoder import woe_encode
+from .woe_encoder import WoeEncoder
