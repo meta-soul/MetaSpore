@@ -1,3 +1,19 @@
+#
+# Copyright 2022 DMetaSoul
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import os
 import sys
 import json
@@ -13,7 +29,7 @@ from transformers import AutoTokenizer, AutoModel, AutoConfig
 import numpy as np
 import onnxruntime
 
-from modeling import TextTransformerEncoder, ImageTransformerEncoder, CLIPTextEncoder, CLIPImageEncoder
+from modeling import TextTransformerEncoder, ImageTransformerEncoder, CLIPTextEncoder, CLIPImageEncoder, SeqTransformerClassifier
 
 
 def validate_onnx_model(model, onnx_path, dummy=None, device='cpu', print_model=False, rtol=1e-03, atol=1e-05):
@@ -154,6 +170,7 @@ def model_exporter(model, export_path, model_key,
     return model.input_names, model.output_names
 
 
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -161,7 +178,7 @@ if __name__ == '__main__':
         required=True, 
         choices=[
             "text_transformer_encoder", "image_transformer_encoder",
-            "clip_text_encoder", "clip_image_encoder"
+            "clip_text_encoder", "clip_image_encoder", "seq_transformer_classifier"
         ], 
         help="The name of exporter."
     )
@@ -243,6 +260,18 @@ if __name__ == '__main__':
             model = CLIPImageEncoder(args.model_name)
         else:
             model = ImageTransformerEncoder(args.model_name)
+    elif args.exporter in ["seq_transformer_classifier"]:
+        assert args.raw_preprocessor == "hf_tokenizer_preprocessor"
+        if not args.raw_decoding:
+            args.raw_decoding = "json"
+        if not args.raw_encoding:
+            args.raw_encoding = "arrow"
+        if not args.raw_inputs:
+            args.raw_inputs = ['texts']
+        if not args.dummy_input:
+            args.dummy_input = "hello world"
+
+        model = SeqTransformerClassifier(args.model_name)
     else:
         print(f"Not support exporter {args.exporter}")
         exit()
