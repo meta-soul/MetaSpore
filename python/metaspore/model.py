@@ -607,8 +607,7 @@ class SparseModel(Model):
                 tensor.item.export_sparse_embedding_bag(sparse_onnx_dir, name)
 
                 # copy the schema
-                data = _metaspore.stream_read_all(
-                    tensor.item.combine_schema_file_path)
+                data = tensor.item.combine_schema_source.encode('utf-8')
                 _metaspore.stream_write_all(
                     use_s3(path + '/' + dir + '/' + 'combine_schema.txt'), data)
 

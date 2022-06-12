@@ -19,3 +19,12 @@ def use_s3(url):
 
 def use_s3a(url):
     return url.replace('s3://', 's3a://')
+
+def is_url(string):
+    if string.startswith('s3://') or string.startswith('s3a://'):
+        return True
+    if string.startswith('file://'):
+        return True
+    if string.startswith('./') or string.startswith('/'):
+        return True
+    return False
