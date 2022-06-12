@@ -14,5 +14,11 @@
 # limitations under the License.
 #
 
-from .modeling_dual_encoder import TransformerDualEncoder
-from .modeling_cross_encoder import TransformerCrossEncoder
+truth_file=data/dev/dev.json
+pair_file=data/output/rerank.query-passage.pair.tsv
+score_file=data/output/rerank.query-passage.pair.score
+pred_file=data/output/rerank.query-passage.pair.json
+
+python src/eval/convert_rerank_res_to_json.py ${pair_file} ${score_file} ${pred_file}
+
+python src/eval/evaluation.py $truth_file $pred_file

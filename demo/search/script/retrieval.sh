@@ -21,30 +21,26 @@ passage_model=$2
 query_file=$3
 passage_data_dir=$4
 topk=$5
+split_name=$6
+job_name=$7
 
 index_mode=faiss:FlatIP
 num_parts=4
 part_size=`cat ${passage_data_dir}/part-00 | wc -l`
-split_name=dev
-query_embs=./data/output/query.embs
+query_embs=./data/output/${split_name}.query.embs
 passage_embs=./data/output/passage.embs
 result_file=./data/output/${split_name}.recall.top${topk}
 
-## encode query
-#echo "Encode query starting..."
-#sh script/infer_dual_encoder.sh cuda:0 "query" ${query_model} ${query_file} ${query_embs}
-#echo "Encode query done!"
+# encode query
+echo "Encode query starting..."
+#[ "$job_name" == "index" ] && sh script/infer_dual_encoder.sh cuda:0 "query" ${query_model} ${query_file} ${query_embs}
+sh script/infer_dual_encoder.sh cuda:0 "query" ${query_model} ${query_file} ${query_embs}
+echo "Encode query done!"
 
 # encode passage
 echo "Encode passage starting..."
 for (( part_id=0; part_id<$num_parts; part_id++ ))
 do
-    if [ "${part_id}" == "2" ]; then
-        continue
-    fi
-    if [ "${part_id}" == "3" ]; then
-        continue
-    fi
 
     device="cuda:${part_id}"
     part_id=`printf "%02d" ${part_id}`
@@ -54,7 +50,7 @@ do
     # multi-gpu parallel
     #nohup sh script/infer_dual_encoder.sh "cuda:0" "${part_id}" ${passage_model} ${input_file} ${output_file} &
 
-    sh script/infer_dual_encoder.sh "cuda:0" "${part_id}" ${passage_model} ${input_file} ${output_file}
+    [ "$job_name" == "index" ] && sh script/infer_dual_encoder.sh "cuda:0" "${part_id}" ${passage_model} ${input_file} ${output_file}
 done
 wait
 echo "Encode passage done!"
@@ -73,6 +69,10 @@ do
 done
 wait
 echo "Index done!"
+
+#if [ "$job_name" == "index" ]; then
+#    exit
+#fi
 
 # search
 echo "Search starting..."

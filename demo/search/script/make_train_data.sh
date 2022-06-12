@@ -17,6 +17,9 @@
 # raw json to tsv data
 cat data/train/train.json | python src/preprocess/json2tsv.py > data/train/train.tsv
 
+# extract train queries
+cat data/train/train.tsv | cut -f1 | uniq | awk -F"\t" '{print $1"\t-\t-\t0"}' > data/train/train.q.format
+
 # [(query, pos),...]
 cut -f1,3 data/train/train.tsv > data/train/train.pos.tsv
 

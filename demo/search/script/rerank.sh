@@ -14,5 +14,20 @@
 # limitations under the License.
 #
 
-from .modeling_dual_encoder import TransformerDualEncoder
-from .modeling_cross_encoder import TransformerCrossEncoder
+set -x
+
+export PYTHONPATH="$PYTHONPATH:$PWD/src"
+
+model=$1
+pair_file=$2
+score_file=$3
+
+echo "Cross score start..."
+python src/infer/cross_encoder_infer.py \
+    --model ${model} \
+    --input-file ${pair_file} \
+    --input-q-i 2 --input-p-i 3 \
+    --output-file ${score_file} \
+    --task-type multiclass --num-labels 2 \
+    --batch-size 512 --device cuda:0 
+echo "Cross score done!"

@@ -14,15 +14,10 @@
 # limitations under the License.
 #
 
-# you should change to your finetuned model, `q_model` is the query model and `p_model` is the passage model
-q_model=output/train_de_loss_contrastive_in_batch/2022_05_27_18_53_58/epoch_1/model1
-p_model=output/train_de_loss_contrastive_in_batch/2022_05_27_18_53_58/epoch_1/model2
-split_name=dev
-query_file=./data/dev/dev.q.format
-#split_name=train
-#query_file=./data/train/train.q.format
-passage_data=./data/passage-collection
-topk=50
+# you should change `model` as your finetuned model path
+model=output/train_ce_multiclass/2022_06_09_18_23_09/step_26000
+pair_file=data/output/rerank.query-passage.pair.tsv
+score_file=data/output/rerank.query-passage.pair.score
 
 mkdir -p ./logs
-nohup sh script/retrieval.sh ${q_model} ${p_model} ${query_file} ${passage_data} ${topk} ${split_name} search > logs/retrieval.log 2>&1 &
+nohup sh script/rerank.sh ${model} ${pair_file} ${score_file} > ./logs/rerank.log 2>&1 &
