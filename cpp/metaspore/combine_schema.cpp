@@ -40,7 +40,7 @@ void CombineSchema::LoadColumnNameFromStream(std::istream &stream) {
     while (std::getline(stream, line)) {
         source.append(line);
         source.push_back('\n');
-        if (line[0] == '#')
+        if (line.empty() || line.front() == '#')
             continue;
         const auto svpair = SplitStringView(line, " "sv);
         int index = -1;
@@ -82,7 +82,7 @@ void CombineSchema::LoadCombineSchemaFromStream(std::istream &stream) {
     while (std::getline(stream, line)) {
         source.append(line);
         source.push_back('\n');
-        if (line[0] == '#')
+        if (line.empty() || line.front() == '#')
             continue;
         const auto svs = SplitStringView(std::string_view(line), "#"sv);
         std::vector<std::string> combines;
