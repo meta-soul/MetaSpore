@@ -24,7 +24,8 @@ def shuffle_df(df, num_workers):
     return df
 
 def read_s3_csv(spark_session, url, shuffle=False, num_workers=1,
-                header=False, nullable=False, delimiter="\002", encoding="UTF-8"):
+                header=False, nullable=False, delimiter="\002", encoding="UTF-8",
+                column_names=None):
     from .url_utils import use_s3a
     df = (spark_session
              .read
@@ -34,6 +35,8 @@ def read_s3_csv(spark_session, url, shuffle=False, num_workers=1,
              .option("delimiter", delimiter)
              .option("encoding", encoding)
              .load(use_s3a(url)))
+    if column_names is not None:
+        df = df.toDF(*column_names)
     if shuffle and num_workers > 1:
         df = shuffle_df(df, num_workers)
     else:
