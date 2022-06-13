@@ -7,6 +7,7 @@ MetaSpore 是一个一站式端到端的机器学习开发平台，提供从数�
 MetaSpore 由[元灵数智](https://www.dmetasoul.com/)团队开发，欢迎关注我们的[公众号和微信交流群](#微信公众号)。
 
 ## 新闻链接：
+* 2022-06-10：[基于MetaSpore on AlphaIDE快速落地风控算法](https://mp.weixin.qq.com/s/htBFRBYke2m9inrtXF5T-Q)
 * 2022-05-18：[AlphaIDE - 新一代AI开发生产平台开放内测](https://mp.weixin.qq.com/s/W54VLwu6tycPa-45gOvBzg)
 * 2022-05-07：[多模态语义检索 | 基于 MetaSpore 快速部署 HuggingFace 预训练模型](https://mp.weixin.qq.com/s/hZ-z_iFHXvWiFHVBFYB8Gg)
 * 2022-04-12：[重磅！开源湖仓平台 LakeSoul 设计理念详解](https://mp.weixin.qq.com/s/X12CiDgL5kRE4uBPOu15aw)
