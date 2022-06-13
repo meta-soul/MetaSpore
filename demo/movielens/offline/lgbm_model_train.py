@@ -41,10 +41,6 @@ def init_spark():
             .config("spark.executor.memory","5G") \
             .config("spark.executor.memory","5G") \
             .config("spark.executor.instances","4") \
-            .config("spark.jars.packages",
-                    "com.microsoft.azure:synapseml_2.12:0.9.4") \
-            .config("spark.jars.repositories",
-                    "https://mmlspark.azureedge.net/maven") \
             .getOrCreate()
     sc = spark.sparkContext
     print(sc.version)
