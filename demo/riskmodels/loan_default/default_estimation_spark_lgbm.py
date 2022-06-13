@@ -46,8 +46,6 @@ def init_spark(app_name, executor_memory, executor_instances, executor_cores,
             .config("spark.executor.instances", executor_instances) \
             .config("spark.executor.cores", executor_cores) \
             .config("spark.default.parallelism", default_parallelism) \
-            .config("spark.jars.packages", "com.microsoft.azure:synapseml_2.12:0.9.4") \
-            .config("spark.jars.repositories", "https://mmlspark.azureedge.net/maven") \
             .getOrCreate()
     sc = spark.sparkContext
     print(sc.version)

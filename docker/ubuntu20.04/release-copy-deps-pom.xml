@@ -38,7 +38,7 @@
     <repository>
         <id>github-lakesoul</id>
         <name>lakesoul</name>
-        <url>https://public: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@maven.pkg.github.com/meta-soul/LakeSoul</url>
+        <url>https://public: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@maven.pkg.github.com/meta-soul/LakeSoul</url>
     </repository>
   </repositories>
   <profiles>
