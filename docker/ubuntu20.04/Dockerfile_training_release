@@ -17,7 +17,6 @@ ARG SPARK_RELEASE="tarball"
 ARG METASPORE_RELEASE="http"
 ARG METASPORE_BUILD_IMAGE="metaspore-training-build:v1.0.0"
 ARG INSTALL_SPARK_CLOUD="false"
-ARG MAVEN_OPTS="--Xmx4g -XX:ReservedCodeCacheSize=1g"
 
 FROM ubuntu:20.04 as env
 
@@ -74,27 +73,31 @@ RUN python -m pip install metaspore-*.whl && pip cache purge && rm -f metaspore-
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-tarball-install
 ARG SPARK_FILE="https://dlcdn.apache.org/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz"
+ARG SYNAPSEML_VERSION="0.9.5-92-76c32ccf-SNAPSHOT"
 RUN mkdir -p /opt/spark && wget ${SPARK_FILE} && tar xf `basename ${SPARK_FILE}` -C /opt/spark --strip-components 1 && rm -f `basename ${SPARK_FILE}`
 ENV SPARK_HOME /opt/spark
 ENV SPARK_CONF_DIR /opt/spark/conf
 ENV PATH=$SPARK_HOME/bin:$PATH
-ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/jars/synapseml_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-cognitive_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-core_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-deep-learning_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-lightgbm_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-opencv_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-vw_2.12-0.9.5.jar:$PYTHONPATH
+ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/jars/synapseml_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-cognitive_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-core_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-deep-learning_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-lightgbm_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-opencv_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-vw_2.12-${SYNAPSEML_VERSION}.jar:$PYTHONPATH
 COPY docker/ubuntu20.04/release-copy-deps-pom.xml docker/ubuntu20.04/maven-proxy-settings.xml .
+ARG MAVEN_OPTS="-Xmx4g -XX:ReservedCodeCacheSize=1g"
 ENV MAVEN_OPTS=${MAVEN_OPTS}
-RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
+RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -Dsynapseml.version=$SYNAPSEML_VERSION -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
 ENV MAVEN_OPTS=
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
 ARG SPARK_FILE="pyspark"
+ARG SYNAPSEML_VERSION="0.9.5-92-76c32ccf-SNAPSHOT"
 RUN python -m pip install ${SPARK_FILE}
 ENV SPARK_HOME /usr/local/lib/python3.8/dist-packages/pyspark
 RUN mkdir -p /opt/spark/conf
 ENV SPARK_CONF_DIR /opt/spark/conf
 ENV PATH=$SPARK_HOME/bin:$PATH
-ENV PYTHONPATH=$SPARK_HOME/jars/synapseml_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-cognitive_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-core_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-deep-learning_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-lightgbm_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-opencv_2.12-0.9.5.jar:$SPARK_HOME/jars/synapseml-vw_2.12-0.9.5.jar:$PYTHONPATH
+ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/jars/synapseml_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-cognitive_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-core_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-deep-learning_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-lightgbm_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-opencv_2.12-${SYNAPSEML_VERSION}.jar:$SPARK_HOME/jars/synapseml-vw_2.12-${SYNAPSEML_VERSION}.jar:$PYTHONPATH
 COPY docker/ubuntu20.04/release-copy-deps-pom.xml docker/ubuntu20.04/maven-proxy-settings.xml .
+ARG MAVEN_OPTS="-Xmx4g -XX:ReservedCodeCacheSize=1g"
 ENV MAVEN_OPTS=${MAVEN_OPTS}
-RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
+RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -Dsynapseml.version=$SYNAPSEML_VERSION -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
 ENV MAVEN_OPTS=
 
 FROM spark-${SPARK_RELEASE}-install as release
