@@ -33,6 +33,7 @@ class PyTorchAgent(Agent):
         self.module = None
         self.updater = None
         self.dataset = None
+        self.loss_function = None
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.model = None
@@ -64,6 +65,7 @@ class PyTorchAgent(Agent):
     def run(self):
         self.distribute_module()
         self.distribute_updater()
+        self.distribute_loss_function()
         self.start_workers()
         self.feed_dataset()
         self.collect_module()
@@ -145,6 +147,17 @@ class PyTorchAgent(Agent):
     def _distribute_updater(cls, updater, _):
         self = __class__.get_instance()
         self.updater = updater
+        return _
+
+    def distribute_loss_function(self):
+        loss_function = self.loss_function
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_loss_function(loss_function, _)).collect()
+
+    @classmethod
+    def _distribute_loss_function(cls, loss_function, _):
+        self = __class__.get_instance()
+        self.loss_function = loss_function
         return _
 
     def collect_module(self):
@@ -301,8 +314,14 @@ class PyTorchAgent(Agent):
         return predictions.detach().reshape(-1)
 
     def compute_loss(self, predictions, labels):
-        from .loss_utils import log_loss
-        return log_loss(predictions, labels) / labels.shape[0]
+        if self.loss_function is not None:
+            loss = self.loss_function(predictions, labels)
+            return loss
+        else:
+            # For backward compatibility.
+            from .loss_utils import log_loss
+            loss = log_loss(predictions, labels) / labels.shape[0]
+            return loss
 
     def update_progress(self, predictions, labels):
         self.minibatch_id += 1
@@ -316,6 +335,7 @@ class PyTorchLauncher(PSLauncher):
         self.module = None
         self.updater = None
         self.dataset = None
+        self.loss_function = None
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.worker_count = None
@@ -352,6 +372,7 @@ class PyTorchLauncher(PSLauncher):
         agent.module = self.module
         agent.updater = self.updater
         agent.dataset = self.dataset
+        agent.loss_function = self.loss_function
         agent.model_export_selector = self.model_export_selector
         self.agent_object = agent
 
@@ -389,6 +410,7 @@ class PyTorchHelperMixin(object):
     def __init__(self,
                  module=None,
                  updater=None,
+                 loss_function=None,
                  worker_count=100,
                  server_count=100,
                  agent_class=None,
@@ -416,6 +438,7 @@ class PyTorchHelperMixin(object):
         super().__init__()
         self.module = module
         self.updater = updater
+        self.loss_function = loss_function
         self.worker_count = worker_count
         self.server_count = server_count
         self.agent_class = agent_class
@@ -447,6 +470,8 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"module must be torch.nn.Module; {self.module!r} is invalid")
         if self.updater is not None and not isinstance(self.updater, TensorUpdater):
             raise TypeError(f"updater must be TensorUpdater; {self.updater!r} is invalid")
+        if self.loss_function is not None and not callable(self.loss_function):
+            raise TypeError(f"loss_function must be callable; {self.loss_function!r} is invalid")
         if not isinstance(self.worker_count, int) or self.worker_count <= 0:
             raise TypeError(f"worker_count must be positive integer; {self.worker_count!r} is invalid")
         if not isinstance(self.server_count, int) or self.server_count <= 0:
@@ -528,6 +553,7 @@ class PyTorchHelperMixin(object):
         launcher.module = self.module
         launcher.updater = self._get_updater_object()
         launcher.dataset = dataset
+        launcher.loss_function = self.loss_function
         launcher.worker_count = self.worker_count
         launcher.server_count = self.server_count
         launcher.agent_class = self._get_agent_class()
