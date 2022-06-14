@@ -9,6 +9,7 @@
   <version>0.0.0</version>
   <properties>
     <spark.version>3.1.2</spark.version>
+    <synapseml.version>0.9.5-92-76c32ccf-SNAPSHOT</synapseml.version>
   </properties>
   <repositories>
     <repository>
@@ -36,9 +37,14 @@
       <url>https://maven.google.com/</url>
     </repository>
     <repository>
+        <id>mmlspark</id>
+        <name>mmlspark</name>
+        <url>https://mmlspark.azureedge.net/maven</url>
+    </repository>
+    <repository>
         <id>github-lakesoul</id>
         <name>lakesoul</name>
-        <url>https://public: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@maven.pkg.github.com/meta-soul/LakeSoul</url>
+        <url>https://public:&#103;hp_feMnce0EkKPIaebQRYOv98lHws83W03TSWYR@maven.pkg.github.com/meta-soul/LakeSoul</url>
     </repository>
   </repositories>
   <profiles>
@@ -174,7 +180,7 @@
     <dependency>
         <groupId>com.microsoft.azure</groupId>
         <artifactId>synapseml_2.12</artifactId>
-        <version>0.9.5</version>
+        <version>0.9.5-92-76c32ccf-SNAPSHOT</version>
         <exclusions>
           <exclusion>
             <groupId>org.scala-lang</groupId>
