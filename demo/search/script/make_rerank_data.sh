@@ -14,5 +14,9 @@
 # limitations under the License.
 #
 
-from .modeling_dual_encoder import TransformerDualEncoder
-from .modeling_cross_encoder import TransformerCrossEncoder
+python -u src/preprocess/make_rerank_data_from_recall_result.py \
+    data/output/dev.recall.top50.json \
+    data/dev/q2qid.dev.json \
+    data/passage-collection/passage2id.map.json \
+    data/passage-collection/part-00,data/passage-collection/part-01,data/passage-collection/part-02,data/passage-collection/part-03 \
+    data/output/rerank.query-passage.pair.tsv

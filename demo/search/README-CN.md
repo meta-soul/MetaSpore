@@ -69,6 +69,9 @@ sh script/make_train_data.sh
 
 # make the training running time evaluation data
 sh script/make_eval_data.sh
+
+# add source code into python path
+export PYTHONPATH="$PYTHONPATH:$PWD/src"
 ```
 
 ## 4.1 召回模型
@@ -99,6 +102,8 @@ sh script/make_eval_data.sh
 可通过类似这种方式来启动模型训练：
 
 ```python
+# ref `script/train_dual_encoder.sh`
+
 python src/train/train_dual_encoder.py --name train_de_loss_cosine \
     --model DMetaSoul/sbert-chinese-general-v2 \
     --dual-model DMetaSoul/sbert-chinese-general-v2 \
@@ -133,6 +138,8 @@ python src/train/train_dual_encoder.py --name train_de_loss_cosine \
 模型训练开始后，日志、评测监控以及模型参数都被保存在 `output` 目录下，可以从这里查看模型训练状态。等模型训练完成之后，可以通过以下命令来评估模型在验证集上的效果：
 
 ```bash
+# ref `script/run_retrieval.sh`
+
 # change to your model saved directory
 q_model=output/train_de_loss_cosine/2022_05_27_21_16_29/epoch_1/model1
 p_model=output/train_de_loss_cosine/2022_05_27_21_16_29/epoch_1/model2
@@ -141,7 +148,7 @@ passage_data=./data/passage-collection
 topk=50
 
 # retrieval based passage database
-sh script/retrieval.sh ${q_model} ${p_model} ${query_file} ${passage_data} ${topk}
+sh script/retrieval.sh ${q_model} ${p_model} ${query_file} ${passage_data} ${topk} dev index
 
 # evaluate the retrieval results
 sh script/eval_retrieval.sh
@@ -154,6 +161,8 @@ sh script/eval_retrieval.sh
 目前我们已经支持了在线负采样模型优化，启动命令如下：
 
 ```bash
+# ref `script/train_dual_encoder.sh`
+
 python -u src/train/train_dual_encoder.py --name train_de_loss_contrastive_in_batch \
     --model DMetaSoul/sbert-chinese-general-v2 \
     --dual-model DMetaSoul/sbert-chinese-general-v2 \
@@ -173,3 +182,173 @@ python -u src/train/train_dual_encoder.py --name train_de_loss_contrastive_in_ba
 ```
 
 训练启动参数跟上述类似，更多其它优化方式可以参考脚本 `script/train_dual_encoder.sh`，模型训练监控以及最终效果评估也跟上述类似。
+
+## 4.2 排序模型
+
+召回模型出于对大规模数据下运行性能的考虑，其检索精度往往较低且并不保证返回候选结果的有序性。我们将开发深度语义相关性模型用来对召回候选结果进行再次排序，考虑到排序数据规模往往较小，这里可以使用学习能力更强的交互式预训练模型，并结合训练数据进行二分类训练优化。
+
+由于可用训练数据仅有正样本，负样本需要基于采样来构造，下面我们会根据不同负样本采样方式进行优化。排序模型训练完成后，用它对召回模型结果进行排序，最终得到结果会在验证集上进行评测。
+
+目前我们迭代优化的排序模型在**验证集**上效果：
+
+| Model                    | MRR@10 | recall@1 | recall@50 |
+| ------------------------ | ------ | -------- | --------- |
+| in-batch-neg (retrieval) | 25.58  | 16.90    | 74.40     |
+| rand-neg5 (rerank)       | 24.45  | 14.80    | 74.40     |
+| hard-neg1 (rerank)       | 47.28  | 34.45    | 74.40     |
+
+综上可见全局随机负采样方法（`rand-neg5`）效果甚至比召回模型（`in-batch-neg`）要差，这主要由于排序模型在推理时其输入数据分布并非全局均匀的，而是跟召回模型的输出数据分布保持一致。`hard-neg1` 是对召回模型候选结果进行随机采样负样本的方法，对召回结果重新排序后效果有较大提升（25.58->47.28）。
+
+由于排序模型将对召回模型结果进行重新排序，因此需要先把待排序的召回候选结果生成好，命令如下：
+
+```bash
+# sh script/make_rerank_data.sh
+
+python -u src/preprocess/make_rerank_data_from_recall_result.py \
+    data/output/dev.recall.top50.json \
+    data/dev/q2qid.dev.json \
+    data/passage-collection/passage2id.map.json \
+    data/passage-collection/part-00,data/passage-collection/part-01,data/passage-collection/part-02,data/passage-collection/part-03 \
+    data/output/rerank.query-passage.pair.tsv
+```
+
+待排序候选数据集将会保存在 `data/output/rerank.query-passage.pair.tsv` 文件中。
+
+### 4.2.1 全局随机负采样
+
+全局随机负采样思路较为简单，对于每个 query 将从整个检索库中随机采样 passage 作为负样本，运行以下命令来生成训练数据：
+
+```bash
+cat data/train/train.pos.tsv | python src/preprocess/negative_rand_sample.py 5 pair > data/train/train.rand.neg5.pair.tsv
+```
+
+然后通过如下命令来启动模型训练：
+
+```bash
+# ref `script/train_cross_encoder.sh`
+
+python -u src/train/train_cross_encoder.py --name train_ce_multiclass \
+    --model DMetaSoul/sbert-chinese-general-v2 \
+    --num-epochs 2 \
+    --lr 3e-05 \
+    --train-file data/train/train.rand.neg5.pair.tsv \
+    --train-kind multiclass \
+    --train-text-index 0,1 \
+    --train-label-index 2 \
+    --train-batch-size 32 \
+    --num-labels 2 \
+    --save-steps 2000 \
+    --eval-qid-file data/dev/dev4eval.qid.tsv \
+    --eval-pid-file data/dev/dev4eval.pid.tsv \
+    --eval-rel-file data/dev/dev4eval.rel.tsv \
+```
+
+其中部分关键参数的作用说明如下：
+
+- `--train-kind` 训练任务类型，可以是 `multiclass`, `multilabel`, `regression` 等，我们这里是二分类任务
+- `--num-labels` 分类任务需要指定类别数量，这里含相关和不相关两类
+
+模型训练开始后，日志、评测监控以及模型参数都被保存在 `output` 目录下，可以从这里查看模型训练状态。等模型训练完成之后，可以通过以下命令来评估模型在验证集上的效果：
+
+```bash
+# ref `script/run_rerank.sh`
+
+# change to your model saved directory
+model=output/train_ce_multiclass/2022_06_09_18_23_09/step_26000
+pair_file=data/output/rerank.query-passage.pair.tsv
+score_file=data/output/rerank.query-passage.pair.score
+
+# rerank the retrieval candidates results 
+sh script/rerank.sh ${model} ${pair_file} ${score_file}
+
+# evaluate the rerank results
+sh script/eval_rerank.sh
+```
+
+### 4.2.2 基于稠密向量召回的负采样
+
+因为是基于对召回结果集进行负采样，首先需要把训练数据中所有 query 的召回结果跑出来，命令如下：
+
+```bash
+# ref `script/run_retrieval.sh`
+
+# change to your model saved directory
+q_model=output/train_de_loss_cosine/2022_05_27_21_16_29/epoch_1/model1
+p_model=output/train_de_loss_cosine/2022_05_27_21_16_29/epoch_1/model2
+query_file=./data/train/train.q.format
+passage_data=./data/passage-collection
+topk=50
+
+# retrieval based passage database
+sh script/retrieval.sh ${q_model} ${p_model} ${query_file} ${passage_data} ${topk} train index
+```
+
+运行完成后，召回候选结果会保存在 `data/output/train.recall.top50` 文件中。
+
+接下来利用召回候选来采样负样本，大致思路就是对召回结果中**非正样本**进行随机采样，命令如下：
+
+```bash
+# ref `script/make_hard_data.sh`
+
+python src/preprocess/negative_hard_sample.py \
+    data/train/train.pos.tsv \
+    data/output/train.recall.top50 \
+    data/passage-collection/part-00,data/passage-collection/part-01,data/passage-collection/part-02,data/passage-collection/part-03 \
+    1 pair data/train/train.hard.neg1.pair.tsv \
+```
+
+采样生成的数据集将被保存在 `data/train/train.hard.neg1.pair.tsv` 文件中，接下来使用该数据集进行训练：
+
+```bash
+python -u src/train/train_cross_encoder.py --name train_ce_multiclass \
+    --model DMetaSoul/sbert-chinese-general-v2 \
+    --num-epochs 2 \
+    --lr 3e-05 \
+    --train-file data/train/train.hard.neg1.pair.tsv \
+    --train-kind multiclass \
+    --train-text-index 0,1 \
+    --train-label-index 2 \
+    --train-batch-size 32 \
+    --num-labels 2 \
+    --save-steps 2000 \
+    --eval-qid-file data/dev/dev4eval.qid.tsv \
+    --eval-pid-file data/dev/dev4eval.pid.tsv \
+    --eval-rel-file data/dev/dev4eval.rel.tsv \
+```
+
+训练命令跟上述全局负采样是一样的，唯一不同之处是这里替换了训练数据文件。当训练完成后，同样可以利用前述命令来进行效果评测。
+
+# 五、模型推理
+
+召回模型和排序模型都可以借助 [MetaSpore Serving](https://github.com/meta-soul/MetaSpore) 进行在线推理。进入模型导出工具[目录](https://github.com/meta-soul/MetaSpore/tree/main/demo/multimodal/offline/model_export)，按照如下命令将模型导出并推送到 S3 云存储，即可使用 MetaSpore Serving 对其进行加载推理：
+
+```bash
+# export retrieval query model
+rm -rf ./export
+
+# your model path and key
+model_name=your-model-save-path/2022_05_27_18_53_58/epoch_1/model1
+model_key=dense-retrieval-query-encoder
+
+python src/modeling_export.py --exporter text_transformer_encoder --export-path ./export --model-name ${model_name} --model-key ${model_key} --raw-inputs texts --raw-preprocessor hf_tokenizer_preprocessor --raw-decoding json --raw-encoding arrow
+
+s3_path=${MY_S3_PATH}/demo/nlp-algos-transformer/models/${model_key}
+if [ $? == 0 ]; then
+    aws s3 cp --recursive ./export ${s3_path}
+fi
+
+# export rerank model
+rm -rf ./export
+
+# your model path and key
+model_name=your-model-save-path/2022_06_08_19_11_59/epoch_0
+model_key=deep-relevant-ranker
+
+python src/modeling_export.py --exporter seq_transformer_classifier --export-path ./export --model-name ${model_name} --model-key ${model_key} --raw-inputs texts --raw-preprocessor hf_tokenizer_preprocessor --raw-decoding json --raw-encoding arrow
+
+s3_path=${MY_S3_PATH}/demo/nlp-algos-transformer/models/${model_key}
+if [ $? == 0 ]; then
+    aws s3 cp --recursive ./export ${s3_path}
+fi
+```
+
