@@ -20,6 +20,8 @@ import pyspark.ml.base
 from . import patching_pickle
 from .agent import Agent
 from .model import Model
+from .metric import ModelMetric
+from .metric import BinaryClassificationModelMetric
 from .updater import TensorUpdater
 from .updater import AdamTensorUpdater
 from .distributed_trainer import DistributedTrainer
@@ -34,6 +36,7 @@ class PyTorchAgent(Agent):
         self.updater = None
         self.dataset = None
         self.loss_function = None
+        self.metric_class = None
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.model = None
@@ -66,6 +69,7 @@ class PyTorchAgent(Agent):
         self.distribute_module()
         self.distribute_updater()
         self.distribute_loss_function()
+        self.distribute_metric_class()
         self.start_workers()
         self.feed_dataset()
         self.collect_module()
@@ -158,6 +162,17 @@ class PyTorchAgent(Agent):
     def _distribute_loss_function(cls, loss_function, _):
         self = __class__.get_instance()
         self.loss_function = loss_function
+        return _
+
+    def distribute_metric_class(self):
+        metric_class = self.metric_class
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_metric_class(metric_class, _)).collect()
+
+    @classmethod
+    def _distribute_metric_class(cls, metric_class, _):
+        self = __class__.get_instance()
+        self.metric_class = metric_class
         return _
 
     def collect_module(self):
@@ -303,14 +318,17 @@ class PyTorchAgent(Agent):
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
         self.trainer.train(loss)
-        self.update_progress(predictions, labels)
+        self.update_progress(batch_size=len(labels), batch_loss=loss,
+                             predictions=predictions, labels=labels)
 
     def validate_minibatch(self, minibatch):
         self.model.eval()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
         predictions = self.model(ndarrays)
         labels = torch.from_numpy(labels).reshape(-1, 1)
-        self.update_progress(predictions, labels)
+        loss = self.compute_loss(predictions, labels)
+        self.update_progress(batch_size=len(labels), batch_loss=loss,
+                             predictions=predictions, labels=labels)
         return predictions.detach().reshape(-1)
 
     def compute_loss(self, predictions, labels):
@@ -323,11 +341,17 @@ class PyTorchAgent(Agent):
             loss = log_loss(predictions, labels) / labels.shape[0]
             return loss
 
-    def update_progress(self, predictions, labels):
+    def update_progress(self, **kwargs):
         self.minibatch_id += 1
-        self.update_metric(predictions, labels)
+        self.update_metric(**kwargs)
         if self.minibatch_id % self.metric_update_interval == 0:
             self.push_metric()
+
+    def _get_metric_class(self):
+        metric_class = self.metric_class
+        if metric_class is not None:
+            return metric_class
+        return super()._get_metric_class()
 
 class PyTorchLauncher(PSLauncher):
     def __init__(self):
@@ -336,6 +360,7 @@ class PyTorchLauncher(PSLauncher):
         self.updater = None
         self.dataset = None
         self.loss_function = None
+        self.metric_class = None
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.worker_count = None
@@ -373,6 +398,7 @@ class PyTorchLauncher(PSLauncher):
         agent.updater = self.updater
         agent.dataset = self.dataset
         agent.loss_function = self.loss_function
+        agent.metric_class = self.metric_class
         agent.model_export_selector = self.model_export_selector
         self.agent_object = agent
 
@@ -411,6 +437,7 @@ class PyTorchHelperMixin(object):
                  module=None,
                  updater=None,
                  loss_function=None,
+                 metric_class=None,
                  worker_count=100,
                  server_count=100,
                  agent_class=None,
@@ -439,6 +466,7 @@ class PyTorchHelperMixin(object):
         self.module = module
         self.updater = updater
         self.loss_function = loss_function
+        self.metric_class = metric_class
         self.worker_count = worker_count
         self.server_count = server_count
         self.agent_class = agent_class
@@ -472,6 +500,8 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"updater must be TensorUpdater; {self.updater!r} is invalid")
         if self.loss_function is not None and not callable(self.loss_function):
             raise TypeError(f"loss_function must be callable; {self.loss_function!r} is invalid")
+        if self.metric_class is not None and not issubclass(self.metric_class, ModelMetric):
+            raise TypeError(f"metric_class must be a subclass of ModelMetric; {self.metric_class!r} is invalid")
         if not isinstance(self.worker_count, int) or self.worker_count <= 0:
             raise TypeError(f"worker_count must be positive integer; {self.worker_count!r} is invalid")
         if not isinstance(self.server_count, int) or self.server_count <= 0:
@@ -554,6 +584,7 @@ class PyTorchHelperMixin(object):
         launcher.updater = self._get_updater_object()
         launcher.dataset = dataset
         launcher.loss_function = self.loss_function
+        launcher.metric_class = self.metric_class
         launcher.worker_count = self.worker_count
         launcher.server_count = self.server_count
         launcher.agent_class = self._get_agent_class()
@@ -585,6 +616,8 @@ class PyTorchHelperMixin(object):
         args = self.extra_agent_attributes.copy()
         args['module'] = module
         args['updater'] = self.updater
+        args['loss_function'] = self.loss_function
+        args['metric_class'] = self.metric_class
         args['worker_count'] = self.worker_count
         args['server_count'] = self.server_count
         args['agent_class'] = self.agent_class

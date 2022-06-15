@@ -44,6 +44,8 @@ from .agent import Agent
 from .model import Model
 from .model import SparseModel
 from .metric import ModelMetric
+from .metric import BasicModelMetric
+from .metric import BinaryClassificationModelMetric
 from .distributed_trainer import DistributedTrainer
 from .experiment import Experiment
 

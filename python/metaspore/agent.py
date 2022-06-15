@@ -15,7 +15,6 @@
 #
 
 import asyncio
-from datetime import datetime
 import threading
 import concurrent.futures
 import traceback
@@ -26,7 +25,7 @@ from ._metaspore import NodeRole
 from ._metaspore import Message
 from ._metaspore import PSRunner
 from ._metaspore import PSDefaultAgent
-from .metric import ModelMetric
+from .metric import BinaryClassificationModelMetric
 from .network_utils import get_available_endpoint
 from .url_utils import use_s3a
 
@@ -433,8 +432,12 @@ class Agent(object):
         message = "Agent.validate_minibatch method is not implemented"
         raise NotImplementedError(message)
 
+    def _get_metric_class(self):
+        return BinaryClassificationModelMetric
+
     def _create_metric(self):
-        metric = ModelMetric()
+        metric_class = self._get_metric_class()
+        metric = metric_class()
         return metric
 
     @property
@@ -445,8 +448,8 @@ class Agent(object):
             self.__metric = metric
         return metric
 
-    def update_metric(self, predictions, labels):
-        self._metric.accumulate(predictions.data.numpy(), labels.data.numpy())
+    def update_metric(self, **kwargs):
+        self._metric.accumulate(**kwargs)
 
     def push_metric(self):
         body = dict(command='PushMetric')
@@ -471,19 +474,10 @@ class Agent(object):
             for i in range(req.slice_count):
                 states += req.get_slice(i),
             accum = self._metric
-            delta = ModelMetric.from_states(states)
+            delta = self._create_metric()
+            delta.from_states(states)
             accum.merge(delta)
-            string = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            string += f' -- auc: {accum.compute_auc()}'
-            string += f', \u0394auc: {delta.compute_auc()}'
-            string += f', pcoc: {accum.compute_pcoc()}'
-            string += f', \u0394pcoc: {delta.compute_pcoc()}'
-            string += f', #instance: {accum.instance_count}'
-            if accum.threshold > 0.0:
-                string += f', accuracy: {accum.compute_accuracy()}'
-                string += f', precision: {accum.compute_precision()}'
-                string += f', recall: {accum.compute_recall()}'
-                string += f', F{accum.beta:g}_score: {accum.compute_f_score()}'
+            string = accum.format(delta)
             print(string)
             res = Message()
             self.send_response(req, res)
