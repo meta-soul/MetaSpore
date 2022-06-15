@@ -16,9 +16,7 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <cuda_runtime.h>
-#include <stdio.h>
 
 namespace metaspore::serving {
 
