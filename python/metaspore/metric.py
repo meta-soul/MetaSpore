@@ -15,11 +15,133 @@
 #
 
 import numpy
+import torch
 import struct
+from datetime import datetime
 from ._metaspore import ModelMetricBuffer
 
 class ModelMetric(object):
+    def __init__(self):
+        self._instance_num = 0
+
+    @property
+    def instance_count(self):
+        return self._instance_num
+
+    def _get_scalar_pack_info(self):
+        return (('_instance_num', 'l'),)
+
+    def _get_array_pack_info(self):
+        return ()
+
+    def clear(self):
+        self._instance_num = 0
+
+    def merge(self, other):
+        self._instance_num += other._instance_num
+
+    def accumulate(self, *, batch_size, **kwargs):
+        self._instance_num += batch_size
+
+    def _get_scalar_pack_format(self):
+        fmt = ''.join(t for n, t in self._get_scalar_pack_info())
+        return fmt
+
+    def _get_scalar_values(self):
+        values = tuple(getattr(self, n) for n, t in self._get_scalar_pack_info())
+        return values
+
+    def _pack_scalar_values(self):
+        fmt = self._get_scalar_pack_format()
+        values = self._get_scalar_values()
+        data = struct.pack(fmt, *values)
+        data = numpy.array(tuple(data), dtype=numpy.uint8)
+        return data
+
+    def _unpack_scalar_values(self, data):
+        fmt = self._get_scalar_pack_format()
+        values = struct.unpack(fmt, data)
+        for (name, tag), value in zip(self._get_scalar_pack_info(), values):
+            setattr(self, name, value)
+
+    def get_states(self):
+        states = self._pack_scalar_values(),
+        for name in self._get_array_pack_info():
+            states += getattr(self, name),
+        return states
+
+    def from_states(self, states):
+        self._unpack_scalar_values(states[0])
+        for name, array in zip(self._get_array_pack_info(), states[1:]):
+            field = getattr(self, name)
+            field[...] = array
+
+    def _as_numpy_ndarray(self, value):
+        if isinstance(value, numpy.ndarray):
+            return value
+        elif isinstance(value, torch.Tensor):
+            return value.data.numpy()
+        else:
+            message = f"value must be numpy ndarray or torch tensor; {value!r} is invalid"
+            raise TypeError(message)
+
+    def __str__(self):
+        string = '#instance={self.instance_count}'
+        return string
+
+    def _get_format_header(self):
+        string = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        return string
+
+    def _get_format_body(self, delta):
+        string = f'#instance: {self.instance_count}'
+        return string
+
+    def format(self, delta):
+        header = self._get_format_header()
+        body = self._get_format_body(delta)
+        string = header + ' -- ' + body
+        return string
+
+class BasicModelMetric(ModelMetric):
+    def __init__(self):
+        super().__init__()
+        self._loss_sum = 0.0
+
+    def _get_scalar_pack_info(self):
+        return super()._get_scalar_pack_info() + (('_loss_sum', 'd'),)
+
+    def clear(self):
+        super().clear()
+        self._loss_sum = 0.0
+
+    def merge(self, other):
+        super().merge(other)
+        self._loss_sum += other._loss_sum
+
+    def accumulate(self, *, batch_loss, **kwargs):
+        super().accumulate(**kwargs)
+        self._loss_sum += batch_loss
+
+    def compute_loss(self):
+        if self.instance_count == 0:
+            return float('nan')
+        return self._loss_sum / self.instance_count
+
+    def __str__(self):
+        string = f'loss={self.compute_loss()}'
+        string += f', {super().__str__()}'
+        return string
+
+    def _get_format_body(self, delta):
+        string = f'loss: {self.compute_loss()}'
+        string += f', \u0394loss: {delta.compute_loss()}'
+        string += f', {super()._get_format_body(delta)}'
+        return string
+
+class BinaryClassificationModelMetric(BasicModelMetric):
     def __init__(self, buffer_size=1000000, threshold=0.0, beta=1.0):
+        super().__init__()
         self._buffer_size = buffer_size
         self._threshold = threshold
         self._beta = beta
@@ -27,7 +149,6 @@ class ModelMetric(object):
         self._negative_buffer = numpy.zeros(buffer_size, dtype=numpy.float64)
         self._prediction_sum = 0.0
         self._label_sum = 0.0
-        self._instance_num = 0
         self._true_positive = 0
         self._true_negative = 0
         self._false_positive = 0
@@ -41,40 +162,52 @@ class ModelMetric(object):
     def beta(self):
         return self._beta
 
-    @property
-    def instance_count(self):
-        return self._instance_num
+    def _get_scalar_pack_info(self):
+        return super()._get_scalar_pack_info() + (
+            ('_prediction_sum', 'd'),
+            ('_label_sum', 'd'),
+            ('_true_positive', 'l'),
+            ('_true_negative', 'l'),
+            ('_false_positive', 'l'),
+            ('_false_negative', 'l'))
+
+    def _get_array_pack_info(self):
+        return super()._get_array_pack_info() + (
+            '_positive_buffer',
+            '_negative_buffer')
 
     def clear(self):
+        super().clear()
         self._positive_buffer.fill(0.0)
         self._negative_buffer.fill(0.0)
         self._prediction_sum = 0.0
         self._label_sum = 0.0
-        self._instance_num = 0
         self._true_positive = 0
         self._true_negative = 0
         self._false_positive = 0
         self._false_negative = 0
 
     def merge(self, other):
+        super().merge(other)
         self._positive_buffer += other._positive_buffer
         self._negative_buffer += other._negative_buffer
         self._prediction_sum += other._prediction_sum
         self._label_sum += other._label_sum
-        self._instance_num += other._instance_num
         self._true_positive += other._true_positive
         self._true_negative += other._true_negative
         self._false_positive += other._false_positive
         self._false_negative += other._false_negative
 
-    def accumulate(self, predictions, labels):
+    def accumulate(self, *, predictions, labels, **kwargs):
+        super().accumulate(**kwargs)
+        predictions = self._as_numpy_ndarray(predictions)
+        labels = self._as_numpy_ndarray(labels)
         if labels.dtype != numpy.float32:
             labels = labels.astype(numpy.float32)
         ModelMetricBuffer.update_buffer(self._positive_buffer, self._negative_buffer,
                                         predictions, labels)
         self._prediction_sum += predictions.sum()
         self._label_sum += labels.sum()
-        self._instance_num += len(labels)
         if self.threshold > 0.0:
             predicted_positive = predictions > self._threshold
             predicted_negative = predictions <= self._threshold
@@ -127,6 +260,7 @@ class ModelMetric(object):
     def __str__(self):
         string = f'auc={self.compute_auc()}'
         string += f', pcoc={self.compute_pcoc()}'
+        string += f', {super().__str__()}'
         if self.threshold > 0.0:
             string += f', accuracy={self.compute_accuracy()}'
             string += f', precision={self.compute_precision()}'
@@ -134,37 +268,15 @@ class ModelMetric(object):
             string += f', F{self.beta:g}_score={self.compute_f_score()}'
         return string
 
-    def _get_pack_format(self):
-        return 'ddl' + 'l' * 4
-
-    def get_states(self):
-        scalars = self._prediction_sum,
-        scalars += self._label_sum,
-        scalars += self._instance_num,
-        scalars += self._true_positive,
-        scalars += self._true_negative,
-        scalars += self._false_positive,
-        scalars += self._false_negative,
-        scalars = struct.pack(self._get_pack_format(), *scalars)
-        scalars = numpy.array(tuple(scalars), dtype=numpy.uint8)
-        states = scalars,
-        states += self._positive_buffer,
-        states += self._negative_buffer,
-        return states
-
-    @classmethod
-    def from_states(cls, states):
-        scalars, pos_buf, neg_buf = states
-        buffer_size = len(pos_buf)
-        inst = cls(buffer_size)
-        inst._positive_buffer[:] = pos_buf
-        inst._negative_buffer[:] = neg_buf
-        pred_sum, lab_sum, inst_num, tp, tn, fp, fn = struct.unpack(inst._get_pack_format(), scalars)
-        inst._prediction_sum = pred_sum
-        inst._label_sum = lab_sum
-        inst._instance_num = inst_num
-        inst._true_positive = tp
-        inst._true_negative = tn
-        inst._false_positive = fp
-        inst._false_negative = fn
-        return inst
+    def _get_format_body(self, delta):
+        string = f'auc: {self.compute_auc()}'
+        string += f', \u0394auc: {delta.compute_auc()}'
+        string += f', pcoc: {self.compute_pcoc()}'
+        string += f', \u0394pcoc: {delta.compute_pcoc()}'
+        string += f', {super()._get_format_body(delta)}'
+        if self.threshold > 0.0:
+            string += f', accuracy: {self.compute_accuracy()}'
+            string += f', precision: {self.compute_precision()}'
+            string += f', recall: {self.compute_recall()}'
+            string += f', F{self.beta:g}_score: {self.compute_f_score()}'
+        return string
