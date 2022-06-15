@@ -29,7 +29,7 @@
         "gtest",
         "gflags",
         "benchmark",
-        "onnxruntime-cpu-default",
+        "onnxruntime-gpu-default",
         "xtensor",
         "cppzmq",
         "python3",

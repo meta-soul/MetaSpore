@@ -30,7 +30,8 @@ target_link_libraries(arrow_static INTERFACE
     unofficial::brotli::brotlicommon-static
 )
 
-include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeCpuDefault.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeGpuDefault.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/FindCudart.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/AsioGrpcProtobufGenerator.cmake")
 
 set(PROTOS
@@ -93,7 +94,8 @@ target_link_libraries(metaspore-serving PUBLIC
     Boost::system
     asio-grpc::asio-grpc
     fmt::fmt
-    onnxruntime-cpu-default
+    onnxruntime-gpu-default
+    cudart
     arrow_static
     range-v3
     xtensor
