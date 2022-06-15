@@ -3,9 +3,9 @@
         {
             "kind": "git",
             "repository": "https://github.com/meta-soul/meta-vcpkg-registry.git",
-            "baseline": "5de9b5586e2dd1743ca0846e9209752b0d68c1be",
+            "baseline": "0325e8af8680eb5c656317ff84c34743465ad033",
             "packages": [
-                "onnxruntime-cpu-default"
+                "onnxruntime-gpu-default"
             ]
         }
     ]

@@ -16,6 +16,7 @@
 
 #include <serving/ort_model.h>
 #include <serving/test_utils.h>
+#include <boost/asio/use_future.hpp>
 
 #include <fstream>
 #include <thread>
@@ -83,7 +84,7 @@ Ort::Value get_mnist_test_10_images_tensor(const std::string &path, int64_t batc
 
 TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadNormal) {
     auto &tp = Threadpools::get_background_threadpool();
-    boost::asio::co_spawn(
+    std::future<void> future = boost::asio::co_spawn(
         tp,
         []() -> awaitable<void> {
             OrtModel model;
@@ -91,7 +92,7 @@ TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadNormal) {
             EXPECT_TRUE_COROUTINE(status);
             auto info = model.info();
             EXPECT_EQ(info, "onnxruntime model loaded from mnist_model/model.onnx"s);
-            auto input_value = get_mnist_test_10_images_tensor("data/t10k-images-idx3-ubyte"s, 10);
+            auto input_value = get_mnist_test_10_images_tensor("data/MNIST/raw/t10k-images-idx3-ubyte"s, 10);
             const float *in_ptr = input_value.GetTensorMutableData<float>();
             auto input = std::make_unique<OrtModelInput>();
             input->inputs.emplace("input"s, OrtModelInput::Value{.value = std::move(input_value)});
@@ -105,22 +106,8 @@ TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadNormal) {
             TensorPrint::print_tensor<float>(output_value);
             co_return;
         },
-        boost::asio::detached);
-}
-
-TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadFail) {
-    auto &tp = Threadpools::get_compute_threadpool();
-    boost::asio::co_spawn(
-        tp,
-        []() -> awaitable<void> {
-            OrtModel model;
-            auto status = co_await model.load(".");
-            ASSERT_TRUE_COROUTINE(absl::IsNotFound(status));
-            ASSERT_EQUAL_COROUTINE(status.ToString(),
-                                   "NOT_FOUND: model.onnx doesn't exist under ."s);
-            co_return;
-        },
-        boost::asio::detached);
+        boost::asio::use_future);
+    future.get();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

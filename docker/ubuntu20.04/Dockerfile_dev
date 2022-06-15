@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM ubuntu:20.04
+FROM nvidia/cuda:11.6.2-cudnn8-runtime-ubuntu20.04 as runtime_env
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal main restricted" >/etc/apt/sources.list
@@ -57,3 +57,9 @@ RUN /opt/vcpkg/bootstrap-vcpkg.sh
 COPY vcpkg.json /opt/vcpkg_installed/vcpkg.json
 COPY vcpkg-configuration.json /opt/vcpkg_installed/vcpkg-configuration.json
 RUN /opt/vcpkg/vcpkg install --x-install-root=/opt/vcpkg_installed --x-manifest-root=/opt/vcpkg_installed --clean-after-build
+
+FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04 as devel_env
+FROM runtime_env as runtime_dev
+
+COPY --from=devel_env /usr/local/cuda-11/include/ /opt/vcpkg_installed/x64-linux/include/
+COPY --from=devel_env /usr/local/cuda-11/lib64/ /opt/vcpkg_installed/x64-linux/lib/

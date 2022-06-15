@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 ARG BUILD_IMAGE
-FROM ubuntu:20.04 as serving_env
+FROM nvidia/cuda:11.6.2-cudnn8-runtime-ubuntu20.04 as serving_env
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal main restricted" >/etc/apt/sources.list
