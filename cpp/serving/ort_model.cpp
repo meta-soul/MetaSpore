@@ -15,9 +15,9 @@
 //
 
 #include <common/logger.h>
+#include <serving/gpu_utils.h>
 #include <serving/ort_model.h>
 #include <serving/utils.h>
-#include <serving/gpu_utils.h>
 
 #include <filesystem>
 
@@ -85,8 +85,8 @@ awaitable_status OrtModel::load(std::string dir_path) {
                     fmt::format("model.onnx doesn't exist under {}", dir_path));
             }
             if (GpuHelper::is_gpu_available()) {
-              spdlog::info("Use cuda:0");
-              OrtSessionOptionsAppendExecutionProvider_CUDA(context_->session_options_, 0);
+                spdlog::info("Use cuda:0");
+                OrtSessionOptionsAppendExecutionProvider_CUDA(context_->session_options_, 0);
             }
             context_->session_ =
                 Ort::Session(get_ort_model_global().env_, file.c_str(), context_->session_options_);

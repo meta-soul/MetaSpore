@@ -16,61 +16,34 @@
 
 #pragma once
 
-#include <fmt/format.h>
-#include <fmt/ostream.h>
-
 #include <cstdlib>
-#include <stdio.h>
 #include <cuda_runtime.h>
+#include <stdio.h>
 
 namespace metaspore::serving {
 
-  class GpuHelper {
-    public:
-     static bool is_gpu_available() {
-       //used to count the device numbers
-       int count;
-       // get the cuda device count
-       cudaGetDeviceCount(&count);
-       if (count == 0) {
-         spdlog::info("There is no device.");
-         return false;
-       }
-       // find the device >= 1.X
-       int i;
-       for (i = 0; i < count; ++i) {
-         cudaDeviceProp prop;
-         if (cudaGetDeviceProperties(&prop, i) == cudaSuccess) {
-           if (prop.major >= 1) {
-             printDeviceProp(prop);
-             break;
-           }
-         }
-       }
-       // if can't find the device
-       if (i == count) {
-         spdlog::info("There is no device supporting CUDA 1.x.");
-         return false;
-       }
-       return true;
-     }
- 
-     static void printDeviceProp(const cudaDeviceProp& prop) {
-       spdlog::info("Device Name : {}.", prop.name);
-       spdlog::info("totalGlobalMem : {}.", prop.totalGlobalMem);
-       spdlog::info("sharedMemPerBlock : {}.", prop.sharedMemPerBlock);
-       spdlog::info("regsPerBlock : {}.", prop.regsPerBlock);
-       spdlog::info("warpSize : {}.", prop.warpSize);
-       spdlog::info("memPitch : {}.", prop.memPitch);
-       spdlog::info("maxThreadsPerBlock : {}.", prop.maxThreadsPerBlock);
-       spdlog::info("maxThreadsDim[0 - 2] : {} {} {}.", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
-       spdlog::info("maxGridSize[0 - 2] : {} {} {}.", prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
-       spdlog::info("totalConstMem : {}.", prop.totalConstMem);
-       spdlog::info("major.minor : {}.{}.", prop.major, prop.minor);
-       spdlog::info("clockRate : {}.", prop.clockRate);
-       spdlog::info("textureAlignment : {}.", prop.textureAlignment);
-       spdlog::info("deviceOverlap : {}.", prop.deviceOverlap);
-       spdlog::info("multiProcessorCount : {}.", prop.multiProcessorCount);
-     }
-  };
+class GpuHelper {
+  public:
+    static bool is_gpu_available() {
+        // used to count the device numbers
+        int deviceCount = 0;
+
+        // get the cuda device count
+        cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
+        spdlog::info("deviceCount: {}", deviceCount);
+
+        if (deviceCount <= 0) {
+            spdlog::info("No device detected");
+            return false;
+        }
+
+        // Error when running cudaGetDeviceCount
+        if (cudaResultCode != cudaSuccess) {
+            spdlog::info("{} (CUDA error Code={})", cudaGetErrorString(cudaResultCode),
+                         (int)cudaResultCode);
+            return false;
+        }
+        return true;
+    }
+};
 } // namespace metaspore::serving

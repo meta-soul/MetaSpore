@@ -92,7 +92,7 @@ TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadNormal) {
             EXPECT_TRUE_COROUTINE(status);
             auto info = model.info();
             EXPECT_EQ(info, "onnxruntime model loaded from mnist_model/model.onnx"s);
-            auto input_value = get_mnist_test_10_images_tensor("data/t10k-images-idx3-ubyte"s, 10);
+            auto input_value = get_mnist_test_10_images_tensor("data/MNIST/raw/t10k-images-idx3-ubyte"s, 10);
             const float *in_ptr = input_value.GetTensorMutableData<float>();
             auto input = std::make_unique<OrtModelInput>();
             input->inputs.emplace("input"s, OrtModelInput::Value{.value = std::move(input_value)});
