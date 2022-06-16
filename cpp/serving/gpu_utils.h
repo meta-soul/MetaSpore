@@ -16,13 +16,16 @@
 
 #pragma once
 
+#if ENABLE_GPU
 #include <cuda_runtime.h>
+#endif
 
 namespace metaspore::serving {
 
 class GpuHelper {
   public:
     static bool is_gpu_available() {
+#if ENABLE_GPU
         // used to count the device numbers
         int deviceCount = 0;
 
@@ -42,6 +45,10 @@ class GpuHelper {
             return false;
         }
         return true;
+#else
+        return false;
+#endif
     }
 };
+
 } // namespace metaspore::serving

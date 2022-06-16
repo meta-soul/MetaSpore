@@ -30,6 +30,9 @@ status PyPreprocessingProcess::launch() {
     if (rc != 0)
         return absl::FailedPreconditionError("fail to create virtual env \"" + virtual_env_dir_ + "\"");
     fs::path venv_py = fs::path{virtual_env_dir_} / "bin" / "python";
+    rc = bp::system(venv_py.string(), "-m", "pip", "install", "--upgrade", "pip");
+    if (rc != 0)
+        return absl::FailedPreconditionError("fail to upgrade pip");
     if (!requirement_file_.empty()) {
         rc = bp::system(venv_py.string(), "-m", "pip", "install", "-r", requirement_file_);
         if (rc != 0)

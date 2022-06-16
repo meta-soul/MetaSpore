@@ -98,6 +98,8 @@ absl::Status add_join_plan(std::unique_ptr<FeatureComputeContext> &context_,
             fmt::format("FeatureComputeExec feed_input with non-exist name {}", right_source_name));
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
     arrow::compute::HashJoinNodeOptions join_opts{
         join_type, left_key_names | ranges::views::transform([](const std::string &name) {
                        return arrow::FieldRef(name);
@@ -105,6 +107,8 @@ absl::Status add_join_plan(std::unique_ptr<FeatureComputeContext> &context_,
         right_key_names | ranges::views::transform([](const std::string &name) {
             return arrow::FieldRef(name);
         }) | ranges::to<std::vector>()};
+#pragma GCC diagnostic pop
+
     auto hashjoin = arrow::compute::MakeExecNode(
         "hashjoin", context_->plan_.get(), {left_source->second.node, right_source->second.node},
         join_opts);

@@ -103,6 +103,8 @@ status FeatureComputeExec::add_join_plan(const std::string &left_source_name,
             fmt::format("FeatureComputeExec add join with non-exist name {}", right_source_name));
     }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wfree-nonheap-object"
     cp::HashJoinNodeOptions join_opts{
         join_type, left_key_names | ranges::views::transform([](const std::string &name) {
                        return arrow::FieldRef(name);
@@ -110,6 +112,8 @@ status FeatureComputeExec::add_join_plan(const std::string &left_source_name,
         right_key_names | ranges::views::transform([](const std::string &name) {
             return arrow::FieldRef(name);
         }) | ranges::to<std::vector>()};
+#pragma GCC diagnostic pop
+
     cp::Declaration join(
         "hashjoin",
         {cp::Declaration::Input(left_source->second), cp::Declaration::Input(right_source->second)},

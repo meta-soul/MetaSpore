@@ -86,7 +86,10 @@ awaitable_status OrtModel::load(std::string dir_path) {
             }
             if (GpuHelper::is_gpu_available()) {
                 spdlog::info("Use cuda:0");
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
                 OrtSessionOptionsAppendExecutionProvider_CUDA(context_->session_options_, 0);
+#pragma GCC diagnostic pop
             }
             context_->session_ =
                 Ort::Session(get_ort_model_global().env_, file.c_str(), context_->session_options_);

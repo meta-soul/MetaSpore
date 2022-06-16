@@ -39,6 +39,7 @@ endif()
 
 option(BUILD_TRAIN_PKG "Enable training package build" ON)
 option(BUILD_SERVING_BIN "Enable serving binary build" ON)
+option(ENABLE_GPU "Enable GPU support" ON)
 option(ENABLE_TESTS "Enable tests build" OFF)
 
 find_package(Git REQUIRED)
