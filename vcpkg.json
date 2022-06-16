@@ -52,7 +52,12 @@
             "name": "python3",
             "version": "3.8.3",
             "port-version": 2
+        },
+        {
+            "name": "arrow",
+            "version": "7.0.0",
+            "port-version": 2
         }
     ],
-    "builtin-baseline": "a3df696929b28195b0d7a477ba6cd16dba48fa52"
+    "builtin-baseline": "e2794913924ef606cc7bbc59c173f2714e9853c5"
 }
