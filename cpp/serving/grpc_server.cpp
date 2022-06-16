@@ -40,41 +40,40 @@ DECLARE_string(grpc_listen_host);
 DECLARE_string(grpc_listen_port);
 
 // From
-// https://github.com/Tradias/asio-grpc/blob/cd9d3aad3af56a43793594d1a5388a453e7d5668/example/streaming-server.cpp#L31
+// https://github.com/Tradias/asio-grpc/blob/496408239c4cb62e9360088aba8c74b2ec3a04e7/example/multi-threaded-server.cpp#L29
 // Copyright 2022 Dennis Hezel
 struct ServerShutdown {
     grpc::Server &server;
     boost::asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
-    std::optional<std::thread> shutdown_thread;
+    std::atomic_bool is_shutdown{};
+    std::thread shutdown_thread;
 
     ServerShutdown(grpc::Server &server, agrpc::GrpcContext &grpc_context)
         : server(server), signals(grpc_context, SIGINT, SIGTERM) {
-        signals.async_wait([&](auto &&, auto &&signal) {
-            spdlog::info("Shutdown with signal {}", signal);
-            shutdown();
+        signals.async_wait([&](auto &&ec, auto &&signal) {
+            if (boost::asio::error::operation_aborted != ec) {
+                spdlog::info("Shutdown with signal {}", signal);
+                shutdown();
+            }
         });
     }
 
     void shutdown() {
-        if (!shutdown_thread) {
-            // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps, cancelling the signal
-            // so that the GrpcContext will eventually run out of work and return
-            // from `run()`.
-            shutdown_thread.emplace([&] {
+        if (!is_shutdown.exchange(true)) {
+            // We cannot call server.Shutdown() on the same thread that runs a GrpcContext
+            // because that could lead to deadlock, therefore create a new thread.
+            shutdown_thread = std::thread([&] {
                 signals.cancel();
                 server.Shutdown();
             });
-            // Alternatively call `grpc_context.stop()` here instead which causes all coroutines
-            // to end at their next suspension point.
-            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns
-            // or `.reset()` the grpc_context and go into another `grpc_context.run()`
         }
     }
 
     ~ServerShutdown() {
-        if (shutdown_thread) {
-            shutdown_thread->join();
+        if (shutdown_thread.joinable()) {
+            shutdown_thread.join();
+        } else if (!is_shutdown.exchange(true)) {
+            server.Shutdown();
         }
     }
 };
