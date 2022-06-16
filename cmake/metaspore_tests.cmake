@@ -19,7 +19,7 @@ enable_testing()
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/cpp/tests/data/MNIST/raw/t10k-images-idx3-ubyte
-    COMMAND find . -type f -name '*.gz' -exec sh -c 'file=$$1\; [ -e "\$\${file%.gz}" ] || gunzip -k "\$\${file}";' find-sh {} \\\;
+    COMMAND find . -type f -name '*.gz' -exec sh -c '[ -e \$\${1%.gz} ] || gunzip -k \$\$1' find-sh {} \\\;
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/cpp/tests/data/MNIST/raw
 )
 add_custom_command(
@@ -111,6 +111,7 @@ endif()
 
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py
+    COMMAND ${PYTHON_EXE} -m pip install --upgrade pip
     COMMAND ${PYTHON_EXE} -m pip install --upgrade --force-reinstall --no-deps ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
     DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name} testing_venv
 )

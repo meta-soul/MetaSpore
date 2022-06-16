@@ -30,6 +30,7 @@ target_link_libraries(arrow_static INTERFACE
     unofficial::brotli::brotlicommon-static
 )
 
+include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeCpuDefault.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeGpuDefault.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/FindCudart.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/AsioGrpcProtobufGenerator.cmake")
@@ -42,10 +43,10 @@ set(PROTO_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/gen/proto/cpp)
 set(PROTO_SRC_DIR ${PROTO_INC_DIR}/serving)
 file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
 
-asio_grpc_protobuf_generate(                                                                                    
-    GENERATE_GRPC                                                                                               
-    OUT_VAR PROTO_SRCS                                                                 
-    OUT_DIR "${PROTO_SRC_DIR}"                                                     
+asio_grpc_protobuf_generate(
+    GENERATE_GRPC
+    OUT_VAR PROTO_SRCS
+    OUT_DIR "${PROTO_SRC_DIR}"
     PROTOS ${PROTOS})
 
 set(SRCS
@@ -94,12 +95,18 @@ target_link_libraries(metaspore-serving PUBLIC
     Boost::system
     asio-grpc::asio-grpc
     fmt::fmt
-    onnxruntime-gpu-default
-    cudart
     arrow_static
     range-v3
     xtensor
 )
+
+if(ENABLE_GPU)
+    target_link_libraries(metaspore-serving PUBLIC onnxruntime-gpu-default cudart)
+    target_compile_definitions(metaspore-serving PUBLIC ENABLE_GPU=1)
+else()
+    target_link_libraries(metaspore-serving PUBLIC onnxruntime-cpu-default)
+    target_compile_definitions(metaspore-serving PUBLIC ENABLE_GPU=0)
+endif()
 
 add_executable(metaspore-serving-bin ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/main.cpp)
 target_link_libraries(metaspore-serving-bin PRIVATE metaspore-serving mimalloc-static)
