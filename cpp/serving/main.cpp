@@ -17,6 +17,7 @@
 #include <common/logger.h>
 #include <serving/feature_compute_funcs.h>
 #include <serving/grpc_server.h>
+#include <serving/grpc_client_context_pool.h>
 #include <serving/model_manager.h>
 #include <serving/threadpool.h>
 
@@ -39,6 +40,7 @@ int main(int argc, char **argv) {
     }
 
     metaspore::SpdlogDefault::Init();
+    GrpcClientContextPool::get_instance();
 
     ModelManager::get_model_manager().init(FLAGS_init_load_path);
 
@@ -47,6 +49,7 @@ int main(int argc, char **argv) {
         server.run();
     }
 
+    GrpcClientContextPool::get_instance().wait();
     auto &tp = metaspore::serving::Threadpools::get_compute_threadpool();
     auto &btp = metaspore::serving::Threadpools::get_background_threadpool();
     tp.join();

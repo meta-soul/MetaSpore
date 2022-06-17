@@ -18,7 +18,6 @@
 #include <serving/converters.h>
 #include <serving/grpc_server.h>
 #include <serving/grpc_server_shutdown.h>
-#include <serving/grpc_client_context_pool.h>
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
@@ -37,7 +36,6 @@ namespace metaspore::serving {
 DECLARE_string(grpc_listen_host);
 DECLARE_string(grpc_listen_port);
 DECLARE_uint64(grpc_server_threads);
-DECLARE_uint64(grpc_client_threads);
 
 class GrpcServerContext {
   public:
@@ -55,10 +53,6 @@ class GrpcServerContext {
         builder.RegisterService(&predict_service);
         builder.RegisterService(&load_service);
         server = builder.BuildAndStart();
-        int grpc_client_thread_count = FLAGS_grpc_client_threads;
-        if (grpc_client_thread_count == 0)
-            grpc_client_thread_count = std::thread::hardware_concurrency();
-        client_context_pool = std::make_unique<GrpcClientContextPool>(grpc_client_thread_count);
     }
 
     std::unique_ptr<grpc::Server> server;
@@ -67,7 +61,6 @@ class GrpcServerContext {
     std::forward_list<agrpc::GrpcContext> grpc_server_contexts;
     std::vector<std::thread> grpc_server_threads;
     int grpc_server_thread_count{};
-    std::unique_ptr<GrpcClientContextPool> client_context_pool;
 };
 
 GrpcServer::GrpcServer() { context_ = std::make_unique<GrpcServerContext>(); }
@@ -170,7 +163,6 @@ void GrpcServer::run() {
     spdlog::info("Start to accept grpc requests with {} threads", context_->grpc_server_thread_count);
     for (auto &thread : context_->grpc_server_threads)
         thread.join();
-    context_->client_context_pool->wait();
 }
 
 } // namespace metaspore::serving

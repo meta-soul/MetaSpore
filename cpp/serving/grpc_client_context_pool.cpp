@@ -14,13 +14,18 @@
 // limitations under the License.
 //
 
+#include <gflags/gflags.h>
 #include <serving/grpc_client_context_pool.h>
 
 namespace metaspore::serving {
 
-GrpcClientContextPool::GrpcClientContextPool(size_t thread_count)
-    : grpc_client_thread_count_(thread_count)
+DECLARE_uint64(grpc_client_threads);
+
+GrpcClientContextPool::GrpcClientContextPool()
 {
+    grpc_client_thread_count_ = FLAGS_grpc_client_threads;
+    if (grpc_client_thread_count_ == 0)
+        grpc_client_thread_count_ = std::thread::hardware_concurrency();
     for (size_t i = 0; i < grpc_client_thread_count_; i++) {
         auto &grpc_context = grpc_client_contexts_.emplace_front(std::make_unique<grpc::CompletionQueue>());
         guards_.emplace_back(grpc_context.get_executor());
@@ -43,6 +48,12 @@ void GrpcClientContextPool::wait()
     guards_.clear();
     for (auto &thread : grpc_client_threads_)
         thread.join();
+}
+
+GrpcClientContextPool& GrpcClientContextPool::get_instance()
+{
+    static GrpcClientContextPool instance;
+    return instance;
 }
 
 } // namespace metaspore::serving

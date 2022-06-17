@@ -14,6 +14,8 @@
 // limitations under the License.
 //
 
+#pragma once
+
 #include <stdint.h>
 #include <atomic>
 #include <vector>
@@ -25,9 +27,11 @@ namespace metaspore::serving {
 
 class GrpcClientContextPool {
 public:
-    GrpcClientContextPool(size_t thread_count);
+    GrpcClientContextPool();
     agrpc::GrpcContext &get_next();
     void wait();
+
+    static GrpcClientContextPool& get_instance();
 
 private:
     class RoundRobin

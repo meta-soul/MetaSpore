@@ -29,6 +29,7 @@
 #include <serving/utils.h>
 #include <serving/metaspore.pb.h>
 #include <serving/metaspore.grpc.pb.h>
+#include <serving/grpc_client_context_pool.h>
 #include <serving/py_preprocessing_process.h>
 #include <serving/py_preprocessing_model.h>
 
@@ -39,7 +40,6 @@ class PyPreprocessingModelContext {
     PyPreprocessingProcess process_;
     std::unique_ptr<Predict::Stub> stub_;
     std::filesystem::path temp_dir_;
-    GrpcClientContextPool* client_context_pool_{};
 
     ~PyPreprocessingModelContext() {
         if (!temp_dir_.empty())
@@ -112,7 +112,6 @@ awaitable_status PyPreprocessingModel::load(std::string dir_path) {
                 co_return std::move(status);
             auto channel = grpc::CreateChannel(listen_addr, grpc::InsecureChannelCredentials());
             context_->stub_ = Predict::NewStub(channel);
-            context_->client_context_pool_ = &contexts;
 
             spdlog::info("PyPreprocessingModel loaded from {}, required inputs [{}], "
                          "producing outputs [{}]",
@@ -129,7 +128,7 @@ awaitable_result<std::unique_ptr<PyPreprocessingModelOutput>>
 PyPreprocessingModel::do_predict(std::unique_ptr<PyPreprocessingModelInput> input) {
     auto output = std::make_unique<PyPreprocessingModelOutput>();
     grpc::ClientContext client_context;
-    agrpc::GrpcContext& grpc_context = context_->client_context_pool_->get_next();
+    agrpc::GrpcContext& grpc_context = GrpcClientContextPool::get_instance().get_next();
     grpc::Status status;
     const auto reader = agrpc::request(&Predict::Stub::AsyncPredict, *context_->stub_, client_context, input->request, grpc_context);
     co_await agrpc::finish(reader, output->reply, status, boost::asio::bind_executor(grpc_context, boost::asio::use_awaitable));
