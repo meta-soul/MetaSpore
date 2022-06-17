@@ -37,6 +37,10 @@ class PyTorchAgent(Agent):
         self.dataset = None
         self.loss_function = None
         self.metric_class = None
+        self.start_workers_hook = None
+        self.stop_workers_hook = None
+        self.worker_start_hook = None
+        self.worker_stop_hook = None
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.model = None
@@ -70,6 +74,8 @@ class PyTorchAgent(Agent):
         self.distribute_updater()
         self.distribute_loss_function()
         self.distribute_metric_class()
+        self.distribute_worker_start_hook()
+        self.distribute_worker_stop_hook()
         self.start_workers()
         self.feed_dataset()
         self.collect_module()
@@ -175,6 +181,28 @@ class PyTorchAgent(Agent):
         self.metric_class = metric_class
         return _
 
+    def distribute_worker_start_hook(self):
+        worker_start_hook = self.worker_start_hook
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_worker_start_hook(worker_start_hook, _)).collect()
+
+    @classmethod
+    def _distribute_worker_start_hook(cls, worker_start_hook, _):
+        self = __class__.get_instance()
+        self.worker_start_hook = worker_start_hook
+        return _
+
+    def distribute_worker_stop_hook(self):
+        worker_stop_hook = self.worker_stop_hook
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_worker_stop_hook(worker_stop_hook, _)).collect()
+
+    @classmethod
+    def _distribute_worker_stop_hook(cls, worker_stop_hook, _):
+        self = __class__.get_instance()
+        self.worker_stop_hook = worker_stop_hook
+        return _
+
     def collect_module(self):
         if self.is_training_mode:
             rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
@@ -197,10 +225,18 @@ class PyTorchAgent(Agent):
         self.trainer = DistributedTrainer(self.model, updater=self.updater)
         self.trainer.initialize()
 
+    def start_workers(self):
+        if self.start_workers_hook is not None:
+            self.start_workers_hook(self)
+        super().start_workers()
+
     def worker_start(self):
+        super().worker_start()
         self.setup_model()
         self.setup_trainer()
         self.load_model()
+        if self.worker_start_hook is not None:
+            self.worker_start_hook(self)
 
     def load_model(self):
         if self.model_in_path is not None:
@@ -226,12 +262,20 @@ class PyTorchAgent(Agent):
                               model_export_selector=self.model_export_selector,
                               output_names=self.model_output_names)
 
+    def stop_workers(self):
+        super().stop_workers()
+        if self.stop_workers_hook is not None:
+            self.stop_workers_hook(self)
+
     def worker_stop(self):
         # Make sure the final metric buffers are pushed.
         self.push_metric()
         if self.is_training_mode:
             self.save_model()
             self.export_model()
+        if self.worker_stop_hook is not None:
+            self.worker_stop_hook(self)
+        super().worker_stop()
 
     def feed_dataset(self):
         if self.is_training_mode:
@@ -337,9 +381,13 @@ class PyTorchAgent(Agent):
             return loss
         else:
             # For backward compatibility.
-            from .loss_utils import log_loss
-            loss = log_loss(predictions, labels) / labels.shape[0]
+            loss = self._legacy_compute_loss(predictions, labels)
             return loss
+
+    def _legacy_compute_loss(self, predictions, labels):
+        from .loss_utils import log_loss
+        loss = log_loss(predictions, labels) / labels.shape[0]
+        return loss
 
     def update_progress(self, **kwargs):
         self.minibatch_id += 1
@@ -361,6 +409,10 @@ class PyTorchLauncher(PSLauncher):
         self.dataset = None
         self.loss_function = None
         self.metric_class = None
+        self.start_workers_hook = None
+        self.stop_workers_hook = None
+        self.worker_start_hook = None
+        self.worker_stop_hook = None
         self.model_export_selector = None
         self.tensor_name_prefix = None
         self.worker_count = None
@@ -399,6 +451,10 @@ class PyTorchLauncher(PSLauncher):
         agent.dataset = self.dataset
         agent.loss_function = self.loss_function
         agent.metric_class = self.metric_class
+        agent.start_workers_hook = self.start_workers_hook
+        agent.stop_workers_hook = self.stop_workers_hook
+        agent.worker_start_hook = self.worker_start_hook
+        agent.worker_stop_hook = self.worker_stop_hook
         agent.model_export_selector = self.model_export_selector
         self.agent_object = agent
 
@@ -438,6 +494,10 @@ class PyTorchHelperMixin(object):
                  updater=None,
                  loss_function=None,
                  metric_class=None,
+                 start_workers_hook=None,
+                 stop_workers_hook=None,
+                 worker_start_hook=None,
+                 worker_stop_hook=None,
                  worker_count=100,
                  server_count=100,
                  agent_class=None,
@@ -467,6 +527,10 @@ class PyTorchHelperMixin(object):
         self.updater = updater
         self.loss_function = loss_function
         self.metric_class = metric_class
+        self.start_workers_hook = start_workers_hook
+        self.stop_workers_hook = stop_workers_hook
+        self.worker_start_hook = worker_start_hook
+        self.worker_stop_hook = worker_stop_hook
         self.worker_count = worker_count
         self.server_count = server_count
         self.agent_class = agent_class
@@ -502,6 +566,14 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"loss_function must be callable; {self.loss_function!r} is invalid")
         if self.metric_class is not None and not issubclass(self.metric_class, ModelMetric):
             raise TypeError(f"metric_class must be a subclass of ModelMetric; {self.metric_class!r} is invalid")
+        if self.start_workers_hook is not None and not callable(self.start_workers_hook):
+            raise TypeError(f"start_workers_hook must be callable; {self.start_workers_hook!r} is invalid")
+        if self.stop_workers_hook is not None and not callable(self.stop_workers_hook):
+            raise TypeError(f"stop_workers_hook must be callable; {self.stop_workers_hook!r} is invalid")
+        if self.worker_start_hook is not None and not callable(self.worker_start_hook):
+            raise TypeError(f"worker_start_hook must be callable; {self.worker_start_hook!r} is invalid")
+        if self.worker_stop_hook is not None and not callable(self.worker_stop_hook):
+            raise TypeError(f"worker_stop_hook must be callable; {self.worker_stop_hook!r} is invalid")
         if not isinstance(self.worker_count, int) or self.worker_count <= 0:
             raise TypeError(f"worker_count must be positive integer; {self.worker_count!r} is invalid")
         if not isinstance(self.server_count, int) or self.server_count <= 0:
@@ -585,6 +657,10 @@ class PyTorchHelperMixin(object):
         launcher.dataset = dataset
         launcher.loss_function = self.loss_function
         launcher.metric_class = self.metric_class
+        launcher.start_workers_hook = self.start_workers_hook
+        launcher.stop_workers_hook = self.stop_workers_hook
+        launcher.worker_start_hook = self.worker_start_hook
+        launcher.worker_stop_hook = self.worker_stop_hook
         launcher.worker_count = self.worker_count
         launcher.server_count = self.server_count
         launcher.agent_class = self._get_agent_class()
@@ -618,6 +694,10 @@ class PyTorchHelperMixin(object):
         args['updater'] = self.updater
         args['loss_function'] = self.loss_function
         args['metric_class'] = self.metric_class
+        args['start_workers_hook'] = self.start_workers_hook
+        args['stop_workers_hook'] = self.stop_workers_hook
+        args['worker_start_hook'] = self.worker_start_hook
+        args['worker_stop_hook'] = self.worker_stop_hook
         args['worker_count'] = self.worker_count
         args['server_count'] = self.server_count
         args['agent_class'] = self.agent_class
