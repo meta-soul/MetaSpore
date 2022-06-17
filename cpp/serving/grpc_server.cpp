@@ -67,36 +67,6 @@ GrpcServer::~GrpcServer() = default;
 
 GrpcServer::GrpcServer(GrpcServer &&) = default;
 
-// From
-// https://github.com/Tradias/asio-grpc/blob/f179621e3ff5401b99e4c40ba2427a1a1ab7ffcf/example/helper/coSpawner.hpp
-// Copyright 2022 Dennis Hezel
-template <class Handler> struct CoSpawner {
-    using executor_type = boost::asio::associated_executor_t<Handler>;
-    using allocator_type = boost::asio::associated_allocator_t<Handler>;
-
-    Handler handler;
-
-    explicit CoSpawner(Handler handler) : handler(std::move(handler)) {}
-
-    template <class T> void operator()(agrpc::RepeatedlyRequestContext<T> &&request_context) {
-        boost::asio::co_spawn(
-            this->get_executor(),
-            [handler = std::move(handler), request_context = std::move(request_context)]() mutable
-            -> boost::asio::awaitable<void> {
-                co_await std::apply(std::move(handler), request_context.args());
-            },
-            boost::asio::detached);
-    }
-
-    [[nodiscard]] executor_type get_executor() const noexcept {
-        return boost::asio::get_associated_executor(handler);
-    }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept {
-        return boost::asio::get_associated_allocator(handler);
-    }
-};
-
 awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<PredictReply> &writer,
                               const status &s) {
     co_await agrpc::finish_with_error(
@@ -116,10 +86,10 @@ void GrpcServer::run() {
 
     agrpc::repeatedly_request(
         &Predict::AsyncService::RequestPredict, context_->predict_service,
-        CoSpawner{boost::asio::bind_executor(
+        boost::asio::bind_executor(
             *context_->grpc_context,
             [&](grpc::ServerContext &ctx, PredictRequest &req,
-                grpc::ServerAsyncResponseWriter<PredictReply> writer) -> awaitable<void> {
+                grpc::ServerAsyncResponseWriter<PredictReply> &writer) -> awaitable<void> {
                 auto find_model = ModelManager::get_model_manager().get_model(req.model_name());
                 if (!find_model.ok()) {
                     co_await respond_error(writer, find_model.status());
@@ -142,14 +112,14 @@ void GrpcServer::run() {
                         co_await respond_error(writer, absl::UnknownError(std::move(ex)));
                 }
                 co_return;
-            })});
+            }));
 
     agrpc::repeatedly_request(
         &Load::AsyncService::RequestLoad, context_->load_service,
-        CoSpawner{boost::asio::bind_executor(
+        boost::asio::bind_executor(
             *context_->grpc_context,
             [&](grpc::ServerContext &ctx, LoadRequest &req,
-                grpc::ServerAsyncResponseWriter<LoadReply> writer) -> awaitable<void> {
+                grpc::ServerAsyncResponseWriter<LoadReply> &writer) -> awaitable<void> {
                 const std::string &model_name = req.model_name();
                 const std::string &version = req.version();
                 const std::string &dir_path = req.dir_path();
@@ -169,7 +139,7 @@ void GrpcServer::run() {
                                            boost::asio::use_awaitable);
                 }
                 co_return;
-            })});
+            }));
 
     spdlog::info("Start to accept grpc requests");
     context_->grpc_context->run();
