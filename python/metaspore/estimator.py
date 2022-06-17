@@ -37,6 +37,8 @@ class PyTorchAgent(Agent):
         self.dataset = None
         self.loss_function = None
         self.metric_class = None
+        self.coordinator_start_hook = None
+        self.coordinator_stop_hook = None
         self.start_workers_hook = None
         self.stop_workers_hook = None
         self.worker_start_hook = None
@@ -70,6 +72,8 @@ class PyTorchAgent(Agent):
         self.minibatch_id = 0
 
     def run(self):
+        if self.coordinator_start_hook is not None:
+            self.coordinator_start_hook(self)
         self.distribute_module()
         self.distribute_updater()
         self.distribute_loss_function()
@@ -80,6 +84,8 @@ class PyTorchAgent(Agent):
         self.feed_dataset()
         self.collect_module()
         self.stop_workers()
+        if self.coordinator_stop_hook is not None:
+            self.coordinator_stop_hook(self)
 
     def distribute_module(self):
         buf = io.BytesIO()
@@ -409,6 +415,8 @@ class PyTorchLauncher(PSLauncher):
         self.dataset = None
         self.loss_function = None
         self.metric_class = None
+        self.coordinator_start_hook = None
+        self.coordinator_stop_hook = None
         self.start_workers_hook = None
         self.stop_workers_hook = None
         self.worker_start_hook = None
@@ -451,6 +459,8 @@ class PyTorchLauncher(PSLauncher):
         agent.dataset = self.dataset
         agent.loss_function = self.loss_function
         agent.metric_class = self.metric_class
+        agent.coordinator_start_hook = self.coordinator_start_hook
+        agent.coordinator_stop_hook = self.coordinator_stop_hook
         agent.start_workers_hook = self.start_workers_hook
         agent.stop_workers_hook = self.stop_workers_hook
         agent.worker_start_hook = self.worker_start_hook
@@ -494,6 +504,8 @@ class PyTorchHelperMixin(object):
                  updater=None,
                  loss_function=None,
                  metric_class=None,
+                 coordinator_start_hook=None,
+                 coordinator_stop_hook=None,
                  start_workers_hook=None,
                  stop_workers_hook=None,
                  worker_start_hook=None,
@@ -527,6 +539,8 @@ class PyTorchHelperMixin(object):
         self.updater = updater
         self.loss_function = loss_function
         self.metric_class = metric_class
+        self.coordinator_start_hook = coordinator_start_hook
+        self.coordinator_stop_hook = coordinator_stop_hook
         self.start_workers_hook = start_workers_hook
         self.stop_workers_hook = stop_workers_hook
         self.worker_start_hook = worker_start_hook
@@ -566,6 +580,10 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"loss_function must be callable; {self.loss_function!r} is invalid")
         if self.metric_class is not None and not issubclass(self.metric_class, ModelMetric):
             raise TypeError(f"metric_class must be a subclass of ModelMetric; {self.metric_class!r} is invalid")
+        if self.coordinator_start_hook is not None and not callable(self.coordinator_start_hook):
+            raise TypeError(f"coordinator_start_hook must be callable; {self.coordinator_start_hook!r} is invalid")
+        if self.coordinator_stop_hook is not None and not callable(self.coordinator_stop_hook):
+            raise TypeError(f"coordinator_stop_hook must be callable; {self.coordinator_stop_hook!r} is invalid")
         if self.start_workers_hook is not None and not callable(self.start_workers_hook):
             raise TypeError(f"start_workers_hook must be callable; {self.start_workers_hook!r} is invalid")
         if self.stop_workers_hook is not None and not callable(self.stop_workers_hook):
@@ -657,6 +675,8 @@ class PyTorchHelperMixin(object):
         launcher.dataset = dataset
         launcher.loss_function = self.loss_function
         launcher.metric_class = self.metric_class
+        launcher.coordinator_start_hook = self.coordinator_start_hook
+        launcher.coordinator_stop_hook = self.coordinator_stop_hook
         launcher.start_workers_hook = self.start_workers_hook
         launcher.stop_workers_hook = self.stop_workers_hook
         launcher.worker_start_hook = self.worker_start_hook
@@ -694,6 +714,8 @@ class PyTorchHelperMixin(object):
         args['updater'] = self.updater
         args['loss_function'] = self.loss_function
         args['metric_class'] = self.metric_class
+        args['coordinator_start_hook'] = self.coordinator_start_hook
+        args['coordinator_stop_hook'] = self.coordinator_stop_hook
         args['start_workers_hook'] = self.start_workers_hook
         args['stop_workers_hook'] = self.stop_workers_hook
         args['worker_start_hook'] = self.worker_start_hook
