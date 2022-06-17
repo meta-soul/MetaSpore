@@ -57,7 +57,7 @@ class SparseLookupModel : public ModelBaseCRTP<SparseLookupModel> {
     class SparseLookupSource {
       public:
         virtual ~SparseLookupSource() {}
-        virtual awaitable_status load(const std::string &dir, GrpcClientContextPool &contexts) = 0;
+        virtual awaitable_status load(const std::string &dir) = 0;
 
         virtual awaitable_result<std::shared_ptr<arrow::FloatTensor>>
         lookup(std::shared_ptr<arrow::UInt64Tensor> indices) = 0;
@@ -68,7 +68,7 @@ class SparseLookupModel : public ModelBaseCRTP<SparseLookupModel> {
     SparseLookupModel();
     SparseLookupModel(SparseLookupModel &&);
 
-    awaitable_status load(std::string dir_path, GrpcClientContextPool &contexts) override;
+    awaitable_status load(std::string dir_path) override;
 
     awaitable_result<std::unique_ptr<SparseLookupModelOutput>>
     do_predict(std::unique_ptr<SparseLookupModelInput> input);

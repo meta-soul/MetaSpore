@@ -69,7 +69,7 @@ OrtModel::OrtModel(OrtModel &&) = default;
 // To avoid std::unique_ptr requires complete type for OrtModelContext
 OrtModel::~OrtModel() = default;
 
-awaitable_status OrtModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
+awaitable_status OrtModel::load(std::string dir_path) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,

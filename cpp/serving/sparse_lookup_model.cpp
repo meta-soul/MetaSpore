@@ -45,11 +45,11 @@ SparseLookupModel::SparseLookupModel() { context_ = std::make_unique<SparseLooku
 
 SparseLookupModel::SparseLookupModel(SparseLookupModel &&) = default;
 
-awaitable_status SparseLookupModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
+awaitable_status SparseLookupModel::load(std::string dir_path) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,
-        [this, &dir_path, &contexts]() -> awaitable_status {
+        [this, &dir_path]() -> awaitable_status {
             std::filesystem::path p(dir_path);
             if (!std::filesystem::is_directory(p)) {
                 co_return absl::NotFoundError(
@@ -62,7 +62,7 @@ awaitable_status SparseLookupModel::load(std::string dir_path, GrpcClientContext
             }
             context_->source_ = InMemorySparseLookupSource::make();
             CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                context_->source_->load(embedding_table_dir.string(), contexts));
+                context_->source_->load(embedding_table_dir.string()));
             context_->dir_path_ = dir_path;
 
             CO_ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(auto size_result,

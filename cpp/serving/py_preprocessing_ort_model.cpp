@@ -45,11 +45,11 @@ PyPreprocessingOrtModel::PyPreprocessingOrtModel(PyPreprocessingOrtModel &&) = d
 
 PyPreprocessingOrtModel::~PyPreprocessingOrtModel() = default;
 
-awaitable_status PyPreprocessingOrtModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
+awaitable_status PyPreprocessingOrtModel::load(std::string dir_path) {
     auto &tp = Threadpools::get_background_threadpool();
     auto s = co_await boost::asio::co_spawn(
         tp,
-        [this, &dir_path, &contexts]() -> awaitable_status {
+        [this, &dir_path]() -> awaitable_status {
             auto dir = std::filesystem::path(dir_path);
             if (!std::filesystem::is_directory(dir)) {
                 co_return absl::InvalidArgumentError(
@@ -76,9 +76,9 @@ awaitable_status PyPreprocessingOrtModel::load(std::string dir_path, GrpcClientC
                     fmt::format("model.onnx doesn't exist under {}", main_dir.string()));
             }
             CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                context_->preprocessing_model.load(preprocess_dir.string(), contexts));
+                context_->preprocessing_model.load(preprocess_dir.string()));
             CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                context_->ort_model.load(main_dir.string(), contexts));
+                context_->ort_model.load(main_dir.string()));
             auto preprocess_out = context_->preprocessing_model.output_names();
             auto main_in = context_->ort_model.input_names();
             std::unordered_set<std::string> out_set(preprocess_out.begin(), preprocess_out.end());

@@ -69,12 +69,11 @@ make_item_record_batch() {
 }
 
 TEST(TabularModelTestSuite, TabularModelTest) {
-    GrpcClientContextPool client_context_pool(1);
     auto f = boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [&client_context_pool]() -> awaitable<void> {
+        []() -> awaitable<void> {
             TabularModel model;
-            auto status = co_await model.load("sparse_ctr_model", client_context_pool);
+            auto status = co_await model.load("sparse_ctr_model");
             ASSERT_STATUS_OK_COROUTINE(status);
             auto [user_batch, user_schema] = make_user_record_batch();
             auto [item_batch, item_schema] = make_item_record_batch();
@@ -102,7 +101,6 @@ TEST(TabularModelTestSuite, TabularModelTest) {
         },
         boost::asio::use_future);
     (void)f.get();
-    client_context_pool.wait();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

@@ -14,8 +14,6 @@
 // limitations under the License.
 //
 
-#pragma once
-
 #include <atomic>
 #include <thread>
 #include <agrpc/asioGrpc.hpp>

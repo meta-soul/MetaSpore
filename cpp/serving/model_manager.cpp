@@ -33,7 +33,7 @@
 
 namespace metaspore::serving {
 
-void ModelManager::init(const std::string &dir_path, GrpcClientContextPool &contexts) {
+void ModelManager::init(const std::string &dir_path) {
     // scan all subdirs and try to load them
     namespace fs = std::filesystem;
     auto d = fs::path(dir_path);
@@ -43,12 +43,12 @@ void ModelManager::init(const std::string &dir_path, GrpcClientContextPool &cont
         if (dir_entry.is_directory()) {
             std::future<void> future = boost::asio::co_spawn(
                                            Threadpools::get_background_threadpool(),
-                                           [this, dir_entry, &contexts]() -> awaitable<void> {
+                                           [this, dir_entry]() -> awaitable<void> {
                                                auto sub_dir = dir_entry.path();
                                                auto name = dir_entry.path().filename();
                                                spdlog::info("ModelManager: Try to load model from {} with name {} during init",
                                                             sub_dir, name);
-                                               auto s = co_await load(dir_entry.path(), dir_entry.path().filename(), contexts);
+                                               auto s = co_await load(dir_entry.path(), dir_entry.path().filename());
                                                if (!s.ok()) {
                                                    spdlog::info(
                                                        "ModelManager: Load model from {} during init failed {}, ignored",
@@ -64,15 +64,14 @@ void ModelManager::init(const std::string &dir_path, GrpcClientContextPool &cont
         futures.at(i).get();
 }
 
-awaitable_status ModelManager::load(const std::string &dir_path, const std::string &name,
-                                    GrpcClientContextPool &contexts) {
+awaitable_status ModelManager::load(const std::string &dir_path, const std::string &name) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [this, &dir_path, &name, &contexts]() -> awaitable_status {
+        [this, &dir_path, &name]() -> awaitable_status {
             // load order: tabular, preproc_ort, ort
-            auto load_tabular_fn = [this, &dir_path, &name, &contexts]() -> awaitable_status {
+            auto load_tabular_fn = [this, &dir_path, &name]() -> awaitable_status {
                 TabularModel model;
-                auto status = co_await model.load(dir_path, contexts);
+                auto status = co_await model.load(dir_path);
                 if (!status.ok()) {
                     spdlog::error("ModelManager: Cannot load TabularModel {} from {}: {}", name,
                                   dir_path, status);
@@ -89,9 +88,9 @@ awaitable_status ModelManager::load(const std::string &dir_path, const std::stri
                 models_[name] = runner;
                 co_return absl::OkStatus();
             };
-            auto load_preproc_ort_fn = [this, &dir_path, &name, &contexts]() -> awaitable_status {
+            auto load_preproc_ort_fn = [this, &dir_path, &name]() -> awaitable_status {
                 PyPreprocessingOrtModel model;
-                auto status = co_await model.load(dir_path, contexts);
+                auto status = co_await model.load(dir_path);
                 if (!status.ok()) {
                     spdlog::error("ModelManager: Cannot load PyPreprocessingOrtModel {} from {}: {}", name,
                                   dir_path, status);
@@ -108,9 +107,9 @@ awaitable_status ModelManager::load(const std::string &dir_path, const std::stri
                 models_[name] = runner;
                 co_return absl::OkStatus();
             };
-            auto load_ort_fn = [this, &dir_path, &name, &contexts]() -> awaitable_status {
+            auto load_ort_fn = [this, &dir_path, &name]() -> awaitable_status {
                 OrtModel model;
-                auto status = co_await model.load(dir_path, contexts);
+                auto status = co_await model.load(dir_path);
                 if (!status.ok()) {
                     spdlog::error("ModelManager: Cannot load OrtModel {} from {}: {}", name,
                                   dir_path, status);

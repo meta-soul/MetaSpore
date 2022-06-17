@@ -83,13 +83,12 @@ Ort::Value get_mnist_test_10_images_tensor(const std::string &path, int64_t batc
     }
 
 TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadNormal) {
-    GrpcClientContextPool client_context_pool(1);
     auto &tp = Threadpools::get_background_threadpool();
     std::future<void> future = boost::asio::co_spawn(
         tp,
-        [&client_context_pool]() -> awaitable<void> {
+        []() -> awaitable<void> {
             OrtModel model;
-            auto status = co_await model.load("mnist_model", client_context_pool);
+            auto status = co_await model.load("mnist_model");
             EXPECT_TRUE_COROUTINE(status);
             auto info = model.info();
             EXPECT_EQ(info, "onnxruntime model loaded from mnist_model/model.onnx"s);
@@ -109,7 +108,6 @@ TEST(ORT_MODEL_TEST_SUITE, TestOrtModelLoadNormal) {
         },
         boost::asio::use_future);
     future.get();
-    client_context_pool.wait();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

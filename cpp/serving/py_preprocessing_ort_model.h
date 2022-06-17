@@ -39,7 +39,7 @@ class PyPreprocessingOrtModel : public ModelBaseCRTP<PyPreprocessingOrtModel> {
     PyPreprocessingOrtModel(PyPreprocessingOrtModel &&);
     ~PyPreprocessingOrtModel();
 
-    awaitable_status load(std::string dir_path, GrpcClientContextPool &contexts) override;
+    awaitable_status load(std::string dir_path) override;
 
     awaitable_result<std::unique_ptr<OutputType>> do_predict(std::unique_ptr<InputType> input);
 
