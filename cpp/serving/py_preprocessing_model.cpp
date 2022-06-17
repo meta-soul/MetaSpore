@@ -29,7 +29,6 @@
 #include <serving/utils.h>
 #include <serving/metaspore.pb.h>
 #include <serving/metaspore.grpc.pb.h>
-#include <serving/shared_grpc_context.h>
 #include <serving/py_preprocessing_process.h>
 #include <serving/py_preprocessing_model.h>
 

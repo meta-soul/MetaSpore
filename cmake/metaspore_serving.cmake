@@ -63,8 +63,6 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_feature_extraction_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/schema_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/dense_feature_extraction_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/shared_grpc_server_builder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/shared_grpc_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server_shutdown.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_client_context_pool.cpp

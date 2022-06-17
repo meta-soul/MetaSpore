@@ -21,8 +21,6 @@
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
-#include <serving/shared_grpc_server_builder.h>
-#include <serving/shared_grpc_context.h>
 #include <metaspore/string_utils.h>
 
 #include <fmt/format.h>
