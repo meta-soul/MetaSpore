@@ -24,6 +24,7 @@
 #include <fmt/format.h>
 
 #include <serving/threadpool.h>
+#include <serving/grpc_client_context_pool.h>
 #include <serving/types.h>
 
 namespace metaspore::serving {
@@ -47,7 +48,7 @@ class ModelBase {
   public:
     virtual ~ModelBase() {}
 
-    virtual awaitable_status load(std::string dir_path) = 0;
+    virtual awaitable_status load(std::string dir_path, GrpcClientContextPool &contexts) = 0;
 
     virtual awaitable_result<std::unique_ptr<ModelInputOutput>>
     predict(std::unique_ptr<ModelInputOutput> input) = 0;

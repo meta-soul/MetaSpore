@@ -44,7 +44,7 @@ DenseFeatureExtractionModel::DenseFeatureExtractionModel(DenseFeatureExtractionM
 
 DenseFeatureExtractionModel::~DenseFeatureExtractionModel() = default;
 
-awaitable_status DenseFeatureExtractionModel::load(std::string dir_path) {
+awaitable_status DenseFeatureExtractionModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
         [this, &dir_path]() -> awaitable_status {

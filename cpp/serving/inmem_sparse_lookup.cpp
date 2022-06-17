@@ -32,7 +32,7 @@ using MapType = metaspore::MemoryMappedArrayHashMap<KeyType, ValueType>;
 using MapContainerType = std::vector<std::shared_ptr<MapType>>;
 using namespace std::string_literals;
 
-awaitable_status InMemorySparseLookupSource::load(const std::string &dir) {
+awaitable_status InMemorySparseLookupSource::load(const std::string &dir, GrpcClientContextPool &contexts) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
         [this, &dir]() -> awaitable_status {

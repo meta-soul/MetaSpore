@@ -48,7 +48,7 @@ class OrtModel : public ModelBaseCRTP<OrtModel> {
     OrtModel();
     OrtModel(OrtModel &&);
 
-    awaitable_status load(std::string dir_path) override;
+    awaitable_status load(std::string dir_path, GrpcClientContextPool &contexts) override;
 
     awaitable_result<std::unique_ptr<OutputType>> do_predict(std::unique_ptr<InputType> input);
 

@@ -57,10 +57,10 @@ TabularModel::TabularModel(TabularModel &&) = default;
 
 TabularModel::~TabularModel() = default;
 
-awaitable_status TabularModel::load(std::string dir_path) {
+awaitable_status TabularModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        [this, &dir_path]() -> awaitable_status {
+        [this, &dir_path, &contexts]() -> awaitable_status {
             // load a ctr model
             // 1. find all subdirs prefixed with "sparse_" and load fe/lookup models in them
             fs::path root_dir(dir_path);
@@ -75,7 +75,7 @@ awaitable_status TabularModel::load(std::string dir_path) {
                     // find if dense schema exist and load it
                     if (dir_entry.path().filename() == "dense_schema.txt") {
                         CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                            context_->dense_model.load(root_dir.string()));
+                            context_->dense_model.load(root_dir.string(), contexts));
                         context_->dense_fe_to_ort_converter =
                             std::make_unique<DenseFEToOrtConverter>(
                                 context_->dense_model.input_names());
@@ -101,7 +101,7 @@ awaitable_status TabularModel::load(std::string dir_path) {
                                          dir_entry.path().string());
                             // load sparse fe model
                             CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                                unit.fe_model.load(dir_entry.path().string()));
+                                unit.fe_model.load(dir_entry.path().string(), contexts));
                             component_loaded ^= 0b1;
                             std::copy(unit.fe_model.input_names().begin(),
                                       unit.fe_model.input_names().end(),
@@ -112,7 +112,7 @@ awaitable_status TabularModel::load(std::string dir_path) {
                                          dir_entry.path().string());
                             // load lookup model
                             CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                                unit.lookup_model.load(dir_entry.path().string()));
+                                unit.lookup_model.load(dir_entry.path().string(), contexts));
                             unit.fe_to_lookup_converter =
                                 std::make_unique<SparseFEToLookupConverter>();
                             component_loaded ^= 0b10;
@@ -122,7 +122,7 @@ awaitable_status TabularModel::load(std::string dir_path) {
                                          dir_entry.path().string());
                             // load sparse emebdding bag model
                             CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                                unit.emb_model.load(dir_entry.path().string()));
+                                unit.emb_model.load(dir_entry.path().string(), contexts));
                             component_loaded ^= 0b100;
                         }
                     }
@@ -138,7 +138,7 @@ awaitable_status TabularModel::load(std::string dir_path) {
                     // load dense ort model
                     if (!dense_loaded) {
                         CO_AWAIT_AND_CO_RETURN_IF_STATUS_NOT_OK(
-                            context_->ort_model.load(dir_entry.path()));
+                            context_->ort_model.load(dir_entry.path(), contexts));
                         dense_loaded = true;
                     } else {
                         spdlog::error("TabularModel cannot support more than one dense model");

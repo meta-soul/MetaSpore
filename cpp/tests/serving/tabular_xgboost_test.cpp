@@ -62,11 +62,12 @@ std::shared_ptr<RecordBatch> RecordBatchFromJSON(const std::shared_ptr<Schema> &
 }
 
 TEST(TabularXGBoostModelTestSuite, TabularXGBoostModelTest) {
+    GrpcClientContextPool client_context_pool(1);
     boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
-        []() -> awaitable<void> {
+        [&client_context_pool]() -> awaitable<void> {
             TabularModel model;
-            auto status = co_await model.load("xgboost_model");
+            auto status = co_await model.load("xgboost_model", client_context_pool);
             ASSERT_STATUS_OK_COROUTINE(status);
 
             // construct input record batch
@@ -92,6 +93,7 @@ TEST(TabularXGBoostModelTestSuite, TabularXGBoostModelTest) {
             }
         },
         boost::asio::detached);
+    client_context_pool.wait();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

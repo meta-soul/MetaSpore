@@ -53,11 +53,11 @@ PyPreprocessingModel::PyPreprocessingModel() { context_ = std::make_unique<PyPre
 
 PyPreprocessingModel::PyPreprocessingModel(PyPreprocessingModel &&) = default;
 
-awaitable_status PyPreprocessingModel::load(std::string dir_path) {
+awaitable_status PyPreprocessingModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,
-        [this, &dir_path]() -> awaitable_status {
+        [this, &dir_path, &contexts]() -> awaitable_status {
             std::filesystem::path p(dir_path);
             if (!std::filesystem::is_directory(p)) {
                 co_return absl::NotFoundError(

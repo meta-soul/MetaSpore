@@ -30,7 +30,7 @@ namespace serving {
 
 class InMemorySparseLookupSource : public SparseLookupModel::SparseLookupSource {
   public:
-    awaitable_status load(const std::string &dir) override;
+    awaitable_status load(const std::string &dir, GrpcClientContextPool &contexts) override;
 
     awaitable_result<std::shared_ptr<arrow::FloatTensor>>
     lookup(std::shared_ptr<arrow::UInt64Tensor> indices) override;

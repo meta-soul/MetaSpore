@@ -30,18 +30,20 @@ using namespace metaspore::serving;
     }
 
 TEST(PyPreprocessingModelTestSuite, LoadModelTest) {
+    GrpcClientContextPool client_context_pool(1);
     auto &tp = Threadpools::get_background_threadpool();
     std::future<void> future = boost::asio::co_spawn(
         tp,
-        []() -> awaitable<void> {
+        [&client_context_pool]() -> awaitable<void> {
             auto prog_dir = boost::dll::program_location().parent_path();
             auto conf_dir = prog_dir / "testing_preprocessor_conf";
             PyPreprocessingModel model;
-            auto status = co_await model.load(conf_dir.string());
+            auto status = co_await model.load(conf_dir.string(), client_context_pool);
             EXPECT_TRUE_COROUTINE(status);
         },
         boost::asio::use_future);
     future.get();
+    client_context_pool.wait();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

@@ -17,8 +17,8 @@
 #pragma once
 
 #include <memory>
-
 #include <serving/types.h>
+#include <serving/grpc_client_context_pool.h>
 
 namespace metaspore::serving {
 
@@ -26,7 +26,7 @@ class GrpcServerContext;
 
 class GrpcServer {
   public:
-    GrpcServer();
+    GrpcServer(GrpcClientContextPool &client_context_pool);
     ~GrpcServer();
     GrpcServer(GrpcServer &&);
 

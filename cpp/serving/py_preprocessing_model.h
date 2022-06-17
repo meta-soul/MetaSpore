@@ -41,7 +41,7 @@ class PyPreprocessingModel : public ModelBaseCRTP<PyPreprocessingModel> {
     PyPreprocessingModel();
     PyPreprocessingModel(PyPreprocessingModel &&);
 
-    awaitable_status load(std::string dir_path) override;
+    awaitable_status load(std::string dir_path, GrpcClientContextPool &contexts) override;
 
     awaitable_result<std::unique_ptr<PyPreprocessingModelOutput>>
     do_predict(std::unique_ptr<PyPreprocessingModelInput> input);

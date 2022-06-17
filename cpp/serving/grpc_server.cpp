@@ -18,7 +18,6 @@
 #include <serving/converters.h>
 #include <serving/grpc_server.h>
 #include <serving/grpc_server_shutdown.h>
-#include <serving/grpc_client_context_pool.h>
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
@@ -39,11 +38,11 @@ namespace metaspore::serving {
 DECLARE_string(grpc_listen_host);
 DECLARE_string(grpc_listen_port);
 DECLARE_uint64(grpc_server_threads);
-DECLARE_uint64(grpc_client_threads);
 
 class GrpcServerContext {
   public:
-    GrpcServerContext() {
+    GrpcServerContext(GrpcClientContextPool &client_context_pool)
+        : client_context_pool(client_context_pool) {
         grpc_server_thread_count = FLAGS_grpc_server_threads;
         if (grpc_server_thread_count == 0)
             grpc_server_thread_count = std::thread::hardware_concurrency();
@@ -57,10 +56,6 @@ class GrpcServerContext {
         builder.RegisterService(&predict_service);
         builder.RegisterService(&load_service);
         server = builder.BuildAndStart();
-        int grpc_client_thread_count = FLAGS_grpc_client_threads;
-        if (grpc_client_thread_count == 0)
-            grpc_client_thread_count = std::thread::hardware_concurrency();
-        client_context_pool = std::make_unique<GrpcClientContextPool>(grpc_client_thread_count);
     }
 
     std::unique_ptr<grpc::Server> server;
@@ -69,10 +64,13 @@ class GrpcServerContext {
     std::forward_list<agrpc::GrpcContext> grpc_server_contexts;
     std::vector<std::thread> grpc_server_threads;
     int grpc_server_thread_count{};
-    std::unique_ptr<GrpcClientContextPool> client_context_pool;
+    GrpcClientContextPool &client_context_pool;
 };
 
-GrpcServer::GrpcServer() { context_ = std::make_unique<GrpcServerContext>(); }
+GrpcServer::GrpcServer(GrpcClientContextPool &client_context_pool)
+{
+    context_ = std::make_unique<GrpcServerContext>(client_context_pool);
+}
 
 GrpcServer::~GrpcServer() = default;
 
@@ -93,8 +91,7 @@ awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<LoadReply> &writer
 }
 
 void register_predict_request_handler(agrpc::GrpcContext &grpc_context,
-                                      Predict::AsyncService &predict_service,
-                                      GrpcServerShutdown &server_shutdown)
+                                      Predict::AsyncService &predict_service)
 {
     agrpc::repeatedly_request(
         &Predict::AsyncService::RequestPredict, predict_service,
@@ -129,7 +126,7 @@ void register_predict_request_handler(agrpc::GrpcContext &grpc_context,
 
 void register_load_request_handler(agrpc::GrpcContext &grpc_context,
                                    Load::AsyncService &load_service,
-                                   GrpcServerShutdown &server_shutdown)
+                                   GrpcClientContextPool &client_context_pool)
 {
     agrpc::repeatedly_request(
         &Load::AsyncService::RequestLoad, load_service,
@@ -144,7 +141,7 @@ void register_load_request_handler(agrpc::GrpcContext &grpc_context,
                                    " version " + metaspore::ToSource(version) +
                                    " from " + metaspore::ToSource(dir_path) + ".";
                 spdlog::info("Loading" + desc);
-                auto status = co_await ModelManager::get_model_manager().load(dir_path, model_name);
+                auto status = co_await ModelManager::get_model_manager().load(dir_path, model_name, client_context_pool);
                 if (!status.ok()) {
                     spdlog::error("Fail to load" + desc);
                     co_await respond_error(writer, status);
@@ -164,15 +161,14 @@ void GrpcServer::run() {
     for (int i = 0; i < context_->grpc_server_thread_count; i++) {
         context_->grpc_server_threads.emplace_back([&, i] {
             auto &grpc_context = *std::next(context_->grpc_server_contexts.begin(), i);
-            register_predict_request_handler(grpc_context, context_->predict_service, server_shutdown);
-            register_load_request_handler(grpc_context, context_->load_service, server_shutdown);
+            register_predict_request_handler(grpc_context, context_->predict_service);
+            register_load_request_handler(grpc_context, context_->load_service, context_->client_context_pool);
             grpc_context.run();
         });
     }
     spdlog::info("Start to accept grpc requests with {} threads", context_->grpc_server_thread_count);
     for (auto &thread : context_->grpc_server_threads)
         thread.join();
-    context_->client_context_pool->wait();
 }
 
 } // namespace metaspore::serving

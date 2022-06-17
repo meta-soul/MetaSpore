@@ -26,12 +26,13 @@ using namespace std::chrono_literals;
 using namespace metaspore::serving;
 
 TEST(SparseLookupModelTestSuite, SparseLookupModelTest) {
+    GrpcClientContextPool client_context_pool(1);
     auto &tp = Threadpools::get_background_threadpool();
     boost::asio::co_spawn(
         tp,
-        []() -> awaitable<void> {
+        [&client_context_pool]() -> awaitable<void> {
             SparseLookupModel slm;
-            auto s = co_await slm.load("sparse_model");
+            auto s = co_await slm.load("sparse_model", client_context_pool);
             EXPECT_TRUE(s.ok());
             if (!s.ok()) {
                 fmt::print(stderr, "load failed: {}", s);
@@ -88,6 +89,7 @@ TEST(SparseLookupModelTestSuite, SparseLookupModelTest) {
             }
         },
         boost::asio::detached);
+    client_context_pool.wait();
 }
 
 int main(int argc, char **argv) { return run_all_tests(argc, argv); }

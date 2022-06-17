@@ -45,7 +45,7 @@ SparseFeatureExtractionModel::SparseFeatureExtractionModel(SparseFeatureExtracti
 
 SparseFeatureExtractionModel::~SparseFeatureExtractionModel() = default;
 
-awaitable_status SparseFeatureExtractionModel::load(std::string dir_path) {
+awaitable_status SparseFeatureExtractionModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
     auto s = co_await boost::asio::co_spawn(
         Threadpools::get_background_threadpool(),
         [this, &dir_path]() -> awaitable_status {

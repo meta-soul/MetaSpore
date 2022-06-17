@@ -26,6 +26,7 @@
 
 namespace metaspore::serving {
 DECLARE_string(init_load_path);
+DECLARE_uint64(grpc_client_threads);
 }
 
 using namespace metaspore::serving;
@@ -40,12 +41,19 @@ int main(int argc, char **argv) {
 
     metaspore::SpdlogDefault::Init();
 
-    ModelManager::get_model_manager().init(FLAGS_init_load_path);
+    int grpc_client_thread_count = FLAGS_grpc_client_threads;
+    if (grpc_client_thread_count == 0)
+        grpc_client_thread_count = std::thread::hardware_concurrency();
+    GrpcClientContextPool client_context_pool(grpc_client_thread_count);
+
+    ModelManager::get_model_manager().init(FLAGS_init_load_path, client_context_pool);
 
     {
-        GrpcServer server;
+        GrpcServer server(client_context_pool);
         server.run();
     }
+
+    client_context_pool.wait();
 
     auto &tp = metaspore::serving::Threadpools::get_compute_threadpool();
     auto &btp = metaspore::serving::Threadpools::get_background_threadpool();

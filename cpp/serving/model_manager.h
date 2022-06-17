@@ -22,6 +22,7 @@
 #include <unordered_map>
 
 #include <serving/grpc_model_runner.h>
+#include <serving/grpc_client_context_pool.h>
 #include <serving/types.h>
 
 namespace metaspore::serving {
@@ -33,9 +34,10 @@ class ModelManager {
         return mgr;
     }
 
-    void init(const std::string &dir_path);
+    void init(const std::string &dir_path, GrpcClientContextPool &contexts);
 
-    awaitable_status load(const std::string &dir_path, const std::string &name);
+    awaitable_status load(const std::string &dir_path, const std::string &name,
+                          GrpcClientContextPool &contexts);
 
     result<std::shared_ptr<GrpcModelRunner>> get_model(const std::string &name);
 

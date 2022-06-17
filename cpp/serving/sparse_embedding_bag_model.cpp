@@ -38,12 +38,12 @@ SparseEmbeddingBagModel::SparseEmbeddingBagModel(SparseEmbeddingBagModel &&) = d
 
 SparseEmbeddingBagModel::~SparseEmbeddingBagModel() = default;
 
-awaitable_status SparseEmbeddingBagModel::load(std::string dir_path) {
+awaitable_status SparseEmbeddingBagModel::load(std::string dir_path, GrpcClientContextPool &contexts) {
     auto &tp = Threadpools::get_background_threadpool();
     auto r = co_await boost::asio::co_spawn(
         tp,
-        [this, &dir_path]() -> awaitable_status {
-            auto status = co_await context_->ort_model_.load(dir_path);
+        [this, &dir_path, &contexts]() -> awaitable_status {
+            auto status = co_await context_->ort_model_.load(dir_path, contexts);
             if (!status.ok()) {
                 spdlog::error("Cannot load embedding bag ort model from {}", dir_path);
             }
