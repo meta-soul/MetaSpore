@@ -81,13 +81,14 @@ awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<LoadReply> &writer
         boost::asio::use_awaitable);
 }
 
-void GrpcServer::run() {
-    GrpcServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
-
+void register_predict_request_handler(agrpc::GrpcContext &grpc_context,
+                                      Predict::AsyncService &predict_service,
+                                      GrpcServerShutdown &server_shutdown)
+{
     agrpc::repeatedly_request(
-        &Predict::AsyncService::RequestPredict, context_->predict_service,
+        &Predict::AsyncService::RequestPredict, predict_service,
         boost::asio::bind_executor(
-            *context_->grpc_context,
+            grpc_context,
             [&](grpc::ServerContext &ctx, PredictRequest &req,
                 grpc::ServerAsyncResponseWriter<PredictReply> &writer) -> awaitable<void> {
                 auto find_model = ModelManager::get_model_manager().get_model(req.model_name());
@@ -113,11 +114,16 @@ void GrpcServer::run() {
                 }
                 co_return;
             }));
+}
 
+void register_load_request_handler(agrpc::GrpcContext &grpc_context,
+                                   Load::AsyncService &load_service,
+                                   GrpcServerShutdown &server_shutdown)
+{
     agrpc::repeatedly_request(
-        &Load::AsyncService::RequestLoad, context_->load_service,
+        &Load::AsyncService::RequestLoad, load_service,
         boost::asio::bind_executor(
-            *context_->grpc_context,
+            grpc_context,
             [&](grpc::ServerContext &ctx, LoadRequest &req,
                 grpc::ServerAsyncResponseWriter<LoadReply> &writer) -> awaitable<void> {
                 const std::string &model_name = req.model_name();
@@ -140,6 +146,13 @@ void GrpcServer::run() {
                 }
                 co_return;
             }));
+}
+
+void GrpcServer::run() {
+    GrpcServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
+
+    register_predict_request_handler(*context_->grpc_context, context_->predict_service, server_shutdown);
+    register_load_request_handler(*context_->grpc_context, context_->load_service, server_shutdown);
 
     spdlog::info("Start to accept grpc requests");
     context_->grpc_context->run();
