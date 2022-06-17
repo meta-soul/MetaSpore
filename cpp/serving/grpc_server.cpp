@@ -17,6 +17,7 @@
 #include <common/logger.h>
 #include <serving/converters.h>
 #include <serving/grpc_server.h>
+#include <serving/grpc_server_shutdown.h>
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
@@ -24,9 +25,7 @@
 #include <serving/shared_grpc_context.h>
 #include <metaspore/string_utils.h>
 
-#include <agrpc/asioGrpc.hpp>
 #include <boost/asio/bind_executor.hpp>
-#include <boost/asio/signal_set.hpp>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include <grpcpp/server.h>
@@ -38,45 +37,6 @@ namespace metaspore::serving {
 
 DECLARE_string(grpc_listen_host);
 DECLARE_string(grpc_listen_port);
-
-// From
-// https://github.com/Tradias/asio-grpc/blob/496408239c4cb62e9360088aba8c74b2ec3a04e7/example/multi-threaded-server.cpp#L29
-// Copyright 2022 Dennis Hezel
-struct ServerShutdown {
-    grpc::Server &server;
-    boost::asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
-    std::atomic_bool is_shutdown{};
-    std::thread shutdown_thread;
-
-    ServerShutdown(grpc::Server &server, agrpc::GrpcContext &grpc_context)
-        : server(server), signals(grpc_context, SIGINT, SIGTERM) {
-        signals.async_wait([&](auto &&ec, auto &&signal) {
-            if (boost::asio::error::operation_aborted != ec) {
-                spdlog::info("Shutdown with signal {}", signal);
-                shutdown();
-            }
-        });
-    }
-
-    void shutdown() {
-        if (!is_shutdown.exchange(true)) {
-            // We cannot call server.Shutdown() on the same thread that runs a GrpcContext
-            // because that could lead to deadlock, therefore create a new thread.
-            shutdown_thread = std::thread([&] {
-                signals.cancel();
-                server.Shutdown();
-            });
-        }
-    }
-
-    ~ServerShutdown() {
-        if (shutdown_thread.joinable()) {
-            shutdown_thread.join();
-        } else if (!is_shutdown.exchange(true)) {
-            server.Shutdown();
-        }
-    }
-};
 
 class GrpcServerContext {
   public:
@@ -152,7 +112,7 @@ awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<LoadReply> &writer
 }
 
 void GrpcServer::run() {
-    ServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
+    GrpcServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
 
     agrpc::repeatedly_request(
         &Predict::AsyncService::RequestPredict, context_->predict_service,
