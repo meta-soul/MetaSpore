@@ -67,6 +67,7 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/shared_grpc_context.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server_shutdown.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_client_context_pool.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_model_runner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/model_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_embedding_bag_model.cpp
