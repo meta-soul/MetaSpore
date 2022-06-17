@@ -25,40 +25,45 @@
 #include <serving/shared_grpc_context.h>
 #include <metaspore/string_utils.h>
 
-#include <boost/asio/bind_executor.hpp>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
 #include <optional>
+#include <forward_list>
 
 namespace metaspore::serving {
 
 DECLARE_string(grpc_listen_host);
 DECLARE_string(grpc_listen_port);
+DECLARE_uint64(grpc_server_threads);
+DECLARE_uint64(grpc_client_threads);
 
 class GrpcServerContext {
   public:
-    GrpcServerContext()
-            : builder(SharedGrpcServerBuilder::get_instance())
-            , predict_service()
-            , load_service()
-            , grpc_context(SharedGrpcContext::get_instance()) {
+    GrpcServerContext() {
+        grpc_server_thread_count = FLAGS_grpc_server_threads;
+        if (grpc_server_thread_count == 0)
+            grpc_server_thread_count = std::thread::hardware_concurrency();
+        grpc::ServerBuilder builder;
+        for (int i = 0; i < grpc_server_thread_count; i++)
+            grpc_server_contexts.emplace_front(builder.AddCompletionQueue());
         spdlog::info("Listening on {}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port);
-        builder->AddListeningPort(
+        builder.AddListeningPort(
             fmt::format("{}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port),
             grpc::InsecureServerCredentials());
-        builder->RegisterService(&predict_service);
-        builder->RegisterService(&load_service);
-        server = builder->BuildAndStart();
+        builder.RegisterService(&predict_service);
+        builder.RegisterService(&load_service);
+        server = builder.BuildAndStart();
     }
 
-    std::shared_ptr<grpc::ServerBuilder> builder;
+    std::unique_ptr<grpc::Server> server;
     Predict::AsyncService predict_service;
     Load::AsyncService load_service;
-    std::shared_ptr<agrpc::GrpcContext> grpc_context;
-    std::unique_ptr<grpc::Server> server;
+    std::forward_list<agrpc::GrpcContext> grpc_server_contexts;
+    std::vector<std::thread> grpc_server_threads;
+    int grpc_server_thread_count{};
 };
 
 GrpcServer::GrpcServer() { context_ = std::make_unique<GrpcServerContext>(); }
@@ -149,13 +154,18 @@ void register_load_request_handler(agrpc::GrpcContext &grpc_context,
 }
 
 void GrpcServer::run() {
-    GrpcServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
-
-    register_predict_request_handler(*context_->grpc_context, context_->predict_service, server_shutdown);
-    register_load_request_handler(*context_->grpc_context, context_->load_service, server_shutdown);
-
-    spdlog::info("Start to accept grpc requests");
-    context_->grpc_context->run();
+    GrpcServerShutdown server_shutdown{*context_->server, context_->grpc_server_contexts.front()};
+    for (int i = 0; i < context_->grpc_server_thread_count; i++) {
+        context_->grpc_server_threads.emplace_back([&, i] {
+            auto &grpc_context = *std::next(context_->grpc_server_contexts.begin(), i);
+            register_predict_request_handler(grpc_context, context_->predict_service, server_shutdown);
+            register_load_request_handler(grpc_context, context_->load_service, server_shutdown);
+            grpc_context.run();
+        });
+    }
+    spdlog::info("Start to accept grpc requests with {} threads", context_->grpc_server_thread_count);
+    for (auto &thread : context_->grpc_server_threads)
+        thread.join();
 }
 
 } // namespace metaspore::serving
