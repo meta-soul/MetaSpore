@@ -37,6 +37,13 @@ class PyTorchAgent(Agent):
         self.dataset = None
         self.loss_function = None
         self.metric_class = None
+        self.training_dataset_transformer = None
+        self.validation_dataset_transformer = None
+        self.training_minibatch_transformer = None
+        self.validation_minibatch_transformer = None
+        self.training_minibatch_preprocessor = None
+        self.validation_minibatch_preprocessor = None
+        self.minibatch_preprocessor = None
         self.coordinator_start_hook = None
         self.coordinator_stop_hook = None
         self.start_workers_hook = None
@@ -78,6 +85,11 @@ class PyTorchAgent(Agent):
         self.distribute_updater()
         self.distribute_loss_function()
         self.distribute_metric_class()
+        self.distribute_training_minibatch_transformer()
+        self.distribute_validation_minibatch_transformer()
+        self.distribute_training_minibatch_preprocessor()
+        self.distribute_validation_minibatch_preprocessor()
+        self.distribute_minibatch_preprocessor()
         self.distribute_worker_start_hook()
         self.distribute_worker_stop_hook()
         self.start_workers()
@@ -187,6 +199,61 @@ class PyTorchAgent(Agent):
         self.metric_class = metric_class
         return _
 
+    def distribute_training_minibatch_transformer(self):
+        transformer = self.training_minibatch_transformer
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_training_minibatch_transformer(transformer, _)).collect()
+
+    @classmethod
+    def _distribute_training_minibatch_transformer(cls, transformer, _):
+        self = __class__.get_instance()
+        self.training_minibatch_transformer = transformer
+        return _
+
+    def distribute_validation_minibatch_transformer(self):
+        transformer = self.validation_minibatch_transformer
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_validation_minibatch_transformer(transformer, _)).collect()
+
+    @classmethod
+    def _distribute_validation_minibatch_transformer(cls, transformer, _):
+        self = __class__.get_instance()
+        self.validation_minibatch_transformer = transformer
+        return _
+
+    def distribute_training_minibatch_preprocessor(self):
+        preprocessor = self.training_minibatch_preprocessor
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_training_minibatch_preprocessor(preprocessor, _)).collect()
+
+    @classmethod
+    def _distribute_training_minibatch_preprocessor(cls, preprocessor, _):
+        self = __class__.get_instance()
+        self.training_minibatch_preprocessor = preprocessor
+        return _
+
+    def distribute_validation_minibatch_preprocessor(self):
+        preprocessor = self.validation_minibatch_preprocessor
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_validation_minibatch_preprocessor(preprocessor, _)).collect()
+
+    @classmethod
+    def _distribute_validation_minibatch_preprocessor(cls, preprocessor, _):
+        self = __class__.get_instance()
+        self.validation_minibatch_preprocessor = preprocessor
+        return _
+
+    def distribute_minibatch_preprocessor(self):
+        preprocessor = self.minibatch_preprocessor
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_minibatch_preprocessor(preprocessor, _)).collect()
+
+    @classmethod
+    def _distribute_minibatch_preprocessor(cls, preprocessor, _):
+        self = __class__.get_instance()
+        self.minibatch_preprocessor = preprocessor
+        return _
+
     def distribute_worker_start_hook(self):
         worker_start_hook = self.worker_start_hook
         rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
@@ -290,6 +357,13 @@ class PyTorchAgent(Agent):
             self.feed_validation_dataset()
 
     def feed_training_dataset(self):
+        if self.training_dataset_transformer is not None:
+            self.training_dataset_transformer(self)
+        else:
+            # For backward compatibility.
+            self._legacy_feed_training_dataset()
+
+    def _legacy_feed_training_dataset(self):
         from .input import shuffle_df
         for epoch in range(self.training_epoches):
             df = self.dataset
@@ -299,6 +373,13 @@ class PyTorchAgent(Agent):
             df.write.format('noop').mode('overwrite').save()
 
     def feed_validation_dataset(self):
+        if self.validation_dataset_transformer is not None:
+            self.validation_dataset_transformer(self)
+        else:
+            # For backward compatibility.
+            self._legacy_feed_validation_dataset()
+
+    def _legacy_feed_validation_dataset(self):
         df = self.dataset.withColumn(self.output_prediction_column_name,
                                      self.feed_validation_minibatch()(*self.dataset.columns))
         df = df.withColumn(self.output_label_column_name,
@@ -336,6 +417,21 @@ class PyTorchAgent(Agent):
         return _feed_validation_minibatch
 
     def preprocess_minibatch(self, minibatch):
+        if self.is_training_mode and self.training_minibatch_preprocessor is not None:
+            result = self.training_minibatch_preprocessor(self, minibatch)
+            return result
+        elif not self.is_training_mode and self.validation_minibatch_preprocessor is not None:
+            result = self.validation_minibatch_preprocessor(self, minibatch)
+            return result
+        elif self.minibatch_preprocessor is not None:
+            result = self.minibatch_preprocessor(self, minibatch)
+            return result
+        else:
+            # For backward compatibility.
+            result = self._legacy_preprocess_minibatch(minibatch)
+            return result
+
+    def _legacy_preprocess_minibatch(self, minibatch):
         import numpy as np
         ndarrays = [col.values for col in minibatch]
         labels = minibatch[self.input_label_column_index].values.astype(np.float32)
@@ -362,6 +458,13 @@ class PyTorchAgent(Agent):
         return result
 
     def train_minibatch(self, minibatch):
+        if self.training_minibatch_transformer is not None:
+            self.training_minibatch_transformer(self, minibatch)
+        else:
+            # For backward compatibility.
+            self._legacy_train_minibatch(minibatch)
+
+    def _legacy_train_minibatch(self, minibatch):
         self.model.train()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
         predictions = self.model(ndarrays)
@@ -372,6 +475,15 @@ class PyTorchAgent(Agent):
                              predictions=predictions, labels=labels)
 
     def validate_minibatch(self, minibatch):
+        if self.validation_minibatch_transformer is not None:
+            result = self.validation_minibatch_transformer(self, minibatch)
+            return result
+        else:
+            # For backward compatibility.
+            result = self._legacy_validate_minibatch(minibatch)
+            return result
+
+    def _legacy_validate_minibatch(self, minibatch):
         self.model.eval()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
         predictions = self.model(ndarrays)
@@ -415,6 +527,13 @@ class PyTorchLauncher(PSLauncher):
         self.dataset = None
         self.loss_function = None
         self.metric_class = None
+        self.training_dataset_transformer = None
+        self.validation_dataset_transformer = None
+        self.training_minibatch_transformer = None
+        self.validation_minibatch_transformer = None
+        self.training_minibatch_preprocessor = None
+        self.validation_minibatch_preprocessor = None
+        self.minibatch_preprocessor = None
         self.coordinator_start_hook = None
         self.coordinator_stop_hook = None
         self.start_workers_hook = None
@@ -459,6 +578,13 @@ class PyTorchLauncher(PSLauncher):
         agent.dataset = self.dataset
         agent.loss_function = self.loss_function
         agent.metric_class = self.metric_class
+        agent.training_dataset_transformer = self.training_dataset_transformer
+        agent.validation_dataset_transformer = self.validation_dataset_transformer
+        agent.training_minibatch_transformer = self.training_minibatch_transformer
+        agent.validation_minibatch_transformer = self.validation_minibatch_transformer
+        agent.training_minibatch_preprocessor = self.training_minibatch_preprocessor
+        agent.validation_minibatch_preprocessor = self.validation_minibatch_preprocessor
+        agent.minibatch_preprocessor = self.minibatch_preprocessor
         agent.coordinator_start_hook = self.coordinator_start_hook
         agent.coordinator_stop_hook = self.coordinator_stop_hook
         agent.start_workers_hook = self.start_workers_hook
@@ -504,6 +630,13 @@ class PyTorchHelperMixin(object):
                  updater=None,
                  loss_function=None,
                  metric_class=None,
+                 training_dataset_transformer=None,
+                 validation_dataset_transformer=None,
+                 training_minibatch_transformer=None,
+                 validation_minibatch_transformer=None,
+                 training_minibatch_preprocessor=None,
+                 validation_minibatch_preprocessor=None,
+                 minibatch_preprocessor=None,
                  coordinator_start_hook=None,
                  coordinator_stop_hook=None,
                  start_workers_hook=None,
@@ -539,6 +672,13 @@ class PyTorchHelperMixin(object):
         self.updater = updater
         self.loss_function = loss_function
         self.metric_class = metric_class
+        self.training_dataset_transformer = training_dataset_transformer
+        self.validation_dataset_transformer = validation_dataset_transformer
+        self.training_minibatch_transformer = training_minibatch_transformer
+        self.validation_minibatch_transformer = validation_minibatch_transformer
+        self.training_minibatch_preprocessor = training_minibatch_preprocessor
+        self.validation_minibatch_preprocessor = validation_minibatch_preprocessor
+        self.minibatch_preprocessor = minibatch_preprocessor
         self.coordinator_start_hook = coordinator_start_hook
         self.coordinator_stop_hook = coordinator_stop_hook
         self.start_workers_hook = start_workers_hook
@@ -580,6 +720,20 @@ class PyTorchHelperMixin(object):
             raise TypeError(f"loss_function must be callable; {self.loss_function!r} is invalid")
         if self.metric_class is not None and not issubclass(self.metric_class, ModelMetric):
             raise TypeError(f"metric_class must be a subclass of ModelMetric; {self.metric_class!r} is invalid")
+        if self.training_dataset_transformer is not None and not callable(self.training_dataset_transformer):
+            raise TypeError(f"training_dataset_transformer must be a subclass of ModelMetric; {self.training_dataset_transformer!r} is invalid")
+        if self.validation_dataset_transformer is not None and not callable(self.validation_dataset_transformer):
+            raise TypeError(f"validation_dataset_transformer must be a subclass of ModelMetric; {self.validation_dataset_transformer!r} is invalid")
+        if self.training_minibatch_transformer is not None and not callable(self.training_minibatch_transformer):
+            raise TypeError(f"training_minibatch_transformer must be a subclass of ModelMetric; {self.training_minibatch_transformer!r} is invalid")
+        if self.validation_minibatch_transformer is not None and not callable(self.validation_minibatch_transformer):
+            raise TypeError(f"validation_minibatch_transformer must be a subclass of ModelMetric; {self.validation_minibatch_transformer!r} is invalid")
+        if self.training_minibatch_preprocessor is not None and not callable(self.training_minibatch_preprocessor):
+            raise TypeError(f"training_minibatch_preprocessor must be a subclass of ModelMetric; {self.training_minibatch_preprocessor!r} is invalid")
+        if self.validation_minibatch_preprocessor is not None and not callable(self.validation_minibatch_preprocessor):
+            raise TypeError(f"validation_minibatch_preprocessor must be a subclass of ModelMetric; {self.validation_minibatch_preprocessor!r} is invalid")
+        if self.minibatch_preprocessor is not None and not callable(self.minibatch_preprocessor):
+            raise TypeError(f"minibatch_preprocessor must be a subclass of ModelMetric; {self.minibatch_preprocessor!r} is invalid")
         if self.coordinator_start_hook is not None and not callable(self.coordinator_start_hook):
             raise TypeError(f"coordinator_start_hook must be callable; {self.coordinator_start_hook!r} is invalid")
         if self.coordinator_stop_hook is not None and not callable(self.coordinator_stop_hook):
@@ -675,6 +829,13 @@ class PyTorchHelperMixin(object):
         launcher.dataset = dataset
         launcher.loss_function = self.loss_function
         launcher.metric_class = self.metric_class
+        launcher.training_dataset_transformer = self.training_dataset_transformer
+        launcher.validation_dataset_transformer = self.validation_dataset_transformer
+        launcher.training_minibatch_transformer = self.training_minibatch_transformer
+        launcher.validation_minibatch_transformer = self.validation_minibatch_transformer
+        launcher.training_minibatch_preprocessor = self.training_minibatch_preprocessor
+        launcher.validation_minibatch_preprocessor = self.validation_minibatch_preprocessor
+        launcher.minibatch_preprocessor = self.minibatch_preprocessor
         launcher.coordinator_start_hook = self.coordinator_start_hook
         launcher.coordinator_stop_hook = self.coordinator_stop_hook
         launcher.start_workers_hook = self.start_workers_hook
@@ -714,6 +875,13 @@ class PyTorchHelperMixin(object):
         args['updater'] = self.updater
         args['loss_function'] = self.loss_function
         args['metric_class'] = self.metric_class
+        args['training_dataset_transformer'] = self.training_dataset_transformer
+        args['validation_dataset_transformer'] = self.validation_dataset_transformer
+        args['training_minibatch_transformer'] = self.training_minibatch_transformer
+        args['validation_minibatch_transformer'] = self.validation_minibatch_transformer
+        args['training_minibatch_preprocessor'] = self.training_minibatch_preprocessor
+        args['validation_minibatch_preprocessor'] = self.validation_minibatch_preprocessor
+        args['minibatch_preprocessor'] = self.minibatch_preprocessor
         args['coordinator_start_hook'] = self.coordinator_start_hook
         args['coordinator_stop_hook'] = self.coordinator_stop_hook
         args['start_workers_hook'] = self.start_workers_hook
