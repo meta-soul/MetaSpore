@@ -73,7 +73,7 @@ def negative_sampling(spark, dataset, user_column, item_column, time_column, neg
     # sampling distribution
     item_weight = gen_sample_prob(dataset, item_column)
     # unzip a list of tupples
-    items_dist = item_weight.select('movie_id', 'sampling_prob')\
+    items_dist = item_weight.select(item_column, 'sampling_prob')\
                             .rdd.map(lambda x: (x[0], x[1])).collect()
     zipped_dist = [list(t) for t in zip(*items_dist)]
     item_list, dist_list = zipped_dist[0], zipped_dist[1]
