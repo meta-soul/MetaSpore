@@ -1,0 +1,8 @@
+user_id
+friend_id
+user_gender
+user_age
+user_completion_percentage
+friend_gender
+friend_age
+friend_completion_percentage
