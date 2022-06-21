@@ -1,0 +1,58 @@
+## datasets
+movies_path: ${MY_S3_BUCKET}/movielens/ml-1m/movies.dat
+ratings_path: ${MY_S3_BUCKET}/movielens/ml-1m/ratings.dat
+users_path: ${MY_S3_BUCKET}/movielens/ml-1m/users.dat
+imdb_path: ${MY_S3_BUCKET}/movielens/ml-25m/movie_ml_imdb.csv
+douban_movies_path: ${MY_S3_BUCKET}/datasets/moviedata-10m/movies.csv
+
+## elastic uri
+es_host: elastic-demo-es-http.default.svc.cluster.local
+es_port: 9200
+
+## elastic index mappings
+create_movies_index: movies
+create_movies_mapping_id: movie_id
+create_movies:
+    mappings:
+        properties:
+            movie_id: 
+                type: integer
+            title:
+                type: text
+            
+            genres:
+                type: keyword
+                
+create_users_index: users
+create_users:
+    mappings:
+        properties:
+            user_id:
+                type: integer
+create_ratings_index: ratings
+create_ratings:
+    mappings:
+        properties:
+            timestamp: 
+                type: date
+            user_id:
+                type: integer
+            movie_id:
+                type: integer
+            rating:
+                type: double
+                
+create_douban_movies_index: douban_movies
+create_douban_movies_mapping_id: MOVIE_ID
+create_douban_movies:
+    mappings:
+        properties:
+            MOVIE_ID: 
+                type: long
+            NAME: 
+                type: text
+                analyzer: smartcn
+            STORYLINE:
+                type: text
+                analyzer: smartcn
+                    
