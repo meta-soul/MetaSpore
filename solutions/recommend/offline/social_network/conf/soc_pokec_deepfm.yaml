@@ -1,0 +1,48 @@
+## spark session
+app_name: 'CTR Demo DeepFM - soc_pokec'
+local: False
+worker_count: 2
+server_count: 2
+batch_size: 50
+worker_memory: '5G'
+server_memory: '5G'
+coordinator_memory: '5G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset_rank.parquet
+test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset_rank.parquet
+
+## model configurations
+wide_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
+wide_combine_schema_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/wide_combine_schema.txt
+deep_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
+deep_combine_schema_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/deep_combine_schema.txt
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/deepfm/model_out/
+# model_export_path: s3://dmetasoul-bucket/demo/soc-pokec/model/deepfm/model_export/
+model_version: '0.1'
+experiment_name: soc_pokec_dfm
+input_label_column_index: 0
+metric_update_interval: 100
+
+## model hyper params
+use_wide: True
+use_dnn: True
+use_fm: True
+wide_embedding_dim: 10
+deep_embedding_dim: 10
+adam_learning_rate: 0.0001
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.5
+ftrl_beta: 1.0
+dnn_hidden_units: [1024, 1024, 1024]
+sparse_init_var: 0.01
+dnn_hidden_activations: ReLU
+use_bias: True
+batch_norm: True
+net_dropout: 0
+net_regularizer: null
+training_epoches: 1
+shuffle_training_dataset: True
