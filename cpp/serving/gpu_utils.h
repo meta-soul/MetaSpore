@@ -31,10 +31,10 @@ class GpuHelper {
 
         // get the cuda device count
         cudaError_t cudaResultCode = cudaGetDeviceCount(&deviceCount);
-        spdlog::info("deviceCount: {}", deviceCount);
+        spdlog::info("GPU deviceCount: {}", deviceCount);
 
         if (deviceCount <= 0) {
-            spdlog::info("No device detected");
+            spdlog::info("No GPU device detected");
             return false;
         }
 

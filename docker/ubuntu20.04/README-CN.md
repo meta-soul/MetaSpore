@@ -15,15 +15,19 @@ export REPOSITORY=...
     ```bash
     DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_dev -t $REPOSITORY/metaspore-dev:v1.0.0 .
     ```
+    可以通过 `--build-arg RUNTIME=gpu` 构建 GPU 支持的 dev 镜像。默认为 CPU 环境。
 
     1. Serving Build 镜像，基于 Dev 镜像生成 Serving 服务构建结果：`Dockerfile_serving_build`
         ```bash
         DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_serving_build --build-arg DEV_IMAGE=$REPOSITORY/metaspore-dev:v1.0.0 -t $REPOSITORY/metaspore-serving-build:v1.0.0 .
         ```
+        可以通过 `--build-arg ENABLE_GPU=ON` 构建支持 GPU 的 serving 服务。默认只支持 CPU 预测。
+
         1. Serving Release 镜像：基于 Serving Build 镜像，生成可发布的镜像，strip 了 Debug 段以减小镜像体积：`Dockerfile_serving_release`
             ```bash
             DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_serving_release --build-arg BUILD_IMAGE=$REPOSITORY/metaspore-serving-build:v1.0.0 -t $REPOSITORY/metaspore-serving-release:v1.0.0 --target serving_release .
             ```
+            可以通过 `--build-arg RUNTIME=gpu` 构建 GPU 支持的 release 镜像。默认只支持 CPU。
         1. Serving Debug 镜像：基于 Serving Build 镜像，生成 Debug Info 和携带 GDB 环境的镜像：`Dockerfile_serving_release`
             ```bash
             DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_serving_release --build-arg BUILD_IMAGE=$REPOSITORY/metaspore-serving-build:v1.0.0 -t $REPOSITORY/metaspore-serving-debug:v1.0.0 --target serving_debug .

@@ -125,6 +125,11 @@ set_target_properties(metaspore_shared PROPERTIES
 target_compile_definitions(metaspore_shared PRIVATE DMLC_USE_S3=1)
 target_compile_definitions(metaspore_shared PRIVATE _METASPORE_VERSION="${project_version}")
 target_compile_definitions(metaspore_shared PRIVATE DBG_MACRO_NO_WARNING)
+
+target_compile_options(metaspore_shared PRIVATE
+    -funroll-loops
+    -march=core-avx2
+)
 target_include_directories(metaspore_shared PRIVATE ${PROJECT_SOURCE_DIR}/cpp)
 target_include_directories(metaspore_shared PRIVATE ${PROJECT_BINARY_DIR}/gen/thrift/cpp)
 target_link_libraries(metaspore_shared PRIVATE
