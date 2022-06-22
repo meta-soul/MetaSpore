@@ -1,3 +1,2 @@
 friend_id
 friend_gender
-friend_age
