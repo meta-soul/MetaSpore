@@ -1,4 +1,5 @@
 from .node import PipelineNode
+import metaspore as ms
 
 class TwoTowersEstimatorNode(PipelineNode):
     def __call__(self, **payload) -> dict:
