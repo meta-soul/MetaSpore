@@ -29,6 +29,11 @@ add_library(metaspore-common STATIC
     ${SRCS}
 )
 
+target_compile_options(metaspore-common PRIVATE
+    -funroll-loops
+    -march=core-avx2
+)
+
 target_include_directories(metaspore-common PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp
 )

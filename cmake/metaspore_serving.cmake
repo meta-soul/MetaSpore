@@ -31,9 +31,11 @@ target_link_libraries(arrow_static INTERFACE
 )
 
 include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeCpuDefault.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeGpuDefault.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/FindCudart.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/AsioGrpcProtobufGenerator.cmake")
+if(ENABLE_GPU)
+    include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeGpuDefault.cmake")
+    find_package(CUDA)
+endif()
 
 set(PROTOS
     ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
@@ -86,7 +88,7 @@ target_include_directories(metaspore-serving PUBLIC
 
 target_compile_options(metaspore-serving PUBLIC
     -funroll-loops
-    -march=native
+    -march=core-avx2
 )
 
 target_link_libraries(metaspore-serving PUBLIC
@@ -101,7 +103,8 @@ target_link_libraries(metaspore-serving PUBLIC
 )
 
 if(ENABLE_GPU)
-    target_link_libraries(metaspore-serving PUBLIC onnxruntime-gpu-default cudart)
+    target_include_directories(metaspore-serving PUBLIC ${CUDA_INCLUDE_DIRS})
+    target_link_libraries(metaspore-serving PUBLIC onnxruntime-gpu-default ${CUDA_LIBRARIES})
     target_compile_definitions(metaspore-serving PUBLIC ENABLE_GPU=1)
 else()
     target_link_libraries(metaspore-serving PUBLIC onnxruntime-cpu-default)
@@ -121,6 +124,19 @@ add_custom_command(TARGET metaspore-serving-bin
             cut -f 3 -d ' ' |
             xargs -L 1 -I so_file cp -n so_file ${CMAKE_CURRENT_BINARY_DIR}/
 )
+
+if(ENABLE_GPU)
+    get_filename_component(ORT_GPU_LIB_DIR ${ORT_GPU_LIBRARY} DIRECTORY)
+    add_custom_command(TARGET metaspore-serving-bin
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            libonnxruntime_providers_cuda.so
+            libonnxruntime_providers_shared.so
+            libonnxruntime_providers_tensorrt.so
+            ${CMAKE_CURRENT_BINARY_DIR}
+        WORKING_DIRECTORY ${ORT_GPU_LIB_DIR}
+    )
+endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 message("Found Python at " ${Python_EXECUTABLE})
