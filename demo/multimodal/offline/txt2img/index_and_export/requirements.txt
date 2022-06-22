@@ -3,7 +3,7 @@ transformers==4.16.0
 onnx==1.10.2
 onnxruntime==1.10.0
 torch==1.10.2
-numpy==1.21.2
+numpy==1.22.0
 tqdm==4.64.0
 awscli==1.22.19
 awscli_plugin_endpoint==0.4
