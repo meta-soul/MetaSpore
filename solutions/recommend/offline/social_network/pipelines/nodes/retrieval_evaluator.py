@@ -3,7 +3,7 @@ from .node import PipelineNode
 class RetrievalEvaluatorNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
-        test_result = conf['test_result']
+        test_result = payload['test_result']
         user_id = conf['user_id']
         item_id = conf['item_id']
         
