@@ -36,17 +36,20 @@ from onnxconverter_common.data_types import FloatTensorType
 initial_types = [('input', FloatTensorType(shape=[-1, 10]))]
 xgboost_onnx_model = convert_xgboost(bst, initial_types=initial_types, target_opset=14)
 
-output_dir = "output/model_export/xgboost/"
+output_dir = "output/model_export/xgboost_model/"
 
 pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+pathlib.Path(os.path.join(output_dir, 'dense')).mkdir(parents=True, exist_ok=True)
 
-with open(os.path.join(output_dir, 'model.onnx'), "wb") as f:
+with open(os.path.join(output_dir, 'dense/model.onnx'), "wb") as f:
     f.write(xgboost_onnx_model.SerializeToString())
+with open(os.path.join(output_dir, 'dense_schema.txt'), "w") as f:
+    f.write('table: input\n')
 
 import onnxruntime as ort
 test_data = np.random.rand(1, 10).astype('f')
 print(f'Test data: {test_data}')
-ort_sess = ort.InferenceSession(os.path.join(output_dir, 'model.onnx'))
+ort_sess = ort.InferenceSession(os.path.join(output_dir, 'dense/model.onnx'))
 outputs = ort_sess.run(None, {'input': test_data})
 
 # Print Result 
