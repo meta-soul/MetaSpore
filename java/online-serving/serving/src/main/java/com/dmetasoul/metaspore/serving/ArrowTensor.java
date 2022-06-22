@@ -197,16 +197,16 @@ public class ArrowTensor {
     public void setTypedData() {
         if (isDoubleTensor()) {
             this.doubleData = data.order(ByteOrder.LITTLE_ENDIAN).asDoubleBuffer();
-            this.dataElems = this.doubleData.array().length;
+            this.dataElems = this.doubleData.limit() / 8;
         } else if (isFloatTensor()) {
             this.floatData = data.order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer();
-            this.dataElems = this.floatData.array().length;
+            this.dataElems = this.floatData.limit() / 4;
         } else if (isIntegerTensor()) {
             this.intData = data.order(ByteOrder.LITTLE_ENDIAN).asIntBuffer();
-            this.dataElems = this.intData.array().length;
+            this.dataElems = this.intData.limit() / 4;
         } else if (isLongTensor()) {
             this.longData = data.order(ByteOrder.LITTLE_ENDIAN).asLongBuffer();
-            this.dataElems = this.longData.array().length;
+            this.dataElems = this.longData.limit() / 8;
         }
     }
 
