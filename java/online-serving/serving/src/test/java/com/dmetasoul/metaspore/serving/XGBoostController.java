@@ -43,10 +43,18 @@ public class XGBoostController {
             ArrowTensor tensor = result.get(entry.getKey());
             long[] shape = tensor.getShape();
             toJson.put(entry.getKey() + "_shape", shape);
-            ArrowTensor.FloatTensorAccessor accessor = result.get(entry.getKey()).getFloatData();
-            long eleNum = tensor.getSize();
-            if (accessor != null) {
+            if (tensor.isFloatTensor()) {
+                ArrowTensor.FloatTensorAccessor accessor = tensor.getFloatData();
+                long eleNum = tensor.getSize();
                 List<Float> l = new ArrayList<>();
+                for (int i = 0; i < (int) eleNum; ++i) {
+                    l.add(accessor.get(i));
+                }
+                toJson.put(entry.getKey(), l);
+            } else if (tensor.isLongTensor()) {
+                ArrowTensor.LongTensorAccessor accessor = tensor.getLongData();
+                long eleNum = tensor.getSize();
+                List<Long> l = new ArrayList<>();
                 for (int i = 0; i < (int) eleNum; ++i) {
                     l.add(accessor.get(i));
                 }

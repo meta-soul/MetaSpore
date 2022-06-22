@@ -9,5 +9,6 @@
 /cpp/tests/data/MNIST/raw/t10k-labels-idx1-ubyte
 /cpp/tests/data/MNIST/raw/train-images-idx3-ubyte
 /cpp/tests/data/MNIST/raw/train-labels-idx1-ubyte
+/java/.idea
 .ipynb_checkpoints/
 __pycache__
