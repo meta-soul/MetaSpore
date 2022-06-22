@@ -1,5 +1,5 @@
 sentence-transformers==2.1.0
-numpy==1.21.2
+numpy==1.22.0
 gensim==4.1.2
 jieba==0.42.1
 scipy==1.7.3
