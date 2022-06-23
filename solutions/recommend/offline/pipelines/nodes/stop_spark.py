@@ -14,15 +14,20 @@
 # limitations under the License.
 #
 
-from abc import ABC, abstractmethod
+from solutions.recommend.offline.utils.logger import start_logging
+from .node import PipelineNode
 
-class PipelineNode(ABC):
-    def preprocess(self, **payload) -> dict:
-        return payload
-    
-    def postprocess(self, **payload) -> dict:
-        return payload
-    
-    @abstractmethod
+import sys
+sys.path.append('../../') 
+from utils import start_logging
+
+class StopSparkNode(PipelineNode):
     def __call__(self, **payload) -> dict:
-        pass
+        logger = start_logging(payload['logging'])
+        spark = payload['spark']
+        if not spark:
+            logger.info('Spark session is none')
+            return payload
+        spark.sparkContext.stop()
+        logger.info('Spark session stop')
+        return payload
