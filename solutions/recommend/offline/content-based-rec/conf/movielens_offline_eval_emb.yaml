@@ -1,0 +1,65 @@
+name: movielens_offline_evaluate_emb
+working_dir: ./src
+python: /opt/anaconda3/envs/pytorch-1.10.1/bin/python
+
+pipeline:
+
+- 
+  name: item_train_encode
+  status: 1
+  script: item_model/item_offline_embed.py
+  args:
+    item_data: ../data/ml-1m-schema/item.train.json
+    dump_data: ../data/ml-1m-dump/item.emb.train.pkl
+    text_model_name: sentence-transformers/all-MiniLM-L6-v2
+    batch_size: 64
+    device: "cuda:0"
+
+- 
+  name: item_test_encode
+  status: 1
+  script: item_model/item_offline_embed.py
+  args:
+    item_data: ../data/ml-1m-schema/item.test.json
+    dump_data: ../data/ml-1m-dump/item.emb.test.pkl
+    text_model_name: sentence-transformers/all-MiniLM-L6-v2
+    batch_size: 64
+    device: "cuda:0"
+
+-
+  name: user_encode
+  status: 1
+  script: user_model/user_offline_embed.py
+  args:
+    scene_id: ml-cb-100
+    action_type: rating
+    action_data: ../data/ml-1m-schema/action.train.json
+    item_data: ../data/ml-1m-dump/item.emb.train.pkl
+    dump_data: ../data/ml-1m-dump/user.emb.train.pkl
+    action_sortby_key: action_time
+    action_agg_func: avg
+    action_max_len: 3
+    action_decay_rate: 0.5
+
+-
+  name: search
+  status: 1
+  script: search/semantic_search.py
+  args:
+    user_data: ../data/ml-1m-dump/user.emb.train.pkl
+    item_data: ../data/ml-1m-dump/item.emb.test.pkl
+    result_data: ../data/ml-1m-dump/search_result.emb.json
+    topk: 20
+
+-
+  name: evaluate
+  status: 1
+  script: search/evaluate.py
+  args:
+    scene_id: ml-cb-100
+    action_type: rating
+    action_sortby_key: action_time
+    action_data: ../data/ml-1m-schema/action.test.json
+    predict_data: ../data/ml-1m-dump/search_result.emb.json
+    result_data: ../data/ml-1m-dump/evaluate_result.emb.json
+    topk: 20
