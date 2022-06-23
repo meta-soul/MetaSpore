@@ -1,6 +1,6 @@
 ## spark session
 app_name: 'Pipeline Demo'
-local: False
+local: True
 worker_count: 2
 server_count: 2
 batch_size: 128
@@ -8,8 +8,8 @@ worker_memory: '4G'
 server_memory: '4G'
 coordinator_memory: '4G'
 
-zip_path: ../MetaSpore/solutions/recommend/offline/social_network/python.zip
-zip_cwd: ../../../../../recommend-algos
+zip_path: ../MetaSpore/solutions/recommend/offline/python.zip
+zip_cwd: ../../../../recommend-algos
 
 ## datasets
 train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
