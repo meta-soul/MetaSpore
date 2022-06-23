@@ -7,7 +7,6 @@ class RetrievalEvaluatorNode(PipelineNode):
         user_id = conf['user_id']
         item_id = conf['item_id']
         
-        
         from pyspark.sql import functions as F
         print('Debug -- test sample:')
         test_result.select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
@@ -19,7 +18,7 @@ class RetrievalEvaluatorNode(PipelineNode):
         from pyspark.mllib.evaluation import RankingMetrics
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
                                                 [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
-                                                [x.friend_id])) # TODO use item_id column name
+                                                [getattr(x, item_id)]))
 
         recall_metrics = RankingMetrics(prediction_label_rdd)
 

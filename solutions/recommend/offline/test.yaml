@@ -1,6 +1,6 @@
 ## spark session
 app_name: 'Pipeline Demo'
-local: True
+local: False
 worker_count: 2
 server_count: 2
 batch_size: 128
@@ -19,11 +19,31 @@ item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.pa
 user_id: user_id
 item_id: friend_id
 
-## model configuratio
-two_tower_module: metaspore
-# two_tower_module: python.two_tower_retrieval_milvus 
-two_tower_module_class: TwoTowerBatchNegativeSamplingModule
-two_tower_estimator_class: TwoTowerRetrievalEstimator
+## model configuration
+
+user_module_class:
+  module_name: python.dssm_net
+  class_name: UserModule
+  
+item_module_class:
+  module_name: python.dssm_net
+  class_name: ItemModule
+  
+similarity_module_class:
+  module_name: python.dssm_net
+  class_name: SimilarityModule
+
+two_tower_retrieval_module_class:
+  module_name: python.training
+  class_name: TwoTowerBatchNegativeSamplingModule
+
+two_tower_agent_class:
+  module_name: python.training
+  class_name: TwoTowerBatchNegativeSamplingAgent
+  
+two_tower_estimator_class:
+  module_name: metaspore
+  class_name: TwoTowerRetrievalEstimator
 
 user_column_name: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
 user_combine_schema: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/user_combine_schema.txt
@@ -36,15 +56,9 @@ model_export_path: null
 model_version: '0.1'
 experiment_name: soc_pokec_two_towers_dssm
 
-## milvus
-milvus_description: 'ml_1m_dssm'
-milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
-milvus_port: '19530'
-milvus_embedding_field: 'embedding_vector'
-milvus_index_type: 'IVF_FLAT'
-milvus_metric_type: 'IP'
-milvus_nlist: 1024
-milvus_nprobe: 128
+item_ids_column_indices: [2]
+retrieval_item_count: 20
+metric_update_interval: 500
 
 
 ## dataset
@@ -68,5 +82,5 @@ ftrl_learning_rate: 0.02
 ftrl_smothing_rate: 1.0
 ftrl_l1_regularization: 1.0
 ftrl_l2_regularization: 1.0
-training_epoches: 1
+training_epoches: 20
 shuffle_training_dataset: True
