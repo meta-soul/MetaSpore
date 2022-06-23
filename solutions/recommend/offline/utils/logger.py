@@ -14,7 +14,10 @@
 # limitations under the License.
 #
 
+import sys
 import logging
+
+stdout_handler = logging.StreamHandler(sys.stdout)
 
 LOG_FORMAT = '%(asctime)s - %(message)s'
 DATE_FORMAT='%Y-%m-%d %H:%M:%S'
@@ -24,8 +27,9 @@ LEVELS = {
     'info':logging.INFO,
     'warning':logging.WARNING,
     'error':logging.ERROR,
-    'critical':logging.CRITICAL}
+    'critical':logging.CRITICAL
+}
 
-def start_logging(level=DEFAULT_LEVEL, **params):
-    logging.basicConfig(level=LEVELS[level], datefmt=DATE_FORMAT, format=LOG_FORMAT)
+def start_logging(loglevel=DEFAULT_LEVEL, **params):
+    logging.basicConfig(level=LEVELS[loglevel], datefmt=DATE_FORMAT, format=LOG_FORMAT, handlers=[stdout_handler])
     return logging.getLogger(__name__)

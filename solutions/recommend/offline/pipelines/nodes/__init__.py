@@ -17,5 +17,7 @@
 from .node import PipelineNode
 from .data_loader import DataLoaderNode
 from .init_spark import InitSparkNode
+from .stop_spark import StopSparkNode
 from .retrieval_evaluator import RetrievalEvaluatorNode
 from .two_towers_estimator import TwoTowersEstimatorNode
+
