@@ -14,15 +14,18 @@
 # limitations under the License.
 #
 
-from abc import ABC, abstractmethod
+import logging
 
-class PipelineNode(ABC):
-    def preprocess(self, **payload) -> dict:
-        return payload
-    
-    def postprocess(self, **payload) -> dict:
-        return payload
-    
-    @abstractmethod
-    def __call__(self, **payload) -> dict:
-        pass
+LOG_FORMAT = '%(asctime)s - %(message)s'
+DATE_FORMAT='%Y-%m-%d %H:%M:%S'
+DEFAULT_LEVEL = 'info'
+LEVELS = {
+    'debug':logging.DEBUG,
+    'info':logging.INFO,
+    'warning':logging.WARNING,
+    'error':logging.ERROR,
+    'critical':logging.CRITICAL}
+
+def start_logging(level=DEFAULT_LEVEL, **params):
+    logging.basicConfig(level=LEVELS[level], datefmt=DATE_FORMAT, format=LOG_FORMAT)
+    return logging.getLogger(__name__)

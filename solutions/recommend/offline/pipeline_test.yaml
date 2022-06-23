@@ -1,0 +1,22 @@
+logging:
+  loglevel: debug
+
+spark:
+  session_confs:
+    app_name: 'Pipeline Demo'
+    local: True
+    worker_count: 2
+    server_count: 2
+    batch_size: 128
+    worker_memory: '4G'
+    server_memory: '4G'
+    coordinator_memory: '4G'
+
+  extended_confs:
+    spark.network.timeout: '500'
+    spark.ui.showConsoleProgress: 'true'
+    spark.kubernetes.executor.deleteOnTermination: 'true'
+  
+  pyzip:
+    cwd_path: '../../../../recommend-algos'
+    zip_file_path: '../MetaSpore/solutions/recommend/offline/python.zip'
