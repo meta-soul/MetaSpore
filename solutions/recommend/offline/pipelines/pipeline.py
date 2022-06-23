@@ -1,5 +1,5 @@
 import yaml
-from .nodes.node import PipelineNode
+from .nodes import PipelineNode
 
 class Pipeline(object):
     def __init__(self, conf_path):
