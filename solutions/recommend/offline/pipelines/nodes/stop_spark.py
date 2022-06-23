@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-from solutions.recommend.offline.utils.logger import start_logging
 from .node import PipelineNode
 
 import sys
@@ -23,7 +22,9 @@ from utils import start_logging
 
 class StopSparkNode(PipelineNode):
     def __call__(self, **payload) -> dict:
-        logger = start_logging(payload['logging'])
+        confs = payload['conf']
+        logger = start_logging(**confs['logging'])
+        
         spark = payload['spark']
         if not spark:
             logger.info('Spark session is none')
@@ -31,3 +32,5 @@ class StopSparkNode(PipelineNode):
         spark.sparkContext.stop()
         logger.info('Spark session stop')
         return payload
+    
+    

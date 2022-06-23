@@ -1,5 +1,5 @@
 logging:
-  loglevel: debug
+  loglevel: info
 
 spark:
   session_confs:
@@ -18,5 +18,5 @@ spark:
     spark.kubernetes.executor.deleteOnTermination: 'true'
   
   pyzip:
-    cwd_path: '../../../../recommend-algos'
-    zip_file_path: '../MetaSpore/solutions/recommend/offline/python.zip'
+    cwd_path: '/home/spark/work/recommend-algos/'
+    zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'

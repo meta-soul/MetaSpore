@@ -23,10 +23,11 @@ sys.path.append('../../')
 from utils import start_logging
 
 class InitSparkNode(PipelineNode):
-    def __call__(self, **payload) -> dict:
-        logger = start_logging(payload['logging'])
+    def __call__(self, **payload) -> dict:        
+        confs = payload['conf']
+        logger = start_logging(**confs['logging'])
 
-        spark_confs = payload['spark']
+        spark_confs = confs['spark']
         if not spark_confs:
             logger.info("Spark configuration is none")
             return payload
@@ -41,7 +42,7 @@ class InitSparkNode(PipelineNode):
             cwd_path = spark_confs['pyzip']['cwd_path']
             zip_file_path = spark_confs['pyzip']['zip_file_path']
             subprocess.run(['zip', '-r', zip_file_path, 'python'], cwd=cwd_path)
-            extended_confs['spark.submit.pyFiles'] = zip_file_path
+            extended_confs['spark.submit.pyFiles'] = 'python.zip'
         
         spark = ms.spark.get_session(local=session_confs['local'],
                                      app_name=session_confs['app_name'],
@@ -53,7 +54,8 @@ class InitSparkNode(PipelineNode):
                                      coordinator_memory=session_confs['coordinator_memory'],
                                      spark_confs=extended_confs)
         sc = spark.sparkContext
-        logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl:{}'\
-                    .format( sc.version, sc.applicationId, sc.uiWebUrl))
+        logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl: {}'\
+                     .format( sc.version, sc.applicationId, sc.uiWebUrl))
         payload['spark'] = spark
         return payload
+    
