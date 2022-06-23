@@ -1,0 +1,57 @@
+name: movielens_offline_evaluate_tag
+working_dir: ./src
+python: /opt/anaconda3/envs/pytorch-1.10.1/bin/python
+
+pipeline:
+
+- 
+  name: item_train_encode
+  status: 1
+  script: item_model/item_offline_tag.py
+  args:
+    item_data: ../data/ml-1m-schema/item.train.json
+    dump_data: ../data/ml-1m-dump/item.tag.train.pkl
+
+- 
+  name: item_test_encode
+  status: 1
+  script: item_model/item_offline_tag.py
+  args:
+    item_data: ../data/ml-1m-schema/item.test.json
+    dump_data: ../data/ml-1m-dump/item.tag.test.pkl
+
+-
+  name: user_encode
+  status: 1
+  script: user_model/user_offline_tag.py
+  args:
+    scene_id: ml-cb-100
+    action_type: rating
+    action_data: ../data/ml-1m-schema/action.train.json
+    item_data: ../data/ml-1m-schema/item.train.json
+    dump_data: ../data/ml-1m-dump/user.tag.train.json
+    action_sortby_key: action_time
+    action_max_len: 3
+
+-
+  name: search
+  status: 1
+  script: search/tag_search.py
+  args:
+    user_data: ../data/ml-1m-dump/user.tag.train.json
+    item_data: ../data/ml-1m-dump/item.tag.test.pkl
+    result_data: ../data/ml-1m-dump/search_result.tag.json
+    topk: 20
+
+-
+  name: evaluate
+  status: 1
+  script: search/evaluate.py
+  args:
+    scene_id: ml-cb-100
+    action_type: rating
+    action_sortby_key: action_time
+    action_data: ../data/ml-1m-schema/action.test.json
+    predict_data: ../data/ml-1m-dump/search_result.tag.json
+    result_data: ../data/ml-1m-dump/evaluate_result.tag.json
+    topk: 20
