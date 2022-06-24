@@ -14,15 +14,22 @@
 # limitations under the License.
 #
 
-from .node import PipelineNode
+import sys
+import logging
 
-class DataLoaderNode(PipelineNode):
-    def __call__(self, **payload) -> dict:
-        dataset = payload['conf']['dataset']
-        spark = payload['spark']
-        
-        payload['train_dataset'] = spark.read.parquet(dataset['train_path'])
-        payload['test_dataset'] = spark.read.parquet(dataset['test_path'])
-        payload['item_dataset']  = spark.read.parquet(dataset['item_path'])
+stdout_handler = logging.StreamHandler(sys.stdout)
 
-        return payload
+LOG_FORMAT = '%(asctime)s - %(message)s'
+DATE_FORMAT='%Y-%m-%d %H:%M:%S'
+DEFAULT_LEVEL = 'info'
+LEVELS = {
+    'debug':logging.DEBUG,
+    'info':logging.INFO,
+    'warning':logging.WARNING,
+    'error':logging.ERROR,
+    'critical':logging.CRITICAL
+}
+
+def start_logging(loglevel=DEFAULT_LEVEL, **params):
+    logging.basicConfig(level=LEVELS[loglevel], datefmt=DATE_FORMAT, format=LOG_FORMAT, handlers=[stdout_handler])
+    return logging.getLogger(__name__)

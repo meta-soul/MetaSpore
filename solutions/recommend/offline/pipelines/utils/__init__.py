@@ -14,15 +14,5 @@
 # limitations under the License.
 #
 
-from .node import PipelineNode
-
-class DataLoaderNode(PipelineNode):
-    def __call__(self, **payload) -> dict:
-        dataset = payload['conf']['dataset']
-        spark = payload['spark']
-        
-        payload['train_dataset'] = spark.read.parquet(dataset['train_path'])
-        payload['test_dataset'] = spark.read.parquet(dataset['test_path'])
-        payload['item_dataset']  = spark.read.parquet(dataset['item_path'])
-
-        return payload
+from .logger import start_logging
+from .class_utils import get_class
