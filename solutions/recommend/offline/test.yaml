@@ -5,8 +5,10 @@ spark:
   session_confs:
     app_name: 'Pipeline Demo'
     local: False
-    worker_count: 4
-    server_count: 4
+    worker_count: 2
+    worker_cpu: 4
+    server_count: 2
+    server_cpu: 4
     batch_size: 128
     worker_memory: '10G'
     server_memory: '10G'
@@ -90,5 +92,5 @@ training:
   ftrl_smothing_rate: 1.0
   ftrl_l1_regularization: 1.0
   ftrl_l2_regularization: 1.0
-  training_epoches: 20
+  training_epoches: 1
   shuffle_training_dataset: True

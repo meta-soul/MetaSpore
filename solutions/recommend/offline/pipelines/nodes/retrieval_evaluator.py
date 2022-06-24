@@ -27,11 +27,6 @@ class RetrievalEvaluatorNode(PipelineNode):
         print('Debug -- test sample:')
         test_result.select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
         
-        user_id_to_verify = test_result.head(1).collect()[0][user_id]
-
-        test_result[test_result[user_id]==user_id_to_verify]\
-                    .select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
-
         ## evaluation
         from pyspark.mllib.evaluation import RankingMetrics
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
