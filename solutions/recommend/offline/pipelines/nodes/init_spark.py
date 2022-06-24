@@ -45,13 +45,15 @@ class InitSparkNode(PipelineNode):
             extended_confs['spark.submit.pyFiles'] = 'python.zip'
         
         spark = ms.spark.get_session(local=session_confs['local'],
-                                     app_name=session_confs['app_name'],
-                                     batch_size=session_confs['batch_size'],
-                                     worker_count=session_confs['worker_count'],
-                                     server_count=session_confs['server_count'],
-                                     worker_memory=session_confs['worker_memory'],
-                                     server_memory=session_confs['server_memory'],
-                                     coordinator_memory=session_confs['coordinator_memory'],
+                                     app_name=session_confs['app_name'] or 'metaspore',
+                                     batch_size=session_confs['batch_size'] or 100,
+                                     worker_count=session_confs['worker_count'] or 1,
+                                     server_count=session_confs['server_count'] or 1,
+                                     worker_cpu=session_confs['worker_cpu'] or 1,
+                                     server_cpu=session_confs['server_cpu'] or 1,
+                                     worker_memory=session_confs['worker_memory'] or '5G',
+                                     server_memory=session_confs['server_memory'] or '5G',
+                                     coordinator_memory=session_confs['coordinator_memory'] or '5G',
                                      spark_confs=extended_confs)
         sc = spark.sparkContext
         logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl: {}'\

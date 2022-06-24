@@ -5,9 +5,11 @@ spark:
   session_confs:
     app_name: 'Pipeline Demo'
     local: True
+    batch_size: 128
     worker_count: 2
     server_count: 2
-    batch_size: 128
+    worker_cpu: 4
+    server_cpu: 4
     worker_memory: '4G'
     server_memory: '4G'
     coordinator_memory: '4G'
