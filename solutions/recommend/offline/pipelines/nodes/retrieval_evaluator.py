@@ -20,14 +20,16 @@ class RetrievalEvaluatorNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
         test_result = payload['test_result']
-        user_id = conf['user_id']
-        item_id = conf['item_id']
+        user_id = conf['dataset']['user_id']
+        item_id = conf['dataset']['item_id']
         
         from pyspark.sql import functions as F
         print('Debug -- test sample:')
         test_result.select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
+        
+        user_id_to_verify = test_result.head(1).collect()[0][user_id]
 
-        test_result[test_result[user_id]==100]\
+        test_result[test_result[user_id]==user_id_to_verify]\
                     .select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
 
         ## evaluation
