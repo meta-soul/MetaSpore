@@ -15,8 +15,6 @@
 #
 
 from .node import PipelineNode
-
-import sys
 from ..utils import start_logging
 
 class DataLoaderNode(PipelineNode):
