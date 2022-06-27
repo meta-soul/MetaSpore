@@ -13,12 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
-from .node import PipelineNode
 import metaspore as ms
 import subprocess
 
-import sys
+from .node import PipelineNode
 from ..utils import start_logging
 
 class InitSparkNode(PipelineNode):
