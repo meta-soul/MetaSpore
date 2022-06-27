@@ -20,4 +20,5 @@ from .init_spark import InitSparkNode
 from .stop_spark import StopSparkNode
 from .retrieval_evaluator import RetrievalEvaluatorNode
 from .two_towers_estimator import TwoTowersEstimatorNode
+from .i2i_estimator import I2IEstimatorNode
 

@@ -21,12 +21,14 @@ from ..utils import get_class
 class TwoTowersEstimatorNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         training_conf = payload['conf']['training']
+        spark_session_conf = payload['conf']['spark']['session_confs']
+        
         UserModule = get_class(training_conf['user_module_class'])
         ItemModule = get_class(training_conf['item_module_class'])
         SimilarityModule = get_class(training_conf['similarity_module_class'])
-        TwoTowerRetrievalModule = get_class(training_conf['two_tower_retrieval_module_class'])
-        TwoTowerAgentModule = get_class(training_conf['two_tower_agent_class'])
-        TwoTowerEstimatorModule = get_class(training_conf['two_tower_estimator_class'])
+        TwoTowersRetrievalModule = get_class(training_conf['two_towers_retrieval_module_class'])
+        TwoTowersAgentModule = get_class(training_conf['two_towers_agent_class'])
+        TwoTowersEstimatorModule = get_class(training_conf['two_towers_estimator_class'])
 
         ## init user module, item module, similarity module
         user_module = UserModule(training_conf['user_column_name'], \
@@ -46,11 +48,13 @@ class TwoTowersEstimatorNode(PipelineNode):
                                  l2 = training_conf['ftrl_l2_regularization'], \
                                  dense_structure = training_conf['dense_structure'])
         similarity_module = SimilarityModule(training_conf['tau'])
-        module = TwoTowerRetrievalModule(user_module, item_module, similarity_module)
+        module = TwoTowersRetrievalModule(user_module, item_module, similarity_module)
 
-        estimator = TwoTowerEstimatorModule(module = module,
+        estimator = TwoTowersEstimatorModule(module = module,
+                                     worker_count = spark_session_conf['worker_count'],
+                                     server_count = spark_session_conf['server_count'],
                                      item_dataset = payload['item_dataset'],
-                                     agent_class = TwoTowerAgentModule,
+                                     agent_class = TwoTowersAgentModule,
                                      **training_conf)
         ## dnn learning rate
         estimator.updater = ms.AdamTensorUpdater(training_conf['adam_learning_rate'])

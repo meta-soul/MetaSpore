@@ -1,0 +1,47 @@
+logging:
+  loglevel: debug
+
+spark:
+  session_confs:
+    app_name: 'Pipeline Demo'
+    local: False
+    worker_count: 2
+    worker_cpu: 4
+    server_count: 2
+    server_cpu: 4
+    batch_size: 128
+    worker_memory: '10G'
+    server_memory: '10G'
+    coordinator_memory: '10G'
+
+  extended_confs:
+    spark.network.timeout: '500'
+    spark.ui.showConsoleProgress: 'true'
+    spark.kubernetes.executor.deleteOnTermination: 'true'
+  
+  pyzip:
+    cwd_path: '/home/spark/work/MetaSpore/'
+    zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+
+dataset:
+  train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+  test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+  item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
+  user_id_column: user_id
+  item_id_column: friend_id
+  label_column: label
+  label_value: '1'
+  last_item_id_column: last_friend_id
+
+training:
+  i2i_estimator_class:
+    module_name: python.algos.item_cf_retrieval
+    class_name: ItemCFEstimator
+
+#  i2i_estimator_class:
+#    module_name: metaspore
+#    class_name: SwingEstimator
+    
+  model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/model/item_cf/model_out/df.parquet
+  max_recommendation_count: 20
+  

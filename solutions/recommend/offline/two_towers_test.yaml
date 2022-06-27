@@ -27,8 +27,11 @@ dataset:
   train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
   test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
   item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
-  user_id: user_id
-  item_id: friend_id
+  user_id_column: user_id
+  item_id_column: friend_id
+  label_column: label
+  label_value: '1'
+  last_item_id_column: last_friend_id
 
 training:
   user_module_class:
@@ -43,15 +46,15 @@ training:
     module_name: python.dssm_net
     class_name: SimilarityModule
 
-  two_tower_retrieval_module_class:
+  two_towers_retrieval_module_class:
     module_name: python.training
     class_name: TwoTowerBatchNegativeSamplingModule
 
-  two_tower_agent_class:
+  two_towers_agent_class:
     module_name: python.training
     class_name: TwoTowerBatchNegativeSamplingAgent
   
-  two_tower_estimator_class:
+  two_towers_estimator_class:
     module_name: metaspore
     class_name: TwoTowerRetrievalEstimator
 
@@ -69,7 +72,6 @@ training:
   item_ids_column_indices: [2]
   retrieval_item_count: 20
   metric_update_interval: 500
-
 
   ## dataset
   input_label_column_index: 0

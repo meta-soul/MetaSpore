@@ -20,8 +20,8 @@ class RetrievalEvaluatorNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
         test_result = payload['test_result']
-        user_id = conf['dataset']['user_id']
-        item_id = conf['dataset']['item_id']
+        user_id = conf['dataset']['user_id_column']
+        item_id = conf['dataset']['item_id_column']
         
         from pyspark.sql import functions as F
         print('Debug -- test sample:')
