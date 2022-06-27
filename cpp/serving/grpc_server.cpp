@@ -17,89 +17,50 @@
 #include <common/logger.h>
 #include <serving/converters.h>
 #include <serving/grpc_server.h>
+#include <serving/grpc_server_shutdown.h>
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
 #include <serving/types.h>
-#include <serving/shared_grpc_server_builder.h>
-#include <serving/shared_grpc_context.h>
 #include <metaspore/string_utils.h>
 
-#include <agrpc/asioGrpc.hpp>
-#include <boost/asio/bind_executor.hpp>
-#include <boost/asio/signal_set.hpp>
 #include <fmt/format.h>
 #include <gflags/gflags.h>
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 
 #include <optional>
+#include <forward_list>
 
 namespace metaspore::serving {
 
 DECLARE_string(grpc_listen_host);
 DECLARE_string(grpc_listen_port);
-
-// From
-// https://github.com/Tradias/asio-grpc/blob/cd9d3aad3af56a43793594d1a5388a453e7d5668/example/streaming-server.cpp#L31
-// Copyright 2022 Dennis Hezel
-struct ServerShutdown {
-    grpc::Server &server;
-    boost::asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals;
-    std::optional<std::thread> shutdown_thread;
-
-    ServerShutdown(grpc::Server &server, agrpc::GrpcContext &grpc_context)
-        : server(server), signals(grpc_context, SIGINT, SIGTERM) {
-        signals.async_wait([&](auto &&, auto &&signal) {
-            spdlog::info("Shutdown with signal {}", signal);
-            shutdown();
-        });
-    }
-
-    void shutdown() {
-        if (!shutdown_thread) {
-            // This will cause all coroutines to run to completion normally
-            // while returning `false` from RPC related steps, cancelling the signal
-            // so that the GrpcContext will eventually run out of work and return
-            // from `run()`.
-            shutdown_thread.emplace([&] {
-                signals.cancel();
-                server.Shutdown();
-            });
-            // Alternatively call `grpc_context.stop()` here instead which causes all coroutines
-            // to end at their next suspension point.
-            // Then call `server->Shutdown()` after the call to `grpc_context.run()` returns
-            // or `.reset()` the grpc_context and go into another `grpc_context.run()`
-        }
-    }
-
-    ~ServerShutdown() {
-        if (shutdown_thread) {
-            shutdown_thread->join();
-        }
-    }
-};
+DECLARE_uint64(grpc_server_threads);
 
 class GrpcServerContext {
   public:
-    GrpcServerContext()
-            : builder(SharedGrpcServerBuilder::get_instance())
-            , predict_service()
-            , load_service()
-            , grpc_context(SharedGrpcContext::get_instance()) {
+    GrpcServerContext() {
+        grpc_server_thread_count = FLAGS_grpc_server_threads;
+        if (grpc_server_thread_count == 0)
+            grpc_server_thread_count = std::thread::hardware_concurrency();
+        grpc::ServerBuilder builder;
+        for (int i = 0; i < grpc_server_thread_count; i++)
+            grpc_server_contexts.emplace_front(builder.AddCompletionQueue());
         spdlog::info("Listening on {}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port);
-        builder->AddListeningPort(
+        builder.AddListeningPort(
             fmt::format("{}:{}", FLAGS_grpc_listen_host, FLAGS_grpc_listen_port),
             grpc::InsecureServerCredentials());
-        builder->RegisterService(&predict_service);
-        builder->RegisterService(&load_service);
-        server = builder->BuildAndStart();
+        builder.RegisterService(&predict_service);
+        builder.RegisterService(&load_service);
+        server = builder.BuildAndStart();
     }
 
-    std::shared_ptr<grpc::ServerBuilder> builder;
+    std::unique_ptr<grpc::Server> server;
     Predict::AsyncService predict_service;
     Load::AsyncService load_service;
-    std::shared_ptr<agrpc::GrpcContext> grpc_context;
-    std::unique_ptr<grpc::Server> server;
+    std::forward_list<agrpc::GrpcContext> grpc_server_contexts;
+    std::vector<std::thread> grpc_server_threads;
+    int grpc_server_thread_count{};
 };
 
 GrpcServer::GrpcServer() { context_ = std::make_unique<GrpcServerContext>(); }
@@ -107,36 +68,6 @@ GrpcServer::GrpcServer() { context_ = std::make_unique<GrpcServerContext>(); }
 GrpcServer::~GrpcServer() = default;
 
 GrpcServer::GrpcServer(GrpcServer &&) = default;
-
-// From
-// https://github.com/Tradias/asio-grpc/blob/f179621e3ff5401b99e4c40ba2427a1a1ab7ffcf/example/helper/coSpawner.hpp
-// Copyright 2022 Dennis Hezel
-template <class Handler> struct CoSpawner {
-    using executor_type = boost::asio::associated_executor_t<Handler>;
-    using allocator_type = boost::asio::associated_allocator_t<Handler>;
-
-    Handler handler;
-
-    explicit CoSpawner(Handler handler) : handler(std::move(handler)) {}
-
-    template <class T> void operator()(agrpc::RepeatedlyRequestContext<T> &&request_context) {
-        boost::asio::co_spawn(
-            this->get_executor(),
-            [handler = std::move(handler), request_context = std::move(request_context)]() mutable
-            -> boost::asio::awaitable<void> {
-                co_await std::apply(std::move(handler), request_context.args());
-            },
-            boost::asio::detached);
-    }
-
-    [[nodiscard]] executor_type get_executor() const noexcept {
-        return boost::asio::get_associated_executor(handler);
-    }
-
-    [[nodiscard]] allocator_type get_allocator() const noexcept {
-        return boost::asio::get_associated_allocator(handler);
-    }
-};
 
 awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<PredictReply> &writer,
                               const status &s) {
@@ -152,15 +83,16 @@ awaitable<void> respond_error(grpc::ServerAsyncResponseWriter<LoadReply> &writer
         boost::asio::use_awaitable);
 }
 
-void GrpcServer::run() {
-    ServerShutdown server_shutdown{*context_->server, *context_->grpc_context};
-
+void register_predict_request_handler(agrpc::GrpcContext &grpc_context,
+                                      Predict::AsyncService &predict_service,
+                                      GrpcServerShutdown &server_shutdown)
+{
     agrpc::repeatedly_request(
-        &Predict::AsyncService::RequestPredict, context_->predict_service,
-        CoSpawner{boost::asio::bind_executor(
-            *context_->grpc_context,
+        &Predict::AsyncService::RequestPredict, predict_service,
+        boost::asio::bind_executor(
+            grpc_context,
             [&](grpc::ServerContext &ctx, PredictRequest &req,
-                grpc::ServerAsyncResponseWriter<PredictReply> writer) -> awaitable<void> {
+                grpc::ServerAsyncResponseWriter<PredictReply> &writer) -> awaitable<void> {
                 auto find_model = ModelManager::get_model_manager().get_model(req.model_name());
                 if (!find_model.ok()) {
                     co_await respond_error(writer, find_model.status());
@@ -183,14 +115,19 @@ void GrpcServer::run() {
                         co_await respond_error(writer, absl::UnknownError(std::move(ex)));
                 }
                 co_return;
-            })});
+            }));
+}
 
+void register_load_request_handler(agrpc::GrpcContext &grpc_context,
+                                   Load::AsyncService &load_service,
+                                   GrpcServerShutdown &server_shutdown)
+{
     agrpc::repeatedly_request(
-        &Load::AsyncService::RequestLoad, context_->load_service,
-        CoSpawner{boost::asio::bind_executor(
-            *context_->grpc_context,
+        &Load::AsyncService::RequestLoad, load_service,
+        boost::asio::bind_executor(
+            grpc_context,
             [&](grpc::ServerContext &ctx, LoadRequest &req,
-                grpc::ServerAsyncResponseWriter<LoadReply> writer) -> awaitable<void> {
+                grpc::ServerAsyncResponseWriter<LoadReply> &writer) -> awaitable<void> {
                 const std::string &model_name = req.model_name();
                 const std::string &version = req.version();
                 const std::string &dir_path = req.dir_path();
@@ -210,10 +147,22 @@ void GrpcServer::run() {
                                            boost::asio::use_awaitable);
                 }
                 co_return;
-            })});
+            }));
+}
 
-    spdlog::info("Start to accept grpc requests");
-    context_->grpc_context->run();
+void GrpcServer::run() {
+    GrpcServerShutdown server_shutdown{*context_->server, context_->grpc_server_contexts.front()};
+    for (int i = 0; i < context_->grpc_server_thread_count; i++) {
+        context_->grpc_server_threads.emplace_back([&, i] {
+            auto &grpc_context = *std::next(context_->grpc_server_contexts.begin(), i);
+            register_predict_request_handler(grpc_context, context_->predict_service, server_shutdown);
+            register_load_request_handler(grpc_context, context_->load_service, server_shutdown);
+            grpc_context.run();
+        });
+    }
+    spdlog::info("Start to accept grpc requests with {} threads", context_->grpc_server_thread_count);
+    for (auto &thread : context_->grpc_server_threads)
+        thread.join();
 }
 
 } // namespace metaspore::serving

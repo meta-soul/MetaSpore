@@ -20,6 +20,8 @@ namespace metaspore::serving {
 
 DEFINE_uint64(compute_thread_num, 4UL, "Thread number for computing");
 DEFINE_uint64(background_thread_num, 2UL, "Thread number for background tasks");
+DEFINE_uint64(grpc_server_threads, 4UL, "Thread number for grpc servers");
+DEFINE_uint64(grpc_client_threads, 4UL, "Thread number for grpc clients");
 DEFINE_string(grpc_listen_host, "0.0.0.0", "Listen host for grpc service");
 DEFINE_string(grpc_listen_port, "50051", "Listen port for grpc service");
 DEFINE_string(init_load_path, ".", "Load path to init during start");

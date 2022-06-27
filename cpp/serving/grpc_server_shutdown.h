@@ -14,14 +14,27 @@
 // limitations under the License.
 //
 
-#include <serving/shared_grpc_server_builder.h>
+#pragma once
+
+#include <atomic>
+#include <thread>
+#include <agrpc/asioGrpc.hpp>
+#include <boost/asio/signal_set.hpp>
 
 namespace metaspore::serving {
 
-std::shared_ptr<grpc::ServerBuilder> SharedGrpcServerBuilder::get_instance() {
-    static std::shared_ptr<grpc::ServerBuilder> instance =
-        std::make_shared<grpc::ServerBuilder>();
-    return instance;
-}
+class GrpcServerShutdown {
+public:
+    GrpcServerShutdown(grpc::Server &server, agrpc::GrpcContext &grpc_context);
+    ~GrpcServerShutdown();
 
-}
+    void shutdown();
+
+private:
+    grpc::Server &server_;
+    boost::asio::basic_signal_set<agrpc::GrpcContext::executor_type> signals_;
+    std::atomic_bool is_shutdown_{};
+    std::thread shutdown_thread_;
+};
+
+} // namespace metaspore::serving
