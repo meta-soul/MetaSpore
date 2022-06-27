@@ -14,16 +14,23 @@
 # limitations under the License.
 #
 
+from cmath import inf
 import yaml
 from .nodes import PipelineNode
 
 class Pipeline(object):
-    def __init__(self, conf_path):
+    def __init__(self, conf_path, infer=False):
         self._nodes = []
         self._conf = dict()
         with open(conf_path, 'r') as stream:
             self._conf = yaml.load(stream, Loader=yaml.FullLoader)
-            print('Debug -- load config: ', self._conf)
+            print('Debug -- load config: ', self._conf) 
+        if infer:
+            from .utils import get_class
+            node_confs = list(filter(lambda x: 'node_class' in x and 'node_priority' in x, \
+                                     [v for _k, v in self._conf.items()]))
+            node_list = list(map(lambda x: get_class('pipelines.nodes', x['node_class']), node_confs))
+            self._nodes = [v for _k, v in dict(node_list).items()]
     
     def add_node(self, node):
         if not isinstance(node, PipelineNode):

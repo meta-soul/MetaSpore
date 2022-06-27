@@ -15,10 +15,7 @@
 #
 
 from .node import PipelineNode
-
-import sys
-sys.path.append('../../') 
-from utils import start_logging
+from ..utils import start_logging
 
 class StopSparkNode(PipelineNode):
     def __call__(self, **payload) -> dict:
