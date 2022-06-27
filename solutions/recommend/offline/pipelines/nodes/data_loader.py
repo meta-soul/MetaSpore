@@ -16,13 +16,24 @@
 
 from .node import PipelineNode
 
+import sys
+from ..utils import start_logging
+
 class DataLoaderNode(PipelineNode):
     def __call__(self, **payload) -> dict:
-        dataset = payload['conf']['dataset']
+        confs = payload['conf']
+        logger = start_logging(**confs['logging'])
+        dataset = confs['dataset']
         spark = payload['spark']
         
-        payload['train_dataset'] = spark.read.parquet(dataset['train_path'])
-        payload['test_dataset'] = spark.read.parquet(dataset['test_path'])
-        payload['item_dataset']  = spark.read.parquet(dataset['item_path'])
+        if 'train_path' in dataset:
+            payload['train_dataset'] = spark.read.parquet(dataset['train_path'])
+            logger.info('Train dataset is loaded: {}'.format(dataset['train_path']))
+        if 'test_path' in dataset:
+            payload['test_dataset'] = spark.read.parquet(dataset['test_path'])
+            logger.info('Test dataset is loaded: {}'.format(dataset['test_path']))
+        if 'item_path' in dataset:
+            payload['item_dataset']  = spark.read.parquet(dataset['item_path'])
+            logger.info('Item dataset is loaded: {}'.format(dataset['item_path']))
 
         return payload

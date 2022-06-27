@@ -22,3 +22,11 @@ spark:
   pyzip:
     cwd_path: '/home/spark/work/recommend-algos/'
     zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+
+# Assuming we are using parquet file here
+dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
+    user_id: user_id
+    item_id: friend_id
