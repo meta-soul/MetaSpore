@@ -1,0 +1,84 @@
+logging:
+  loglevel: debug
+
+spark:
+  node_class: InitSparkNode
+  node_priority: 10
+  session_confs:
+    app_name: 'Deep CTR Pipeline Demo'
+    local: False
+    worker_count: 2
+    worker_cpu: 4
+    server_count: 2
+    server_cpu: 4
+    batch_size: 128
+    worker_memory: '10G'
+    server_memory: '10G'
+    coordinator_memory: '10G'
+
+  extended_confs:
+    spark.network.timeout: '500'
+    spark.ui.showConsoleProgress: 'true'
+    spark.kubernetes.executor.deleteOnTermination: 'true'
+  
+  pyzip:
+    cwd_path: '/home/spark/work/MetaSpore/'
+    zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+
+dataset:
+  node_class: DataLoaderNode
+  node_priority: 20
+  train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset_rank.parquet
+  test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset_rank.parquet
+  user_id_column: user_id
+  item_id_column: friend_id
+  label_column: label
+  label_value: '1'
+  last_item_id_column: last_friend_id
+
+training:
+  node_class: DeepCTREstimatorNode
+  node_priority: 30
+  deep_ctr_model_class:
+    module_name: python.algos.deepfm_net
+    class_name: DeepFM
+  wide_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
+  wide_combine_schema_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/wide_combine_schema.txt
+  deep_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
+  deep_combine_schema_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/deep_combine_schema.txt
+  model_in_path: null
+  model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/deepfm/model_out/
+  # model_export_path: s3://dmetasoul-bucket/demo/soc-pokec/model/deepfm/model_export/
+  model_version: '0.1'
+  experiment_name: soc_pokec_dfm
+  input_label_column_index: 0
+  metric_update_interval: 100
+  
+  use_wide: True
+  use_dnn: True
+  use_fm: True
+  wide_embedding_dim: 10
+  deep_embedding_dim: 10
+  adam_learning_rate: 0.0001
+  ftrl_l1: 1.0
+  ftrl_l2: 120.0
+  ftrl_alpha: 0.5
+  ftrl_beta: 1.0
+  dnn_hidden_units: [1024, 1024, 1024]
+  sparse_init_var: 0.01
+  dnn_hidden_activations: ReLU
+  use_bias: True
+  batch_norm: True
+  net_dropout: 0
+  net_regularizer: null
+  training_epoches: 1
+  shuffle_training_dataset: True
+  
+evaluation:
+  node_class: RankEvaluatorNode
+  node_priority: 40
+
+spark_stop:
+  node_class: StopSparkNode
+  node_priority: 99
+  
