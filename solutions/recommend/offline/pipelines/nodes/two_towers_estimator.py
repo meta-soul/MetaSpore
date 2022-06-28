@@ -23,12 +23,12 @@ class TwoTowersEstimatorNode(PipelineNode):
         training_conf = payload['conf']['training']
         spark_session_conf = payload['conf']['spark']['session_confs']
         
-        UserModule = get_class(training_conf['user_module_class'])
-        ItemModule = get_class(training_conf['item_module_class'])
-        SimilarityModule = get_class(training_conf['similarity_module_class'])
-        TwoTowersRetrievalModule = get_class(training_conf['two_towers_retrieval_module_class'])
-        TwoTowersAgentModule = get_class(training_conf['two_towers_agent_class'])
-        TwoTowersEstimatorModule = get_class(training_conf['two_towers_estimator_class'])
+        UserModule = get_class(**training_conf['user_module_class'])
+        ItemModule = get_class(**training_conf['item_module_class'])
+        SimilarityModule = get_class(**training_conf['similarity_module_class'])
+        TwoTowersRetrievalModule = get_class(**training_conf['two_towers_retrieval_module_class'])
+        TwoTowersAgentModule = get_class(**training_conf['two_towers_agent_class'])
+        TwoTowersEstimatorModule = get_class(**training_conf['two_towers_estimator_class'])
 
         ## init user module, item module, similarity module
         user_module = UserModule(training_conf['user_column_name'], \
