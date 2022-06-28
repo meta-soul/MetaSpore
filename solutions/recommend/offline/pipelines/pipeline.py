@@ -29,8 +29,8 @@ class Pipeline(object):
             from .utils import get_class
             node_confs = list(filter(lambda x: 'node_class' in x and 'node_priority' in x, \
                                      [v for _k, v in self._conf.items()]))
-            node_list = list(map(lambda x: get_class('pipelines.nodes', x['node_class']), node_confs))
-            self._nodes = [v for _k, v in dict(node_list).items()]
+            node_list = list(map(lambda x: (x['node_priority'], get_class('pipelines.nodes', x['node_class'])()), node_confs))
+            self._nodes.extend([v for _k, v in dict(node_list).items()])
     
     def add_node(self, node):
         if not isinstance(node, PipelineNode):
