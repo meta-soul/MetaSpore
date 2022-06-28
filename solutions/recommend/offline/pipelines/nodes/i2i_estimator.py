@@ -40,9 +40,9 @@ class I2IEstimatorNode(PipelineNode):
         train_dataset = payload['train_dataset']
         test_dataset = payload['test_dataset']
         
-        I2IEstimatorModule = get_class(**training_conf['i2i_estimator_class'])
+        I2IEstimator = get_class(**training_conf['i2i_estimator_class'])
         
-        estimator = I2IEstimatorModule(user_id_column_name = user_id,
+        estimator = I2IEstimator(user_id_column_name = user_id,
                                        item_id_column_name = item_id,
                                        behavior_column_name = label,
                                        behavior_filter_value = label_value,
