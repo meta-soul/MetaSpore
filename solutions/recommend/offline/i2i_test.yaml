@@ -54,6 +54,12 @@ training:
 evaluation:
   node_class: RetrievalEvaluatorNode
   node_priority: 40
+  
+mongodb:
+  node_class: MongoDBDumperNode
+  node_priority: 50
+  input_url: mongodb://jpa:Dmetasoul_123456@172.31.37.47:27017/jpa.saas_icf
+  output_url: mongodb://jpa:Dmetasoul_123456@172.31.37.47:27017/jpa.saas_icf
 
 spark_stop:
   node_class: StopSparkNode
