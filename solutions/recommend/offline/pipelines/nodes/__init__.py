@@ -23,4 +23,5 @@ from .two_towers_estimator import TwoTowersEstimatorNode
 from .i2i_estimator import I2IEstimatorNode
 from .deep_ctr_estimator import DeepCTREstimatorNode
 from .rank_evaluator import RankEvaluatorNode
+from .mongodb_dumper import MongoDBDumperNode
 
