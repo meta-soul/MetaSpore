@@ -14,25 +14,34 @@
 # limitations under the License.
 #
 
+from pyspark.sql import SparkSession
+import pymongo
 from .node import PipelineNode
 from ..utils import start_logging
 
 class MongoDBDumperNode(PipelineNode):
     def __call__(self, **payload) -> dict:
-        mongodb_conf = payload['conf']['mongodb']
-        logger = start_logging(**confs['logging'])
-        spark = payload['spark']
+        
+        mongodb = payload['conf']['mongodb']
         df_to_mongodb = payload['df_to_mongodb']
-        
-        logger.info('Dump to MongoDB: prepare')
-        spark.conf.set('spark.jars.packages', 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1')
-        spark.conf.set('spark.mongodb.input.uri', mongodb_conf['input_url'])
-        spark.conf.set('spark.mongodb.output.uri', mongodb_conf['output_url'])
-        
+        logger = start_logging(**payload['conf']['logging'])
+
         logger.info('Dump to MongoDB: start')
-        df_to_mongodb.write.format("mongo").mode("overwrite").save()
+        df_to_mongodb.write \
+            .format("mongo") \
+            .mode(mongodb['write_mode']) \
+            .option("uri", mongodb['uri']) \
+            .option("database", mongodb['database']) \
+            .option("collection", mongodb['collection']) \
+            .save()
+        
+        logger.info('Dump to MongoDB: index')
+        if len(mongodb['index_fields']) > 0:
+            client = pymongo.MongoClient(mongodb['connection_uri'])
+            collection = client[mongodb['database']][mongodb['collection']]
+            for field_name in mongodb['index_fields']:
+                collection.create_index([(field_name, pymongo.ASCENDING)], unique=mongodb['index_unique'])
+                
         logger.info('Dump to MongoDB: done')
         
         return payload
-    
-    

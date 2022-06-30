@@ -51,7 +51,8 @@ class I2IEstimatorNode(PipelineNode):
         ## model train
         model = estimator.fit(train_dataset)
         
-        model.df.write.parquet(training_conf['model_out_path'], mode="overwrite")
+        # model.df.write.parquet(training_conf['model_out_path'], mode="overwrite")
+        payload['df_to_mongodb'] = model.df
         
         ## prepare trigger item id 
         original_item_id ='original_item_id'

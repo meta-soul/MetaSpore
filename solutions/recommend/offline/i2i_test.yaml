@@ -20,6 +20,7 @@ spark:
     spark.network.timeout: '500'
     spark.ui.showConsoleProgress: 'true'
     spark.kubernetes.executor.deleteOnTermination: 'true'
+    spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
   
   pyzip:
     cwd_path: '/home/spark/work/MetaSpore/'
@@ -58,8 +59,12 @@ evaluation:
 mongodb:
   node_class: MongoDBDumperNode
   node_priority: 50
-  input_url: mongodb://jpa:Dmetasoul_123456@172.31.37.47:27017/jpa.saas_icf
-  output_url: mongodb://jpa:Dmetasoul_123456@172.31.37.47:27017/jpa.saas_icf
+  uri: mongodb://172.31.37.47:27017/
+  database: jpa
+  collection: saas_icf
+  write_mode: overwrite
+  index_fields: []
+  index_unique: False
 
 spark_stop:
   node_class: StopSparkNode
