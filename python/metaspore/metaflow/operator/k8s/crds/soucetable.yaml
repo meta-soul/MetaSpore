@@ -1,0 +1,47 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: sourcetables.metaflow.metaspore.com
+spec:
+  group: metaflow.metaspore.com
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          required:
+          - spec
+          type: object
+          properties:
+            spec:
+              required:
+              - type
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+              properties:
+                type:
+                  type: string
+                  enum:
+                  - hive
+                  - lakesoul
+                  - csv
+                  - parquet
+                options:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      value:
+                        type: string
+                columns:
+                  type: array
+                  items:
+                    type: string
+  scope: Namespaced
+  names:
+    plural: sourcetables
+    singular: sourcetable
+    kind: SourceTable

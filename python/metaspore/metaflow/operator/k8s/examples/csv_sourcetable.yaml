@@ -1,0 +1,15 @@
+apiVersion: metaflow.metaspore.com/v1
+kind: SourceTable
+metadata:
+  name: a-csv-table
+spec:
+  type: csv
+  options:
+  - key: delimiter
+    value: ';'
+  - key: header
+    value: 'false'
+  columns:
+  - user_id
+  - item_id
+  - label
