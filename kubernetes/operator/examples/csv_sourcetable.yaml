@@ -1,4 +1,4 @@
-apiVersion: metaflow.metaspore.com/v1
+apiVersion: metaspore.com/v1
 kind: SourceTable
 metadata:
   name: a-csv-table

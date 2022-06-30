@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metaspore-operator
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      application: metaspore-operator
+  template:
+    metadata:
+      labels:
+        application: metaspore-operator
+    spec:
+      serviceAccountName: metaspore-account
+      containers:
+      - name: metaspore-operator
+        image: metaspore/operator:v0.0.1
