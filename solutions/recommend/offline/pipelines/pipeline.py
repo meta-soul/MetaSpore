@@ -23,14 +23,17 @@ class Pipeline(object):
         self._nodes = []
         self._conf = dict()
         with open(conf_path, 'r') as stream:
-            self._conf = yaml.load(stream, Loader=yaml.FullLoader)
+            instructions = yaml.load(stream, Loader=yaml.FullLoader)
+            self._conf = instructions['spec']
+            self._meta = instructions['metadata']
             print('Debug -- load config: ', self._conf) 
+            print('Debug -- load meta: ', self._meta)
         if infer:
             from .utils import get_class
-            node_confs = list(filter(lambda x: 'node_class' in x and 'node_priority' in x, \
-                                     [v for _k, v in self._conf.items()]))
-            node_list = list(map(lambda x: (x['node_priority'], get_class('pipelines.nodes', x['node_class'])()), node_confs))
-            self._nodes.extend([v for _k, v in dict(node_list).items()])
+            node_confs = [next(iter(x.items())) for x in self._meta['pipeline_nodes']]
+            print('Debug -- algo pipeline node init params: ', node_confs)
+            node_list = list(map(lambda x: get_class('pipelines.nodes', x[0])(**x[1] or {}), node_confs))
+            self._nodes.extend(node_list)
     
     def add_node(self, node):
         if not isinstance(node, PipelineNode):

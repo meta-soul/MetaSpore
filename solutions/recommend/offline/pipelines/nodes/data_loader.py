@@ -21,7 +21,7 @@ class DataLoaderNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         confs = payload['conf']
         logger = start_logging(**confs['logging'])
-        dataset = confs['dataset']
+        dataset = confs[self._node_conf]
         spark = payload['spark']
         
         if 'train_path' in dataset:
