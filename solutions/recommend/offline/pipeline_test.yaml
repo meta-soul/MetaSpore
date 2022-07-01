@@ -1,53 +1,47 @@
 apiVersion: metaspore/v1
 kind: TrainingJob
 metadata:
-    name: ItemCF
-    category: Match/I2I/ItemCF
-    pipeline_nodes:
-      - InitSparkNode:
-          node_conf: spark
-      - DataLoaderNode:
-          node_conf: dataset
-      - StopSparkNode:
+  name: ItemCF
+  category: Match/I2I/ItemCF
+  pipeline_nodes:
+    - InitSparkNode:
+        node_conf: spark
+    - DataLoaderNode:
+        node_conf: dataset
+    - StopSparkNode:
 
 spec: 
-    logging:
-      loglevel: info
-
-    spark:
-      node_class: InitSparkNode
-      node_priority: 1
-      session_confs:
-        app_name: 'Pipeline Demo'
-        local: True
-        batch_size: 128
-        worker_count: 2
-        server_count: 2
-        worker_cpu: 4
-        server_cpu: 4
-        worker_memory: '4G'
-        server_memory: '4G'
-        coordinator_memory: '4G'
-
-      extended_confs:
-        spark.network.timeout: '500'
-        spark.ui.showConsoleProgress: 'true'
-        spark.kubernetes.executor.deleteOnTermination: 'true'
-
-      pyzip:
-        cwd_path: '/home/spark/work/recommend-algos/'
-        zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
-
-    # Assuming we are using parquet file here
-    dataset:
-        node_class: DataLoaderNode
-        node_priority: 2
-        train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
-        test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
-        item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
-        user_id: user_id
-        item_id: friend_id
-
-    spark_stop:
-        node_class: StopSparkNode
-        node_priority: 3
+  logging:
+    loglevel: info
+  
+  spark:
+    session_confs:
+      app_name: 'Pipeline Demo'
+      local: True
+      batch_size: 128
+      worker_count: 2
+      server_count: 2
+      worker_cpu: 4
+      server_cpu: 4
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+  
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+  
+    pyzip:
+      cwd_path: '/home/spark/work/recommend-algos/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+  
+  # Assuming we are using parquet file here
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
+    user_id: user_id
+    item_id: friend_id
+  
+  spark_stop:
