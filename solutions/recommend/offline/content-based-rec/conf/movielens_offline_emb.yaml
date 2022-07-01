@@ -1,76 +1,87 @@
-name: movielens_offline_emb
-working_dir: ./src
-python: /opt/anaconda3/envs/pytorch-1.10.1/bin/python
+apiVersion: metaspore/v1
+kind: CBEmbedJob
+metadata:
+  name: CBEmbed-I2I
+  category: Match/CBCF/CBEmbed-I2I
 
-pipeline:
-
-- 
-  name: item_encode
-  status: 1
-  script: item_model/item_offline_embed.py
-  args:
-    item_data: ../data/ml-1m-schema/item.train.json
-    dump_data: ../data/ml-1m-dump/item.emb.pkl
-    text_model_name: sentence-transformers/all-MiniLM-L6-v2
-    batch_size: 64
-    device: "cuda:0"
-
--
-  name: user_encode
-  status: 1
-  script: user_model/user_offline_embed.py
-  args:
-    scene_id: ml-cb-100
-    action_type: rating
-    action_data: ../data/ml-1m-schema/action.train.json
-    item_data: ../data/ml-1m-dump/item.emb.pkl
-    dump_data: ../data/ml-1m-dump/user.emb.pkl
-    action_sortby_key: action_time
-    action_agg_func: avg
-    action_max_len: 3
-    action_decay_rate: 0.5
-
--
-  name: push_item
-  status: 1
-  script: milvus/push.py
-  args:
-    host: 10.0.1.85
-    port: 19530
-    collection_name: movielens_cb_demo
-    id_field: _ids
-    emb_field: embs
-    index_field: item_emb
-    index_file: ../data/ml-1m-dump/item.emb.pkl
-
--
-  name: push_item_test
-  status: 1
-  script: milvus/pull.py
-  args:
-    host: 10.0.1.85
-    port: 19530
-    collection_name: movielens_cb_demo
-    index_field: item_emb
-    vector: 384
-
--
-  name: push_user
-  status: 1
-  script: mongo/push.py
-  args:
-    uri: mongodb://172.31.37.47:27017
-    db_name: jpa
-    collection_name: movielens_cb_demo
-    id_field: _ids
-    emb_field: embs
-    index_file: ../data/ml-1m-dump/user.emb.pkl
-
--
-  name: push_user_test
-  status: 1
-  script: mongo/pull.py
-  args:
-    uri: mongodb://172.31.37.47:27017
-    db_name: jpa
-    collection_name: movielens_cb_demo
+spec:
+  spark:
+    session_confs:
+      app_name: 'CBCF-Embedding Pipeline'
+      spark.executor.memory: '10G'
+      spark.executor.instances: '4'
+      spark.executor.cores: '4'
+      spark.default.parallelism: '100'
+  
+  data:
+    input:
+      item_data: ../data/ml-1m-schema/item.train
+      action_data: ../data/ml-1m-schema/action.train
+      #item_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-schema/item.train
+      #action_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-schema/action.train
+    dump:
+      item_emb_data: ../data/ml-1m-dump/item.emb
+      user_emb_data: ../data/ml-1m-dump/user.emb
+      #item_emb_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-dump/item.emb
+      #user_emb_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-dump/user.emb
+  
+  jobs:
+    item_embed:
+      run:
+        status: true
+        text_model_name: sentence-transformers/all-MiniLM-L6-v2
+        batch_size: 64
+        device: "cuda:0"
+        write_mode: overwrite
+      push_id:
+        status: true
+        mongo_uri: mongodb://172.31.37.47:27017
+        mongo_database: jpa
+        mongo_collection: movielens_cb_demo_item_embid
+        write_mode: overwrite
+        fields: 
+        - id
+        - item_id
+        index_fields: 
+        - id
+      push_emb:
+        status: true
+        milvus_host: 120.92.77.120
+        milvus_port: 19530
+        collection_name: movielens_cb_demo_item_emb
+        collection_desc: "Movielens CBCF item embedding"
+        collection_shards: 2
+        fields: 
+        - id
+        - item_emb
+        id_field: id
+        emb_field: item_emb
+        write_batch: 1024
+        write_interval: 0.1
+        index_metric: IP
+        index_nlist: 1024
+        index_type: IVF_FLAT
+  
+    user_embed:
+      run:
+        status: true
+        scene_id: ml-cb-100
+        action_type: rating
+        action_value_min: 0.0
+        action_value_max: 9999999.0
+        action_sortby_key: action_time
+        action_agg_func: avg
+        action_max_len: 3
+        action_decay_rate: 0.5
+        write_mode: overwrite
+      push_emb:
+        status: true
+        mongo_uri: mongodb://172.31.37.47:27017
+        mongo_database: jpa
+        mongo_collection: movielens_cb_demo_user_emb
+        write_mode: overwrite
+        fields: 
+        - user_id
+        - user_emb
+        index_fields: 
+        - user_id
