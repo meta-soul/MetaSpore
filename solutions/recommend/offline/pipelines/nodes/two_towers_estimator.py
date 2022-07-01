@@ -20,7 +20,7 @@ from ..utils import get_class
 
 class TwoTowersEstimatorNode(PipelineNode):
     def __call__(self, **payload) -> dict:
-        training_conf = payload['conf']['training']
+        training_conf = payload['conf'][self._node_conf]
         spark_session_conf = payload['conf']['spark']['session_confs']
         
         UserModule = get_class(**training_conf['user_module_class'])

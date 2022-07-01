@@ -22,7 +22,7 @@ from ..utils import start_logging
 class MongoDBDumperNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         
-        mongodb = payload['conf']['mongodb']
+        mongodb = payload['conf'][self._node_conf]
         df_to_mongodb = payload['df_to_mongodb']
         logger = start_logging(**payload['conf']['logging'])
 
