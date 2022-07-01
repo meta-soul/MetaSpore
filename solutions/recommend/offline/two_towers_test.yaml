@@ -4,15 +4,19 @@ metadata:
   name: BatchNegativeSampling
   category: Match/TwoTwoers/BatchNegativeSampling
   pipeline_nodes:
-    - InitSparkNode:
+    - class: InitSparkNode
+      params:
         node_conf: spark
-    - DataLoaderNode:
+    - class: DataLoaderNode
+      params:
         node_conf: dataset
-    - TwoTowersEstimatorNode:
+    - class: TwoTowersEstimatorNode
+      params:
         node_conf: training
-    - RetrievalEvaluatorNode:
+    - class: RetrievalEvaluatorNode
+      params:
         node_conf: evaluation
-    - StopSparkNode:
+    - class: StopSparkNode
 
 spec:
   logging:

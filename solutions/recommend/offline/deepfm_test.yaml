@@ -4,15 +4,19 @@ metadata:
   name: DeepFM
   category: Rank/DeepCTR/DeepFM
   pipeline_nodes:
-    - InitSparkNode:
+    - class: InitSparkNode
+      params:
         node_conf: spark
-    - DataLoaderNode:
+    - class: DataLoaderNode
+      params:
         node_conf: dataset
-    - DeepCTREstimatorNode:
+    - class: DeepCTREstimatorNode
+      params:
         node_conf: training
-    - RankEvaluatorNode:
+    - class: RankEvaluatorNode
+      params:
         node_conf: evaluation
-    - StopSparkNode:
+    - class: StopSparkNode
 
 spec:
   logging:

@@ -4,11 +4,13 @@ metadata:
   name: ItemCF
   category: Match/I2I/ItemCF
   pipeline_nodes:
-    - InitSparkNode:
+    - class: InitSparkNode
+      params: 
         node_conf: spark
-    - DataLoaderNode:
+    - class: DataLoaderNode
+      params:
         node_conf: dataset
-    - StopSparkNode:
+    - class: StopSparkNode
 
 spec: 
   logging:
