@@ -30,7 +30,7 @@ class Pipeline(object):
             print('Debug -- load meta: ', self._meta)
         if infer:
             from .utils import get_class
-            node_confs = [next(iter(x.items())) for x in self._meta['pipeline_nodes']]
+            node_confs = [(x['class'], x.get('params', None)) for x in self._meta['pipeline_nodes']]
             print('Debug -- algo pipeline node init params: ', node_confs)
             node_list = list(map(lambda x: get_class('pipelines.nodes', x[0])(**x[1] or {}), node_confs))
             self._nodes.extend(node_list)
