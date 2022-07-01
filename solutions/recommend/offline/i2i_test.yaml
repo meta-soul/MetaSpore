@@ -4,17 +4,22 @@ metadata:
   name: ItemCF
   category: Match/I2I/ItemCF
   pipeline_nodes:
-    - InitSparkNode:
+    - class: InitSparkNode
+      params:
         node_conf: spark
-    - DataLoaderNode:
+    - class: DataLoaderNode
+      params:
         node_conf: dataset
-    - I2IEstimatorNode:
+    - class: I2IEstimatorNode
+      params:
         node_conf: training
-    - RetrievalEvaluatorNode:
+    - class: RetrievalEvaluatorNode
+      params:
         node_conf: evaluation
-    - MongoDBDumperNode:
+    - class: MongoDBDumperNode
+      params:
         node_conf: mongodb
-    - StopSparkNode:
+    - class: StopSparkNode
 
 spec:
   logging:

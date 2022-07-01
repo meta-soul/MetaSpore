@@ -21,7 +21,7 @@ from ..utils import get_class
 class DeepCTREstimatorNode(PipelineNode):   
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
-        training_conf = conf['training']
+        training_conf = conf[self._node_conf]
         spark_session_conf = payload['conf']['spark']['session_confs']
         train_dataset = payload['train_dataset']
         test_dataset = payload['test_dataset']

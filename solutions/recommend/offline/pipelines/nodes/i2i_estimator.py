@@ -31,7 +31,7 @@ class I2IEstimatorNode(PipelineNode):
     
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
-        training_conf = conf['training']
+        training_conf = conf[self._node_conf]
         user_id = conf['dataset']['user_id_column']
         item_id = conf['dataset']['item_id_column']
         label = conf['dataset']['label_column']
