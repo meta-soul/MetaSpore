@@ -73,12 +73,8 @@ spec:
     max_recommendation_count: 20
   
   evaluation:
-    node_class: RetrievalEvaluatorNode
-    node_priority: 40
   
   mongodb:
-    node_class: MongoDBDumperNode
-    node_priority: 50
     uri: mongodb://172.31.37.47:27017/
     database: jpa
     collection: saas_icf
@@ -87,6 +83,4 @@ spec:
     index_unique: False
   
   spark_stop:
-    node_class: StopSparkNode
-    node_priority: 99
   
