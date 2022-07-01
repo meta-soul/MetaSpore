@@ -24,7 +24,7 @@ class InitSparkNode(PipelineNode):
         confs = payload['conf']
         logger = start_logging(**confs['logging'])
 
-        spark_confs = confs['spark']
+        spark_confs = confs[self._node_conf]
         if not spark_confs:
             logger.info("Spark configuration is none")
             return payload

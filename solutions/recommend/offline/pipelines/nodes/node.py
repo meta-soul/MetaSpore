@@ -17,6 +17,9 @@
 from abc import ABC, abstractmethod
 
 class PipelineNode(ABC):
+    def __init__(self, node_conf=None, **kwargs):
+        self._node_conf = node_conf
+    
     def preprocess(self, **payload) -> dict:
         return payload
     
