@@ -35,6 +35,8 @@ MetaSpore has the following features:
     * [Online algorithm application (Java implementation)](demo/movielens/online)
 
 ## Installation package download
+
+### Training package
 We provide a precompiled offline training installation package: [download link](https://ks3-sgp.ksyuncs.com/dmetasoul-release-sg/releases/metaspore/metaspore-1.0.0%2B48beee4-cp38-cp38-linux_x86_64.whl). This package requires Python 3.8.
 
 After downloading, in the Python 3.8 environment, execute the installation through the command line:
@@ -43,6 +45,19 @@ pip install pyspark
 pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stable.html
 pip install metaspore-1.0.0+48beee4-cp38-cp38-linux_x86_64.whl
 ```
+
+### Serving package
+We provide prebuilt docker images for MetaSpore Serving Service:
+#### CPU only image
+```
+docker pull dmetasoul/metaspore-serving-release:cpu-v1.0.1
+```
+#### GPU image
+```
+docker pull dmetasoul/metaspore-serving-release:gpu-v1.0.1
+```
+
+See [Run Serving Service in Docker](docs/run-serving-image.md) for details.
 
 ## Compile the code
 
