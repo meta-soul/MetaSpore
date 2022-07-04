@@ -17,7 +17,7 @@ if __package__ is None:
     sys.path.append('..')
     from common import init_spark, stop_spark
 else:
-    from jobs.common import init_spark, stop_spark
+    from ..common import init_spark, stop_spark
 
 def get_parser():
     parser = argparse.ArgumentParser()

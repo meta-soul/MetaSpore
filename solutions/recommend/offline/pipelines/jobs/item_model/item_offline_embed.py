@@ -11,7 +11,7 @@ if __package__ is None:
     sys.path.append('..')
     from common import init_spark
 else:
-    from jobs.common import init_spark
+    from ..common import init_spark
 
 def run(item_data, dump_data, text_model_name, 
         batch_size=256, device="cuda:0", write_mode="overwrite", 
