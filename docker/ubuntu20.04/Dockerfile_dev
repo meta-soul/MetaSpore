@@ -57,6 +57,6 @@ RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 110 --slave /
 
 RUN git clone https://github.com/Microsoft/vcpkg.git /opt/vcpkg
 RUN /opt/vcpkg/bootstrap-vcpkg.sh
-COPY vcpkg.json /opt/vcpkg_installed/vcpkg.json
-COPY vcpkg-configuration.json /opt/vcpkg_installed/vcpkg-configuration.json
-RUN /opt/vcpkg/vcpkg install --x-install-root=/opt/vcpkg_installed --x-manifest-root=/opt/vcpkg_installed --clean-after-build
+COPY vcpkg.json /opt/vcpkg.json
+COPY vcpkg-configuration.json /opt/vcpkg-configuration.json
+RUN --mount=type=cache,target=/opt/vcpkg_installed /opt/vcpkg/vcpkg install --x-install-root=/opt/vcpkg_installed --x-manifest-root=/opt --clean-after-build

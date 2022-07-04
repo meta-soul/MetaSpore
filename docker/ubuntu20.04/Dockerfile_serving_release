@@ -40,12 +40,12 @@ ENV LC_ALL=en_US.UTF-8
 ENV TZ=Asia/Shanghai
 RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install -y tzdata && apt-get clean
 
-RUN apt-get install --fix-missing -y python3 python3-setuptools ca-certificates && apt-get clean
+RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-certificates && apt-get clean
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
 RUN python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
-RUN python -m pip install grpcio-tools python3-venv numpy pyarrow --no-cache-dir
+RUN python -m pip install grpcio-tools numpy pyarrow --no-cache-dir
 
 FROM ${BUILD_IMAGE} as build_stage
 
