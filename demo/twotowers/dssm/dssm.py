@@ -29,11 +29,11 @@ from pyspark.mllib.evaluation import RankingMetrics
 
 def parse_class_desc(class_desc, path_sep='.'):
     if not class_desc or len(class_desc)<=0:
-        print('Error -- empty class desc: ', class_desc)
+        print('Error -- empty class desc:', class_desc)
         return None
     class_path_list = class_desc.split(path_sep)
     if len(class_path_list) <= 1:
-        print('Error -- empty module name: ', class_desc)
+        print('Error -- empty module name:', class_desc)
     return path_sep.join(class_path_list[:-1]), class_path_list[-1]
 
 def init_class_with_desc(class_desc, path_sep='.'):
@@ -48,7 +48,7 @@ def load_config(path):
     params = dict()
     with open(path, 'r') as stream:
         params = yaml.load(stream, Loader=yaml.FullLoader)
-        print('Debug -- load config: ', params)
+        print('Debug -- load config:', params)
     return params
 
 def init_spark(local, app_name, batch_size, worker_count, server_count,
@@ -136,7 +136,7 @@ def train(spark, train_dataset, item_dataset, **model_params):
                                 item_ids_column_indices = [6],
                                 retrieval_item_count = 20,
                                 metric_update_interval = 500,
-                                agent_class = agent_class_
+                                agent_class = agent_class_,
                                 **model_params)
     ## dnn learning rate
     estimator.updater = ms.AdamTensorUpdater(model_params['adam_learning_rate'])
@@ -182,8 +182,8 @@ if __name__=="__main__":
     test_result = transform(spark, model, test_dataset)
     ## evaluate
     recall_metrics = evaluate(spark, test_result)
-    print("Debug -- Precision@20: ", recall_metrics.precisionAt(20))
-    print("Debug -- Recall@20: ", recall_metrics.recallAt(20))
-    print("Debug -- MAP@20: ", recall_metrics.meanAveragePrecisionAt(20))
-    print("Debug -- NDCG@20: ", recall_metrics.ndcgAt(20))
+    print("Debug -- Precision@20:", recall_metrics.precisionAt(20))
+    print("Debug -- Recall@20:", recall_metrics.recallAt(20))
+    print("Debug -- MAP@20:", recall_metrics.meanAveragePrecisionAt(20))
+    print("Debug -- NDCG@20:", recall_metrics.ndcgAt(20))
     stop_spark(spark)
