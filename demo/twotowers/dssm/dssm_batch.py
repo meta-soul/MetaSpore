@@ -66,21 +66,28 @@ def read_dataset(spark):
 
 def train(spark, train_dataset, item_dataset, **model_params):
     ## init user module, item module, similarity module
-    user_module = UserModule(user_column_name, user_combine_schema, \
-                             emb_size = model_params['vector_embedding_size'], \
-                             alpha = model_params['ftrl_learning_rate'], \
-                             beta = model_params['ftrl_smothing_rate'], \
-                             l1 = model_params['ftrl_l1_regularization'], \
-                             l2 = model_params['ftrl_l2_regularization'], \
-                             dense_structure = model_params['dense_structure'])
-    item_module = ItemModule(item_column_name, item_combine_schema, \
-                             emb_size = model_params['vector_embedding_size'], \
-                             alpha = model_params['ftrl_learning_rate'], \
-                             beta = model_params['ftrl_smothing_rate'], \
-                             l1 = model_params['ftrl_l1_regularization'], \
-                             l2 = model_params['ftrl_l2_regularization'], \
-                             dense_structure = model_params['dense_structure'])
+    user_module = UserModule(column_name_path = model_params['user_column_name'], \
+                             combine_schema_path = model_params['user_combine_schema'], \
+                             embedding_dim = model_params['vector_embedding_size'], \
+                             sparse_init_var = model_params['sparse_init_var'], \
+                             ftrl_l1 = model_params['ftrl_l1_regularization'], \
+                             ftrl_l2 = model_params['ftrl_l2_regularization'], \
+                             ftrl_alpha = model_params['ftrl_learning_rate'], \
+                             ftrl_beta = model_params['ftrl_smothing_rate'], \
+                             dnn_hidden_units = model_params['dnn_hidden_units'], \
+                             dnn_hidden_activations = model_params['dnn_hidden_activations'])
+    item_module = ItemModule(column_name_path = model_params['item_column_name'], \
+                             combine_schema_path = model_params['item_combine_schema'], \
+                             embedding_dim = model_params['vector_embedding_size'], \
+                             sparse_init_var = model_params['sparse_init_var'], \
+                             ftrl_l1 = model_params['ftrl_l1_regularization'], \
+                             ftrl_l2 = model_params['ftrl_l2_regularization'], \
+                             ftrl_alpha = model_params['ftrl_learning_rate'], \
+                             ftrl_beta = model_params['ftrl_smothing_rate'], \
+                             dnn_hidden_units = model_params['dnn_hidden_units'], \
+                             dnn_hidden_activations = model_params['dnn_hidden_activations'])
     similarity_module = SimilarityModule(model_params['tau'])
+
     ## init module class
     module = TwoTowerBatchNegativeSamplingModule(user_module, item_module, similarity_module)
     ## import two tower module
