@@ -1,0 +1,86 @@
+apiVersion: metaspore/v1
+kind: TrainingJob
+metadata:
+  name: ItemCF
+  category: Match/I2I/ItemCF
+  pipeline_nodes:
+    - class: InitSparkNode
+      params:
+        node_conf: spark
+    - class: DataLoaderNode
+      params:
+        node_conf: dataset
+    - class: I2IEstimatorNode
+      params:
+        node_conf: training
+    - class: RetrievalEvaluatorNode
+      params:
+        node_conf: evaluation
+    - class: MongoDBDumperNode
+      params:
+        node_conf: mongodb
+    - class: StopSparkNode
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: 'I2I Pipeline Demo'
+      local: False
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+  
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+  
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/test/python.zip'
+  
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
+    user_id_column: user_id
+    item_id_column: friend_id
+    label_column: label
+    label_value: '1'
+    last_item_id_column: last_friend_id
+  
+  training:
+    node_class: I2IEstimatorNode
+    node_priority: 30
+    i2i_estimator_class:
+      module_name: python.algos.item_cf_retrieval
+      class_name: ItemCFEstimator
+  
+  #  i2i_estimator_class:
+  #    module_name: metaspore
+  #    class_name: SwingEstimator
+  
+    model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/model/item_cf/model_out/df.parquet
+    max_recommendation_count: 20
+  
+  evaluation:
+  
+  mongodb:
+    uri: mongodb://172.31.37.47:27017/
+    database: jpa
+    collection: saas_icf
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+  
+  spark_stop:
+  
