@@ -1,0 +1,13 @@
+{
+  "title": "Init log",
+  "description": "Configuration of python logging.",
+  "type": "object",
+  "properties": {
+    "loglevel": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "loglevel"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "title": "I2I Estimator",
+  "description": "Configuration of i2i estimator node.",
+  "type": "object",
+  "properties": {
+    "i2i_estimator_class": {
+      "type": "object",
+      "properties": {
+        "module_name": {
+          "type": "string"
+        },
+        "class_name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "module_name",
+        "class_name"
+      ]
+    },
+    "model_out_path": {
+      "type": "string"
+    },
+    "max_recommendation_count": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": [
+    "i2i_estimator_class",
+    "model_out_path",
+    "max_recommendation_count"
+  ]
+}
