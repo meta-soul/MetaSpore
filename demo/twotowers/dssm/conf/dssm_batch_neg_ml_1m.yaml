@@ -42,8 +42,8 @@ milvus_nprobe: 128
 
 ## dataset
 input_label_column_index: 0
-input_feature_column_num: 11
 input_item_id_column_index: 6 
+input_feature_column_num: 11
 input_item_probability_column_index: 11
 input_sample_weight_column_index: 12
 
