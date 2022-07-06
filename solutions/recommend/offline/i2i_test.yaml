@@ -59,8 +59,6 @@ spec:
     last_item_id_column: last_friend_id
   
   training:
-    node_class: I2IEstimatorNode
-    node_priority: 30
     i2i_estimator_class:
       module_name: python.algos.item_cf_retrieval
       class_name: ItemCFEstimator
