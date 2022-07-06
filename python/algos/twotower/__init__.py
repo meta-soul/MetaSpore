@@ -14,4 +14,4 @@
 # limitations under the License.
 #
 
-from .two_tower_retrieval import TwoTowerRetrievalModel, TwoTowerRetrievalEstimator
+from .two_tower_retrieval import TwoTowerRetrievalModule, TwoTowerRetrievalModel, TwoTowerRetrievalEstimator

@@ -15,7 +15,7 @@ item_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/item.parquet
 
 ## model
 ## two_tower_module: metaspore
-two_tower_module: python.algos.twotowers 
+two_tower_module: python.algos.twotower
 two_tower_module_class: TwoTowerRetrievalModule
 two_tower_estimator_class: TwoTowerRetrievalEstimator
 
