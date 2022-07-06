@@ -14,11 +14,6 @@
 # limitations under the License.
 #
 
-get_python_wheel_tag(python_wheel_tag)
-set(wheel_file_name metaspore-${project_version}-${python_wheel_tag}.whl)
-message(STATUS "python_wheel_tag: ${python_wheel_tag}")
-message(STATUS "wheel_file_name: ${wheel_file_name}")
-
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/install_wheel.stamp
     COMMAND ${Python_EXECUTABLE} -m pip install wheel
@@ -27,7 +22,8 @@ add_custom_command(
 add_custom_target(install_wheel DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/install_wheel.stamp)
 
 set(python_files
-    python/setup.py
+    pyproject.toml
+    setup.py
     python/metaspore/__init__.py
     python/metaspore/initializer.py
     python/metaspore/updater.py
@@ -69,8 +65,7 @@ set(python_files
 )
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
                    COMMAND env _METASPORE_SO=${PROJECT_BINARY_DIR}/_metaspore.so
-                               _METASPORE_VERSION=${project_version}
-                           ${Python_EXECUTABLE} -m pip wheel ${PROJECT_SOURCE_DIR}/python
-                   MAIN_DEPENDENCY python/setup.py
+                           ${Python_EXECUTABLE} -m pip wheel ${PROJECT_SOURCE_DIR}
+                   MAIN_DEPENDENCY setup.py
                    DEPENDS metaspore_shared ${python_files} install_wheel)
 add_custom_target(python_wheel ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name})

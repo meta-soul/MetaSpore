@@ -34,9 +34,9 @@ cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_T
 make -j8
 ```
 
-After the compilation is complete, metaspore-1.0.0-GITTAG-cp38-cp38-linux_x86_64.whl will be generated in the current build directory, where GITTAG needs to be replaced with the actual git version.
+After the compilation is complete, metaspore-1.0.1-cp38-cp38-linux_x86_64.whl will be generated in the current build directory, where the version `1.0.1` is read from pyproject.toml file.
 
 Then you can install it into the Python environment for testing with the following command:
 ```bash
-pip install --upgrade --force-reinstall --no-deps metaspore-1.0.0+GITTAG-cp38-cp38-linux_x86_64.whl
+pip install --upgrade --force-reinstall --no-deps metaspore-1.0.1-cp38-cp38-linux_x86_64.whl
 ```

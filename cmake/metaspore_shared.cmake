@@ -14,9 +14,6 @@
 # limitations under the License.
 #
 
-get_project_version(project_version)
-message(STATUS "project_version: ${project_version}")
-
 find_package(Python REQUIRED COMPONENTS Interpreter Development)
 message("Found Python at " ${Python_EXECUTABLE})
 find_package(PkgConfig REQUIRED)
@@ -143,12 +140,4 @@ target_link_libraries(metaspore_shared PRIVATE
     Boost::headers
     thrift::thrift
     zmq::libzmq
-)
-
-add_custom_command(TARGET metaspore_shared
-    POST_BUILD
-    COMMAND ldd ${CMAKE_CURRENT_BINARY_DIR}/_metaspore.so | 
-            egrep -v 'linux-vdso|ld-linux-x86-64|libpthread|libdl|libm|libc|${CMAKE_CURRENT_BINARY_DIR}' |
-            cut -f 3 -d ' ' |
-            xargs -L 1 -I so_file cp so_file ${CMAKE_CURRENT_BINARY_DIR}/
 )
