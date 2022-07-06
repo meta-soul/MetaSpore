@@ -71,70 +71,75 @@ if(BUILD_SERVING_BIN)
     )
 endif()
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CreateVirtualEnvironment.cmake)
+if(BUILD_TRAIN_PKG)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/get_python_wheel_name.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/CreateVirtualEnvironment.cmake)
+    get_python_wheel_name(wheel_file_name)
+    message("Python wheel name for test " ${wheel_file_name})
 
-CreateVirtualEnvironment(testing_venv
-    REQUIREMENTS_TXT ${CMAKE_CURRENT_SOURCE_DIR}/python/tests/requirements.txt
-    OUT_PYTHON_EXE PYTHON_EXE
-    OUT_BINARY_DIR PYTHON_BIN_DIR)
+    CreateVirtualEnvironment(testing_venv
+        REQUIREMENTS_TXT ${CMAKE_CURRENT_SOURCE_DIR}/python/tests/requirements.txt
+        OUT_PYTHON_EXE PYTHON_EXE
+        OUT_BINARY_DIR PYTHON_BIN_DIR)
 
-add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/metaspore_pb2.py ${CMAKE_BINARY_DIR}/metaspore_pb2_grpc.py
-    COMMAND ${PYTHON_EXE} -m grpc_tools.protoc -I ${CMAKE_CURRENT_SOURCE_DIR}/protos
-        --python_out=${CMAKE_CURRENT_BINARY_DIR} --grpc_python_out ${CMAKE_CURRENT_BINARY_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
-    DEPENDS testing_venv ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto)
-add_custom_target(py_grpc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/metaspore_pb2_grpc.py)
-
-if(BUILD_SERVING_BIN)
-    add_cpp_test(test_py_preprocessing_process serving/py_preprocessing_process_test.cpp)
-    add_custom_command(TARGET test_py_preprocessing_process
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/example_requirements.txt
-                ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/requirements.txt
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/example_preprocessor.py
-                ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/preprocessor.py
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/test_example_preprocessor.py
-                ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/test_example_preprocessor.py
-        COMMAND ${PYTHON_EXE} -m grpc_tools.protoc
-                -I ${CMAKE_CURRENT_SOURCE_DIR}/protos
-                --python_out ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
-                --grpc_python_out ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
-                ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
-    )
-    add_cpp_test(test_py_preprocessing_model serving/py_preprocessing_model_test.cpp)
-endif()
-
-add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py
-    COMMAND ${PYTHON_EXE} -m pip install --upgrade pip
-    COMMAND ${PYTHON_EXE} -m pip install --upgrade --force-reinstall --no-deps ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name} testing_venv
-)
-add_custom_target(metaspore_wheel_install ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py python_wheel)
-
-function(add_py_test test_name file_name)
     add_custom_command(
-        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file_name}
-        COMMAND ${CMAKE_COMMAND} -E create_hardlink ${CMAKE_CURRENT_SOURCE_DIR}/python/tests/${file_name} ${CMAKE_CURRENT_BINARY_DIR}/${file_name}
-        DEPENDS testing_venv py_grpc metaspore_wheel_install)
-    add_custom_target(${test_name} ALL DEPENDS
-        ${CMAKE_CURRENT_BINARY_DIR}/${file_name} metaspore_wheel_install copy_files)
-    add_test(NAME ${test_name} COMMAND ${PYTHON_EXE} ${CMAKE_CURRENT_BINARY_DIR}/${file_name})
-endfunction()
+        OUTPUT ${CMAKE_BINARY_DIR}/metaspore_pb2.py ${CMAKE_BINARY_DIR}/metaspore_pb2_grpc.py
+        COMMAND ${PYTHON_EXE} -m grpc_tools.protoc -I ${CMAKE_CURRENT_SOURCE_DIR}/protos
+            --python_out=${CMAKE_CURRENT_BINARY_DIR} --grpc_python_out ${CMAKE_CURRENT_BINARY_DIR}
+            ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
+        DEPENDS testing_venv ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto)
+    add_custom_target(py_grpc ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/metaspore_pb2_grpc.py)
 
-add_py_test(test_dense_xgboost_train dense_xgboost.py)
-add_py_test(test_dense_xgboost_grpc dense_xgboost_grpc_test.py)
-add_py_test(test_embedding_bag_export.py embedding_bag_export.py)
-add_py_test(test_mnist_mlp_train mnist_mlp.py)
-add_py_test(test_mnist_mlp_eval mnist_mlp_eval.py)
-add_py_test(test_sparse_two_tower_train_export sparse_two_tower_export_demo.py)
-add_py_test(test_sparse_mlp_train_export sparse_mlp_export_demo.py)
-add_py_test(test_sparse_wdl_train_export sparse_wdl_export_demo.py)
-add_py_test(test_sparse_wdl_export sparse_wdl_export_test.py)
-add_py_test(test_sparse_wdl_grpc sparse_wdl_grpc_test.py)
-add_py_test(test_two_tower_retrieval_milvus two_tower_retrieval_milvus.py)
+    if(BUILD_SERVING_BIN)
+        add_cpp_test(test_py_preprocessing_process serving/py_preprocessing_process_test.cpp)
+        add_custom_command(TARGET test_py_preprocessing_process
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
+            COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/example_requirements.txt
+                    ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/requirements.txt
+            COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/example_preprocessor.py
+                    ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/preprocessor.py
+            COMMAND ${CMAKE_COMMAND} -E copy
+                    ${CMAKE_CURRENT_SOURCE_DIR}/python/scripts/preprocessing/test_example_preprocessor.py
+                    ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf/test_example_preprocessor.py
+            COMMAND ${PYTHON_EXE} -m grpc_tools.protoc
+                    -I ${CMAKE_CURRENT_SOURCE_DIR}/protos
+                    --python_out ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
+                    --grpc_python_out ${CMAKE_CURRENT_BINARY_DIR}/testing_preprocessor_conf
+                    ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
+        )
+        add_cpp_test(test_py_preprocessing_model serving/py_preprocessing_model_test.cpp)
+    endif()
+
+    add_custom_command(
+        OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py
+        COMMAND ${PYTHON_EXE} -m pip install --upgrade pip
+        COMMAND ${PYTHON_EXE} -m pip install --upgrade --force-reinstall --no-deps ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
+        DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name} testing_venv
+    )
+    add_custom_target(metaspore_wheel_install ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/testing_venv/lib/python3.8/site-packages/metaspore/agent.py python_wheel)
+
+    function(add_py_test test_name file_name)
+        add_custom_command(
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${file_name}
+            COMMAND ${CMAKE_COMMAND} -E create_hardlink ${CMAKE_CURRENT_SOURCE_DIR}/python/tests/${file_name} ${CMAKE_CURRENT_BINARY_DIR}/${file_name}
+            DEPENDS testing_venv py_grpc metaspore_wheel_install)
+        add_custom_target(${test_name} ALL DEPENDS
+            ${CMAKE_CURRENT_BINARY_DIR}/${file_name} metaspore_wheel_install copy_files)
+        add_test(NAME ${test_name} COMMAND ${PYTHON_EXE} ${CMAKE_CURRENT_BINARY_DIR}/${file_name})
+    endfunction()
+
+    add_py_test(test_dense_xgboost_train dense_xgboost.py)
+    add_py_test(test_dense_xgboost_grpc dense_xgboost_grpc_test.py)
+    add_py_test(test_embedding_bag_export.py embedding_bag_export.py)
+    add_py_test(test_mnist_mlp_train mnist_mlp.py)
+    add_py_test(test_mnist_mlp_eval mnist_mlp_eval.py)
+    add_py_test(test_sparse_two_tower_train_export sparse_two_tower_export_demo.py)
+    add_py_test(test_sparse_mlp_train_export sparse_mlp_export_demo.py)
+    add_py_test(test_sparse_wdl_train_export sparse_wdl_export_demo.py)
+    add_py_test(test_sparse_wdl_export sparse_wdl_export_test.py)
+    add_py_test(test_sparse_wdl_grpc sparse_wdl_grpc_test.py)
+    add_py_test(test_two_tower_retrieval_milvus two_tower_retrieval_milvus.py)
+endif()

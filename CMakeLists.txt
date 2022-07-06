@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 project(metaspore
-    VERSION 1.0.0
+    VERSION 1.0.1
     LANGUAGES CXX
     DESCRIPTION "MetaSpore AI Platform"
     HOMEPAGE_URL "https://github.com/meta-soul/MetaSpore.git"
@@ -50,8 +50,6 @@ find_package(Boost COMPONENTS filesystem system REQUIRED)
 include(cmake/metaspore_common.cmake)
 
 if(BUILD_TRAIN_PKG)
-    include(cmake/get_project_version.cmake)
-    include(cmake/get_python_wheel_tag.cmake)
     include(cmake/metaspore_shared.cmake)
     include(cmake/python_wheel.cmake)
 endif()

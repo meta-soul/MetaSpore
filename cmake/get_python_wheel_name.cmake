@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-function(get_python_wheel_tag var)
+function(get_python_wheel_name var)
     set(src)
     string(APPEND src "import sys; ")
     string(APPEND src "ver = '%d%d' % ")
@@ -23,7 +23,7 @@ function(get_python_wheel_tag var)
     string(APPEND src "sys.maxunicode == 0x10ffff else ''; ")
     string(APPEND src "flag += 'm' if ver == '37' else ''; ")
     string(APPEND src "print('cp%s-cp%s%s-linux_x86_64' % ")
-    string(APPEND src "(ver, ver, flag))")
+    string(APPEND src "(ver, ver, flag), end='')")
     execute_process(
         COMMAND ${Python_EXECUTABLE} -c "${src}"
         RESULT_VARIABLE rc
@@ -31,6 +31,13 @@ function(get_python_wheel_tag var)
     if(NOT "${rc}" STREQUAL "0" OR "${wheel_tag}" STREQUAL "")
         message(FATAL_ERROR "Can not get Python wheel tag.")
     endif()
-    string(STRIP "${wheel_tag}" wheel_tag)
-    set("${var}" "${wheel_tag}" PARENT_SCOPE)
+    execute_process(
+        COMMAND ${Python_EXECUTABLE} -c "import pkg_resources; print(pkg_resources.get_distribution('metaspore').version, end='')"
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        RESULT_VARIABLE rc
+        OUTPUT_VARIABLE wheel_version)
+    if(NOT "${rc}" STREQUAL "0" OR "${wheel_version}" STREQUAL "")
+        message(FATAL_ERROR "Can not get Python wheel version.")
+    endif()
+    set("${var}" "${CMAKE_PROJECT_NAME}-${wheel_version}-${wheel_tag}.whl" PARENT_SCOPE)
 endfunction()

@@ -50,41 +50,10 @@ class metaspore_build_ext(build_ext):
         import shutil
         metaspore_so_path = self.get_metaspore_so_path()
         ext_so_path = self.get_ext_fullpath(ext.name)
+        print(f'ext copy so cwd: {os.getcwd()} from {metaspore_so_path} to {ext_so_path}')
         shutil.copy(metaspore_so_path, ext_so_path)
-        metaspore_so_dir = os.path.dirname(os.path.realpath(metaspore_so_path))
-        ext_so_dir = os.path.dirname(os.path.realpath(ext_so_path))
-        so_names = ['libstdc++.so.6', 'libgcc_s.so.1']
-        for so_name in so_names:
-            shutil.copy(os.path.join(metaspore_so_dir, so_name), os.path.join(ext_so_dir, so_name))
 
-def get_metaspore_version():
-    key = '_METASPORE_VERSION'
-    metaspore_version = os.environ.get(key)
-    if metaspore_version is None:
-        message = "environment variable %r is not set; " % key
-        message += "can not get MetaSpore wheel version"
-        raise RuntimeError(message)
-    return metaspore_version
-
-setup(name='metaspore',
-      version=get_metaspore_version(),
-      description="MetaSpore AI platform.",
-      packages=['metaspore', 'metaspore.nn', 'metaspore.compat', 'metaspore.compat.ps', 'ps'],
-      ext_modules=[MetaSporeExtension('metaspore/_metaspore')],
-      cmdclass={ 'build_ext': metaspore_build_ext },
-      classifiers=[
-          "Programming Language :: Python :: 3",
-          "License :: OSI Approved :: Apache Software License",
-          "Operating System :: POSIX :: Linux",
-          "Topic :: Scientific/Engineering :: Artificial Intelligence",
-      ],
-      install_requires=['numpy>=1.20.1',
-                        'pandas>=1.2.3',
-                        'nest_asyncio>=1.5.1',
-                        'cloudpickle>=1.6.0',
-                        'pyarrow>=3.0.0',
-                        'PyYAML>=5.3.1',
-                        'boto3>=1.17.41',
-                        'python-consul>=1.1.0',
-                        'findspark>=1.4.2',
-                        'tabulate'])
+setup(
+    ext_modules=[MetaSporeExtension('metaspore/_metaspore')],
+    cmdclass={ 'build_ext': metaspore_build_ext },
+)

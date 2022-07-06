@@ -67,7 +67,7 @@ class HashtableHelpers {
   private:
     static constexpr __uint128_t fast_modulo(__uint128_t a, __uint128_t b) {
         constexpr int q = 89;
-        __uint64_t r = (a & b) + (a >> q);
+        uint64_t r = (a & b) + (a >> q);
         if (r >= b)
             r -= b;
         return r;
