@@ -1,0 +1,109 @@
+{
+  "title": "Deep CTR Estimator",
+  "description": "Configuration of deep ctr estimator node.",
+  "type": "object",
+  "properties": {
+    "deep_ctr_model_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "wide_column_name_path": {
+      "type": "string"
+    },
+    "wide_combine_schema_path": {
+      "type": "string"
+    },
+    "deep_column_name_path": {
+      "type": "string"
+    },
+    "deep_combine_schema_path": {
+      "type": "string"
+    },
+    "model_in_path": {
+      "type": "string"
+    },
+    "model_out_path": {
+      "type": "string"
+    },
+    "model_export_path": {
+      "type": "string"
+    },
+    "model_version": {
+      "type": "string"
+    },
+    "experiment_name": {
+      "type": "string"
+    },
+    "input_label_column_index": {
+      "$ref": "file:common.schema.json#/definitions/column_index"
+    },
+    "metric_update_interval": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "use_wide": {
+      "type": "boolean"
+    },
+    "use_dnn": {
+      "type": "boolean"
+    },
+    "use_fm": {
+      "type": "boolean"
+    },
+    "wide_embedding_dim": {
+      "$ref": "file:common.schema.json#/definitions/embedding_size"
+    },
+    "deep_embedding_dim": {
+      "$ref": "file:common.schema.json#/definitions/embedding_size"
+    },
+    "adam_learning_rate": {
+      "$ref": "file:common.schema.json#/definitions/prob_like"
+    },
+    "ftrl_l1": {
+      "type": "number"
+    },
+    "ftrl_l2": {
+      "type": "number"
+    },
+    "ftrl_alpha": {
+      "type": "number"
+    },
+    "ftrl_beta": {
+      "type": "number"
+    },
+    "dnn_hidden_units": {
+      "$ref": "file:common.schema.json#/definitions/fc_structure"
+    },
+    "sparse_init_var": {
+      "type": "number"
+    },
+    "dnn_hidden_activations": {
+      "type": "string"
+    },
+    "use_bias": {
+      "type": "boolean"
+    },
+    "batch_norm": {
+      "type": "boolean"
+    },
+    "net_dropout": {
+      "$ref": "file:common.schema.json#/definitions/prob_like"
+    },
+    "net_regularizer": {
+      "type": "string"
+    },
+    "training_epoches": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "shuffle_training_dataset": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "deep_ctr_model_class",
+    "model_out_path",
+    "model_version",
+    "experiment_name",
+    "input_label_column_index"
+  ]
+}
