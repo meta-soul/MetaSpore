@@ -21,8 +21,8 @@ import argparse
 import sys 
 
 sys.path.append('../../../') 
-from python.algos.simplex.simplex_net import UserModule, ItemModule, SimilarityModule
-from python.algos.simplex.simplex_agent import SimpleXAgent
+from python.algos.twotower.simplex import UserModule, ItemModule, SimilarityModule
+from python.algos.twotower.simplex import SimpleXAgent
 
 def load_config(path):
     params = dict()

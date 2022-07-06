@@ -16,7 +16,7 @@ item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
 ## model configuration
 two_tower_module_class: metaspore.TwoTowerRetrievalModule
 two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
-# two_tower_estimator_class: python.two_tower_retrieval_milvus.TwoTowerRetrievalEstimator
+# two_tower_estimator_class: python.twotower.TwoTowerRetrievalEstimator
 
 
 user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema

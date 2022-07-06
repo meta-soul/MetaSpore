@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from .retrieval_metric import RetrievalModelMetric
+from ..retrieval_metric import RetrievalModelMetric
 
 MIN_FLOAT = np.finfo(np.float32).min / 100.0
 MAX_FLOAT = np.finfo(np.float32).max / 100.0

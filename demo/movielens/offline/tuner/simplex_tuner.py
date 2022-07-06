@@ -25,10 +25,7 @@ from pyspark.mllib.evaluation import RankingMetrics
 sys.path.append("../../../../")
 
 from python.algos.tuner.base_tuner import BaseTuner
-from python.algos.simplex.simplex_net import UserModule
-from python.algos.simplex.simplex_net import ItemModule
-from python.algos.simplex.simplex_net import SimilarityModule
-from python.algos.simplex.simplex_agent import SimpleXAgent
+from python.algos.twotower.simplex import UserModule, ItemModule, SimilarityModule, SimpleXAgent
 
 class SimpleXTuner(BaseTuner):
     def __init__(self, config):

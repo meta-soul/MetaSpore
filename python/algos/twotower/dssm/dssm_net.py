@@ -18,7 +18,7 @@ import torch
 import metaspore as ms
 import torch.nn.functional as F
 
-from ..layers import MLPLayer
+from ...layers import MLPLayer
 
 class SimilarityModule(torch.nn.Module):
     def __init__(self, tau):
