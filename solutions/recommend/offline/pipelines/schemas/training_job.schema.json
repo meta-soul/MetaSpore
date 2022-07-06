@@ -55,7 +55,10 @@
             "I2IEstimatorNode",
             "RetrievalEvaluatorNode",
             "MongoDBDumperNode",
-            "StopSparkNode"
+            "StopSparkNode",
+            "TwoTowersEstimatorNode",
+            "DeepCTREstimatorNode",
+            "RankEvaluatorNode"
           ],
           "type": "string"
         },
@@ -77,6 +80,9 @@
       "additionalProperties": {
         "anyOf": [
           {
+            "type": "null"
+          },
+          {
             "$ref": "file:init_log.schema.json"
           },
           {
@@ -92,7 +98,10 @@
             "$ref": "file:mongodb_dumper.schema.json"
           },
           {
-            "type": "null"
+            "$ref": "file:two_towers_estimator.schema.json"
+          },
+          {
+            "$ref": "file:deep_ctr_estimator.schema.json"
           }
         ]
       }

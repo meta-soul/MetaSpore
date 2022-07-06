@@ -5,7 +5,8 @@
   "properties": {
     "uri": {
       "type": "string",
-      "pattern": "^mongodb://.+$"
+      "pattern": "^mongodb://.+$",
+      "error_msg": "Please input a valid MongoDB URI."
     },
     "database": {
       "type": "string"
