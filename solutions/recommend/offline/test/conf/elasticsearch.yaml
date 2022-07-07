@@ -1,0 +1,88 @@
+apiVersion: metaspore/v1
+kind: Searchjob
+metadata:
+  name: elasticsearch
+  category: Search/es
+  pipeline_nodes:
+    - class: InitSparkNode
+      params:
+        node_conf: spark
+    - class: DataLoaderNode
+      params:
+        node_conf: dataset
+    - class: SearchBuilderNode
+      params:
+        node_conf: indexer_conf
+    - class: SearchEvaluateNode
+      params:
+        node_conf: evaluation
+    - class: StopSparkNode
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: Elastic Search
+      local: false
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+      
+    extended_confs:
+      spark.executor.memory: '4G'
+      spark.executor.instances: '2'
+      spark.network.timeout: '500'
+      spark.executor.memoryOverhead: '2G'
+      spark.jars.packages: 'org.elasticsearch:elasticsearch-spark-30_2.12:8.2.3'
+      spark.jars.repositories: 'https://maven.aliyun.com/repository/central'
+      spark.es.net.http.auth.user: 'elastic'
+      spark.es.net.http.auth.pass: '59Jazz5tf0l8e935xHEt1K8D'
+      spark.es.port: '9200'
+      spark.es.nodes: 'elastic-demo-es-http.default.svc.cluster.local'
+      spark.es.nodes.wan.only: 'true'
+      spark.es.index.auto.create: 'true'
+      spark.es.net.ssl: 'false'
+      
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/moviedata-10m/movies.parquet
+    
+  indexer_conf:
+    create_index: douban_movies
+    create_mapping_id: MOVIE_ID
+    create_schema: 
+        mappings:
+            properties:
+                MOVIE_ID: 
+                    type: long
+                NAME: 
+                    type: text
+                    analyzer: smartcn
+                STORYLINE:
+                    type: text
+                    analyzer: smartcn
+   
+  evaluation:
+      search_queries: 
+        - keywords: 
+            values:
+              NAME: '李小龙' 
+              STORYLINE: '功夫'
+            sorter_rules: 
+              MOVIE_ID: 'desc'
+          
+        - ids: 
+            values: ['26670818', '6389523', '26392287']
+            sorter_rules: 
+              MOVIE_ID: 'desc'
+
+           
+ 
+  spark_stop:
+  

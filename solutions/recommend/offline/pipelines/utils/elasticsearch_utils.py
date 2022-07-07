@@ -33,7 +33,7 @@ def generate_keyword_match_rules(match_rules, using_phrase=True):
         return None
     rules = []
     match_method = 'match_phrase' if using_phrase else 'match'
-    for field, match_keyword in match_rules:
+    for field, match_keyword in match_rules.items():
         match_rule = {match_method: {field: match_keyword}}
         rules.append(match_rule)
     return rules
@@ -42,7 +42,7 @@ def generate_attribute_sorter_rules(sorter_rules):
     if sorter_rules is None: 
         return None
     rules = []
-    for attr, order in sorter_rules:
+    for attr, order in sorter_rules.items():
         sorter_rule = {attr: {"order": order}}
         rules.append(sorter_rule)
     return rules

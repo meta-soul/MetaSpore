@@ -46,4 +46,3 @@ class Pipeline(object):
             payload = node.preprocess(**payload)
             payload = node(**payload)
             payload = node.postprocess(**payload)
-
