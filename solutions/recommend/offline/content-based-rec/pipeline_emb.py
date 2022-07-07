@@ -42,6 +42,8 @@ def main():
     # spark conf
     spark_conf = conf['spark']['session_confs']
     app_name = spark_conf['app_name']
+    spark_local = spark_conf.get('local', False)
+    del spark_conf['local']
     del spark_conf['app_name']
     spark_conf_str = dict2str(spark_conf)
 

@@ -99,8 +99,8 @@ def item_emb_by_serving(spark, item_df, serving_host, serving_port, serving_mode
 
 def run(item_data, dump_data, text_model_name, batch_size=256, device="cuda:0", 
         serving=False, serving_host="", serving_port=50000, serving_model="",
-        write_mode="overwrite", job_name='item-model-embed', spark_conf=""):
-    spark = init_spark(job_name, spark_conf)
+        write_mode="overwrite", job_name='item-model-embed', spark_conf="", spark_local=False):
+    spark = init_spark(job_name, spark_conf, local=spark_local)
 
     # load raw data
     item_df = spark.read.parquet(item_data)

@@ -8,6 +8,7 @@ spec:
   spark:
     session_confs:
       app_name: 'CBCF-Embedding Pipeline'
+      local: True
       spark.executor.memory: '10G'
       spark.executor.instances: '4'
       spark.executor.cores: '4'
