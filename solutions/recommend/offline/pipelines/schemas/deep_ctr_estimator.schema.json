@@ -19,13 +19,13 @@
       "type": "string"
     },
     "model_in_path": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "model_out_path": {
       "type": "string"
     },
     "model_export_path": {
-      "type": "string"
+      "type": ["string", "null"]
     },
     "model_version": {
       "type": "string"
