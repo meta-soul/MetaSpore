@@ -32,10 +32,11 @@ function(get_python_wheel_name var)
         message(FATAL_ERROR "Can not get Python wheel tag.")
     endif()
     execute_process(
-        COMMAND ${Python_EXECUTABLE} -c "import pkg_resources; print(pkg_resources.get_distribution('metaspore').version, end='')"
+        COMMAND bash "-c" "grep --color=never version pyproject.toml | grep --color=never -Eo '[0-9\.]+'"
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
         RESULT_VARIABLE rc
-        OUTPUT_VARIABLE wheel_version)
+        OUTPUT_VARIABLE wheel_version
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
     if(NOT "${rc}" STREQUAL "0" OR "${wheel_version}" STREQUAL "")
         message(FATAL_ERROR "Can not get Python wheel version.")
     endif()
