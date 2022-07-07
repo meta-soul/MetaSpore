@@ -113,7 +113,7 @@ class TwoTowerBatchNegativeSamplingAgent(ms.PyTorchAgent):
             self.push_metric()
             
     def _create_metric(self):
-        metric = RetrievalModelMetric()
+        metric = RetrievalModelMetric(use_auc=False)
         return metric
     
     def update_metric(self, predictions, labels, loss):

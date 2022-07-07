@@ -25,7 +25,7 @@ from ..retrieval_metric import RetrievalModelMetric
 
 class SimpleXAgent(ms.PyTorchAgent):
     def _create_metric(self):
-        metric = RetrievalModelMetric(useAUC=False)
+        metric = RetrievalModelMetric(use_auc=False)
         return metric
     
     def update_metric(self, predictions, labels, loss):

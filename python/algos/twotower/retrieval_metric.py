@@ -20,10 +20,10 @@ import numpy as np
 from metaspore._metaspore import ModelMetricBuffer
 
 class RetrievalModelMetric(ms.ModelMetric):
-    def __init__(self, buffer_size=1000000, threshold=0.0, beta=1.0, useAUC=True):
+    def __init__(self, buffer_size=1000000, threshold=0.0, beta=1.0, use_auc=True):
         super().__init__(buffer_size=1000000, threshold=0.0, beta=1.0)
         self._loss = 0
-        self._useAUC = useAUC
+        self._use_auc = use_auc
 
     def clear(self):
         super().clear()
@@ -36,7 +36,7 @@ class RetrievalModelMetric(ms.ModelMetric):
     def accumulate(self, predictions, labels, loss):
         if labels.dtype != np.float32:
             labels = labels.astype(np.float32)
-        if self._useAUC:
+        if self._use_auc:
             ModelMetricBuffer.update_buffer(self._positive_buffer, self._negative_buffer,
                                             predictions, labels)
         self._prediction_sum += predictions.sum()
