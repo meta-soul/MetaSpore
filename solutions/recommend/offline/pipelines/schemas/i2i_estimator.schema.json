@@ -4,19 +4,7 @@
   "type": "object",
   "properties": {
     "i2i_estimator_class": {
-      "type": "object",
-      "properties": {
-        "module_name": {
-          "type": "string"
-        },
-        "class_name": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "module_name",
-        "class_name"
-      ]
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
     },
     "model_out_path": {
       "type": "string"
