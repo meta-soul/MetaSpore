@@ -11,7 +11,11 @@
         "class_name": {
           "type": "string"
         }
-      }
+      },
+      "required": [
+        "module_name",
+        "class_name"
+      ]
     },
     "column_index": {
       "type": "integer",
