@@ -23,7 +23,7 @@ import importlib
 import metaspore as ms
 
 sys.path.append('../../../') 
-from python.algos.twotowers.dssm import UserModule, ItemModule, SimilarityModule
+from python.algos.twotower.dssm import UserModule, ItemModule, SimilarityModule
 from pyspark.sql import functions as F
 from pyspark.mllib.evaluation import RankingMetrics
 

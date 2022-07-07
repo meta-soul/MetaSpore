@@ -14,8 +14,8 @@ test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
 item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/item.parquet
 
 ## model configuration
-two_tower_module_class: python.algos.twotowers.dssm.TwoTowerBatchNegativeSamplingModule
-two_tower_agent_class: python.algos.twotowers.dssm.TwoTowerBatchNegativeSamplingAgent
+two_tower_module_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingModule
+two_tower_agent_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingAgent
 two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
 # two_tower_estimator_class: python.twotower.TwoTowerRetrievalEstimator
 
