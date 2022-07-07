@@ -1,3 +1,19 @@
+#
+# Copyright 2022 DMetaSoul
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import os
 import argparse
 
@@ -43,8 +59,9 @@ def main():
     if a['status']:
         print("* item embed")
         item_embed_run(item_data, item_emb_data, 
-            a['text_model_name'], a['batch_size'], a['device'], a['write_mode'],
-            job_name=f"{app_name}-item-embed", spark_conf=spark_conf_str)
+            a['text_model_name'], a['batch_size'], a['device'], 
+            a['infer_online'], a['infer_host'], a['infer_port'], a['infer_model'],
+            a['write_mode'], job_name=f"{app_name}-item-embed", spark_conf=spark_conf_str)
     # push id
     a = item_conf['push_id']
     if a['status']:

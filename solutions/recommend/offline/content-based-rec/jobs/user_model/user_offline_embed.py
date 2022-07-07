@@ -1,3 +1,19 @@
+#
+# Copyright 2022 DMetaSoul
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 import os
 import sys
 import math
@@ -17,7 +33,7 @@ if __package__ is None:
     sys.path.append('..')
     from common import init_spark, stop_spark
 else:
-    from jobs.common import init_spark, stop_spark
+    from ..common import init_spark, stop_spark
 
 def get_parser():
     parser = argparse.ArgumentParser()
@@ -128,7 +144,7 @@ def run(action_data, item_data, dump_data, scene_id, action_type,
         .filter(actions['action_type']==action_type)\
         .filter(actions['action_value']>action_value_min)\
         .filter(actions['action_value']<action_value_max)
-    print(f"Total actions: {actions.count()}")
+    print(f"Scene actions: {actions.count()}")
 
     # keep user's latest top-k actions
     actions = actions.withColumn('_action_rank', 
