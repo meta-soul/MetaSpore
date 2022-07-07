@@ -16,3 +16,4 @@
 
 from .logger import start_logging
 from .class_utils import get_class
+from .elasticsearch_utils import *

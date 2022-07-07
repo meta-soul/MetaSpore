@@ -35,7 +35,7 @@ class InitSparkNode(PipelineNode):
             return payload
 
         extended_confs = spark_confs['extended_confs'] or {}
-        if spark_confs['pyzip']:
+        if spark_confs.get('pyzip'):
             cwd_path = spark_confs['pyzip']['cwd_path']
             zip_file_path = spark_confs['pyzip']['zip_file_path']
             subprocess.run(['zip', '-r', zip_file_path, 'python'], cwd=cwd_path)

@@ -25,3 +25,5 @@ from .deep_ctr_estimator import DeepCTREstimatorNode
 from .rank_evaluator import RankEvaluatorNode
 from .mongodb_dumper import MongoDBDumperNode
 from .attribute2i import Attribute2INode
+from .search_builder import SearchBuilderNode
+from .search_evaluator import SearchEvaluateNode
