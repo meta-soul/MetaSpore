@@ -1,0 +1,100 @@
+apiVersion: metaspore/v1
+kind: CBEmbedJob
+metadata:
+  name: CBEmbed-I2I
+  category: Match/CBCF/CBEmbed-I2I
+  pipeline_nodes:
+    - class: Embedding2INode
+
+spec:
+  spark:
+    session_confs:
+      app_name: 'CBCF-Embedding Pipeline'
+      local: True
+      spark.executor.memory: '10G'
+      spark.executor.instances: '4'
+      spark.executor.cores: '4'
+      spark.default.parallelism: '1'
+      spark.task.resource.gpu.amount: '1'
+      spark.sql.execution.arrow.enabled: 'true'
+      spark.sql.execution.arrow.maxRecordsPerBatch: '1024'
+  
+  data:
+    input:
+      #item_data: ../data/moviedata-10m-schema/item.train
+      #action_data: ../data/moviedata-10m-schema/action.train
+      item_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-schema/item.train
+      action_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-schema/action.train
+    dump:
+      #item_emb_data: ../data/moviedata-10m-dump/item.emb
+      #user_emb_data: ../data/moviedata-10m-dump/user.emb
+      item_emb_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-dump/item.emb
+      user_emb_data: s3://dmetasoul-bucket/demo/datasets/moviedata-10m-dump/user.emb
+  
+  jobs:
+    item_embed:
+      run:
+        status: true
+        text_model_name: "bert-base-chinese"
+        batch_size: 64
+        device: "cuda"
+        infer_online: false
+        infer_host: "172.31.0.197"
+        infer_port: 50001
+        infer_model: "bert-base-chinese"
+        write_mode: overwrite
+      push_id:
+        status: true
+        mongo_uri: mongodb://172.31.37.47:27017
+        mongo_database: jpa
+        mongo_collection: moviedata_cb_demo_item_embid
+        write_mode: overwrite
+        fields: 
+        - id
+        - item_id
+        index_fields: 
+        - id
+      push_emb:
+        status: true
+        #milvus_host: 10.0.1.85
+        #milvus_port: 19530
+        #milvus_host: 120.92.77.120
+        milvus_host: my-milvus-release.milvus.svc.cluster.local
+        milvus_port: 19530
+        collection_name: moviedata_cb_demo_item_emb
+        collection_desc: "Movielens CBCF item embedding"
+        collection_shards: 2
+        fields: 
+        - id
+        - item_emb
+        id_field: id
+        emb_field: item_emb
+        write_batch: 1024
+        write_interval: 0.1
+        index_metric: IP
+        index_nlist: 1024
+        index_type: IVF_FLAT
+  
+    user_embed:
+      run:
+        status: true
+        scene_id: douban-cb-100
+        action_type: rating
+        action_value_min: 0.0
+        action_value_max: 9999999.0
+        action_sortby_key: action_time
+        action_agg_func: avg
+        action_max_len: 3
+        action_decay_rate: 0.5
+        write_mode: overwrite
+      push_emb:
+        status: true
+        mongo_uri: mongodb://172.31.37.47:27017
+        mongo_database: jpa
+        mongo_collection: moviedata_cb_demo_user_emb
+        write_mode: overwrite
+        fields: 
+        - user_id
+        - user_emb
+        index_fields: 
+        - user_id
