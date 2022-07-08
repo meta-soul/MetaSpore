@@ -1,7 +1,7 @@
 from elasticsearch import Elasticsearch
 
 def create_es_using_http_auth(http_uri, user, password, verify_certs=False, **params):
-    es = Elasticsearch([http_uri], http_auth=(user, password), verify_certs=verify_certs)
+    es = Elasticsearch([http_uri], http_auth=(user, password), verify_certs=verify_certs, timeout=60)
     es.info(pretty=True)
     return es
 
