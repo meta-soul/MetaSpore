@@ -1,0 +1,28 @@
+## spark session
+app_name: 'ItemCF I2I'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 256
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+executor_cores: '4'
+default_parallelism: '400'
+
+## datasets
+train_path: ${MY_S3_BUCKET}/movielens/1m/cf/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+
+## swing model configuration
+user_id_column_name: user_id
+item_id_column_name: movie_id
+behavior_column_name: label
+behavior_filter_value: '1'
+key_column_name: key
+value_column_name: value
+use_debug: False
+last_item_col_name: last_movie
+
+## model hyper params
+max_recommendation_count: 20
