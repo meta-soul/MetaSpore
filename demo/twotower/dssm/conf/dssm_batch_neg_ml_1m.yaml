@@ -1,5 +1,5 @@
 ## spark session
-app_name: 'DSSM Demo'
+app_name: 'TwoTower-DSSM'
 local: False
 worker_count: 2
 server_count: 2
