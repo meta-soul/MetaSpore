@@ -39,8 +39,8 @@ class TwoTowerBatchNegativeSamplingModule(ms.TwoTowerRetrievalModule):
         item_emb = self._item_module(x)
         scores = torch.matmul(user_emb, item_emb.T)
         targets = torch.tensor(range(len(scores)), dtype=torch.long)
-        preditions = F.softmax(scores, dim=1).clone().detach().diag()
-        return preditions, scores, targets
+        predictions = F.softmax(scores, dim=1).clone().detach().diag()
+        return predictions, scores, targets
 
 class TwoTowerBatchNegativeSamplingAgent(ms.PyTorchAgent):
     def __init__(self):
