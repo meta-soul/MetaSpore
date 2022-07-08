@@ -19,18 +19,36 @@ import subprocess
 import yaml
 import argparse
 import sys 
+import importlib
 import metaspore as ms
 
 sys.path.append('../../../') 
-from python.algos.dssm_net import UserModule, ItemModule, SimilarityModule
+from python.algos.twotower.dssm import UserModule, ItemModule, SimilarityModule
 from pyspark.sql import functions as F
 from pyspark.mllib.evaluation import RankingMetrics
+
+def parse_class_desc(class_desc, path_sep='.'):
+    if not class_desc or len(class_desc)<=0:
+        print('Error -- empty class desc:', class_desc)
+        return None
+    class_path_list = class_desc.split(path_sep)
+    if len(class_path_list) <= 1:
+        print('Error -- empty module name:', class_desc)
+    return path_sep.join(class_path_list[:-1]), class_path_list[-1]
+
+def init_class_with_desc(class_desc, path_sep='.'):
+    module_name, class_name = parse_class_desc(class_desc, path_sep)
+    if not module_name or not class_name:
+        return None
+    module_lib_ = importlib.import_module(module_name)
+    module_class_ = getattr(module_lib_, class_name)
+    return module_class_
 
 def load_config(path):
     params = dict()
     with open(path, 'r') as stream:
         params = yaml.load(stream, Loader=yaml.FullLoader)
-        print('Debug -- load config: ', params)
+        print('Debug -- load config:', params)
     return params
 
 def init_spark(local, app_name, batch_size, worker_count, server_count,
@@ -105,19 +123,20 @@ def train(spark, train_dataset, item_dataset, **model_params):
                              dnn_hidden_units = model_params['dnn_hidden_units'], \
                              dnn_hidden_activations = model_params['dnn_hidden_activations'])
     similarity_module = SimilarityModule(model_params['tau'])
-    ## import two tower module
-    import importlib
-    module_lib = importlib.import_module(model_params['two_tower_module'])
     ## init module class
-    module_class_ = getattr(module_lib, model_params['two_tower_module_class'])
+    module_class_ = init_class_with_desc(model_params['two_tower_module_class'])
     module = module_class_(user_module, item_module, similarity_module)
+    ## init agent class
+    agent_class_ = init_class_with_desc(model_params['two_tower_agent_class']) \
+                   if 'two_tower_agent_class' in model_params else None
     ## init estimator class
-    estimator_class_ = getattr(module_lib, model_params['two_tower_estimator_class'])
+    estimator_class_ = init_class_with_desc(model_params['two_tower_estimator_class'])
     estimator = estimator_class_(module = module,
                                 item_dataset = item_dataset,
                                 item_ids_column_indices = [6],
                                 retrieval_item_count = 20,
                                 metric_update_interval = 500,
+                                agent_class = agent_class_,
                                 **model_params)
     ## dnn learning rate
     estimator.updater = ms.AdamTensorUpdater(model_params['adam_learning_rate'])
@@ -163,8 +182,8 @@ if __name__=="__main__":
     test_result = transform(spark, model, test_dataset)
     ## evaluate
     recall_metrics = evaluate(spark, test_result)
-    print("Debug -- Precision@20: ", recall_metrics.precisionAt(20))
-    print("Debug -- Recall@20: ", recall_metrics.recallAt(20))
-    print("Debug -- MAP@20: ", recall_metrics.meanAveragePrecisionAt(20))
-    print("Debug -- NDCG@20: ", recall_metrics.ndcgAt(20))
+    print("Debug -- Precision@20:", recall_metrics.precisionAt(20))
+    print("Debug -- Recall@20:", recall_metrics.recallAt(20))
+    print("Debug -- MAP@20:", recall_metrics.meanAveragePrecisionAt(20))
+    print("Debug -- NDCG@20:", recall_metrics.ndcgAt(20))
     stop_spark(spark)

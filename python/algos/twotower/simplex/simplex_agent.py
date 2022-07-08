@@ -21,11 +21,11 @@ import json
 from datetime import datetime
 
 from metaspore._metaspore import Message
-from .simplex_metric import SimpleXModelMetric
+from ..retrieval_metric import RetrievalModelMetric
 
 class SimpleXAgent(ms.PyTorchAgent):
     def _create_metric(self):
-        metric = SimpleXModelMetric()
+        metric = RetrievalModelMetric(use_auc=False)
         return metric
     
     def update_metric(self, predictions, labels, loss):
@@ -39,7 +39,7 @@ class SimpleXAgent(ms.PyTorchAgent):
             for i in range(req.slice_count):
                 states += req.get_slice(i),
             accum = self._metric
-            delta = SimpleXModelMetric.from_states(states)
+            delta = RetrievalModelMetric.from_states(states)
             accum.merge(delta)
             string = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
             string += f' -- auc: {accum.compute_auc()}'

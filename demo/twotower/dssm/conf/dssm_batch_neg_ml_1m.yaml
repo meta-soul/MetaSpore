@@ -1,23 +1,23 @@
 ## spark session
-app_name: 'TwoTowers-DSSM'
+app_name: 'TwoTower-DSSM'
 local: False
-worker_count: 4
-server_count: 4
-batch_size: 512
+worker_count: 2
+server_count: 2
+batch_size: 256
 worker_memory: '10G'
 server_memory: '10G'
 coordinator_memory: '10G'
 
 ## datasets
-train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_100/train.parquet
-test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_100/test.parquet
-item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
+train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/item.parquet
 
-## model configuratio
-two_tower_module: metaspore
-# two_tower_module: python.two_tower_retrieval_milvus 
-two_tower_module_class: TwoTowerRetrievalModule
-two_tower_estimator_class: TwoTowerRetrievalEstimator
+## model configuration
+two_tower_module_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingModule
+two_tower_agent_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingAgent
+two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
+# two_tower_estimator_class: python.twotower.TwoTowerRetrievalEstimator
 
 user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema
 user_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema
@@ -29,7 +29,6 @@ model_out_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_out/
 model_export_path: null
 model_version: '0.1'
 experiment_name: two_towers_dssm
-input_label_column_index: 0
 
 ## milvus
 milvus_description: 'ml_1m_dssm'
@@ -41,19 +40,29 @@ milvus_metric_type: 'IP'
 milvus_nlist: 1024
 milvus_nprobe: 128
 
+## dataset
+input_label_column_index: 0
+input_item_id_column_index: 6 
+input_feature_column_num: 11
+input_item_probability_column_index: 11
+input_sample_weight_column_index: 12
+
 ## model hyper params
 tau: 0.05
+use_remove_accidental_hits: True
+use_sampling_probability_correction: True
+use_sample_weight: True
 sparse_init_var: 0.0001
 net_dropout: 0.0
-batch_size: 128
+batch_size: 256
 vector_embedding_size: 32
 item_embedding_size: 128
 dnn_hidden_units: [512, 256, 128]
 dnn_hidden_activations: 'ReLU'
-adam_learning_rate: 0.0001
-ftrl_learning_rate: 0.01
+adam_learning_rate: 0.00005
+ftrl_learning_rate: 0.02
 ftrl_smothing_rate: 1.0
 ftrl_l1_regularization: 1.0
-ftrl_l2_regularization: 120.0
-training_epoches: 3
+ftrl_l2_regularization: 1.0
+training_epoches: 5
 shuffle_training_dataset: True

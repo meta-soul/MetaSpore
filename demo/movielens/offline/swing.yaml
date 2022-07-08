@@ -1,5 +1,5 @@
 ## spark session
-app_name: 'SimpleX Demo'
+app_name: 'Swing Demo'
 local: False
 worker_count: 4
 server_count: 4

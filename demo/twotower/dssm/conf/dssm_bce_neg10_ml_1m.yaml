@@ -1,5 +1,5 @@
 ## spark session
-app_name: 'TwoTowers-DSSM'
+app_name: 'TwoTower-DSSM'
 local: False
 worker_count: 4
 server_count: 4
@@ -13,11 +13,11 @@ train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/train.parquet
 test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
 item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
 
-## model configuratio
-two_tower_module: metaspore
-# two_tower_module: python.two_tower_retrieval_milvus 
-two_tower_module_class: TwoTowerRetrievalModule
-two_tower_estimator_class: TwoTowerRetrievalEstimator
+## model configuration
+two_tower_module_class: metaspore.TwoTowerRetrievalModule
+two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
+# two_tower_estimator_class: python.twotower.TwoTowerRetrievalEstimator
+
 
 user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema
 user_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema

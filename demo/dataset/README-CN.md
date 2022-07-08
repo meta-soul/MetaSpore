@@ -41,7 +41,7 @@ cd ml_1m
 python match_dataset_cf.py --conf match_dataset.yaml.dev --verbose
 ```
 
-之后，我们通过执行以下命令来获取 `TwoTowers` 算法训练所使用的样本数据：
+之后，我们通过执行以下命令来获取 `TwoTower` 算法训练所使用的样本数据：
 
 ```shell
 python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --verbose

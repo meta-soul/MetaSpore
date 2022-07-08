@@ -15,8 +15,8 @@ In this project, we will implement and benchmark the algorithms of two-tower mod
 | Item CF I2I  |    [item_cf.py](baseline/item_cf.py)    |   [item_cf_retrieval.py](../../python/algos/item_cf_retrieval.py)   | [WWW 2010] [Item-Based Collaborative Filtering Recommendation Algorithms](https://www.ra.ethz.ch/cdstore/www10/papers/pdf/p519.pdf)  |
 | Swing I2I  |   [swing.py](baseline/swing.py)    |  [swing_retrieval.py](../../python/metaspore/swing_retrieval.py)   | [arxiv 2020] [Large Scale Product Graph Construction for Recommendation in E-commerce](https://arxiv.org/abs/2109.12613)  | 
 | ALS MF  |   [spark_als.py](baseline/spark_als.py)    |   [Spark Mllib ALS](https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.mllib.recommendation.ALS.html)   | [ICDM 2008] [Collaborative Filtering for Implicit Feedback Datasets](http://www.yifanhu.net/PUB/cf.pdf)  | 
-| DSSM  |   [dssm.py](dssm/dssm.py)    |   [dssm_net.py](../../python/algos/dssm_net.py)   | [CIKM 2013] [Learning Deep Structured Semantic Models for Web Search using Clickthrough Data](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf)  |
-| SimpleX  |   -    |   [simplex_net.py](../../python/algos/simplex/simplex_net.py)   | [CIKM 2021] [SimpleX: A Simple and Strong Baseline for Collaborative Filtering](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf)  |
+| DSSM  |   [dssm.py](dssm/dssm.py)    |   [dssm_net.py](../../python/algos/twotower/dssm/dssm_net.py)   | [CIKM 2013] [Learning Deep Structured Semantic Models for Web Search using Clickthrough Data](https://posenhuang.github.io/papers/cikm2013_DSSM_fullversion.pdf)  |
+| SimpleX  |   -    |   [simplex_net.py](../../python/algos/twotower/simplex/simplex_net.py)   | [CIKM 2021] [SimpleX: A Simple and Strong Baseline for Collaborative Filtering](https://arxiv.org/pdf/2109.12613.pdf)  |
 
 We are continuously adding new models.
 
@@ -30,6 +30,7 @@ We are continuously adding new models.
 | Item CF I2I | MovieLens-1M | 0.009383 | 0.187667 | 0.050912 | 0.080504 |
 | DSSM BCE | MovieLens-1M NegSample-10 | 0.010776 | 0.215533 | 0.043305 | 0.080013 |
 | DSSM BCE | MovieLens-1M NegSample-100 | 0.011313 | 0.226264 | 0.047736 | 0.085856 |
+| DSSM SSM | MovieLens-1M Batchsize-256 | 0.015079 | 0.301592 | 0.077961 | 0.126095 |
 | SimpleX CCL | MovieLens-1M NegSample-100 | - | - | - | - |
 
 For the two-tower model based on neural network, we give the respective experimental results based on different loss functions and different negative sampling ratio. As our models and experiments are tuned, this experiment results may be updated in the future.

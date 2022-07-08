@@ -14,16 +14,16 @@
 # limitations under the License.
 #
 
-import numpy
-import struct
 import metaspore as ms
-from metaspore.metric import ModelMetric
+import struct
+import numpy as np
 from metaspore._metaspore import ModelMetricBuffer
 
-class SimpleXModelMetric(ms.ModelMetric):
-    def __init__(self, buffer_size=1000000, threshold=0.0, beta=1.0):
+class RetrievalModelMetric(ms.ModelMetric):
+    def __init__(self, buffer_size=1000000, threshold=0.0, beta=1.0, use_auc=True):
         super().__init__(buffer_size=1000000, threshold=0.0, beta=1.0)
         self._loss = 0
+        self._use_auc = use_auc
 
     def clear(self):
         super().clear()
@@ -34,10 +34,11 @@ class SimpleXModelMetric(ms.ModelMetric):
         self._loss += other._loss
 
     def accumulate(self, predictions, labels, loss):
-        if labels.dtype != numpy.float32:
-            labels = labels.astype(numpy.float32)
-        # ModelMetricBuffer.update_buffer(self._positive_buffer, self._negative_buffer,
-        #                                 predictions, labels)
+        if labels.dtype != np.float32:
+            labels = labels.astype(np.float32)
+        if self._use_auc:
+            ModelMetricBuffer.update_buffer(self._positive_buffer, self._negative_buffer,
+                                            predictions, labels)
         self._prediction_sum += predictions.sum()
         self._label_sum += labels.sum()
         self._instance_num += len(labels)
@@ -70,7 +71,7 @@ class SimpleXModelMetric(ms.ModelMetric):
         scalars += self._false_negative,
         scalars += self._loss,
         scalars = struct.pack(self._get_pack_format(), *scalars)
-        scalars = numpy.array(tuple(scalars), dtype=numpy.uint8)
+        scalars = np.array(tuple(scalars), dtype=np.uint8)
         states = scalars,
         states += self._positive_buffer,
         states += self._negative_buffer,

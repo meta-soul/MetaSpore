@@ -43,7 +43,7 @@ cd ml_1m
 python match_dataset_cf.py --conf match_dataset.yaml.dev --verbose
 ```
 
-After that we can get the train and test dataset of `TwoTowers` models through following command:
+After that we can get the train and test dataset of `TwoTower` models through following command:
 
 ```shell
 python match_dataset_negsample.py --conf match_dataset_negsample_10.yaml.dev --verbose
