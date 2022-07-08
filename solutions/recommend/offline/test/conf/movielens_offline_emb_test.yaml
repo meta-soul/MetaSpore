@@ -3,6 +3,8 @@ kind: CBEmbedJob
 metadata:
   name: CBEmbed-I2I
   category: Match/CBCF/CBEmbed-I2I
+  pipeline_nodes:
+    - class: Embedding2INode
 
 spec:
   spark:

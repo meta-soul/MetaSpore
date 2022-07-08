@@ -1,0 +1,41 @@
+{
+  "title": "Common Definitions",
+  "description": "Common definitions of json schemas of pipeline nodes",
+  "definitions": {
+    "class_to_load": {
+      "type": "object",
+      "properties": {
+        "module_name": {
+          "type": "string"
+        },
+        "class_name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "module_name",
+        "class_name"
+      ]
+    },
+    "column_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "embedding_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "prob_like": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "fc_structure": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 1
+      }
+    }
+  }
+}

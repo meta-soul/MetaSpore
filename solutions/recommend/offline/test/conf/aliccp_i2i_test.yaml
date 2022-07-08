@@ -13,9 +13,6 @@ metadata:
     - class: I2IEstimatorNode
       params:
         node_conf: training
-    - class: RetrievalEvaluatorNode
-      params:
-        node_conf: evaluation
     - class: MongoDBDumperNode
       params:
         node_conf: mongodb
@@ -34,9 +31,9 @@ spec:
       server_count: 2
       server_cpu: 4
       batch_size: 128
-      worker_memory: '4G'
-      server_memory: '4G'
-      coordinator_memory: '4G'
+      worker_memory: '8G'
+      server_memory: '8G'
+      coordinator_memory: '8G'
   
     extended_confs:
       spark.network.timeout: '500'
@@ -46,21 +43,18 @@ spec:
   
     pyzip:
       cwd_path: '/home/spark/work/MetaSpore/'
-      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/test/python.zip'
   
   dataset:
-    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
-    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
-    item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
-    user_id_column: user_id
-    item_id_column: friend_id
+    train_path: s3://dmetasoul-bucket/demo/aliccp/traindata_10w.parquet
+    test_path: s3://dmetasoul-bucket/demo/aliccp/testdata_10w.parquet
+    user_id_column: '101'
+    item_id_column: '205'
     label_column: label
     label_value: '1'
-    last_item_id_column: last_friend_id
+    last_item_id_column: last_item_id
   
   training:
-    node_class: I2IEstimatorNode
-    node_priority: 30
     i2i_estimator_class:
       module_name: python.algos.item_cf_retrieval
       class_name: ItemCFEstimator
@@ -69,7 +63,7 @@ spec:
   #    module_name: metaspore
   #    class_name: SwingEstimator
   
-    model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/model/item_cf/model_out/df.parquet
+    model_out_path: s3://dmetasoul-bucket/demo/aliccp/model/item_cf/model_out/df.parquet
     max_recommendation_count: 20
   
   evaluation:
@@ -77,7 +71,7 @@ spec:
   mongodb:
     uri: mongodb://172.31.37.47:27017/
     database: jpa
-    collection: saas_icf
+    collection: saas_icf_aliccp
     write_mode: overwrite
     index_fields: []
     index_unique: False

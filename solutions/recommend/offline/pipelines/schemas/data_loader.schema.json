@@ -1,0 +1,20 @@
+{
+  "title": "Data Loader",
+  "description": "Configuration of data loader node.",
+  "type": "object",
+  "properties": {
+    "train_path": {
+      "type": "string"
+    },
+    "test_path": {
+      "type": "string"
+    },
+    "item_path": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "train_path",
+    "test_path"
+  ]
+}

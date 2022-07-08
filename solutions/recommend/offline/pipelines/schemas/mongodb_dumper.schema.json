@@ -1,0 +1,41 @@
+{
+  "title": "MongoDB Dumper",
+  "description": "Configuration of mongodb dumper node.",
+  "type": "object",
+  "properties": {
+    "uri": {
+      "type": "string",
+      "pattern": "^mongodb://.+$",
+      "error_msg": "Please input a valid MongoDB URI."
+    },
+    "database": {
+      "type": "string"
+    },
+    "collection": {
+      "type": "string"
+    },
+    "write_mode": {
+      "enum": [
+        "append",
+        "overwrite"
+      ],
+      "type": "string"
+    },
+    "index_fields": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "index_unique": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "uri",
+    "database",
+    "collection",
+    "write_mode"
+  ]
+}

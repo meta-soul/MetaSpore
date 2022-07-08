@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/training_job.schema.json",
+  "title": "Training Job",
+  "description": "A training job json schema.",
+  "type": "object",
+  "properties": {
+    "apiVersion": {
+      "type": "string"
+    },
+    "kind": {
+      "enum": ["TrainingJob"],
+      "type": "string"
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata"
+    },
+    "spec": {
+      "$ref": "#/definitions/spec"
+    }
+  },
+  "required": [
+    "apiVersion",
+    "kind",
+    "metadata",
+    "spec"
+  ],
+  "definitions": {
+    "metadata": {
+      "description": "Metadata of training job.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "pipeline_nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/pipeline_node"
+          }
+        }
+      }
+    },
+    "pipeline_node": {
+      "description": "Metadata of pipeline node.",
+      "type": "object",
+      "properties": {
+        "class": {
+          "enum": [
+            "InitSparkNode",
+            "DataLoaderNode",
+            "I2IEstimatorNode",
+            "RetrievalEvaluatorNode",
+            "MongoDBDumperNode",
+            "StopSparkNode",
+            "TwoTowersEstimatorNode",
+            "DeepCTREstimatorNode",
+            "RankEvaluatorNode"
+          ],
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "node_conf": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "class"
+      ]
+    },
+    "spec": {
+      "description": "Specification of each node.",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "null"
+          },
+          {
+            "$ref": "file:init_log.schema.json"
+          },
+          {
+            "$ref": "file:init_spark.schema.json"
+          },
+          {
+            "$ref": "file:data_loader.schema.json"
+          },
+          {
+            "$ref": "file:i2i_estimator.schema.json"
+          },
+          {
+            "$ref": "file:mongodb_dumper.schema.json"
+          },
+          {
+            "$ref": "file:two_towers_estimator.schema.json"
+          },
+          {
+            "$ref": "file:deep_ctr_estimator.schema.json"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "title": "Init Spark",
+  "description": "Configuration of init spark node.",
+  "type": "object",
+  "properties": {
+    "session_confs": {
+      "type": "object",
+      "properties": {
+        "app_name": {
+          "type": "string"
+        },
+        "local": {
+          "type": "boolean"
+        },
+        "worker_count": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "worker_cpu": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "server_count": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "server_cpu": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "batch_size": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "worker_memory": {
+          "type": "string",
+          "pattern": "^[1-9]\\d*G$"
+        },
+        "server_memory": {
+          "type": "string",
+          "pattern": "^[1-9]\\d*G$"
+        },
+        "coordinator_memory": {
+          "type": "string",
+          "pattern": "^[1-9]\\d*G$"
+        }
+      },
+      "required": [
+        "app_name"
+      ]
+    },
+    "extended_confs": {
+      "type": "object",
+      "properties": {
+        "spark.network.timeout": {
+          "type": "string",
+          "pattern": "^[1-9]\\d*$"
+        },
+        "spark.ui.showConsoleProgress": {
+          "type": "string",
+          "pattern": "^True$|^False|true$|^false$"
+        },
+        "spark.kubernetes.executor.deleteOnTermination": {
+          "type": "string",
+          "pattern": "^True$|^False|true$|^false$"
+        },
+        "spark.jars.packages": {
+          "type": "string"
+        }
+      }
+    },
+    "pyzip": {
+      "properties": {
+        "cwd_path": {
+          "type": "string",
+          "pattern": "^[^\\0]+$"
+        },
+        "zip_file_path": {
+          "type": "string",
+          "pattern": "^[^\\0]+\\.zip$"
+        }
+      }
+    }
+  },
+  "required": [
+    "session_confs"
+  ]
+}

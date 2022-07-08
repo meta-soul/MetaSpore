@@ -42,30 +42,25 @@ spec:
 
     pyzip:
       cwd_path: '/home/spark/work/MetaSpore/'
-      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/test/python.zip'
 
   dataset:
-    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset_rank.parquet
-    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset_rank.parquet
-    user_id_column: user_id
-    item_id_column: friend_id
-    label_column: label
-    label_value: '1'
-    last_item_id_column: last_friend_id
+    train_path: s3://dmetasoul-bucket/demo/aliccp/traindata_10w.parquet
+    test_path: s3://dmetasoul-bucket/demo/aliccp/testdata_10w.parquet
 
   training:
     deep_ctr_model_class:
       module_name: python.algos.deepfm_net
       class_name: DeepFM
-    wide_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
-    wide_combine_schema_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/wide_combine_schema.txt
-    deep_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
-    deep_combine_schema_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/deep_combine_schema.txt
+    wide_column_name_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm/column_schema
+    wide_combine_schema_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm/combine_column_schema
+    deep_column_name_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm/column_schema
+    deep_combine_schema_path: s3://dmetasoul-bucket/demo/aliccp/schema/esmm/combine_column_schema
     model_in_path: null
-    model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/deepfm/model_out/
-    # model_export_path: s3://dmetasoul-bucket/demo/soc-pokec/model/deepfm/model_export/
+    model_out_path: s3://dmetasoul-bucket/demo/aliccp/model/deepfm/model_out/
+    # model_export_path: s3://dmetasoul-bucket/demo/aliccp/model/deepfm/model_export/
     model_version: '0.1'
-    experiment_name: soc_pokec_dfm
+    experiment_name: aliccp_deepfm
     input_label_column_index: 0
     metric_update_interval: 100
 

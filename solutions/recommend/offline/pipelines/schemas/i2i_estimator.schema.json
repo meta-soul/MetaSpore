@@ -1,0 +1,22 @@
+{
+  "title": "I2I Estimator",
+  "description": "Configuration of i2i estimator node.",
+  "type": "object",
+  "properties": {
+    "i2i_estimator_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "model_out_path": {
+      "type": "string"
+    },
+    "max_recommendation_count": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "required": [
+    "i2i_estimator_class",
+    "model_out_path",
+    "max_recommendation_count"
+  ]
+}

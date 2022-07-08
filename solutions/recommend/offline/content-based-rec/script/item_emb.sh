@@ -1,3 +1,20 @@
+#
+# Copyright 2022 DMetaSoul
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+:<<EOF
 python -m jobs.item_model.item_offline_embed \
     --job-name item-embedding \
     --item-data ../data/ml-1m-schema/item.train \
@@ -13,6 +30,7 @@ python -m jobs.tools.push_mongo --mongo-uri mongodb://172.31.37.47:27017 \
     --fields id,item_id \
     --index-fields id \
     --write-mode overwrite
+EOF
 
 python -m jobs.tools.push_milvus --milvus-host 120.92.77.120 \
     --milvus-port 19530 \

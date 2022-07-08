@@ -1,0 +1,145 @@
+{
+  "title": "Two-Towers Estimator",
+  "description": "Configuration of two towers estimator node.",
+  "type": "object",
+  "properties": {
+    "user_module_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "item_module_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "similarity_module_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "two_towers_retrieval_module_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "two_towers_agent_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "two_towers_estimator_class": {
+      "$ref": "file:common.schema.json#/definitions/class_to_load"
+    },
+    "user_column_name": {
+      "type": "string"
+    },
+    "user_combine_schema": {
+      "type": "string"
+    },
+    "item_column_name": {
+      "type": "string"
+    },
+    "item_combine_schema": {
+      "type": "string"
+    },
+    "model_in_path": {
+      "type": ["string", "null"]
+    },
+    "model_out_path": {
+      "type": "string"
+    },
+    "model_export_path": {
+      "type": ["string", "null"]
+    },
+    "model_version": {
+      "type": "string"
+    },
+    "experiment_name": {
+      "type": "string"
+    },
+    "item_ids_column_indices": {
+      "type": "array",
+      "items": {
+        "$ref": "file:common.schema.json#/definitions/column_index"
+      }
+    },
+    "retrieval_item_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "metric_update_interval": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "input_label_column_index": {
+      "$ref": "file:common.schema.json#/definitions/column_index"
+    },
+    "input_feature_column_num": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "input_item_id_column_index": {
+      "$ref": "file:common.schema.json#/definitions/column_index"
+    },
+    "input_item_probability_column_index": {
+      "$ref": "file:common.schema.json#/definitions/column_index"
+    },
+    "input_sample_weight_column_index": {
+      "$ref": "file:common.schema.json#/definitions/column_index"
+    },
+    "tau": {
+      "$ref": "file:common.schema.json#/definitions/prob_like"
+    },
+    "use_remove_accidental_hits": {
+      "type": "boolean"
+    },
+    "use_sampling_probability_correction": {
+      "type": "boolean"
+    },
+    "use_sample_weight": {
+      "type": "boolean"
+    },
+    "vector_embedding_size": {
+      "$ref": "file:common.schema.json#/definitions/embedding_size"
+    },
+    "item_embedding_size": {
+      "$ref": "file:common.schema.json#/definitions/embedding_size"
+    },
+    "net_dropout": {
+      "$ref": "file:common.schema.json#/definitions/prob_like"
+    },
+    "dense_structure": {
+      "$ref": "file:common.schema.json#/definitions/fc_structure"
+    },
+    "adam_learning_rate": {
+      "$ref": "file:common.schema.json#/definitions/prob_like"
+    },
+    "ftrl_learning_rate": {
+      "type": "number"
+    },
+    "ftrl_smothing_rate": {
+      "type": "number"
+    },
+    "ftrl_l1_regularization": {
+      "type": "number"
+    },
+    "ftrl_l2_regularization": {
+      "type": "number"
+    },
+    "training_epoches": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "shuffle_training_dataset": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "user_module_class",
+    "item_module_class",
+    "similarity_module_class",
+    "two_towers_retrieval_module_class",
+    "two_towers_agent_class",
+    "two_towers_estimator_class",
+    "user_column_name",
+    "user_combine_schema",
+    "item_column_name",
+    "item_combine_schema",
+    "model_out_path",
+    "model_version",
+    "experiment_name",
+    "item_ids_column_indices",
+    "retrieval_item_count"
+  ]
+}
