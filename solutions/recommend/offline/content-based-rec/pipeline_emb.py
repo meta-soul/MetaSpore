@@ -63,7 +63,8 @@ def main():
         item_embed_run(item_data, item_emb_data, 
             a['text_model_name'], a['batch_size'], a['device'], 
             a['infer_online'], a['infer_host'], a['infer_port'], a['infer_model'],
-            a['write_mode'], job_name=f"{app_name}-item-embed", spark_conf=spark_conf_str)
+            a['write_mode'], job_name=f"{app_name}-item-embed", 
+            spark_conf=spark_conf_str, spark_local=spark_local)
     # push id
     a = item_conf['push_id']
     if a['status']:
