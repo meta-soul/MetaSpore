@@ -5,6 +5,12 @@ users_path: ${MY_S3_BUCKET}/movielens/ml-1m/users.dat
 imdb_path: ${MY_S3_BUCKET}/movielens/ml-25m/movie_ml_imdb.csv
 douban_movies_path: ${MY_S3_BUCKET}/datasets/moviedata-10m/movies.csv
 
+movies_parquet_path: ${MY_S3_BUCKET}/movielens/ml-1m/movies.parquet
+ratings_parquet_path: ${MY_S3_BUCKET}/movielens/ml-1m/ratings.parquet
+users_parquet_path: ${MY_S3_BUCKET}/movielens/ml-1m/users.parquet
+imdb_parquet_path: ${MY_S3_BUCKET}/movielens/ml-25m/movie_ml_imdb.parquet
+douban_movies_parquet_path: ${MY_S3_BUCKET}/datasets/moviedata-10m/movies.parquet
+
 ## elastic uri
 es_host: elastic-demo-es-http.default.svc.cluster.local
 es_port: 9200
