@@ -13,6 +13,9 @@ metadata:
     - class: I2IEstimatorNode
       params:
         node_conf: training
+    - class: RetrievalEvaluatorNode
+      params:
+        node_conf: evaluation
     - class: MongoDBDumperNode
       params:
         node_conf: mongodb
