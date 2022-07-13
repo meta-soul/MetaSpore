@@ -20,7 +20,7 @@
 #include <vector>
 
 #include <serving/model_base.h>
-#include <serving/types.h>
+#include <common/types.h>
 
 #include <boost/core/demangle.hpp>
 #include <fmt/format.h>

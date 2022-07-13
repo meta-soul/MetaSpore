@@ -20,7 +20,6 @@
 #include <serving/grpc_server_shutdown.h>
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/model_manager.h>
-#include <serving/types.h>
 #include <metaspore/string_utils.h>
 
 #include <fmt/format.h>

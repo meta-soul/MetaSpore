@@ -15,7 +15,7 @@
 //
 
 #include <serving/test_utils.h>
-#include <serving/types.h>
+#include <common/types.h>
 
 #include <iostream>
 #include <thread>

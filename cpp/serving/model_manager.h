@@ -22,7 +22,7 @@
 #include <unordered_map>
 
 #include <serving/grpc_model_runner.h>
-#include <serving/types.h>
+#include <common/types.h>
 
 namespace metaspore::serving {
 

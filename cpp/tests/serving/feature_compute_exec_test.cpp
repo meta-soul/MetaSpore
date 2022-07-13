@@ -17,7 +17,7 @@
 #include <serving/arrow_helpers.h>
 #include <serving/feature_compute_exec.h>
 #include <serving/test_utils.h>
-#include <serving/types.h>
+#include <common/types.h>
 #include <serving/utils.h>
 
 #include <arrow/compute/api.h>
