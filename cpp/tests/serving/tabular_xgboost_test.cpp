@@ -26,6 +26,7 @@
 #include <thread>
 
 using namespace ranges;
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::string_literals;
 using namespace arrow;

@@ -22,12 +22,12 @@
 #include <arrow/record_batch.h>
 #include <fmt/format.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class ArrowRecordBatchSerde {
   public:
     static result<std::shared_ptr<arrow::RecordBatch>>
-    deserialize_from(const std::string &name, const PredictRequest &request);
+    deserialize_from(const std::string &name, const metaspore::serving::PredictRequest &request);
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

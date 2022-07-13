@@ -21,6 +21,7 @@
 #include <serving/test_utils.h>
 #include <serving/py_preprocessing_model.h>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 
 #define EXPECT_TRUE_COROUTINE(status)                         \

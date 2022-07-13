@@ -26,7 +26,7 @@
 #include <xtensor/xarray.hpp>
 #include <xtensor/xio.hpp>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class TensorPrint {
   public:
@@ -52,4 +52,4 @@ class TensorPrint {
     }
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

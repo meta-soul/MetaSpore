@@ -23,6 +23,7 @@
 
 using namespace std::chrono_literals;
 
+using namespace metaspore;
 using namespace metaspore::serving;
 
 TEST(SparseLookupModelTestSuite, SparseLookupModelTest) {

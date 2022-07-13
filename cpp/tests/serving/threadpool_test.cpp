@@ -14,14 +14,15 @@
 // limitations under the License.
 //
 
-#include <serving/test_utils.h>
 #include <common/types.h>
+#include <serving/test_utils.h>
 
 #include <iostream>
 #include <thread>
 
 #include <boost/asio/use_future.hpp>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 
 TEST(THREADPOOL_TEST_SUITE, TestThreadPoolBasicSpawn) {

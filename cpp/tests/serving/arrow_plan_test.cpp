@@ -31,6 +31,7 @@
 #include <serving/threadpool.h>
 #include <common/utils.h>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::string_literals;
 
