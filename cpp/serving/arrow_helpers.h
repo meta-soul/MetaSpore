@@ -17,7 +17,7 @@
 #pragma once
 
 #include <arrow/api.h>
-#include <serving/types.h>
+#include <common/types.h>
 #include <serving/utils.h>
 
 namespace metaspore::serving {

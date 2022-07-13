@@ -17,7 +17,7 @@
 #pragma once
 
 #include <serving/metaspore.pb.h>
-#include <serving/types.h>
+#include <common/types.h>
 
 #include <arrow/record_batch.h>
 #include <fmt/format.h>

@@ -21,7 +21,7 @@
 #include <serving/tabular_model.h>
 #include <serving/test_utils.h>
 #include <serving/threadpool.h>
-#include <serving/types.h>
+#include <common/types.h>
 
 #include <boost/asio/use_future.hpp>
 

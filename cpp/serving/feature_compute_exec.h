@@ -23,7 +23,7 @@
 #include <arrow/compute/exec/options.h>
 #include <arrow/record_batch.h>
 
-#include <serving/types.h>
+#include <common/types.h>
 
 namespace metaspore::serving {
 

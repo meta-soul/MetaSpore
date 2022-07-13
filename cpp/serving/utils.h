@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <serving/types.h>
+#include <common/types.h>
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>

@@ -24,7 +24,7 @@
 #include <fmt/format.h>
 
 #include <serving/threadpool.h>
-#include <serving/types.h>
+#include <common/types.h>
 
 namespace metaspore::serving {
 

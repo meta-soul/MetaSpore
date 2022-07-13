@@ -18,7 +18,7 @@
 
 #include <memory>
 
-#include <serving/types.h>
+#include <common/types.h>
 
 namespace metaspore::serving {
 
