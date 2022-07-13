@@ -16,9 +16,9 @@
 
 #include <common/logger.h>
 #include <common/features/feature_compute_exec.h>
-#include <serving/schema_parse.h>
+#include <common/features/schema_parser.h>
 #include <serving/sparse_feature_extraction_model.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 #include <common/utils.h>
 
 #include <boost/core/demangle.hpp>

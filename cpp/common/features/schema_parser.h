@@ -19,7 +19,7 @@
 #include <fstream>
 #include <string>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class FeatureComputeExec;
 
@@ -33,4 +33,4 @@ class FeatureSchemaParser {
     static status parse_hash_and_combine(std::istream &is, FeatureComputeExec &exec);
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

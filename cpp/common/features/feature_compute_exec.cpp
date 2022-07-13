@@ -18,7 +18,7 @@
 
 #include <common/logger.h>
 #include <common/features/feature_compute_exec.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 #include <common/utils.h>
 
 #include <boost/asio/experimental/concurrent_channel.hpp>
@@ -33,7 +33,7 @@
 
 namespace cp = arrow::compute;
 
-namespace metaspore::serving {
+namespace metaspore {
 
 using namespace std::string_literals;
 
@@ -265,4 +265,4 @@ std::vector<std::string> FeatureComputeExec::get_input_names() const {
     return v;
 }
 
-} // namespace metaspore::serving
+} // namespace metaspore

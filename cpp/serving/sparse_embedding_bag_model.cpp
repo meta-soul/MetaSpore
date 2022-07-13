@@ -19,7 +19,7 @@
 #include <serving/ort_model.h>
 #include <serving/sparse_embedding_bag_model.h>
 #include <serving/sparse_lookup_model.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 
 namespace metaspore::serving {
 

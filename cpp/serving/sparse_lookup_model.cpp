@@ -18,7 +18,7 @@
 #include <common/logger.h>
 #include <serving/inmem_sparse_lookup.h>
 #include <serving/sparse_lookup_model.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 #include <common/utils.h>
 
 #include <boost/core/demangle.hpp>

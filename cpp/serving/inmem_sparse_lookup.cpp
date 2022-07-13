@@ -18,7 +18,7 @@
 #include <common/hashmap/memory_mapped_array_hash_map_loader.h>
 #include <common/hashmap/multi_memory_mapped_map_search_helper.h>
 #include <serving/inmem_sparse_lookup.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 #include <common/utils.h>
 
 #include <fmt/format.h>

@@ -32,6 +32,7 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/arrow/arrow_tensor_serde.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/features/feature_compute_funcs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/features/feature_compute_exec.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/features/schema_parser.cpp
 )
 
 set(PROTOS

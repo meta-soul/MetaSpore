@@ -18,7 +18,7 @@
 
 #include <arrow/compute/api.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 template <typename FunctionOption>
 class MetaSporeBKDRHashFuncOptType : public arrow::compute::FunctionOptionsType {
@@ -78,4 +78,4 @@ class BKDRHashCombineFunctionOption : public arrow::compute::FunctionOptions {
 
 arrow::Status RegisterAllFunctions();
 
-} // namespace metaspore::serving
+} // namespace metaspore
