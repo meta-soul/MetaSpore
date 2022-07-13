@@ -22,8 +22,8 @@
 #include <range/v3/view/transform.hpp>
 
 #include <common/logger.h>
-#include <serving/feature_compute_exec.h>
-#include <serving/feature_compute_funcs.h>
+#include <common/features/feature_compute_exec.h>
+#include <common/features/feature_compute_funcs.h>
 #include <serving/schema_parse.h>
 
 #include <filesystem>

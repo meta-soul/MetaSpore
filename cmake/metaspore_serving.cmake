@@ -37,8 +37,6 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/ort_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/inmem_sparse_lookup.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_lookup_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/feature_compute_exec.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/feature_compute_funcs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/converters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/tabular_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_feature_extraction_model.cpp

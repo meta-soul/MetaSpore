@@ -15,7 +15,7 @@
 //
 
 #include <common/logger.h>
-#include <serving/feature_compute_funcs.h>
+#include <common/features/feature_compute_funcs.h>
 #include <serving/grpc_server.h>
 #include <serving/grpc_client_context_pool.h>
 #include <serving/model_manager.h>

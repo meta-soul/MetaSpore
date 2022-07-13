@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 #include <common/logger.h>
-#include <serving/feature_compute_exec.h>
+#include <common/features/feature_compute_exec.h>
 #include <serving/threadpool.h>
 #include <common/utils.h>
 

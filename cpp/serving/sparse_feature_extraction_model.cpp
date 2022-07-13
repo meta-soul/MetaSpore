@@ -15,7 +15,7 @@
 //
 
 #include <common/logger.h>
-#include <serving/feature_compute_exec.h>
+#include <common/features/feature_compute_exec.h>
 #include <serving/schema_parse.h>
 #include <serving/sparse_feature_extraction_model.h>
 #include <serving/threadpool.h>

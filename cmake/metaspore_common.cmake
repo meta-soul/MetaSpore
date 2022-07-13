@@ -30,6 +30,8 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/hashmap/memory_mapped_array_hash_map_loader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/arrow/arrow_record_batch_serde.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/arrow/arrow_tensor_serde.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/features/feature_compute_funcs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/features/feature_compute_exec.cpp
 )
 
 set(PROTOS
