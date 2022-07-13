@@ -19,7 +19,7 @@
 #include <serving/schema_parse.h>
 #include <serving/sparse_feature_extraction_model.h>
 #include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 #include <boost/core/demangle.hpp>
 #include <fmt/format.h>

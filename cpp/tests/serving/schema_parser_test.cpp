@@ -22,7 +22,7 @@
 #include <serving/feature_compute_exec.h>
 #include <serving/schema_parse.h>
 #include <serving/test_utils.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 using namespace std;
 using namespace metaspore::serving;

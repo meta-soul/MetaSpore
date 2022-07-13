@@ -29,7 +29,7 @@
 
 #include <serving/arrow_helpers.h>
 #include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 using namespace metaspore::serving;
 using namespace std::string_literals;

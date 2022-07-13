@@ -19,7 +19,7 @@
 #include <common/hashmap/multi_memory_mapped_map_search_helper.h>
 #include <serving/inmem_sparse_lookup.h>
 #include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 #include <fmt/format.h>
 #include <range/v3/algorithm/any_of.hpp>

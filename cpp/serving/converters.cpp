@@ -25,7 +25,7 @@
 #include <serving/ort_model.h>
 #include <serving/sparse_feature_extraction_model.h>
 #include <serving/sparse_lookup_model.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 namespace metaspore::serving {
 
