@@ -19,7 +19,7 @@
 
 #include <serving/feature_compute_funcs.h>
 #include <common/logger.h>
-#include <serving/print_utils.h>
+#include <common/print_utils.h>
 #include <serving/threadpool.h>
 
 namespace metaspore::serving {
