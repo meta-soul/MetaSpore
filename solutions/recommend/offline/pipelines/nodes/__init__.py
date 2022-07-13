@@ -28,3 +28,4 @@ from .attribute2i import Attribute2INode
 from .search_builder import SearchBuilderNode
 from .search_evaluator import SearchEvaluateNode
 from .embedding2i import Embedding2INode
+from .popular import PopularNode
