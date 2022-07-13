@@ -21,6 +21,7 @@
 #include <fstream>
 #include <thread>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::chrono_literals;
 using namespace std::string_literals;

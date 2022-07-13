@@ -24,7 +24,7 @@
 
 #include <common/arrow/arrow_status.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 template <typename T> using awaitable = boost::asio::awaitable<T>;
 
@@ -104,4 +104,4 @@ template <typename T> using awaitable_result = awaitable<result<T>>;
 
 using awaitable_status = awaitable<status>;
 
-} // namespace metaspore::serving
+} // namespace metaspore

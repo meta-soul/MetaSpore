@@ -20,7 +20,7 @@
 #include <common/types.h>
 #include <common/utils.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class ArrowHelpers {
   public:
@@ -173,4 +173,4 @@ struct HashListAccessor {
     }
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

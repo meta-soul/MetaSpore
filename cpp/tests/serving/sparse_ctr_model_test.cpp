@@ -25,6 +25,7 @@
 
 #include <boost/asio/use_future.hpp>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::string_literals;
 

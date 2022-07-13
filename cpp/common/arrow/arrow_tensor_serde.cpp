@@ -22,10 +22,10 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 result<std::shared_ptr<arrow::Tensor>>
-ArrowTensorSerde::deserialize_from(const std::string &name, PredictRequest &request) {
+ArrowTensorSerde::deserialize_from(const std::string &name, metaspore::serving::PredictRequest &request) {
     auto find = request.payload().find(name);
     if (find == request.payload().end()) {
         return absl::NotFoundError(fmt::format("Cannot find input {} from request", name));
@@ -37,7 +37,7 @@ ArrowTensorSerde::deserialize_from(const std::string &name, PredictRequest &requ
 }
 
 result<std::shared_ptr<arrow::Tensor>>
-ArrowTensorSerde::deserialize_from(const std::string &name, PredictReply &reply) {
+ArrowTensorSerde::deserialize_from(const std::string &name, metaspore::serving::PredictReply &reply) {
     auto find = reply.payload().find(name);
     if (find == reply.payload().end()) {
         return absl::NotFoundError(fmt::format("Cannot find input {} from reply", name));
@@ -49,7 +49,7 @@ ArrowTensorSerde::deserialize_from(const std::string &name, PredictReply &reply)
 }
 
 status ArrowTensorSerde::serialize_to(const std::string &name, const arrow::Tensor &tensor,
-                                      PredictRequest &request) {
+                                      metaspore::serving::PredictRequest &request) {
     ASSIGN_RESULT_OR_RETURN_NOT_OK(auto buffer_stream_result,
                                    arrow::io::BufferOutputStream::Create());
     int32_t meta_len = 0;
@@ -62,7 +62,7 @@ status ArrowTensorSerde::serialize_to(const std::string &name, const arrow::Tens
 }
 
 status ArrowTensorSerde::serialize_to(const std::string &name, const arrow::Tensor &tensor,
-                                      PredictReply &reply) {
+                                      metaspore::serving::PredictReply &reply) {
     ASSIGN_RESULT_OR_RETURN_NOT_OK(auto buffer_stream_result,
                                    arrow::io::BufferOutputStream::Create());
     int32_t meta_len = 0;
@@ -74,4 +74,4 @@ status ArrowTensorSerde::serialize_to(const std::string &name, const arrow::Tens
     return absl::OkStatus();
 }
 
-} // namespace metaspore::serving
+} // namespace metaspore

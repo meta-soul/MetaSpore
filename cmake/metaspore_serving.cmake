@@ -15,7 +15,6 @@
 #
 
 find_package(range-v3 CONFIG REQUIRED)
-find_package(xtensor CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 
 target_link_libraries(arrow_static INTERFACE
@@ -77,7 +76,6 @@ target_link_libraries(metaspore-serving PUBLIC
     fmt::fmt
     arrow_static
     range-v3
-    xtensor
 )
 
 if(ENABLE_GPU)

@@ -25,6 +25,7 @@
 #include <common/utils.h>
 
 using namespace std;
+using namespace metaspore;
 using namespace metaspore::serving;
 
 static std::pair<std::shared_ptr<arrow::RecordBatch>, std::shared_ptr<arrow::Schema>>

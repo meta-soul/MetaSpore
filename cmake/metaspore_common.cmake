@@ -19,6 +19,7 @@ find_package(asio-grpc CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
 find_package(Arrow CONFIG REQUIRED)
+find_package(xtensor CONFIG REQUIRED)
 
 set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/globals.cpp
@@ -62,4 +63,5 @@ target_include_directories(metaspore-common PUBLIC
 
 target_link_libraries(metaspore-common PUBLIC
     gflags
+    xtensor
 )
