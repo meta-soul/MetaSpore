@@ -17,7 +17,7 @@
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
-#include <serving/feature_compute_funcs.h>
+#include <common/features/feature_compute_funcs.h>
 #include <common/logger.h>
 #include <common/print_utils.h>
 #include <serving/threadpool.h>
