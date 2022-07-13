@@ -25,7 +25,7 @@
 #include <grpcpp/create_channel.h>
 #include <fmt/format.h>
 #include <common/logger.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 #include <common/utils.h>
 #include <serving/metaspore.pb.h>
 #include <serving/metaspore.grpc.pb.h>

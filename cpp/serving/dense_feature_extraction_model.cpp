@@ -16,8 +16,8 @@
 
 #include <common/logger.h>
 #include <serving/dense_feature_extraction_model.h>
-#include <serving/schema_parse.h>
-#include <serving/threadpool.h>
+#include <common/features/schema_parser.h>
+#include <common/threadpool.h>
 
 #include <arrow/api.h>
 #include <boost/core/demangle.hpp>

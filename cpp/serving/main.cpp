@@ -19,7 +19,7 @@
 #include <serving/grpc_server.h>
 #include <serving/grpc_client_context_pool.h>
 #include <serving/model_manager.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -33,7 +33,7 @@ using namespace metaspore::serving;
 
 int main(int argc, char **argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
-    auto status = RegisterAllFunctions();
+    auto status = metaspore::RegisterAllFunctions();
     if (!status.ok()) {
         fmt::print(stderr, "register arrow functions failed {}\n", status);
         return 1;
@@ -50,8 +50,8 @@ int main(int argc, char **argv) {
     }
 
     GrpcClientContextPool::get_instance().wait();
-    auto &tp = metaspore::serving::Threadpools::get_compute_threadpool();
-    auto &btp = metaspore::serving::Threadpools::get_background_threadpool();
+    auto &tp = metaspore::Threadpools::get_compute_threadpool();
+    auto &btp = metaspore::Threadpools::get_background_threadpool();
     tp.join();
     btp.join();
     tp.stop();

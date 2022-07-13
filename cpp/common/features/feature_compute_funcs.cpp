@@ -23,7 +23,7 @@
 
 namespace cp = arrow::compute;
 
-namespace metaspore::serving {
+namespace metaspore {
 
 // bkdr hash needs a state to store hash value of "feature_name="
 struct StringBKDRHashState : public cp::KernelState {
@@ -232,4 +232,4 @@ arrow::Status RegisterAllFunctions() {
     return arrow::Status::OK();
 }
 
-} // namespace metaspore::serving
+} // namespace metaspore

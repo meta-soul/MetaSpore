@@ -19,7 +19,7 @@
 #include <boost/asio/thread_pool.hpp>
 #include <gflags/gflags.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 DECLARE_uint64(compute_thread_num);
 DECLARE_uint64(background_thread_num);
@@ -39,4 +39,4 @@ class Threadpools {
     }
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

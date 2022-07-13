@@ -19,5 +19,7 @@
 namespace metaspore {
 
 DEFINE_int32(log_level, 2, "Global log level");
+DEFINE_uint64(compute_thread_num, 4UL, "Thread number for computing");
+DEFINE_uint64(background_thread_num, 2UL, "Thread number for background tasks");
 
 } // namespace metaspore

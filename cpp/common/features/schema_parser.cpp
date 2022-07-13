@@ -24,11 +24,11 @@
 #include <common/logger.h>
 #include <common/features/feature_compute_exec.h>
 #include <common/features/feature_compute_funcs.h>
-#include <serving/schema_parse.h>
+#include <common/features/schema_parser.h>
 
 #include <filesystem>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 using boost::spirit::x3::_attr;
 using boost::spirit::x3::char_;
@@ -197,4 +197,4 @@ status FeatureSchemaParser::parse_hash_and_combine(std::istream &is, FeatureComp
     }
     return exec.add_projection(std::move(expressions));
 }
-} // namespace metaspore::serving
+} // namespace metaspore

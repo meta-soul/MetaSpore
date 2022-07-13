@@ -19,7 +19,7 @@
 #include <serving/ort_model.h>
 #include <serving/py_preprocessing_model.h>
 #include <serving/py_preprocessing_ort_model.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 
 #include <filesystem>
 

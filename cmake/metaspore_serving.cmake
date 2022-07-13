@@ -40,7 +40,6 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/converters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/tabular_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_feature_extraction_model.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/schema_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/dense_feature_extraction_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/grpc_server_shutdown.cpp
