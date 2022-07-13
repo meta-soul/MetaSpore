@@ -16,10 +16,6 @@
 
 find_package(range-v3 CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
-find_package(asio-grpc CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
-find_package(Protobuf CONFIG REQUIRED)
-find_package(Arrow CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 
 target_link_libraries(arrow_static INTERFACE
@@ -37,20 +33,6 @@ if(ENABLE_GPU)
     find_package(CUDA)
 endif()
 
-set(PROTOS
-    ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
-)
-
-set(PROTO_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/gen/proto/cpp)
-set(PROTO_SRC_DIR ${PROTO_INC_DIR}/serving)
-file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
-
-asio_grpc_protobuf_generate(
-    GENERATE_GRPC
-    OUT_VAR PROTO_SRCS
-    OUT_DIR "${PROTO_SRC_DIR}"
-    PROTOS ${PROTOS})
-
 set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/globals.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/ort_model.cpp
@@ -58,8 +40,6 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_lookup_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/feature_compute_exec.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/feature_compute_funcs.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/arrow_record_batch_serde.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/arrow_tensor_serde.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/converters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/tabular_model.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/sparse_feature_extraction_model.cpp
@@ -78,12 +58,10 @@ set(SRCS
 
 add_library(metaspore-serving STATIC
     ${SRCS}
-    ${PROTO_SRCS}
 )
 
 target_include_directories(metaspore-serving PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp
-    ${PROTO_INC_DIR}
 )
 
 target_compile_options(metaspore-serving PUBLIC

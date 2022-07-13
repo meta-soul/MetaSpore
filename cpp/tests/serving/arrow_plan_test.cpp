@@ -27,7 +27,7 @@
 #include <range/v3/view/transform.hpp>
 #include <spdlog/spdlog.h>
 
-#include <serving/arrow_helpers.h>
+#include <common/arrow/arrow_helpers.h>
 #include <serving/threadpool.h>
 #include <common/utils.h>
 

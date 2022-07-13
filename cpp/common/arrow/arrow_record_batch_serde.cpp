@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include <serving/arrow_record_batch_serde.h>
+#include <common/arrow/arrow_record_batch_serde.h>
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>

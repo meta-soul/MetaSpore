@@ -15,7 +15,7 @@
 //
 
 #include <common/hash_utils.h>
-#include <serving/arrow_helpers.h>
+#include <common/arrow/arrow_helpers.h>
 #include <serving/feature_compute_funcs.h>
 #include <common/utils.h>
 
