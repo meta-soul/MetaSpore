@@ -18,7 +18,7 @@
 
 #include <boost/asio/use_future.hpp>
 
-#include <serving/arrow_helpers.h>
+#include <common/arrow/arrow_helpers.h>
 #include <serving/feature_compute_exec.h>
 #include <serving/schema_parse.h>
 #include <serving/test_utils.h>

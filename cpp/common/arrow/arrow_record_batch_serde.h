@@ -16,27 +16,18 @@
 
 #pragma once
 
-#include <serving/metaspore.pb.h>
+#include <common/metaspore.pb.h>
 #include <common/types.h>
 
-#include <arrow/tensor.h>
+#include <arrow/record_batch.h>
 #include <fmt/format.h>
 
 namespace metaspore::serving {
 
-class ArrowTensorSerde {
+class ArrowRecordBatchSerde {
   public:
-    static result<std::shared_ptr<arrow::Tensor>>
-    deserialize_from(const std::string &name, PredictRequest &request);
-
-    static result<std::shared_ptr<arrow::Tensor>>
-    deserialize_from(const std::string &name, PredictReply &reply);
-
-    static status serialize_to(const std::string &name, const arrow::Tensor &tensor,
-                               PredictRequest &request);
-
-    static status serialize_to(const std::string &name, const arrow::Tensor &tensor,
-                               PredictReply &reply);
+    static result<std::shared_ptr<arrow::RecordBatch>>
+    deserialize_from(const std::string &name, const PredictRequest &request);
 };
 
 } // namespace metaspore::serving

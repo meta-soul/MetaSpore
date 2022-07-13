@@ -15,6 +15,10 @@
 #
 
 find_package(gflags CONFIG REQUIRED)
+find_package(asio-grpc CONFIG REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
+find_package(Arrow CONFIG REQUIRED)
 
 set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/globals.cpp
@@ -23,10 +27,27 @@ set(SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/hashmap/map_file_header.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/hashmap/memory_usage.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/hashmap/memory_mapped_array_hash_map_loader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/arrow/arrow_record_batch_serde.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cpp/common/arrow/arrow_tensor_serde.cpp
 )
+
+set(PROTOS
+    ${CMAKE_CURRENT_SOURCE_DIR}/protos/metaspore.proto
+)
+
+set(PROTO_INC_DIR ${CMAKE_CURRENT_BINARY_DIR}/gen/proto/cpp)
+set(PROTO_SRC_DIR ${PROTO_INC_DIR}/common)
+file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
+
+asio_grpc_protobuf_generate(
+    GENERATE_GRPC
+    OUT_VAR PROTO_SRCS
+    OUT_DIR "${PROTO_SRC_DIR}"
+    PROTOS ${PROTOS})
 
 add_library(metaspore-common STATIC
     ${SRCS}
+    ${PROTO_SRCS}
 )
 
 target_compile_options(metaspore-common PRIVATE
@@ -36,6 +57,7 @@ target_compile_options(metaspore-common PRIVATE
 
 target_include_directories(metaspore-common PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp
+    ${PROTO_INC_DIR}
 )
 
 target_link_libraries(metaspore-common PUBLIC
