@@ -22,7 +22,7 @@
 #include <boost/asio/co_spawn.hpp>
 #include <boost/asio/detached.hpp>
 
-#include <serving/arrow_status.h>
+#include <common/arrow/arrow_status.h>
 
 namespace metaspore::serving {
 
