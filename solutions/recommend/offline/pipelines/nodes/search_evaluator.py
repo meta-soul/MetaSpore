@@ -27,7 +27,7 @@ class SearchEvaluateNode(PipelineNode):
         index_name = confs['indexer_conf']['create_index']
         searchqueries = evaluation['search_queries']
         for query in searchqueries:
-            if 'keyword' in query:
+            if 'keywords' in query:
                 match_rules = generate_keyword_match_rules(query['keywords']['values'])
                 sorter_rules = generate_attribute_sorter_rules(query['keywords']['sorter_rules'])
                 result = search_es_using_query_combination(es,
