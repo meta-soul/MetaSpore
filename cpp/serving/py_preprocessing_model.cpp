@@ -26,7 +26,7 @@
 #include <fmt/format.h>
 #include <common/logger.h>
 #include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 #include <serving/metaspore.pb.h>
 #include <serving/metaspore.grpc.pb.h>
 #include <serving/grpc_client_context_pool.h>

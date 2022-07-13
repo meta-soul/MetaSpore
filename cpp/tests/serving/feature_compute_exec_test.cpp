@@ -18,7 +18,7 @@
 #include <serving/feature_compute_exec.h>
 #include <serving/test_utils.h>
 #include <common/types.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 #include <arrow/compute/api.h>
 #include <boost/asio/use_future.hpp>

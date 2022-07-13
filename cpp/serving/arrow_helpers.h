@@ -18,7 +18,7 @@
 
 #include <arrow/api.h>
 #include <common/types.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 namespace metaspore::serving {
 

@@ -17,7 +17,7 @@
 #include <common/hash_utils.h>
 #include <serving/arrow_helpers.h>
 #include <serving/feature_compute_funcs.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 #include <fmt/format.h>
 

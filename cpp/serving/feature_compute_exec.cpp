@@ -19,7 +19,7 @@
 #include <common/logger.h>
 #include <serving/feature_compute_exec.h>
 #include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 #include <boost/asio/experimental/concurrent_channel.hpp>
 #include <fmt/format.h>
