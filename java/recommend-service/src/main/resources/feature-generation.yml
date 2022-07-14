@@ -1,0 +1,263 @@
+feature-service:
+  Source:
+    - name: request
+      format: json
+    - name: mongodb
+      kind: mongodb  # kind in (request, mongodb, redis, jdbc, milvus)
+      options:
+        uri: mongodb://localhost:27017/metasoul  # uri need in mongodb
+    - name: userInfo
+      kind: mongodb  # kind in (request, mongodb, redis, jdbc, milvus)
+      options:
+        uri: mongodb://localhost:27017/userData
+    - name: mysql
+      kind: jdbc
+      options:
+        uri: jdbc:mysql://localhost:3306/recomend?profileSQL=true  # uri need in jdbc
+        driver: com.mysql.cj.jdbc.Driver  # driver need in jdbc
+        user: root   # if not set, default root
+        password: test  # if not set, default test
+    - name: recall
+      kind: redis
+      options:
+        cluster: false  # if true, is redis cluster, else is standalone redis
+          # redis cluster need nodes in options
+        # redis standalone need host and port in options
+        host: localhost # if not set, default localhost
+        port: 6379      # if not set, default 6379
+    - name: modelRecall
+      kind: milvus
+      options:
+        host: localhost  # host need in milvus
+        port: 9000
+  SourceTable:
+    - name: userProfile
+      source: mysql
+      table: user
+      columns:
+        - user_id: str   # default first col is primary key
+        - gender: bool
+        - age: float
+        - name: str
+        - education: str
+      sqlFilters:    # only jdbc support sqlFilters
+        - age > 10 and age != 25
+        - name != ""
+    - name: userAction
+      source: userInfo
+      columns:
+        - user_id: str
+        - recent_movie_ids: list_str  # format: list_type  type in (int, str, float, double)
+        - last_movie: str
+        - last_genre: str
+        - user_greater_than_three_rate: double
+        - user_movie_avg_rating: double
+      filters: # mongodb support filters
+        - user_movie_avg_rating:
+            gt: 0.001
+        - last_genre:
+            ne: "sport"
+    - name: userReq
+      source: request
+      columns:
+        - user_id: str
+        - language: str
+        - client_ip: str
+        - login_time: timestamp
+    - name: itemInfo
+      source: mongodb
+      columns:
+        - movie_id: str
+        - title: str
+        - genre: str
+        - imdb_url: str
+        - genre_greater_than_three_rate: double
+        - genre_movie_avg_rating: double
+        - genre_watch_volume: double
+        - movie_avg_rating: double
+        - movie_greater_than_three_rate: double
+        - watch_volume: double
+    - name: usercf
+      source: recall
+      opType: hash  # opType is only use for redis, opType in (list, value, hash, set, zset), only hash has more 2 columns
+      prefix: usercf
+      columns:
+        - user_key: str    # default col is key, other is value
+        - item_ids: map_str_double
+    - name: twotowerRecall
+      source: modelRecall
+      columns:
+        - user_id: str
+        - item_id: str
+        - itemScore: double
+  Feature:
+    - name: twoTower_user
+      from: [ userAction, userProfile]
+      select: [ userAction.user_id, userAction.recent_movie_ids, gender, age, name ]
+      condition:
+        - userAction.user_id: userProfile.user_id
+    - name: twoTower_user2
+      from: [ userAction, userProfile, userReq]
+      select: [ userAction.user_id, userAction.recent_movie_ids, gender, age, name, language ]
+      condition:
+        - userAction.user_id: userProfile.user_id
+        - userAction.user_id: userReq.user_id
+    - name: twoTower_user3
+      from: [ userAction, userProfile, userReq]
+      select: [ userAction.user_id, userAction.recent_movie_ids, gender, age, name, language ]
+      condition:
+        - userProfile.user_id: userReq.user_id
+        - userAction.user_id: userReq.user_id
+    - name: lightGBM
+      from: [ userAction, itemInfo, Recall ]
+      select: [ user_greater_than_three_rate, user_movie_avg_rating, watch_volume, movie_avg_rating, movie_greater_than_three_rate, genre_watch_volume, genre_movie_avg_rating, genre_greater_than_three_rate ]
+      condition:
+        - userAction.user_id: Recall.user_id
+        - itemInfo.movie_id: Recall.item_id
+  AlgoTransform:
+    - name: algoTwoTowerUser
+      depend: twoTower_user
+      fieldActions:
+        - name: user_id
+    - name: algoLightGBM
+      depend: lightGBM
+      fieldActions:
+        - name: watch_volume
+        - name: user_movie_avg_rating
+recommend-service:
+  Layers:
+    - name: userModel
+      experiments:
+        - name: userModel.base
+          ratio: 1.0
+    - name: match
+      experiments:
+        - name: match.base
+          ratio: 0.0
+        - name: match.multiple
+          ratio: 1.0
+    - name: rank
+      experiments:
+        - name: rank.base
+          ratio: 0.0
+        - name: rank.wideDeep
+          ratio: 0.5
+        - name: rank.lightGBM
+          ratio: 0.5
+    - name: diversify
+      experiments:
+        - name: diversify.base
+          ratio: 0.5
+        - name: diversify.MMR
+          ratio: 0.5
+  Experiments:
+    - name: userModel.base
+      chains:
+        - then: userService
+    - name: match.base
+      options:
+        maxReservation: 200
+        cutField: score
+      chains:
+        - then: ItemCfMatcher
+    - name: match.multiple
+      options:
+        maxReservation: 300
+        cutField: score
+      chains:
+        - when: [ItemCfMatcher, SwingMatcher, TwoTowersMatcher]
+          columns:
+            - item_id: str
+            - score: double
+            - scores: map
+    - name: rank.base
+      chains:
+        - then: WideAndDeepRanker
+    - name: rank.wideDeep
+      chains:
+        - then: WideAndDeepRanker
+    - name: rank.lightGBM
+      chains:
+        - then: LightGBMRanker
+    - name: diversify.base
+      chains:
+        - then: diversifyBaseService
+    - name: diversify.MMR
+      chains:
+        - then: diversifyMMRService
+  Services:
+    - name: userService
+      columns:
+        - item_id: str
+        - score: double
+    - name: ItemCfMatcher
+      options:
+        itemCfAlgoLevel: 3
+        itemCfMaxReservation: 200
+      columns:
+        - item_id: str
+        - score: double
+        - scores: map
+    - name: SwingMatcher
+      options:
+        swingAlgoLevel: 3
+        swingMaxReservation: 200
+      columns:
+        - item_id: str
+        - score: double
+        - scores: map
+    - name: TwoTowersMatcher
+      depend: [algoTwoTowerUser, twotowerRecall]   # depend: xxx  xxx 必须是FeatureService中配置的数据资源
+      options:
+        twoTowersSimpleXModelName: two_towers_simplex
+        twoTowersSimpleXAlgoLevel: 3
+        twoTowersSimpleXMaxReservation: 200
+      columns:
+        - item_id: str
+        - score: double
+        - scores: map
+    - name: WideAndDeepRanker
+      options:
+        modelName: movie_lens_wdl
+        ranker: WideAndDeepRanker
+        maxReservation: 100
+        sortStrategyType: USE_RANK_MULTIPLY_MATCH
+        sortStrategyAlpha: 0.4
+        sortStrategyBeta: 0.6
+      columns:
+        - item_id: str
+        - score: double
+    - name: LightGBMRanker
+      depend: algoLightGBM
+      options:
+        modelName: lightgbm_test_model
+      columns:
+        - item_id: str
+        - score: double
+    - name: diversifyBaseService
+      options:
+        useDiversify: true
+        window: 4
+        tolerance: 4
+      columns:
+        - item_id: str
+        - score: double
+    - name: diversifyMMRService
+      options:
+        useDiversify: true
+        lambda: 0.7
+        window: 5
+        tolerance: 5
+      columns:
+        - item_id: str
+        - score: double
+  Scenes:
+    - name: guess-you-like
+      chains:   # 串行执行chain  执行基于liteflow
+        - then: [userModel]
+        - name: Recall
+          then: [match]    # then 表示串行执行layer； when 表示并发执行layer
+          columns:
+            - user_id: str
+            - item_ids: list_str
+        - then: [rank, diversify]

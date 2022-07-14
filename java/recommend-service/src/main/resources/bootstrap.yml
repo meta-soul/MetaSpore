@@ -1,0 +1,15 @@
+spring:
+  cloud:
+    consul:
+      host: 127.0.0.1
+      port: 8500
+      config:
+        enabled: true
+        prefix: config
+        defaultContext: recommend
+        data-key: data
+        format: YAML
+        watch:
+          wait-time: 1
+          delay: 1000
+        fail-fast: true
