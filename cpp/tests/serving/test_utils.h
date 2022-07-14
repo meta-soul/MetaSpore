@@ -45,7 +45,7 @@ namespace metaspore::serving {
 int run_all_tests(int argc, char **argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     SpdlogDefault::Init();
-    auto status = RegisterAllArrowFunctions();
+    auto status = RegisterCustomArrowFunctions();
     if (!status.ok()) {
         fmt::print(stderr, "register arrow functions failed {}\n", status);
         return 1;

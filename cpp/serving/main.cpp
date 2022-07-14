@@ -33,7 +33,7 @@ using namespace metaspore::serving;
 
 int main(int argc, char **argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
-    auto status = metaspore::RegisterAllArrowFunctions();
+    auto status = metaspore::RegisterCustomArrowFunctions();
     if (!status.ok()) {
         fmt::print(stderr, "register arrow functions failed {}\n", status);
         return 1;

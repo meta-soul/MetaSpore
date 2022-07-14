@@ -226,7 +226,7 @@ BKDRHashCombineFunctionOption::BKDRHashCombineFunctionOption()
     : arrow::compute::FunctionOptions(
           MetaSporeBKDRHashFuncOptType<BKDRHashCombineFunctionOption>::get()) {}
 
-arrow::Status RegisterAllArrowFunctions() {
+arrow::Status RegisterCustomArrowFunctions() {
     ARROW_RETURN_NOT_OK(AddStringBKDRHashFunction());
     ARROW_RETURN_NOT_OK(AddBKDRHashCombineFunction());
     return arrow::Status::OK();
