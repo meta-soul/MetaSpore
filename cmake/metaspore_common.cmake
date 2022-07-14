@@ -77,5 +77,7 @@ target_link_libraries(metaspore-common PUBLIC
     absl::statusor
     gflags
     xtensor
-    arrow_static
+    # TODO: cf: fix this
+    #arrow_static
+    /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/libarrow.so.700
 )

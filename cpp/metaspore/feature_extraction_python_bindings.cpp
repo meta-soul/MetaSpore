@@ -25,8 +25,8 @@
 #include <metaspore/pybind_utils.h>
 #include <metaspore/stack_trace_utils.h>
 #include <stdexcept>
-#include <iostream>
 
+// TODO: cf: fix this
 #include <gflags/gflags.h>
 
 namespace py = pybind11;
@@ -40,16 +40,16 @@ void DefineFeatureExtractionBindings(pybind11::module &m) {
     char **argv = &arga[0];
     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-    auto status = metaspore::RegisterAllArrowFunctions();
+    auto status = metaspore::RegisterCustomArrowFunctions();
     if (!status.ok()) {
         std::string serr;
-        serr.append("Fail to register arrow functions in MetaSpore extension.\n\n");
+        serr.append("Fail to register custom arrow functions in MetaSpore extension.\n\n");
         serr.append(GetStackTrace());
         spdlog::error(serr);
         throw std::runtime_error(serr);
     }
 
-    const int rc = arrow::py::import_pyarrow();
+    int rc = arrow::py::import_pyarrow();
     if (rc != 0) {
         std::string serr;
         serr.append("Fail to import pyarrow in MetaSpore extension.\n\n");

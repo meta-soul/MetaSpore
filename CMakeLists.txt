@@ -37,6 +37,10 @@ if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-free-nonheap-object")
 endif()
 
+# pyarrow does not enable _GLIBCXX_USE_CXX11_ABI, so do we
+string(REPLACE "-D_GLIBCXX_USE_CXX11_ABI=1" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(APPEND CMAKE_CXX_FLAGS " -D_GLIBCXX_USE_CXX11_ABI=0")
+
 option(BUILD_TRAIN_PKG "Enable training package build" ON)
 option(BUILD_SERVING_BIN "Enable serving binary build" ON)
 option(ENABLE_GPU "Enable GPU support" ON)

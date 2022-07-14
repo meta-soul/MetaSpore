@@ -145,5 +145,6 @@ target_link_libraries(metaspore_shared PRIVATE
     Boost::headers
     thrift::thrift
     zmq::libzmq
+    # TODO: cf: fix this
     /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/libarrow_python.so.700
 )
