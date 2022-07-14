@@ -297,6 +297,9 @@ public class FeatureTask extends DataService {
             fieldMap.get(table).add(field);
         }
         Map<String, Map<FeatureConfig.Feature.Field, List<Object>>> data = Maps.newHashMap();
+        for (String table : feature.getFrom()) {
+            data.put(table, getTableArray(table, context));
+        }
         if (feature.getFrom().size() == 1) {
             String table = feature.getFrom().get(0);
             setFeatureArray(fieldMap.get(table), data.get(table), featureArrays);
