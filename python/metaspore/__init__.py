@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+# pyarrow must be imported before importing _metaspore,
+# otherwise arrow::py::import_pyarrow() will coredump.
+import pyarrow
+
 from ._metaspore import NodeRole
 from ._metaspore import ActorConfig
 from ._metaspore import PSRunner

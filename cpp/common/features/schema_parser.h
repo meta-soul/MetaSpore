@@ -18,6 +18,7 @@
 
 #include <fstream>
 #include <string>
+#include <common/types.h>
 
 namespace metaspore {
 

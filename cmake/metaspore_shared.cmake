@@ -107,6 +107,7 @@ add_library(metaspore_shared SHARED
     cpp/metaspore/ps_helper.cpp
     cpp/metaspore/combine_schema.cpp
     cpp/metaspore/index_batch.cpp
+    cpp/metaspore/sparse_feature_extractor.cpp
     cpp/metaspore/model_metric_buffer.cpp
     cpp/metaspore/tensor_utils.cpp
     cpp/metaspore/pybind_utils.cpp
@@ -127,8 +128,12 @@ target_compile_options(metaspore_shared PRIVATE
     -funroll-loops
     -march=core-avx2
 )
-target_include_directories(metaspore_shared PRIVATE ${PROJECT_SOURCE_DIR}/cpp)
-target_include_directories(metaspore_shared PRIVATE ${PROJECT_BINARY_DIR}/gen/thrift/cpp)
+target_include_directories(metaspore_shared PRIVATE
+    ${PROJECT_SOURCE_DIR}/cpp
+    ${PROJECT_BINARY_DIR}/gen/thrift/cpp
+    # TODO: cf: fix this
+    /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/include
+)
 target_link_libraries(metaspore_shared PRIVATE
     metaspore-common
     ${JSON11_LIBRARIES}
@@ -140,4 +145,5 @@ target_link_libraries(metaspore_shared PRIVATE
     Boost::headers
     thrift::thrift
     zmq::libzmq
+    /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/libarrow_python.so.700
 )

@@ -17,14 +17,6 @@
 find_package(range-v3 CONFIG REQUIRED)
 find_package(mimalloc CONFIG REQUIRED)
 
-target_link_libraries(arrow_static INTERFACE
-    lz4::lz4
-    utf8proc
-    unofficial::brotli::brotlienc-static
-    unofficial::brotli::brotlidec-static
-    unofficial::brotli::brotlicommon-static
-)
-
 include("${CMAKE_CURRENT_LIST_DIR}/FindOnnxRuntimeCpuDefault.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/AsioGrpcProtobufGenerator.cmake")
 if(ENABLE_GPU)
@@ -71,7 +63,6 @@ target_link_libraries(metaspore-serving PUBLIC
     Boost::system
     asio-grpc::asio-grpc
     fmt::fmt
-    arrow_static
     range-v3
 )
 

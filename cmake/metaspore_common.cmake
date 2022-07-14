@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+find_package(absl CONFIG REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(asio-grpc CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
@@ -64,7 +65,17 @@ target_include_directories(metaspore-common PUBLIC
     ${PROTO_INC_DIR}
 )
 
+target_link_libraries(arrow_static INTERFACE
+    lz4::lz4
+    utf8proc
+    unofficial::brotli::brotlienc-static
+    unofficial::brotli::brotlidec-static
+    unofficial::brotli::brotlicommon-static
+)
+
 target_link_libraries(metaspore-common PUBLIC
+    absl::statusor
     gflags
     xtensor
+    arrow_static
 )
