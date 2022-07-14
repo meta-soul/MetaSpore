@@ -11,7 +11,6 @@ import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -22,13 +21,14 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("rawtypes")
-@Data
 @Slf4j
 @DataServiceAnnotation("Feature")
 public class FeatureTask extends DataService {
 
     private FeatureConfig.Feature feature;
     private Set<String> immediateTables;
+
+    Map<FeatureConfig.Feature.Field, FeatureConfig.Feature.Field> rewritedField = Maps.newHashMap();
 
     @Override
     public boolean initService() {
@@ -45,15 +45,17 @@ public class FeatureTask extends DataService {
                 if (!visitedTables.contains(table)) {
                     boolean noOtherVisited = true;
                     for (FeatureConfig.Feature.Condition cond : conditions) {
-                        if ((cond.getType() == JoinTypeEnum.LEFT || (cond.getType() == JoinTypeEnum.INNER && table.equals(cond.getRight().getTable()))) &&
-                                !visitedTables.contains(cond.getLeft().getTable())) {
-                            noOtherVisited = false;
-                            break;
+                        if (cond.getType() == JoinTypeEnum.LEFT || (cond.getType() == JoinTypeEnum.INNER && table.equals(cond.getRight().getTable()))) {
+                            if (!visitedTables.contains(cond.getLeft().getTable())) {
+                                noOtherVisited = false;
+                                break;
+                            }
                         }
-                        if ((cond.getType() == JoinTypeEnum.RIGHT || (cond.getType() == JoinTypeEnum.INNER && table.equals(cond.getLeft().getTable()))) &&
-                                !visitedTables.contains(cond.getRight().getTable())) {
-                            noOtherVisited = false;
-                            break;
+                        if (cond.getType() == JoinTypeEnum.RIGHT || (cond.getType() == JoinTypeEnum.INNER && table.equals(cond.getLeft().getTable()))) {
+                            if (!visitedTables.contains(cond.getRight().getTable())) {
+                                noOtherVisited = false;
+                                break;
+                            }
                         }
                     }
                     if (noOtherVisited) {
@@ -114,25 +116,36 @@ public class FeatureTask extends DataService {
             if (CollectionUtils.isEmpty(conditions)) {
                 return req;
             }
-            Map<FeatureConfig.Feature.Field, FeatureConfig.Feature.Field> rewritedField = Maps.newHashMap();
             for (FeatureConfig.Feature.Condition cond : conditions) {
                 if (cond.getType() == JoinTypeEnum.INNER) {
                     if (processedTask.contains(cond.getLeft().getTable()) && !processedTask.contains(cond.getRight().getTable())) {
-                        rewritedField.put(rewritedField.getOrDefault(cond.getRight(), cond.getRight()), cond.getLeft());
+                        rewritedField.put(cond.getRight(), cond.getLeft());
                     }
                     if (processedTask.contains(cond.getRight().getTable()) && !processedTask.contains(cond.getLeft().getTable())) {
-                        rewritedField.put(rewritedField.getOrDefault(cond.getLeft(), cond.getLeft()), cond.getRight());
+                        rewritedField.put(cond.getLeft(), cond.getRight());
+                    }
+                }
+            }
+            for (FeatureConfig.Feature.Condition cond : conditions) {
+                if (cond.getType() == JoinTypeEnum.INNER) {
+                    if (rewritedField.containsKey(cond.getLeft()) && !rewritedField.containsKey(cond.getRight()) &&
+                            !cond.getRight().equals(rewritedField.get(cond.getLeft()))) {
+                        rewritedField.put(cond.getRight(), rewritedField.get(cond.getLeft()));
+                    }
+                    if (rewritedField.containsKey(cond.getRight()) && !rewritedField.containsKey(cond.getLeft()) &&
+                            !cond.getLeft().equals(rewritedField.get(cond.getRight()))) {
+                        rewritedField.put(cond.getLeft(), rewritedField.get(cond.getRight()));
                     }
                 }
             }
             for (FeatureConfig.Feature.Condition cond : conditions) {
                 if (cond.getType() == JoinTypeEnum.LEFT ||
                         (cond.getType() == JoinTypeEnum.INNER && depend.equals(cond.getRight().getTable()))) {
-                    setRequest(cond.getLeft(), cond.getRight(), req, context);
+                    setRequest(rewritedField.getOrDefault(cond.getLeft(), cond.getLeft()), cond.getRight(), req, context);
                 }
                 if (cond.getType() == JoinTypeEnum.RIGHT ||
                         (cond.getType() == JoinTypeEnum.INNER && depend.equals(cond.getLeft().getTable()))) {
-                    setRequest(cond.getRight(), cond.getLeft(), req, context);
+                    setRequest(rewritedField.getOrDefault(cond.getRight(), cond.getRight()), cond.getLeft(), req, context);
                 }
             }
         }
@@ -142,7 +155,6 @@ public class FeatureTask extends DataService {
         if (MapUtils.isNotEmpty(feature.getSqlFilters())) {
             req.setSqlFilters(feature.getSqlFilters().get(depend));
         }
-        log.info("depend:{} request: {}", depend, req);
         return req;
     }
 
@@ -172,9 +184,14 @@ public class FeatureTask extends DataService {
                 DataResult.FeatureArray data = result.getFeatureArray();
                 featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), data.getArray(fieldName));
             }
+        } else {
+            for (String fieldName : feature.getFromColumns().get(table)) {
+                featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), Lists.newArrayList());
+            }
         }
         return featureArray;
     }
+
     public void setFeatureArray(List<FeatureConfig.Feature.Field> fields, Map<FeatureConfig.Feature.Field, List<Object>> featureArray, Map<String, List<Object>> result) {
         if (CollectionUtils.isEmpty(fields)) {
             return;
@@ -203,50 +220,92 @@ public class FeatureTask extends DataService {
         for (FeatureConfig.Feature.Condition cond : conditions) {
             FeatureConfig.Feature.Field fieldJoined = cond.getLeft().getTable().equals(table) ? cond.getRight() : cond.getLeft();
             FeatureConfig.Feature.Field fieldTable = cond.getLeft().getTable().equals(table) ? cond.getLeft() : cond.getRight();
-            List<Object> joinedData = joinTable.get(fieldJoined);
-            List<Object> tableData = data.get(fieldTable);
+            List<Object> joinedData = joinTable.getOrDefault(fieldJoined, Lists.newArrayList());
+            List<Object> tableData = data.getOrDefault(fieldTable, Lists.newArrayList());
             List<Pair<Integer, Integer>> indexList = Lists.newArrayList();
-            for (int i = 0; i < joinedData.size(); ++i) {
-                for (int j = 0; j < tableData.size(); ++j) {
-                    if (cond.getType() == JoinTypeEnum.INNER) {
+            if (cond.getType() == JoinTypeEnum.INNER) {
+                for (int i = 0; i < joinedData.size(); ++i) {
+                    for (int j = 0; j < tableData.size(); ++j) {
                         if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
                             indexList.add(Pair.of(i, j));
                         }
-                    } else if (cond.getType() == JoinTypeEnum.LEFT) {
-                        if (cond.getLeft().getTable().equals(table)) {
-                            if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
-                                indexList.add(Pair.of(i, j));
-                            } else {
-                                indexList.add(Pair.of(null, j));
-                            }
-                        } else {
-                            if (tableData.get(j) != null && tableData.get(j).equals(joinedData.get(i))) {
-                                indexList.add(Pair.of(i, j));
-                            } else {
-                                indexList.add(Pair.of(i, null));
-                            }
-                        }
-                    } else if (cond.getType() == JoinTypeEnum.RIGHT) {
-                        if (cond.getLeft().getTable().equals(table)) {
-                            if (tableData.get(j) != null && tableData.get(j).equals(joinedData.get(i))) {
-                                indexList.add(Pair.of(i, j));
-                            } else {
-                                indexList.add(Pair.of(i, null));
-                            }
-                        } else {
+                    }
+                }
+            } else if (cond.getType() == JoinTypeEnum.LEFT) {
+                if (cond.getLeft().getTable().equals(table)) {
+                    for (int j = 0; j < tableData.size(); ++j) {
+                        for (int i = 0; i < joinedData.size(); ++i) {
                             if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
                                 indexList.add(Pair.of(i, j));
                             } else {
                                 indexList.add(Pair.of(null, j));
                             }
                         }
-                    } else {
+                        if (joinedData.isEmpty()) {
+                            indexList.add(Pair.of(null, j));
+                        }
+                    }
+                } else {
+                    for (int i = 0; i < joinedData.size(); ++i) {
+                        for (int j = 0; j < tableData.size(); ++j) {
+                            if (tableData.get(j) != null && tableData.get(j).equals(joinedData.get(i))) {
+                                indexList.add(Pair.of(i, j));
+                            } else {
+                                indexList.add(Pair.of(i, null));
+                            }
+                        }
+                        if (tableData.isEmpty()) {
+                            indexList.add(Pair.of(i, null));
+                        }
+                    }
+                }
+            } else if (cond.getType() == JoinTypeEnum.RIGHT) {
+                if (cond.getLeft().getTable().equals(table)) {
+                    for (int i = 0; i < joinedData.size(); ++i) {
+                        for (int j = 0; j < tableData.size(); ++j) {
+                            if (tableData.get(j) != null && tableData.get(j).equals(joinedData.get(i))) {
+                                indexList.add(Pair.of(i, j));
+                            } else {
+                                indexList.add(Pair.of(i, null));
+                            }
+                        }
+                        if (tableData.isEmpty()) {
+                            indexList.add(Pair.of(i, null));
+                        }
+                    }
+                } else {
+                    for (int j = 0; j < tableData.size(); ++j) {
+                        for (int i = 0; i < joinedData.size(); ++i) {
+                            if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
+                                indexList.add(Pair.of(i, j));
+                            } else {
+                                indexList.add(Pair.of(null, j));
+                            }
+                        }
+                        if (joinedData.isEmpty()) {
+                            indexList.add(Pair.of(null, j));
+                        }
+                    }
+                }
+            } else {
+                for (int i = 0; i < joinedData.size(); ++i) {
+                    for (int j = 0; j < tableData.size(); ++j) {
                         if (tableData.get(j) != null && tableData.get(j).equals(joinedData.get(i))) {
                             indexList.add(Pair.of(i, j));
                         } else {
                             indexList.add(Pair.of(i, null));
                             indexList.add(Pair.of(null, j));
                         }
+                    }
+                }
+                if (joinedData.isEmpty()) {
+                    for (int j = 0; j < tableData.size(); ++j) {
+                        indexList.add(Pair.of(null, j));
+                    }
+                }
+                if (tableData.isEmpty()) {
+                    for (int i = 0; i < joinedData.size(); ++i) {
+                        indexList.add(Pair.of(i, null));
                     }
                 }
             }
@@ -285,7 +344,6 @@ public class FeatureTask extends DataService {
     }
 
 
-
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult dataResult = new DataResult();
@@ -297,6 +355,9 @@ public class FeatureTask extends DataService {
             fieldMap.get(table).add(field);
         }
         Map<String, Map<FeatureConfig.Feature.Field, List<Object>>> data = Maps.newHashMap();
+        for (String table : feature.getFrom()) {
+            data.put(table, getTableArray(table, context));
+        }
         if (feature.getFrom().size() == 1) {
             String table = feature.getFrom().get(0);
             setFeatureArray(fieldMap.get(table), data.get(table), featureArrays);

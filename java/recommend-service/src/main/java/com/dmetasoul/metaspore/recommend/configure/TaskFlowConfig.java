@@ -11,6 +11,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 @Slf4j
 @Data
+@RefreshScope
 @Component
 public class TaskFlowConfig {
     @Autowired
@@ -239,7 +241,7 @@ public class TaskFlowConfig {
                     throw new RuntimeException("Feature check fail!");
                 }
                 // 默认feature， chain数据都是计算好的中间结果，可以直接获取到
-                if (features.containsKey(rely) || chains.containsKey(rely) || sourceTables.get(rely).getSource().equals("request")) {
+                if (features.containsKey(rely) || chains.containsKey(rely) || sources.get(sourceTables.get(rely).getSource()).getKind().equals("request")) {
                     immediateSet.add(rely);
                 }
                 List<String> columnNames = null;
@@ -256,11 +258,13 @@ public class TaskFlowConfig {
                     columnTypes.put(rely, chains.get(rely).getColumnMap());
                 }
                 fromColumns.put(rely, columnNames);
-                for (String col : columnNames) {
-                    if (fieldMap.containsKey(col)) {
-                        fieldMap.put(col, null);
-                    } else {
-                        fieldMap.put(col, rely);
+                if (CollectionUtils.isNotEmpty(columnNames)) {
+                    for (String col : columnNames) {
+                        if (fieldMap.containsKey(col)) {
+                            fieldMap.put(col, null);
+                        } else {
+                            fieldMap.put(col, rely);
+                        }
                     }
                 }
             }
