@@ -76,6 +76,6 @@ class BKDRHashCombineFunctionOption : public arrow::compute::FunctionOptions {
     }
 };
 
-arrow::Status RegisterAllFunctions();
+arrow::Status RegisterAllArrowFunctions();
 
 } // namespace metaspore

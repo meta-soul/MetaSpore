@@ -14,20 +14,49 @@
 // limitations under the License.
 //
 
+#include <arrow/python/pyarrow.h>
+#include <common/features/feature_compute_funcs.h>
 #include <common/hashmap/hash_uniquifier.h>
 #include <memory>
 #include <metaspore/combine_schema.h>
 #include <metaspore/feature_extraction_python_bindings.h>
 #include <metaspore/index_batch.h>
+#include <metaspore/sparse_feature_extractor.h>
 #include <metaspore/pybind_utils.h>
 #include <metaspore/stack_trace_utils.h>
 #include <stdexcept>
+#include <iostream>
+
+#include <gflags/gflags.h>
 
 namespace py = pybind11;
 
 namespace metaspore {
 
 void DefineFeatureExtractionBindings(pybind11::module &m) {
+    // TODO: cf: change to use env vars to init the thread pool
+    int argc = 1;
+    char *arga[] = {"test", nullptr};
+    char **argv = &arga[0];
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    auto status = metaspore::RegisterAllArrowFunctions();
+    if (!status.ok()) {
+        std::string serr;
+        serr.append("Fail to register arrow functions in MetaSpore extension.\n\n");
+        serr.append(GetStackTrace());
+        spdlog::error(serr);
+        throw std::runtime_error(serr);
+    }
+
+    const int rc = arrow::py::import_pyarrow();
+    if (rc != 0) {
+        std::string serr;
+        serr.append("Fail to import pyarrow in MetaSpore extension.\n\n");
+        serr.append(GetStackTrace());
+        spdlog::error(serr);
+        throw std::runtime_error(serr);
+    }
 
     py::class_<metaspore::CombineSchema, std::shared_ptr<metaspore::CombineSchema>>(m,
                                                                                     "CombineSchema")
@@ -105,6 +134,29 @@ void DefineFeatureExtractionBindings(pybind11::module &m) {
         .def(py::init<py::list, const std::string &>())
         .def("to_list", &metaspore::IndexBatch::ToList)
         .def("__str__", &metaspore::IndexBatch::ToString);
+
+    py::class_<metaspore::SparseFeatureExtractor, std::shared_ptr<metaspore::SparseFeatureExtractor>>(
+        m, "SparseFeatureExtractor")
+        .def_property_readonly("source_table_name", &metaspore::SparseFeatureExtractor::get_source_table_name)
+        .def_property_readonly("schema_source", &metaspore::SparseFeatureExtractor::get_schema_source)
+        .def(py::init<const std::string &, const std::string &>())
+        .def("extract", [](metaspore::SparseFeatureExtractor &extractor, py::object batch) {
+            auto result = arrow::py::unwrap_batch(batch.ptr());
+            if (!result.ok()) {
+                std::string serr;
+                serr.append("Unable to unwrap arrow record batch. ");
+                serr.append(result.status().message());
+                serr.append("\n\n");
+                serr.append(GetStackTrace());
+                spdlog::error(serr);
+                throw std::runtime_error(serr);
+            }
+            auto unwrapped_batch = *result;
+            auto [indices, offsets] = extractor.extract(unwrapped_batch);
+            py::array indices_arr = metaspore::to_numpy_array(std::move(indices));
+            py::array offsets_arr = metaspore::to_numpy_array(std::move(offsets));
+            return py::make_tuple(indices_arr, offsets_arr);
+        });
 
     py::class_<metaspore::HashUniquifier>(m, "HashUniquifier")
         .def_static("uniquify", [](py::array_t<uint64_t> items) {
