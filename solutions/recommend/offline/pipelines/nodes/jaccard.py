@@ -43,10 +43,8 @@ class JaccardNode(PipelineNode):
         ## transfrom the test_dataset
         if test_dataset:
             ## friend_id is the trigger item
-            test_dataset = test_dataset.withColumnRenamed(item_id,'friend_id')
-            cond = [test_dataset.friend_id==recall_result.friend_A]
+            cond = [test_dataset[item_id]==recall_result['friend_A']]
             test_result = test_dataset.join(recall_result, on=cond, how='left')
-            test_result = test_result.withColumnRenamed('friend_id', item_id)
             str_schema = 'array<struct<name:string,_2:double>>'
             test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
             payload['test_result'] = test_result
