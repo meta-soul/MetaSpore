@@ -1,0 +1,67 @@
+apiVersion: metaspore/v1
+kind: Trainingjob
+metadata:
+  name: Jaccard
+  category: Match/Jaccard
+  pipeline_nodes:
+    - class: InitSparkNode
+      params:
+        node_conf: spark
+    - class: DataLoaderNode
+      params:
+        node_conf: dataset
+    - class: JaccardNode
+      params:
+        node_conf: recall_conf
+    - class: RetrievalEvaluatorNode
+      params:
+        node_conf: evaluation
+    - class: MongoDBDumperNode
+      params:
+        node_conf: mongodb
+    - class: StopSparkNode
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: Jaccard
+      local: false
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+      
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+            
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    user_id_column: user_id
+    item_id_column: friend_id
+    label_column: label
+    label_value: '1'
+    
+  recall_conf:
+    max_recommendation_count: 20
+
+  mongodb:
+    uri: mongodb://172.31.37.47:27017/
+    database: jpa
+    collection: saas_icf
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+    
+  spark_stop:
+  
