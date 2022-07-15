@@ -193,14 +193,24 @@ public class FeatureConfig {
                 }
                 return null;
             }
+
+            @Override
             public int hashCode() {
                 return String.format("%s.%s", table, fieldName).hashCode();
             }
-            public boolean equals(Field field) {
-                if (field == this) return true;
-                else if ((fieldName != null && !fieldName.equals(field.getFieldName())) || (fieldName == null && field.getFieldName() != null)) {
-                    return false;
-                } else return (table == null || table.equals(field.getTable())) && (table != null || field.getTable() == null);
+
+            @Override
+            public boolean equals(Object obj) {
+                if (obj == this) return true;
+                if (obj == null) return false;
+                if (obj instanceof Field) {
+                    Field field = (Field) obj;
+                    if ((fieldName != null && !fieldName.equals(field.getFieldName())) || (fieldName == null && field.getFieldName() != null)) {
+                        return false;
+                    } else
+                        return (table == null || table.equals(field.getTable())) && (table != null || field.getTable() == null);
+                }
+                return false;
             }
         }
 
@@ -270,8 +280,8 @@ public class FeatureConfig {
         public void setCondition(List<Map<String, String>> data) {
             if (CollectionUtils.isEmpty(data)) return;
             condition = Lists.newArrayList();
-            for (int i = 0; i < data.size(); ++i) {
-                Condition cond = Condition.create(data.get(i));
+            for (Map<String, String> datum : data) {
+                Condition cond = Condition.create(datum);
                 if (cond == null) {
                     log.error("Feature:{} condition is config error", name);
                     throw new RuntimeException(String.format("Feature:%s condition is config error", name));
@@ -375,8 +385,7 @@ public class FeatureConfig {
                 log.error("AlgoTransform config name, fieldActions and depend must not be empty!");
                 return false;
             }
-            for (int index = 0; index < fieldActions.size(); ++index) {
-                FieldAction action = fieldActions.get(index);
+            for (FieldAction action : fieldActions) {
                 if (!action.checkAndDefault()) {
                     log.error("AlgoTransform config action must be right!");
                     return false;
