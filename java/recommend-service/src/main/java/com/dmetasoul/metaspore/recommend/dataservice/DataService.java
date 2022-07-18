@@ -1,5 +1,21 @@
+//
+// Copyright 2022 DMetaSoul
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 package com.dmetasoul.metaspore.recommend.dataservice;
 
+import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -7,7 +23,6 @@ import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.enums.ResultTypeEnum;
 import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
-import com.dmetasoul.metaspore.recommend.TaskFlow;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -23,30 +38,30 @@ import java.util.Set;
 import java.util.concurrent.*;
 
 @Slf4j
-@Data
 public abstract class DataService {
     protected String name;
     protected ExecutorService workFlowPool;
     protected TaskFlowConfig taskFlowConfig;
     protected List<RecommendConfig.Chain> chains = Lists.newArrayList();
     protected Set<String> processedTask = Sets.newHashSet();
-    protected Map<String, DataService> taskServices;
+    protected Map<String, DataService> dataServices;
 
-    protected TaskFlow taskFlow;
+    protected TaskServiceRegister taskServiceRegister;
 
-    public boolean init(String name, TaskFlowConfig taskFlowConfig, TaskFlow taskFlow, ExecutorService workFlowPool) {
+    public boolean init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister taskServiceRegister, ExecutorService workFlowPool) {
         if (StringUtils.isEmpty(name)) {
             log.error("name is null or taskServices is null , init fail!");
             return false;
         }
         this.name = name;
         this.workFlowPool = workFlowPool;
-        this.taskServices = taskFlow.getTaskServices();
+        this.dataServices = taskServiceRegister.getDataServices();
         this.taskFlowConfig = taskFlowConfig;
-        this.taskFlow = taskFlow;
+        this.taskServiceRegister = taskServiceRegister;
         return initService();
     }
     protected abstract boolean initService();
+    public void close() {}
 
     public boolean checkRequest(ServiceRequest request, DataContext context) {
         if (request != null && request.isCircular()) {
@@ -153,7 +168,7 @@ public abstract class DataService {
         return execute(depend, makeRequest(depend, context), context);
     }
     public DataResult execute(String depend, ServiceRequest request, DataContext context) {
-        DataService dataService = taskServices.get(depend);
+        DataService dataService = dataServices.get(depend);
         if (dataService == null) {
             log.error("task:{} depend:{} service init fail!", name, depend);
             context.setStatus(name, TaskStatusEnum.DEPEND_INIT_FAIL);
@@ -250,7 +265,7 @@ public abstract class DataService {
     public DataResult execute(ServiceRequest request, DataContext context){
         DataResult result = new DataResult();
         boolean reset = request.get("reset", false);
-        String reqSign = context.genRequestSign(request);
+        String reqSign = request.genRequestSign(request);
         if (!reset && context.getStatus(name) == TaskStatusEnum.SUCCESS) {
             result = context.getResult(name);
             if (result != null && result.isVaild() && result.getReqSign().equals(reqSign)) {
