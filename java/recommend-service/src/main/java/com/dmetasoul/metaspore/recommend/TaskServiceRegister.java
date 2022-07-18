@@ -18,6 +18,7 @@ import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -65,6 +66,7 @@ public class TaskFlow {
         }
     }
 
+    @RefreshScope
     public boolean initDataSource() {
         dataSources = Maps.newHashMap();
         Map<String, FeatureConfig.Source> sources = taskFlowConfig.getSources();
