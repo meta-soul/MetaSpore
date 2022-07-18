@@ -32,7 +32,10 @@ import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+/**
+ * 用于保存数据字段类型与Class信息的映射关系
+ * Created by @author qinyy907 in 14:24 22/07/15.
+ */
 @Slf4j
 public class DataTypes {
 

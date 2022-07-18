@@ -1,3 +1,18 @@
+//
+// Copyright 2022 DMetaSoul
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 package com.dmetasoul.metaspore.recommend.datasource;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
@@ -35,6 +50,7 @@ import java.util.stream.Collectors;
 public class RedisSource extends DataSource {
 
     private RedisTemplate<String, Object> redisTemplate;
+    private LettuceConnectionFactory factory;
 
     private static RedisNode readHostAndPortFromString(String hostAndPort) {
         String[] args = StringUtils.split(hostAndPort, ":");
@@ -70,7 +86,6 @@ public class RedisSource extends DataSource {
             return false;
         }
         boolean isCluster = (Boolean) source.getOptions().getOrDefault("cluster", true);
-        LettuceConnectionFactory factory;
         if (isCluster) {
             String nodes = (String) source.getOptions().getOrDefault("nodes", "localhost:6379");
             Set<RedisNode> clusterNodes = Arrays.stream(nodes.split(",")).map(RedisSource::readHostAndPortFromString).collect(Collectors.toSet());
@@ -88,6 +103,17 @@ public class RedisSource extends DataSource {
         factory.afterPropertiesSet();
         redisTemplate = getRedisTemplate(factory);
         return true;
+    }
+
+    @Override
+    public void close() {
+        if (factory != null) {
+            try {
+                factory.destroy();
+            } catch (Exception ex) {
+                log.error("redis factory destroy fail! {}", ex.getMessage());
+            }
+        }
     }
 
     @Override

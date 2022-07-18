@@ -1,4 +1,19 @@
-package com.dmetasoul.metaspore.recommend.dataservice;
+//
+// Copyright 2022 DMetaSoul
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+package com.dmetasoul.metaspore.recommend.taskService;
 
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
@@ -20,17 +35,20 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Data
-public abstract class DataService {
+public abstract class TaskService {
     protected String name;
     protected ExecutorService workFlowPool;
     protected TaskFlowConfig taskFlowConfig;
     protected List<RecommendConfig.Chain> chains = Lists.newArrayList();
     protected Set<String> processedTask = Sets.newHashSet();
-    protected Map<String, DataService> dataServices;
+    protected Map<String, TaskService> taskServices;
 
     protected TaskServiceRegister taskServiceRegister;
 
@@ -41,12 +59,13 @@ public abstract class DataService {
         }
         this.name = name;
         this.workFlowPool = workFlowPool;
-        this.dataServices = taskServiceRegister.getDataServices();
+        this.taskServices = taskServiceRegister.getTaskServices();
         this.taskFlowConfig = taskFlowConfig;
         this.taskServiceRegister = taskServiceRegister;
         return initService();
     }
     protected abstract boolean initService();
+    public void close() {}
 
     public boolean checkRequest(ServiceRequest request, DataContext context) {
         if (request != null && request.isCircular()) {
@@ -153,7 +172,7 @@ public abstract class DataService {
         return execute(depend, makeRequest(depend, context), context);
     }
     public DataResult execute(String depend, ServiceRequest request, DataContext context) {
-        DataService dataService = dataServices.get(depend);
+        TaskService dataService = taskServices.get(depend);
         if (dataService == null) {
             log.error("task:{} depend:{} service init fail!", name, depend);
             context.setStatus(name, TaskStatusEnum.DEPEND_INIT_FAIL);
@@ -250,7 +269,7 @@ public abstract class DataService {
     public DataResult execute(ServiceRequest request, DataContext context){
         DataResult result = new DataResult();
         boolean reset = request.get("reset", false);
-        String reqSign = context.genRequestSign(request);
+        String reqSign = request.genRequestSign(request);
         if (!reset && context.getStatus(name) == TaskStatusEnum.SUCCESS) {
             result = context.getResult(name);
             if (result != null && result.isVaild() && result.getReqSign().equals(reqSign)) {
