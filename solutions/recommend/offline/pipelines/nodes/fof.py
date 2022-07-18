@@ -51,7 +51,6 @@ class FofNode(PipelineNode):
             str_schema = 'array<struct<name:string,_2:double>>'
             test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
             payload['test_result'] = test_result
-            test_result.show(10)
         return payload
     
     def u2f_table(self, dataset, user_id, item_id, label, label_value, \
@@ -69,8 +68,7 @@ class FofNode(PipelineNode):
                                                                     F.to_date(last_act_time, time_format)))
             rel_score = rel_score.withColumn('day_diff',  F.when(F.col('day_diff')>F.lit(decay_max),\
                                                                  F.lit(decay_max)).otherwise(F.col('day_diff')))
-            rel_score = rel_score.withColumn('rel_score', F.col('rel_score') * F.pow(F.col('day_diff'), decay_factor))
-        print(rel_score.show(10))
+            rel_score = rel_score.withColumn('rel_score', F.col('rel_score') * F.pow(F.col('day_diff'),decay_factor))
         return rel_score
 
     def u2fof_table(self, u2f_table, user_id, item_id, walk_length=1, filter_u2f=True, max_recommendation_count=100):
