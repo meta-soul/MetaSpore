@@ -35,7 +35,7 @@ class JaccardNode(PipelineNode):
         max_recommendation_count = recall_conf['max_recommendation_count']
         
         ## calculate the recall result
-        recall_result = self.calculate(train_dataset, user_id, item_id)
+        recall_result = self.calculate(train_dataset, user_id, item_id,  label, label_value, max_recommendation_count)
         logger.info('recall_result: {}'\
                      .format(recall_result.show(10)))
         payload['df_to_mongodb'] = recall_result
@@ -50,8 +50,9 @@ class JaccardNode(PipelineNode):
             payload['test_result'] = test_result
         return payload
     
-    def calculate(self, relationship_data, user_id, item_id, max_recommendation_count=20):
-        relationship_data = relationship_data.groupBy(item_id)\
+    def calculate(self, relationship_data, user_id, item_id, label, label_value, max_recommendation_count=20):
+        relationship_data = relationship_data.filter(F.col(label)==label_value)\
+                                .groupBy(item_id)\
                                 .agg(F.collect_list(user_id)\
                                 .alias('user_list'))
         ## 'user_list' column must be array<string> type
