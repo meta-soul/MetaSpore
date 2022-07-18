@@ -21,7 +21,7 @@ from ..utils import start_logging
 from pyspark.sql import Window, functions as F
 from pyspark.ml.feature import CountVectorizer, MinHashLSH
 
-class FofNode(PipelineNode):
+class FriendsOfFriendsNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
         recall_conf = conf[self._node_conf]
@@ -35,21 +35,16 @@ class FofNode(PipelineNode):
         train_dataset = payload['train_dataset']
         test_dataset = payload.get('test_dataset', None)
         max_recommendation_count = recall_conf['max_recommendation_count']
-
+        decay_max = recall_conf['decay_max']        
         ## calculate the recall result
         u2f_table = self.u2f_table(train_dataset, user_id, item_id, label, label_value, time, time_format)
         recall_result = self.u2fof_table(u2f_table, user_id, item_id,)
         logger.info('recall_result: {}'\
                      .format(recall_result.show(10)))
-        payload['df_to_mongodb'] = recall_result
-        
+        payload['df_to_mongodb'] = recall_result        
         ## transfrom the test_dataset
         if test_dataset:
-            ## friend_id is the trigger item
-            cond = test_dataset[user_id]==recall_result['key']
-            test_result = test_dataset.join(recall_result, on=cond, how='left')
-            str_schema = 'array<struct<name:string,_2:double>>'
-            test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
+            test_result = self.test_transform(test_dataset, recall_result, user_id)
             payload['test_result'] = test_result
         return payload
     
@@ -79,7 +74,6 @@ class FofNode(PipelineNode):
                                                  .filter(F.col('ta.'+user_id)!=F.col('tb.'+item_id)) \
                                                  .groupBy(F.col('ta.'+user_id), F.col('tb.'+item_id)) \
                                                  .agg(F.sum(F.col('ta.rel_score') * F.col('tb.rel_score')).alias('rel_score'))
-
         if filter_u2f:
             on_cond = (F.col('ta.'+user_id)==F.col('tb.'+user_id))&(F.col('ta.'+item_id)==F.col('tb.'+item_id))
             u2fof_table = u2fof_table.alias('ta').join(u2f_table.alias('tb'), on=on_cond, how='left_outer') \
@@ -93,3 +87,11 @@ class FofNode(PipelineNode):
                                  .agg(F.collect_list(F.struct(F.col(item_id), F.col('rel_score'))).alias('value_list')) \
                                  .withColumnRenamed(user_id, 'key')
         return u2fof_table
+    
+    def test_transform(self, test_dataset, recall_result, user_id):
+        ## friend_id is the trigger item
+        cond = test_dataset[user_id]==recall_result['key']
+        test_result = test_dataset.join(recall_result, on=cond, how='left')
+        str_schema = 'array<struct<name:string,_2:double>>'
+        test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
+        return test_result

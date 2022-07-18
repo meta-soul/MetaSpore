@@ -10,7 +10,7 @@ metadata:
     - class: DataLoaderNode
       params:
         node_conf: dataset
-    - class: FofNode
+    - class: FriendsOfFriendsNode
       params:
         node_conf: recall_conf
     - class: RetrievalEvaluatorNode
@@ -53,14 +53,16 @@ spec:
     label_value: '1'
     time_column: friend_last_act_time
     time_format: yyyy-MM-dd HH:mm:ss.S
+
     
   recall_conf:
     max_recommendation_count: 20
+    decay_max: 10000
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
     database: jpa
-    collection: saas_icf
+    collection: saas_fof
     write_mode: overwrite
     index_fields: []
     index_unique: False
