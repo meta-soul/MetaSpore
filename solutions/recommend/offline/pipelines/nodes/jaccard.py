@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-from .node import PipelineNode
 import metaspore as ms
+from .node import PipelineNode
 from ..utils import get_class
 from ..utils import start_logging
 from pyspark.sql import Window, functions as F
@@ -33,24 +33,20 @@ class JaccardNode(PipelineNode):
         train_dataset = payload['train_dataset']
         test_dataset = payload.get('test_dataset', None)
         max_recommendation_count = recall_conf['max_recommendation_count']
-        
+        dist_threshold = recall_conf['distance_threshold']
         ## calculate the recall result
-        recall_result = self.calculate(train_dataset, user_id, item_id,  label, label_value, max_recommendation_count)
+        recall_result = self.calculate(train_dataset, user_id, item_id, label, label_value, dist_threshold, max_recommendation_count)
         logger.info('recall_result: {}'\
                      .format(recall_result.show(10)))
         payload['df_to_mongodb'] = recall_result
         
         ## transfrom the test_dataset
         if test_dataset:
-            ## friend_id is the trigger item
-            cond = [test_dataset[item_id]==recall_result['friend_A']]
-            test_result = test_dataset.join(recall_result, on=cond, how='left')
-            str_schema = 'array<struct<name:string,_2:double>>'
-            test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
+            test_result = self.test_transform(test_dataset, recall_result, item_id)
             payload['test_result'] = test_result
         return payload
     
-    def calculate(self, relationship_data, user_id, item_id, label, label_value, max_recommendation_count=20):
+    def calculate(self, relationship_data, user_id, item_id, label, label_value, dist_threshold, max_recommendation_count):
         relationship_data = relationship_data.filter(F.col(label)==label_value)\
                                 .groupBy(item_id)\
                                 .agg(F.collect_list(user_id)\
@@ -61,18 +57,27 @@ class JaccardNode(PipelineNode):
         cv_result = model_cv.transform(relationship_data)
         mh = MinHashLSH(inputCol='features', outputCol='hashes')
         model_mh = mh.fit(cv_result)
-        jaccard_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, 1, distCol='jaccard_dist')\
+        jaccard_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=dist_threshold, distCol='jaccard_dist')\
                                                 .select(F.col('datasetA.'+item_id).alias('friend_A'),\
                                                         F.col('datasetB.'+item_id).alias('friend_B'),\
                                                         F.col('jaccard_dist'))
-        jaccard_sim_table = jaccard_dist_table.withColumn('jaccard_sim', 1-F.col('jaccard_dist')).drop('jaccard_dist')
-        jaccard_sim_table = jaccard_sim_table.filter(F.col('jaccard_sim') != 0)
-        jaccard_sim_table = jaccard_sim_table.filter(F.col('friend_A') != F.col('friend_B'))
-        jaccard_sim_table = jaccard_sim_table.withColumn('value', F.struct('friend_B', 'jaccard_sim'))
+        jaccard_sim_table = jaccard_dist_table.withColumn('jaccard_sim', 1-F.col('jaccard_dist')).drop('jaccard_dist')\
+                                              .filter(F.col('jaccard_sim') != 0)\
+                                              .filter(F.col('friend_A') != F.col('friend_B'))\
+                                              .withColumn('value', F.struct('friend_B', 'jaccard_sim'))
         w = Window.partitionBy('friend_A').orderBy(F.desc('jaccard_sim'))
         recall_result = jaccard_sim_table.withColumn('rn',F.row_number()\
                             .over(w))\
                             .filter(f'rn <= %d' % max_recommendation_count)\
                             .groupby('friend_A')\
-                            .agg(F.collect_list('value').alias('value_list'))
+                            .agg(F.collect_list('value').alias('value_list'))\
+                            .withColumnRenamed('friend_A', 'key')
         return recall_result
+    
+    def test_transform(self, test_dataset, recall_result, item_id):
+        cond = test_dataset[item_id]==recall_result['key']
+        test_result = test_dataset.join(recall_result, on=cond, how='left')
+        str_schema = 'array<struct<name:string,_2:double>>'
+        test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
+        return test_result
+    

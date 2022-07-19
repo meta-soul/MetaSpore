@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-from .node import PipelineNode
 import metaspore as ms
+from .node import PipelineNode
 from ..utils import get_class
 from ..utils import start_logging
 from pyspark.sql import Window, functions as F
@@ -34,18 +34,21 @@ class EuclideanNode(PipelineNode):
         train_dataset = payload['train_dataset']
         test_dataset = payload.get('test_dataset', None)
         max_recommendation_count = recall_conf['max_recommendation_count']
-        bucketLength = recall_conf['bucketLength'] 
+        bucket_length = recall_conf['bucket_length'] 
+        dist_threshold = recall_conf['dist_threshold']
         ## calculate the recall result
-        recall_result = self.calculate(train_dataset, user_id, item_id,  label, label_value, bucketLength, max_recommendation_count)
+        recall_result = self.calculate(train_dataset, user_id, item_id,  label, label_value,\
+                                       dist_threshold, bucket_length, max_recommendation_count)
         logger.info('recall_result: {}'.format(recall_result.show(10)))
         payload['df_to_mongodb'] = recall_result     
         ## transfrom the test_dataset
         if test_dataset:
-            test_result = self.test_transform(test_dataset, recall_result, user_id)
+            test_result = self.test_transform(test_dataset, recall_result, item_id)
             payload['test_result'] = test_result
         return payload
     
-    def calculate(self, relationship_data, user_id, item_id, label, label_value, bucketLength=20, max_recommendation_count=20):
+    def calculate(self, relationship_data, user_id, item_id, label, label_value, \
+                  dist_threshold, bucket_length, max_recommendation_count):
         relationship_data = relationship_data.filter(F.col(label)==label_value)\
                                 .groupBy(item_id)\
                                 .agg(F.collect_list(user_id)\
@@ -54,11 +57,10 @@ class EuclideanNode(PipelineNode):
         cv = CountVectorizer(inputCol='user_list', outputCol='features')
         model_cv = cv.fit(relationship_data)
         cv_result = model_cv.transform(relationship_data)
-        mh = BucketedRandomProjectionLSH(inputCol='features', outputCol='hashes', bucketLength=bucketLength)
+        mh = BucketedRandomProjectionLSH(inputCol='features', outputCol='hashes', bucketLength=bucket_length)
         model_mh = mh.fit(cv_result)
         ## filter the distance result
-        threshold = max_recommendation_count
-        euclidean_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=threshold, distCol='euclidean_dist')\
+        euclidean_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=dist_threshold, distCol='euclidean_dist')\
                                                 .select(F.col('datasetA.'+item_id).alias('friend_A'),\
                                                         F.col('datasetB.'+item_id).alias('friend_B'),\
                                                         F.col('euclidean_dist'))
@@ -81,10 +83,10 @@ class EuclideanNode(PipelineNode):
                             .withColumnRenamed('friend_A', 'key')
         return recall_result
     
-    def test_transform(self, test_dataset, recall_result, user_id):
-        ## friend_id is the trigger item
-        cond = test_dataset[user_id]==recall_result['key']
+    def test_transform(self, test_dataset, recall_result, item_id):
+        cond = test_dataset[item_id]==recall_result['key']
         test_result = test_dataset.join(recall_result, on=cond, how='left')
         str_schema = 'array<struct<name:string,_2:double>>'
         test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
         return test_result
+    

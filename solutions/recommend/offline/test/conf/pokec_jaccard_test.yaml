@@ -54,11 +54,12 @@ spec:
     
   recall_conf:
     max_recommendation_count: 20
+    threshold: 1
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
     database: jpa
-    collection: saas_icf
+    collection: saas_jaccard
     write_mode: overwrite
     index_fields: []
     index_unique: False

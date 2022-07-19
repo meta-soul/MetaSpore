@@ -14,8 +14,8 @@
 # limitations under the License.
 #
 
-from .node import PipelineNode
 import metaspore as ms
+from .node import PipelineNode
 from ..utils import get_class
 from ..utils import start_logging
 from pyspark.sql import Window, functions as F
@@ -89,7 +89,6 @@ class FriendsOfFriendsNode(PipelineNode):
         return u2fof_table
     
     def test_transform(self, test_dataset, recall_result, user_id):
-        ## friend_id is the trigger item
         cond = test_dataset[user_id]==recall_result['key']
         test_result = test_dataset.join(recall_result, on=cond, how='left')
         str_schema = 'array<struct<name:string,_2:double>>'

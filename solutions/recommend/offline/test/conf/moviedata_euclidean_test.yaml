@@ -43,18 +43,20 @@ spec:
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
       spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+      spark.executor.memory: '10G'
             
   dataset:
-    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
-    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    train_path: s3://dmetasoul-bucket/demo/datasets/moviedata-10m/popular_train_data.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/moviedata-10m/popular_test_data.parquet
     user_id_column: user_id
-    item_id_column: friend_id
+    item_id_column: movie_id
     label_column: label
     label_value: '1'
     
   recall_conf:
     max_recommendation_count: 20
-    bucketLength: 20
+    bucket_length: 100
+    dist_threshold: 20
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
