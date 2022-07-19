@@ -35,10 +35,10 @@ class EuclideanNode(PipelineNode):
         test_dataset = payload.get('test_dataset', None)
         max_recommendation_count = recall_conf['max_recommendation_count']
         bucket_length = recall_conf['bucket_length'] 
-        dist_threshold = recall_conf['dist_threshold']
+        distance_threshold = recall_conf['distance_threshold']
         ## calculate the recall result
         recall_result = self.calculate(train_dataset, user_id, item_id,  label, label_value,\
-                                       dist_threshold, bucket_length, max_recommendation_count)
+                                       distance_threshold, bucket_length, max_recommendation_count)
         logger.info('recall_result: {}'.format(recall_result.show(10)))
         payload['df_to_mongodb'] = recall_result     
         ## transfrom the test_dataset
@@ -48,7 +48,7 @@ class EuclideanNode(PipelineNode):
         return payload
     
     def calculate(self, relationship_data, user_id, item_id, label, label_value, \
-                  dist_threshold, bucket_length, max_recommendation_count):
+                  distance_threshold, bucket_length, max_recommendation_count):
         relationship_data = relationship_data.filter(F.col(label)==label_value)\
                                 .groupBy(item_id)\
                                 .agg(F.collect_list(user_id)\
@@ -59,8 +59,8 @@ class EuclideanNode(PipelineNode):
         cv_result = model_cv.transform(relationship_data)
         mh = BucketedRandomProjectionLSH(inputCol='features', outputCol='hashes', bucketLength=bucket_length)
         model_mh = mh.fit(cv_result)
-        ## filter the distance result
-        euclidean_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=dist_threshold, distCol='euclidean_dist')\
+        ## calculate the distance
+        euclidean_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=distance_threshold, distCol='euclidean_dist')\
                                                 .select(F.col('datasetA.'+item_id).alias('friend_A'),\
                                                         F.col('datasetB.'+item_id).alias('friend_B'),\
                                                         F.col('euclidean_dist'))

@@ -56,7 +56,7 @@ spec:
   recall_conf:
     max_recommendation_count: 20
     bucket_length: 100
-    dist_threshold: 20
+    distance_threshold: 20
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
