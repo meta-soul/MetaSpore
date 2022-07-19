@@ -14,12 +14,13 @@
 # limitations under the License.
 #
 
+include(cmake/FindPyArrow.cmake)
+
 find_package(absl CONFIG REQUIRED)
 find_package(gflags CONFIG REQUIRED)
 find_package(asio-grpc CONFIG REQUIRED)
 find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf CONFIG REQUIRED)
-find_package(Arrow CONFIG REQUIRED)
 find_package(xtensor CONFIG REQUIRED)
 
 set(SRCS
@@ -60,24 +61,18 @@ target_compile_options(metaspore-common PRIVATE
     -march=core-avx2
 )
 
+target_compile_definitions(metaspore-common PUBLIC
+    XTENSOR_GLIBCXX_USE_CXX11_ABI=1
+)
+
 target_include_directories(metaspore-common PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/cpp
     ${PROTO_INC_DIR}
-)
-
-target_link_libraries(arrow_static INTERFACE
-    lz4::lz4
-    utf8proc
-    unofficial::brotli::brotlienc-static
-    unofficial::brotli::brotlidec-static
-    unofficial::brotli::brotlicommon-static
 )
 
 target_link_libraries(metaspore-common PUBLIC
     absl::statusor
     gflags
     xtensor
-    # TODO: cf: fix this
-    #arrow_static
-    /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/libarrow.so.700
+    libarrow
 )

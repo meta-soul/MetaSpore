@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development)
-message("Found Python at " ${Python_EXECUTABLE})
 find_package(PkgConfig REQUIRED)
 find_package(pybind11 REQUIRED CONFIG)
 find_package(AWSSDK REQUIRED CONFIG COMPONENTS s3)
@@ -131,8 +129,6 @@ target_compile_options(metaspore_shared PRIVATE
 target_include_directories(metaspore_shared PRIVATE
     ${PROJECT_SOURCE_DIR}/cpp
     ${PROJECT_BINARY_DIR}/gen/thrift/cpp
-    # TODO: cf: fix this
-    /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/include
 )
 target_link_libraries(metaspore_shared PRIVATE
     metaspore-common
@@ -145,6 +141,5 @@ target_link_libraries(metaspore_shared PRIVATE
     Boost::headers
     thrift::thrift
     zmq::libzmq
-    # TODO: cf: fix this
-    /home/xionghd/Desktop/python-env-metaspore/python-env/lib/python3.8/site-packages/pyarrow/libarrow_python.so.700
+    libarrow_python
 )
