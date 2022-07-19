@@ -37,8 +37,8 @@ class FriendsOfFriendsNode(PipelineNode):
         max_recommendation_count = recall_conf['max_recommendation_count']
         decay_max = recall_conf['decay_max']        
         ## calculate the recall result
-        u2f_table = self.u2f_table(train_dataset, user_id, item_id, label, label_value, time, time_format)
-        recall_result = self.u2fof_table(u2f_table, user_id, item_id,)
+        u2f_table = self.u2f_table(train_dataset, user_id, item_id, label, label_value, time, time_format, decay_max)
+        recall_result = self.u2fof_table(self, u2f_table, user_id, item_id, max_recommendation_count)
         logger.info('recall_result: {}'\
                      .format(recall_result.show(10)))
         payload['df_to_mongodb'] = recall_result        
