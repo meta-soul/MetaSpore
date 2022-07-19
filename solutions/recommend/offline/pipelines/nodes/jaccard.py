@@ -33,9 +33,9 @@ class JaccardNode(PipelineNode):
         train_dataset = payload['train_dataset']
         test_dataset = payload.get('test_dataset', None)
         max_recommendation_count = recall_conf['max_recommendation_count']
-        dist_threshold = recall_conf['distance_threshold']
+        distance_threshold = recall_conf['distance_threshold']
         ## calculate the recall result
-        recall_result = self.calculate(train_dataset, user_id, item_id, label, label_value, dist_threshold, max_recommendation_count)
+        recall_result = self.calculate(train_dataset, user_id, item_id, label, label_value, distance_threshold, max_recommendation_count)
         logger.info('recall_result: {}'\
                      .format(recall_result.show(10)))
         payload['df_to_mongodb'] = recall_result
@@ -46,7 +46,7 @@ class JaccardNode(PipelineNode):
             payload['test_result'] = test_result
         return payload
     
-    def calculate(self, relationship_data, user_id, item_id, label, label_value, dist_threshold, max_recommendation_count):
+    def calculate(self, relationship_data, user_id, item_id, label, label_value, distance_threshold, max_recommendation_count):
         relationship_data = relationship_data.filter(F.col(label)==label_value)\
                                 .groupBy(item_id)\
                                 .agg(F.collect_list(user_id)\
@@ -57,7 +57,7 @@ class JaccardNode(PipelineNode):
         cv_result = model_cv.transform(relationship_data)
         mh = MinHashLSH(inputCol='features', outputCol='hashes')
         model_mh = mh.fit(cv_result)
-        jaccard_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=dist_threshold, distCol='jaccard_dist')\
+        jaccard_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=distance_threshold, distCol='jaccard_dist')\
                                                 .select(F.col('datasetA.'+item_id).alias('friend_A'),\
                                                         F.col('datasetB.'+item_id).alias('friend_B'),\
                                                         F.col('jaccard_dist'))
