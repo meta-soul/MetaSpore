@@ -2,7 +2,6 @@
     "name": "metaspore",
     "version": "1.0.0",
     "dependencies": [
-        "arrow",
         "range-v3",
         "boost-asio",
         "boost-dll",
@@ -51,11 +50,6 @@
         {
             "name": "python3",
             "version": "3.8.3",
-            "port-version": 2
-        },
-        {
-            "name": "arrow",
-            "version": "7.0.0",
             "port-version": 2
         }
     ],
