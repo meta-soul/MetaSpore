@@ -147,7 +147,26 @@ void DefineFeatureExtractionBindings(pybind11::module &m) {
             py::array indices_arr = metaspore::to_numpy_array(std::move(indices));
             py::array offsets_arr = metaspore::to_numpy_array(std::move(offsets));
             return py::make_tuple(indices_arr, offsets_arr);
-        });
+        })
+        .def(py::pickle(
+            [](const metaspore::SparseFeatureExtractor &extractor) {
+                auto &str1 = extractor.get_source_table_name();
+                auto &str2 = extractor.get_schema_source();
+                return py::make_tuple(str1, str2);
+            },
+            [](py::tuple t) {
+                if (t.size() != 2) {
+                    std::string serr;
+                    serr.append("invalid pickle state\n\n");
+                    serr.append(GetStackTrace());
+                    spdlog::error(serr);
+                    throw std::runtime_error(serr);
+                }
+                std::string str1 = t[0].cast<std::string>();
+                std::string str2 = t[1].cast<std::string>();
+                auto extractor = std::make_shared<metaspore::SparseFeatureExtractor>(str1, str2);
+                return extractor;
+        }));
 
     py::class_<metaspore::HashUniquifier>(m, "HashUniquifier")
         .def_static("uniquify", [](py::array_t<uint64_t> items) {

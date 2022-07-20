@@ -21,6 +21,7 @@ import torch
 from . import _metaspore
 from ._metaspore import CombineSchema
 from ._metaspore import IndexBatch
+from ._metaspore import SparseFeatureExtractor
 from ._metaspore import HashUniquifier
 from .url_utils import is_url
 from .url_utils import use_s3
@@ -208,6 +209,7 @@ class EmbeddingOperator(torch.nn.Module):
         self._combine_schema = CombineSchema()
         self._combine_schema.load_column_name_from_source(column_name_source)
         self._combine_schema.load_combine_schema_from_source(combine_schema_source)
+        self._feature_extractor = SparseFeatureExtractor('sparse', combine_schema_source)
         string = f"\033[32mloaded combine schema from\033[m "
         string += f"\033[32mcolumn name file \033[m{self.column_name_file_path!r} "
         string += f"\033[32mand combine schema file \033[m{self.combine_schema_file_path!r}"
@@ -694,10 +696,20 @@ class EmbeddingOperator(torch.nn.Module):
 
     @torch.jit.unused
     def _combine_to_indices_and_offsets(self, ndarrays, feature_offset):
-        delim = self._checked_get_delimiter()
-        batch = IndexBatch(ndarrays, delim)
-        indices, offsets = self._combine_schema.combine_to_indices_and_offsets(batch, feature_offset)
+        # TODO: cf: check feature_offset
+        import pandas as pd
+        import pyarrow as pa
+        column_names = self._combine_schema.column_name_source.splitlines()
+        column_names = [x.split()[1] for x in column_names]
+        df = pd.DataFrame({name: ndarray for name, ndarray in zip(column_names, ndarrays)})
+        batch = pa.RecordBatch.from_pandas(df)
+        indices, offsets = self._feature_extractor.extract(batch)
         return indices, offsets
+
+        #delim = self._checked_get_delimiter()
+        #batch = IndexBatch(ndarrays, delim)
+        #indices, offsets = self._combine_schema.combine_to_indices_and_offsets(batch, feature_offset)
+        #return indices, offsets
 
     @torch.jit.unused
     def _do_combine(self, ndarrays):
