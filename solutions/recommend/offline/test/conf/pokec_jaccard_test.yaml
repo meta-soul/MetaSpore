@@ -34,9 +34,9 @@ spec:
       server_count: 2
       server_cpu: 4
       batch_size: 128
-      worker_memory: '8G'
-      server_memory: '8G'
-      coordinator_memory: '8G'
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
       
     extended_confs:
       spark.network.timeout: '500'
@@ -45,14 +45,14 @@ spec:
       spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
             
   dataset:
-    train_path: s3://dmetasoul-bucket/demo/datasets/moviedata-10m/popular_train_data.parquet
-    test_path: s3://dmetasoul-bucket/demo/datasets/moviedata-10m/popular_test_data.parquet
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
     user_id_column: user_id
-    item_id_column: movie_id
+    item_id_column: friend_id
     label_column: label
     label_value: '1'
-        
-  recall_conf: 
+    
+  recall_conf:
     max_recommendation_count: 20
     distance_threshold: 1
 

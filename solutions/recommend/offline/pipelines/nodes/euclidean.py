@@ -19,9 +19,10 @@ from .node import PipelineNode
 from ..utils import get_class
 from ..utils import start_logging
 from pyspark.sql import Window, functions as F
-from pyspark.ml.feature import CountVectorizer, MinHashLSH
+from pyspark.ml.feature import BucketedRandomProjectionLSH, CountVectorizer, MinMaxScaler, VectorAssembler
+from pyspark.sql.types import FloatType
 
-class JaccardNode(PipelineNode):
+class EuclideanNode(PipelineNode):
     def __call__(self, **payload) -> dict:
         conf = payload['conf']
         recall_conf = conf[self._node_conf]
@@ -33,20 +34,21 @@ class JaccardNode(PipelineNode):
         train_dataset = payload['train_dataset']
         test_dataset = payload.get('test_dataset', None)
         max_recommendation_count = recall_conf['max_recommendation_count']
+        bucket_length = recall_conf['bucket_length'] 
         distance_threshold = recall_conf['distance_threshold']
         ## calculate the recall result
-        recall_result = self.calculate(train_dataset, user_id, item_id, label, label_value, distance_threshold, max_recommendation_count)
-        logger.info('recall_result: {}'\
-                     .format(recall_result.show(10)))
-        payload['df_to_mongodb'] = recall_result
-        
+        recall_result = self.calculate(train_dataset, user_id, item_id,  label, label_value,\
+                                       distance_threshold, bucket_length, max_recommendation_count)
+        logger.info('recall_result: {}'.format(recall_result.show(10)))
+        payload['df_to_mongodb'] = recall_result     
         ## transfrom the test_dataset
         if test_dataset:
             test_result = self.test_transform(test_dataset, recall_result, item_id)
             payload['test_result'] = test_result
         return payload
     
-    def calculate(self, relationship_data, user_id, item_id, label, label_value, distance_threshold, max_recommendation_count):
+    def calculate(self, relationship_data, user_id, item_id, label, label_value, \
+                  distance_threshold, bucket_length, max_recommendation_count):
         relationship_data = relationship_data.filter(F.col(label)==label_value)\
                                 .groupBy(item_id)\
                                 .agg(F.collect_list(user_id)\
@@ -55,18 +57,25 @@ class JaccardNode(PipelineNode):
         cv = CountVectorizer(inputCol='user_list', outputCol='features')
         model_cv = cv.fit(relationship_data)
         cv_result = model_cv.transform(relationship_data)
-        mh = MinHashLSH(inputCol='features', outputCol='hashes')
+        mh = BucketedRandomProjectionLSH(inputCol='features', outputCol='hashes', bucketLength=bucket_length)
         model_mh = mh.fit(cv_result)
-        jaccard_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=distance_threshold, distCol='jaccard_dist')\
+        ## calculate the distance
+        euclidean_dist_table = model_mh.approxSimilarityJoin(cv_result, cv_result, threshold=distance_threshold, distCol='euclidean_dist')\
                                                 .select(F.col('datasetA.'+item_id).alias('friend_A'),\
                                                         F.col('datasetB.'+item_id).alias('friend_B'),\
-                                                        F.col('jaccard_dist'))
-        jaccard_sim_table = jaccard_dist_table.withColumn('jaccard_sim', 1-F.col('jaccard_dist')).drop('jaccard_dist')\
-                                              .filter(F.col('jaccard_sim') != 0)\
-                                              .filter(F.col('friend_A') != F.col('friend_B'))\
-                                              .withColumn('value', F.struct('friend_B', 'jaccard_sim'))
-        w = Window.partitionBy('friend_A').orderBy(F.desc('jaccard_sim'))
-        recall_result = jaccard_sim_table.withColumn('rn',F.row_number()\
+                                                        F.col('euclidean_dist'))
+        vectorAssembler = VectorAssembler(handleInvalid="keep").setInputCols(['euclidean_dist']).setOutputCol('euclidean_dist_vec')
+        euclidean_dist_table = vectorAssembler.transform(euclidean_dist_table)
+        mmScaler = MinMaxScaler(outputCol="scaled_dist").setInputCol("euclidean_dist_vec")
+        model = mmScaler.fit(euclidean_dist_table)
+        euclidean_dist_table = model.transform(euclidean_dist_table)
+        udf = F.udf(lambda x : float(x[0]), FloatType())
+        euclidean_sim_table = euclidean_dist_table.withColumn('euclidean_sim', 1-udf('scaled_dist'))\
+                                                  .drop('euclidean_dist', 'euclidean_dist_vec', 'scaled_dist')\
+                                                  .filter(F.col('friend_A') != F.col('friend_B'))\
+                                                  .withColumn('value', F.struct('friend_B', 'euclidean_sim'))
+        w = Window.partitionBy('friend_A').orderBy(F.desc('euclidean_sim'))
+        recall_result = euclidean_sim_table.withColumn('rn',F.row_number()\
                             .over(w))\
                             .filter(f'rn <= %d' % max_recommendation_count)\
                             .groupby('friend_A')\
