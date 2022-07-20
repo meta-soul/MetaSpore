@@ -26,20 +26,11 @@
 #include <metaspore/stack_trace_utils.h>
 #include <stdexcept>
 
-// TODO: cf: fix this
-#include <gflags/gflags.h>
-
 namespace py = pybind11;
 
 namespace metaspore {
 
 void DefineFeatureExtractionBindings(pybind11::module &m) {
-    // TODO: cf: change to use env vars to init the thread pool
-    int argc = 1;
-    char *arga[] = {"test", nullptr};
-    char **argv = &arga[0];
-    gflags::ParseCommandLineFlags(&argc, &argv, true);
-
     auto status = metaspore::RegisterCustomArrowFunctions();
     if (!status.ok()) {
         std::string serr;
