@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <stdlib.h>
 #include <boost/asio/thread_pool.hpp>
 #include <gflags/gflags.h>
 
@@ -29,13 +30,28 @@ using threadpool = boost::asio::thread_pool;
 class Threadpools {
   public:
     static threadpool &get_compute_threadpool() {
-        static threadpool tp(FLAGS_compute_thread_num);
+        static threadpool tp(get_compute_thread_num());
         return tp;
     }
 
     static threadpool &get_background_threadpool() {
-        static threadpool tp(FLAGS_background_thread_num);
+        static threadpool tp(get_background_thread_num());
         return tp;
+    }
+
+  private:
+    static int get_compute_thread_num() {
+        const char* str = getenv("METASPORE_COMPUTE_THREAD_NUM");
+        if (str)
+            return std::stoi(str);
+        return FLAGS_compute_thread_num;
+    }
+
+    static int get_background_thread_num() {
+        const char* str = getenv("METASPORE_BACKGROUND_THREAD_NUM");
+        if (str)
+            return std::stoi(str);
+        return FLAGS_background_thread_num;
     }
 };
 
