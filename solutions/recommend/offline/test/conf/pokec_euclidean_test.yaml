@@ -1,8 +1,8 @@
 apiVersion: metaspore/v1
 kind: Trainingjob
 metadata:
-  name: Jaccard
-  category: Match/Jaccard
+  name: Eucildean
+  category: Match/Eucildean
   pipeline_nodes:
     - class: InitSparkNode
       params:
@@ -10,7 +10,7 @@ metadata:
     - class: DataLoaderNode
       params:
         node_conf: dataset
-    - class: JaccardNode
+    - class: EuclideanNode
       params:
         node_conf: recall_conf
     - class: RetrievalEvaluatorNode
@@ -27,16 +27,16 @@ spec:
   
   spark:
     session_confs:
-      app_name: Jaccard
+      app_name: Euclidean
       local: false
       worker_count: 2
       worker_cpu: 4
       server_count: 2
       server_cpu: 4
       batch_size: 128
-      worker_memory: '4G'
-      server_memory: '4G'
-      coordinator_memory: '4G'
+      worker_memory: '10G'
+      server_memory: '10G'
+      coordinator_memory: '10G'
       
     extended_confs:
       spark.network.timeout: '500'
@@ -54,11 +54,13 @@ spec:
     
   recall_conf:
     max_recommendation_count: 20
+    bucket_length: 20
+    distance_threshold: 20
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
     database: jpa
-    collection: saas_icf
+    collection: saas_euclidean
     write_mode: overwrite
     index_fields: []
     index_unique: False
