@@ -369,7 +369,8 @@ class PyTorchAgent(Agent):
             df = self.dataset
             if self.shuffle_training_dataset:
                 df = shuffle_df(df, self.worker_count)
-            df = df.select(self.feed_training_minibatch()(*df.columns).alias('train'))
+            func = self.feed_training_minibatch()
+            df = df.mapInPandas(func, df.schema)
             df.write.format('noop').mode('overwrite').save()
 
     def feed_validation_dataset(self):
@@ -395,14 +396,11 @@ class PyTorchAgent(Agent):
         df.write.format('noop').mode('overwrite').save()
 
     def feed_training_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_training_minibatch(*minibatch):
+        def _feed_training_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.train_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                result = self.train_minibatch(minibatch)
+                yield  result
         return _feed_training_minibatch
 
     def feed_validation_minibatch(self):
@@ -433,8 +431,8 @@ class PyTorchAgent(Agent):
 
     def _legacy_preprocess_minibatch(self, minibatch):
         import numpy as np
-        ndarrays = [col.values for col in minibatch]
-        labels = minibatch[self.input_label_column_index].values.astype(np.float32)
+        ndarrays = [minibatch[c].values for c in minibatch]
+        labels = ndarrays[self.input_label_column_index].astype(np.float32)
         return ndarrays, labels
 
     def process_minibatch_result(self, minibatch, result):
@@ -463,6 +461,7 @@ class PyTorchAgent(Agent):
         else:
             # For backward compatibility.
             self._legacy_train_minibatch(minibatch)
+        return minibatch
 
     def _legacy_train_minibatch(self, minibatch):
         self.model.train()
