@@ -30,4 +30,5 @@ from .search_evaluator import SearchEvaluateNode
 from .embedding2i import Embedding2INode
 from .popular import PopularNode
 from .jaccard import JaccardNode
+from .euclidean import EuclideanNode
 from .friends_of_friends import FriendsOfFriendsNode
