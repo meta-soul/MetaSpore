@@ -381,12 +381,10 @@ class PyTorchAgent(Agent):
             self._legacy_feed_validation_dataset()
 
     def _legacy_feed_validation_dataset(self):
-        df = self.dataset.withColumn(self.output_prediction_column_name,
-                                     self.feed_validation_minibatch()(*self.dataset.columns))
-        df = df.withColumn(self.output_label_column_name,
-                           df[self.input_label_column_index].cast(self.output_label_column_type))
-        df = df.withColumn(self.output_prediction_column_name,
-                           df[self.output_prediction_column_name].cast(self.output_prediction_column_type))
+        df = self.dataset
+        func = self.feed_validation_minibatch()
+        output_schema = self._make_validation_result_schema(df)
+        df = df.mapInPandas(func, output_schema)
         self.validation_result = df
         # PySpark DataFrame & RDD is lazily evaluated.
         # We must call ``cache`` here otherwise PySpark will try to reevaluate
@@ -404,14 +402,11 @@ class PyTorchAgent(Agent):
         return _feed_training_minibatch
 
     def feed_validation_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_validation_minibatch(*minibatch):
+        def _feed_validation_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.validate_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                result = self.validate_minibatch(minibatch)
+                yield result
         return _feed_validation_minibatch
 
     def preprocess_minibatch(self, minibatch):
@@ -434,26 +429,6 @@ class PyTorchAgent(Agent):
         ndarrays = [minibatch[c].values for c in minibatch]
         labels = ndarrays[self.input_label_column_index].astype(np.float32)
         return ndarrays, labels
-
-    def process_minibatch_result(self, minibatch, result):
-        import pandas as pd
-        minibatch_size = len(minibatch[self.input_label_column_index])
-        if result is None:
-            result = pd.Series([0.0] * minibatch_size)
-        if len(result) != minibatch_size:
-            message = "result length (%d) and " % len(result)
-            message += "minibatch size (%d) mismatch" % minibatch_size
-            raise RuntimeError(message)
-        if not isinstance(result, pd.Series):
-            if len(result.reshape(-1)) == minibatch_size:
-                result = result.reshape(-1)
-            else:
-                message = "result can not be converted to pandas series; "
-                message += "result.shape: {}, ".format(result.shape)
-                message += "minibatch_size: {}".format(minibatch_size)
-                raise RuntimeError(message)
-            result = pd.Series(result)
-        return result
 
     def train_minibatch(self, minibatch):
         if self.training_minibatch_transformer is not None:
@@ -490,7 +465,21 @@ class PyTorchAgent(Agent):
         loss = self.compute_loss(predictions, labels)
         self.update_progress(batch_size=len(labels), batch_loss=loss,
                              predictions=predictions, labels=labels)
-        return predictions.detach().reshape(-1)
+        return self._make_validation_result(minibatch, labels, predictions)
+
+    def _make_validation_result(self, minibatch, labels, predictions):
+        labels = labels.reshape(-1).numpy().astype(self.output_label_column_type)
+        predictions = predictions.detach().reshape(-1).numpy().astype(self.output_prediction_column_type)
+        minibatch[self.output_label_column_name] = labels
+        minibatch[self.output_prediction_column_name] = predictions
+        return minibatch
+
+    def _make_validation_result_schema(self, df):
+        from pyspark.sql.types import StructType
+        result_schema = StructType(df.schema.fields[:])
+        result_schema.add(self.output_label_column_name, self.output_label_column_type)
+        result_schema.add(self.output_prediction_column_name, self.output_prediction_column_type)
+        return result_schema
 
     def compute_loss(self, predictions, labels):
         if self.loss_function is not None:
