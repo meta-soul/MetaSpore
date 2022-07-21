@@ -337,9 +337,10 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
             
         return walk_df
     
-    def _word2vec(self, random_walk_paths, vector_size, window_size, min_count, max_iter, num_partitions):
-        word2Vec = Word2Vec(vectorSize=vector_size, inputCol="path", outputCol="model", \
-                            windowSize=window_size, minCount=min_count, maxIter=max_iter, numPartitions=num_partitions)
+    def _word2vec(self, random_walk_paths):
+        word2Vec = Word2Vec(vectorSize=self.w2v_vector_size, inputCol="path", outputCol="model", \
+                            windowSize=self.w2v_window_size, minCount=self.w2v_min_count, \
+                            maxIter=self.w2v_max_iter, numPartitions=self.w2v_num_partitions)
         model = word2Vec.fit(random_walk_paths)
         node_vectors = model.getVectors()
         return node_vectors
@@ -353,8 +354,7 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
         random_walk_paths = self._random_walk()
         
         # 3. Call Word2Vec
-        node_vectors = self._word2vec(random_walk_paths, vector_size=self.w2v_vector_size, window_size=self.w2v_window_size,\
-                                     min_count=self.w2v_min_count, max_iter=self.w2v_max_iter, num_partitions=self.w2v_num_partitions)
+        node_vectors = self._word2vec(random_walk_paths)
         
         return node_vectors
     
@@ -389,8 +389,8 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
                                     .over(w))\
                                     .filter(f'rn <= %d' % max_recommendation_count)\
                                     .groupby('word_1')\
-                                    .agg(F.collect_list('value').alias('value'))\
-                                    .withColumnRenamed('word_1', 'key')
+                                    .agg(F.collect_list('value').alias(value_column_name))\
+                                    .withColumnRenamed('word_1', key_column_name)
         return recall_df
     
     def _fit(self, dataset):
