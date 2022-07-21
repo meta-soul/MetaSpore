@@ -61,7 +61,18 @@ spec:
       module_name: python.algos.node2vec_retrieval
       class_name: Node2VecEstimator
     model_out_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/df.parquet
-    max_recommendation_count: 20    
+    max_recommendation_count: 20   
+    random_walk_p: 2.0
+    random_walk_q: 0.5
+    random_walk_Z: 1.0
+    random_walk_steps: 10
+    w2v_vector_size: 5
+    w2v_window_size: 30
+    w2v_min_count: 0
+    w2v_max_iter: 10
+    w2v_num_partitions: 1
+    euclid_bucket_length: 100
+    euclid_distance_threshold: 10
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
