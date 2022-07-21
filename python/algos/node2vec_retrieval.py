@@ -16,10 +16,11 @@
 
 import pyspark.ml.base
 import pyspark.sql.functions as F
+from pyspark.sql import Window
 from pyspark.sql.types import Row
 from pyspark.sql.functions import udf
-from pyspark.sql.types import StringType, ArrayType
-
+from pyspark.sql.types import StringType, ArrayType, FloatType
+from pyspark.ml.feature import Word2Vec, BucketedRandomProjectionLSH, VectorAssembler, MinMaxScaler
 
 class Node2VecModel(pyspark.ml.base.Model):
     def __init__(self,
@@ -40,22 +41,26 @@ class Node2VecModel(pyspark.ml.base.Model):
         self.debug = debug
         
     def _transform(self, dataset):
-        '''
         if self.trigger_vertex_column_name is None:
             raise ValueError("trigger_vertex_column_name is required")
         on = dataset[self.trigger_vertex_column_name] == self.df[self.key_column_name]     
         return dataset.join(self.df, on=on, how='left_outer')
-        '''
-        pass
     
     def _format_delimiter(self, string):
-        pass
+        return ''.join('\\u%04X' % ord(c) for c in string)
 
     def _get_value_expr(self):
-        pass
+        string = "array_join(transform(%s, " % self.value_column_name
+        string += "t -> concat(t._1, '%s', t._2)" % self._format_delimiter(self.vertex_score_delimiter)
+        string += "), '%s') " % self._format_delimiter(self.vertex_score_pair_delimiter)
+        string += "AS %s" % self.value_column_name
+        return string
 
     def stringify(self):
-        pass
+        key = self.key_column_name
+        value = self._get_value_expr()
+        self.df = self.df.selectExpr(key, value)
+        return self
     
     def publish(self):
         pass
@@ -78,6 +83,13 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
                  value_column_name='value',
                  vertex_score_delimiter=':',
                  vertex_score_pair_delimiter=';',
+                 w2v_vector_size=5,
+                 w2v_window_size=30,
+                 w2v_min_count=0,
+                 w2v_max_iter=10,
+                 w2v_num_partitions=1,
+                 euclid_bucket_length=100,
+                 euclid_distance_threshold=10,
                  debug=False):
         super().__init__()
         self.source_vertex_column_name = source_vertex_column_name
@@ -98,6 +110,14 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
         self.debug = debug
         self.vertices_lookup = None
         self.edges_lookup = None
+        self.w2v_vector_size = w2v_vector_size
+        self.w2v_window_size = w2v_window_size
+        self.w2v_min_count = w2v_min_count
+        self.w2v_max_iter = w2v_max_iter
+        self.w2v_num_partitions = w2v_num_partitions
+        self.euclid_bucket_length = euclid_bucket_length
+        self.euclid_distance_threshold = euclid_distance_threshold
+        
 
     @staticmethod
     def setup_alias(weights):
@@ -316,7 +336,13 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
             walk_df.printSchema()
             
         return walk_df
-
+    
+    def _word2vec(self, random_walk_paths, vector_size, window_size, min_count, max_iter, num_partitions):
+        word2Vec = Word2Vec(vectorSize=vector_size, inputCol="path", outputCol="model", \
+                            windowSize=window_size, minCount=min_count, maxIter=max_iter, numPartitions=num_partitions)
+        model = word2Vec.fit(random_walk_paths)
+        node_vectors = model.getVectors()
+        return node_vectors
     
     def _node2vec_transform(self, edges):
         # 1. Initialize lookup dataframe
@@ -327,14 +353,50 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
         random_walk_paths = self._random_walk()
         
         # 3. Call Word2Vec
-        # node_vectors = self._word2vec(random_walk_paths)
-        node_vectors = None
+        node_vectors = self._word2vec(random_walk_paths, vector_size=self.w2v_vector_size, window_size=self.w2v_window_size,\
+                                     min_count=self.w2v_min_count, max_iter=self.w2v_max_iter, num_partitions=self.w2v_num_partitions)
         
         return node_vectors
+    
+    def _get_i2i_df(self, embedding_table):
+        
+        mh = BucketedRandomProjectionLSH(inputCol='vector', outputCol='hashes', bucketLength=self.euclid_bucket_length)
+        model_mh = mh.fit(embedding_table)
+        # calculate the distance
+        embedding_dist_table = model_mh.approxSimilarityJoin(embedding_table, embedding_table, \
+                                                             threshold=self.euclid_distance_threshold, distCol='euclidean_dist')\
+                                       .select(F.col('datasetA.word').alias('word_1'),\
+                                               F.col('datasetB.word').alias('word_2'),\
+                                               F.col('euclidean_dist'))
+        
+        # distance normalization
+        vectorAssembler = VectorAssembler(handleInvalid="keep").setInputCols(['euclidean_dist']).setOutputCol('euclidean_dist_vec')
+        embedding_dist_table = vectorAssembler.transform(embedding_dist_table)
+        mmScaler = MinMaxScaler(outputCol="scaled_dist").setInputCol("euclidean_dist_vec")
+        model = mmScaler.fit(embedding_dist_table)
+        embedding_dist_table = model.transform(embedding_dist_table)
+        # similarity = 1 - distance
+        udf = F.udf(lambda x : float(x[0]), FloatType())
+        embedding_sim_table = embedding_dist_table.withColumn('euclidean_sim', 1-udf('scaled_dist'))\
+                                                  .drop('euclidean_dist', 'euclidean_dist_vec', 'scaled_dist')\
+                                                  .filter(F.col('word_1') != F.col('word_2'))\
+                                                  .withColumn('value', F.struct('word_2', 'euclidean_sim'))
+        
+        # collect the top k list
+        max_recommendation_count = self.max_recommendation_count
+        w = Window.partitionBy('word_1').orderBy(F.desc('euclidean_sim'))
+        recall_df = embedding_sim_table.withColumn('rn',F.row_number()\
+                                    .over(w))\
+                                    .filter(f'rn <= %d' % max_recommendation_count)\
+                                    .groupby('word_1')\
+                                    .agg(F.collect_list('value').alias('value'))\
+                                    .withColumnRenamed('word_1', 'key')
+        return recall_df
     
     def _fit(self, dataset):
         dataset = self._filter_dataset(dataset)
         dataset = self._preprocess_dataset(dataset)
-        df = self._node2vec_transform(dataset)
+        node_vectors = self._node2vec_transform(dataset)
+        df = self._get_i2i_df(node_vectors)
         model = self._create_model(df)
         return model
