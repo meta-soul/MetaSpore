@@ -32,3 +32,4 @@ from .popular import PopularNode
 from .jaccard import JaccardNode
 from .euclidean import EuclideanNode
 from .friends_of_friends import FriendsOfFriendsNode
+from .node2vec_estimator import Node2VecEstimatorNode
