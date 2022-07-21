@@ -50,7 +50,7 @@ class Node2VecEstimatorNode(PipelineNode):
                                         random_walk_p=random_walk_p,
                                         random_walk_q=random_walk_q,
                                         random_walk_Z=random_walk_Z,
-                                        random_walk_steps = random_walk_steps,
+                                        random_walk_steps=random_walk_steps,
                                         w2v_vector_size=w2v_vector_size,
                                         w2v_window_size=w2v_window_size,
                                         w2v_min_count=w2v_min_count,
