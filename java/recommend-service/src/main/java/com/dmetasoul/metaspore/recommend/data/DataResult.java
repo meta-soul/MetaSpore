@@ -48,6 +48,58 @@ public class DataResult {
 
     FeatureArray featureArray;
 
+    FeatureTable featureTable;
+
+    PredictResult predictResult;
+
+    @Data
+    public static class PredictResult {
+        ResultType type = ResultType.Other;
+        private List<List<Float>> embedding;
+        private List<Float> score;
+
+        public List<List<Float>> getEmbedding() {
+            if (type.equals(ResultType.Embedding)) {
+                return embedding;
+            }
+            return null;
+        }
+        public List<Float> getScore() {
+            if (type.equals(ResultType.Score)) {
+                return  score;
+            }
+            return null;
+        }
+
+        public void setEmbedding(List<List<Float>> embedding) {
+            if (embedding == null) {
+                return;
+            }
+            this.embedding = embedding;
+            type = ResultType.Embedding;
+        }
+        public void setScore(List<Float> score) {
+            if (score == null) {
+                return;
+            }
+            this.score = score;
+            type = ResultType.Score;
+        }
+
+        enum ResultType {
+            Embedding(0,"embedding"),
+            Score(1, "score"),
+            Other(10, "other");
+            private Integer id;
+            private String name;
+
+            ResultType(int id, String name){
+                this.id = id;
+                this.name = name;
+            }
+        }
+    }
+
     @Data
     public static class FeatureArray {
         Map<String, List<Object>> arrays;
@@ -89,8 +141,6 @@ public class DataResult {
             return get(fieldName, 0);
         }
     }
-    FeatureTable featureTable;
-
     public DataResult() {
         resultType = ResultTypeEnum.EMPTY;
         reqSign = "";
@@ -176,6 +226,18 @@ public class DataResult {
     public FeatureTable getFeatureTable() {
         if(resultType == ResultTypeEnum.FEATURETABLE) {
             return this.featureTable;
+        }
+        return null;
+    }
+
+    public void setPredictResult(PredictResult predictResult) {
+        resultType = ResultTypeEnum.PREDICTRESULT;
+        this.predictResult = predictResult;
+    }
+
+    public PredictResult getPredictResult() {
+        if(resultType == ResultTypeEnum.PREDICTRESULT) {
+            return this.predictResult;
         }
         return null;
     }

@@ -16,17 +16,15 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.enums.ResultTypeEnum;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -42,10 +40,11 @@ public abstract class DataService {
     protected String name;
     protected ExecutorService workFlowPool;
     protected TaskFlowConfig taskFlowConfig;
-    protected List<RecommendConfig.Chain> chains = Lists.newArrayList();
+    protected List<Chain> chains = Lists.newArrayList();
     protected Set<String> processedTask = Sets.newHashSet();
     protected Map<String, DataService> dataServices;
-
+    protected List<String> lastChainTasks;
+    protected boolean lastAny = false;
     protected TaskServiceRegister taskServiceRegister;
 
     public boolean init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister taskServiceRegister, ExecutorService workFlowPool) {
@@ -63,14 +62,6 @@ public abstract class DataService {
     protected abstract boolean initService();
     public void close() {}
 
-    public boolean checkRequest(ServiceRequest request, DataContext context) {
-        if (request != null && request.isCircular()) {
-            log.error("service in circular dependency");
-            throw new RuntimeException("service in circular dependency");
-        }
-        return true;
-    }
-
     public boolean checkResult(DataResult result) {
         if (result == null) {
             log.warn("result is null!");
@@ -81,20 +72,19 @@ public abstract class DataService {
             return false;
         }
         if ((result.getResultType() == ResultTypeEnum.VALUES && result.getValues() == null) ||
-                (result.getResultType() == ResultTypeEnum.DATA && result.getData() == null)) {
-            log.warn("result set value and data is null!");
+                (result.getResultType() == ResultTypeEnum.DATA && result.getData() == null) ||
+                (result.getResultType() == ResultTypeEnum.FEATUREARRAYS && result.getFeatureArray() == null) ||
+                (result.getResultType() == ResultTypeEnum.FEATURETABLE && result.getFeatureTable() == null)) {
+            log.warn("result data is null!");
             return false;
         }
+        result.setName(name);
         return true;
     }
 
     public DataResult getDataResultByName(String name, DataContext context) {
-        if (context.getStatus(name) != TaskStatusEnum.SUCCESS) {
-            log.error("name ：{} result get fail！", name);
-            return null;
-        }
         DataResult result = context.getResult(name);
-        if (result == null || !result.isVaild()) {
+        if (!checkResult(result)) {
             log.error("name ：{} result get wrong！", name);
             return null;
         }
@@ -105,96 +95,114 @@ public abstract class DataService {
         List<DataResult> dataResults = Lists.newArrayList();
         for (String name : names) {
             DataResult result = getDataResultByName(name, context);
-            if (result == null) {
-                log.error("name ：{} result get wrong！", name);
-                continue;
+            if (result != null) {
+                dataResults.add(result);
             }
-            dataResults.add(result);
+        }
+        return dataResults;
+    }
+    public DataResult getDataResultByRely(String name, DataContext context) {
+        DataResult result = getDataResultByName(name, context);
+        if (result == null) {
+            log.error("rely：{} result get wrong！", name);
+            throw new RuntimeException(String.format("task: %s get result fail!", name));
+        }
+        return result;
+    }
+
+    public List<DataResult> getDataResultByRelys(List<String> names, boolean isAny, DataContext context) {
+        List<DataResult> dataResults = getDataResultByNames(names, context);
+        if (isAny && dataResults.isEmpty()) {
+            throw new RuntimeException(String.format("task: %s get rely result fail any at empty !", name));
+        }
+        if (!isAny && dataResults.size() != names.size()) {
+            throw new RuntimeException(String.format("task: %s get rely result fail not any but loss!", name));
         }
         return dataResults;
     }
 
-    public List<Map> getTaskResultByColumns(List<String> taskNames, boolean isAny, List<String> columnNames, DataContext context) {
-        List<DataResult> dataResults = getDataResultByNames(taskNames, context);
+    public List<Map> getDataByColumns(DataResult dataResult, List<String> columnNames) {
         List<Map> data = Lists.newArrayList();
-        if ((!isAny && dataResults.size() != taskNames.size()) || (isAny && dataResults.isEmpty())) {
-            log.error("TaskResult：{} result get wrong！", taskNames);
-            return data;
-        }
-        for (DataResult dataResult: dataResults) {
-            if (MapUtils.isNotEmpty(dataResult.getValues())) {
+        if (MapUtils.isNotEmpty(dataResult.getValues())) {
+            Map<String, Object> map = Maps.newHashMap();
+            for (String col : columnNames) {
+                Object value = dataResult.getValues().get(col);
+                map.put(col, value);
+            }
+            data.add(map);
+        } else if (CollectionUtils.isNotEmpty(dataResult.getData())) {
+            for (Map item : dataResult.getData()) {
                 Map<String, Object> map = Maps.newHashMap();
                 for (String col : columnNames) {
-                    Object value = dataResult.getValues().get(col);
+                    Object value = item.get(col);
                     map.put(col, value);
                 }
                 data.add(map);
-            } else if (CollectionUtils.isNotEmpty(dataResult.getData())) {
-                for (Map item : dataResult.getData()) {
-                    Map<String, Object> map = Maps.newHashMap();
-                    for (String col : columnNames) {
-                        Object value = item.get(col);
-                        map.put(col, value);
-                    }
-                    data.add(map);
+            }
+        } else if (dataResult.getFeatureArray() != null) {
+            DataResult.FeatureArray featureArray = dataResult.getFeatureArray();
+            for (int index = 0; index < featureArray.getMaxIndex(); ++index) {
+                Map<String, Object> map = Maps.newHashMap();
+                for (String col : columnNames) {
+                    Object value = featureArray.get(col, index);
+                    map.put(col, value);
                 }
+                data.add(map);
             }
         }
         return data;
     }
 
-    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        if (StringUtils.isEmpty(depend)) {
-            depend = name;
+    public List<Map> getTaskResultByColumns(List<String> taskNames, boolean isAny, List<String> columnNames, DataContext context) {
+        List<DataResult> dataResults = getDataResultByRelys(taskNames, isAny, context);
+        List<Map> data = Lists.newArrayList();
+        for (DataResult dataResult : dataResults) {
+            data.addAll(getDataByColumns(dataResult, columnNames));
         }
-        ServiceRequest req = new ServiceRequest(depend, name);
-        req.copy(request);
-        if (context != null && MapUtils.isNotEmpty(context.getRequest())) {
-            if (req.getData() == null) req.setData(Maps.newHashMap());
-            req.getData().putAll(context.getRequest());
-        }
-        return req;
+        return data;
     }
 
-    public ServiceRequest makeRequest(String depend, DataContext context) {
-        return makeRequest(depend, null, context);
+    public ServiceRequest makeRequest(String name, ServiceRequest request, DataContext context) {
+        return new ServiceRequest(request, context);
+    }
+
+    public ServiceRequest makeRequest(DataContext context) {
+        return new ServiceRequest(context);
     }
 
     public DataResult execute(DataContext context) {
-        return execute(name, makeRequest(name, context), context);
+        return execute(name, makeRequest(context), context);
     }
 
-    public DataResult execute(String depend, DataContext context) {
-        return execute(depend, makeRequest(depend, context), context);
+    public DataResult execute(String taskName, DataContext context) {
+        return execute(taskName, makeRequest(context), context);
     }
-    public DataResult execute(String depend, ServiceRequest request, DataContext context) {
-        DataService dataService = dataServices.get(depend);
+    public DataResult execute(String taskName, ServiceRequest request, DataContext context) {
+        DataService dataService = dataServices.get(taskName);
         if (dataService == null) {
-            log.error("task:{} depend:{} service init fail!", name, depend);
-            context.setStatus(name, TaskStatusEnum.DEPEND_INIT_FAIL);
+            log.error("task:{} depend:{} service init fail!", name, taskName);
             return null;
         }
-        ServiceRequest taskRequest = makeRequest(depend, request, context);
+        // 调用服务为被调用任务构建请求数据
+        ServiceRequest taskRequest = makeRequest(taskName, request, context);
         if (taskRequest == null) {
-            log.error("task:{} depend:{} request init fail!", name, depend);
-            context.setStatus(name, TaskStatusEnum.DEPEND_INIT_FAIL);
+            log.error("task:{} request init fail!", name);
             return null;
         }
         dataService.execute(taskRequest, context);
-        processedTask.add(depend);
-        return getDataResultByName(depend, context);
+        processedTask.add(taskName);
+        return getDataResultByName(taskName, context);
     }
 
     public List<DataResult> execute(List<String> names, boolean isWhen, boolean isAny, ServiceRequest request, DataContext context) {
-        RecommendConfig.Chain chain = new RecommendConfig.Chain();
+        Chain chain = new Chain();
         if (isWhen) {
             chain.setWhen(names);
             chain.setAny(isAny);
         } else {
             chain.setThen(names);
         }
-        ServiceRequest req = makeRequest(null, request, context);
-        List<String> outputs = executeChain(chain, req, context);
+        List<String> outputs = executeChain(chain, request, context);
         return getDataResultByNames(outputs, context);
     }
 
@@ -206,21 +214,19 @@ public abstract class DataService {
         return execute(names, false, false, context);
     }
 
-    public List<String> executeChain(RecommendConfig.Chain chain, DataContext context) {
-        return executeChain(chain, makeRequest(name, context), context);
+    public List<String> executeChain(Chain chain, DataContext context) {
+        return executeChain(chain, makeRequest(context), context);
     }
 
-    public List<String> executeChain(RecommendConfig.Chain chain, ServiceRequest request, DataContext context) {
+    public List<String> executeChain(Chain chain, ServiceRequest request, DataContext context) {
         List<String> result = Lists.newArrayList();
-        String name = chain.getName();
         String lastThenTask = null;
         if (CollectionUtils.isNotEmpty(chain.getThen())) {
             for (String taskName : chain.getThen()) {
                 lastThenTask = taskName;
                 if (execute(taskName, request, context) == null) {
-                    log.error("task:{} depend:{} exec fail status:{}!", name, taskName, context.getStatus(taskName).getName());
-                    context.setStatus(name, TaskStatusEnum.DEPEND_EXEC_FAIL);
-                    return result;
+                    log.error("task:{} depend:{} exec fail!", name, taskName);
+                    throw new RuntimeException(String.format("task:%s in %s exec fail!", taskName, name));
                 }
             }
         }
@@ -229,13 +235,11 @@ public abstract class DataService {
             for (String taskName : chain.getWhen()) {
                 whenList.add(CompletableFuture.supplyAsync(() -> execute(taskName, request, context), workFlowPool)
                         .whenComplete(((dataResult, throwable) -> {
-                            if (context.getStatus(taskName) != TaskStatusEnum.SUCCESS) {
-                                log.error("task:{} depend:{} exec fail status:{}!", name, taskName, context.getStatus(taskName).getName());
-                                context.setStatus(name, TaskStatusEnum.DEPEND_EXEC_FAIL);
+                            if (!checkResult(dataResult)) {
+                                log.error("task:{} depend:{} exec fail!", name, taskName);
                             }
                             if (throwable != null) {
                                 log.error("exception:{}", throwable.getMessage());
-                                context.setStatus(name, TaskStatusEnum.DEPEND_EXEC_FAIL);
                             }
                         }))
                 );
@@ -250,68 +254,46 @@ public abstract class DataService {
                 resultFuture.get(chain.getTimeOut(), chain.getTimeOutUnit());
             } catch (InterruptedException | ExecutionException e) {
                 log.error("there was an error when executing the CompletableFuture", e);
-                context.setStatus(name, TaskStatusEnum.EXEC_FAIL);
             } catch (TimeoutException e) {
                 log.error("when task timeout!", e);
-                context.setStatus(name, TaskStatusEnum.EXEC_FAIL);
             }
             result.addAll(chain.getWhen());
         } else if (StringUtils.isNotEmpty(lastThenTask)) {
             result.add(lastThenTask);
         }
+        lastChainTasks = result;
+        lastAny = chain.isAny();
         return result;
     }
 
     public DataResult execute(ServiceRequest request, DataContext context){
-        DataResult result = new DataResult();
-        boolean reset = request.get("reset", false);
-        String reqSign = request.genRequestSign(request);
-        if (!reset && context.getStatus(name) == TaskStatusEnum.SUCCESS) {
-            result = context.getResult(name);
-            if (result != null && result.isVaild() && result.getReqSign().equals(reqSign)) {
-                return result;
-            }
-        }
-        context.setStatus(name, TaskStatusEnum.INIT);
-        if (StringUtils.isEmpty(request.getName()) || !name.equals(request.getName())) {
-            request.setName(name);
-        }
-        if (!checkRequest(request, context)) {
-            log.error("request in task:{} is check fail!", name);
-            context.setStatus(name, TaskStatusEnum.CHECK_FAIL);
+        // 1, 跟上次请求没变化，则直接使用上次处理结果
+        DataResult result = getDataResultByName(name, context);
+        String reqSign = request.genRequestSign();
+        if (result != null && result.getReqSign().equals(reqSign)) {
             return result;
         }
-
-        for (RecommendConfig.Chain chain : chains) {
+        // 2, 执行chain，计算依赖服务结果
+        for (Chain chain : chains) {
             List<String> taskNames = executeChain(chain, request, context);
             if (StringUtils.isNotEmpty(chain.getName())) {
                 if (CollectionUtils.isEmpty(taskNames)) {
                     log.error("task:{} chain:{} no task!", name, chain.getName());
-                    context.setStatus(chain.getName(), TaskStatusEnum.DEPEND_INIT_FAIL);
-                    return result;
+                    throw new RuntimeException(String.format("task:%s chain:%s no task!", name, chain.getName()));
                 }
                 DataResult chainResult = new DataResult();
                 List<Map> data = getTaskResultByColumns(taskNames, chain.isAny(), chain.getColumnNames(), context);
-                if (data == null) {
-                    log.error("task:{} chain:{} get result fail!", name, chain.getName());
-                    context.setStatus(chain.getName(), TaskStatusEnum.EXEC_FAIL);
-                    return result;
-                }
                 chainResult.setData(data);
                 context.setResult(chain.getName(), chainResult);
-                context.setStatus(chain.getName(), TaskStatusEnum.SUCCESS);
             }
         }
-        if (context.getStatus(name) != TaskStatusEnum.INIT) {
-            return result;
-        }
+        // 3, 执行服务处理函数
         result = process(request, context);
         if (checkResult(result)) {
             result.setReqSign(reqSign);
             context.setResult(name, result);
-            context.setStatus(name, TaskStatusEnum.SUCCESS);
         } else {
-            context.setStatus(name, TaskStatusEnum.RESULT_ERROR);
+            throw new RuntimeException(String.format("task:%s exec fail!", name));
         }
         return result;
     }

@@ -16,204 +16,70 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
-import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.datasource.DataSource;
+import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.datasource.RedisSource;
+import com.dmetasoul.metaspore.recommend.enums.RedisTypeEnum;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation("SourceTable")
-public class SourceTableTask extends DataService {
+@DataServiceAnnotation
+public class RedisSourceTableTask extends SourceTableTask {
 
-    private DataSource dataSource;
-    private FeatureConfig.Source source;
+    private RedisSource dataSource;
+    private String columnKey;
+    private String keyFormat;
+    private List<String> columnNames;
+    private RedisTypeEnum redisType;
 
     @Override
     public boolean initService() {
-        log.info("test refresh name:{} initService+++++++++++++++++++++++++++++++++++++++++", name);
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        dataSource = taskServiceRegister.getDataSources().get(sourceTable.getSource());
-        source = taskFlowConfig.getSources().get(sourceTable.getSource());
-        return true;
-    }
-
-    @Override
-    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        ServiceRequest req = super.makeRequest(depend, request, context);
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        if (Objects.equals(source.getKind(), "redis")) {  // redis source need keys param
-            if (CollectionUtils.isNotEmpty(req.getKeys())) {
-                return req;
-            }
-            List<String> keys = Lists.newArrayList();
-            String key = sourceTable.getColumnNames().get(0);
-            if (MapUtils.isNotEmpty(req.getEqConditions())) {
-                Object value = req.getEqConditions().get(key);
-                if (value != null) {
-                    if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                        keys.add(String.valueOf(value));
-                    } else {
-                        keys.add(String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(value)));
-                    }
-                }
-            }
-            if (MapUtils.isNotEmpty(req.getInConditions())) {
-                List<Object> value = req.getInConditions().get(key);
-                if (CollectionUtils.isNotEmpty(value)) {
-                    if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                        keys.addAll(value.stream().map(String::valueOf).collect(Collectors.toList()));
-                    } else {
-                        keys.addAll(value.stream().map(x -> String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(x))).collect(Collectors.toList()));
-                    }
-                }
-            }
-            if (keys.isEmpty()) {
-                Object value = req.get(key);
-                if (value != null) {
-                    if (value instanceof Collection) {
-                        List<Object> data = Lists.newArrayList();
-                        data.addAll((Collection<?>) value);
-                        if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                            keys.addAll(data.stream().map(String::valueOf).collect(Collectors.toList()));
-                        } else {
-                            keys.addAll(data.stream().map(x -> String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(x))).collect(Collectors.toList()));
-                        }
-                    }else {
-                        if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                            keys.add(String.valueOf(value));
-                        } else {
-                            keys.add(String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(value)));
-                        }
-                    }
-                }
-            }
-            if (keys.isEmpty()) {
-                log.error("redis request loss keys makeRequest fail!");
-                throw new RuntimeException("redis request loss keys makeRequest fail!");
-            }
-            req.setKeys(keys);
-        } else if (source.getKind().equals("jdbc") || source.getKind().equals("mongodb")) {
-            if (source.getKind().equals("jdbc") && StringUtils.isNotEmpty(req.getJdbcSql())) {
-                return req;
-            }
-            if (req.getEqConditions() == null) req.setEqConditions( Maps.newHashMap());
-            Map<String, Object> eqData = req.getEqConditions();
-            if (MapUtils.isNotEmpty(eqData)) {
-                eqData.keySet().forEach(x->{
-                    if (!sourceTable.getColumnMap().containsKey(x)) {
-                        eqData.remove(x);
-                    }
-                });
-            }
-            if (req.getInConditions() == null) req.setInConditions(Maps.newHashMap());
-            Map<String, List<Object>> inData = req.getInConditions();
-            if (MapUtils.isNotEmpty(inData)) {
-                inData.keySet().forEach(x->{
-                    if (!sourceTable.getColumnMap().containsKey(x)) {
-                        inData.remove(x);
-                    }
-                });
-            }
-            if (MapUtils.isEmpty(eqData) && MapUtils.isEmpty(inData)) {
-                if (MapUtils.isNotEmpty(req.getData())) {
-                    req.getData().forEach((k, v) -> {
-                        if (sourceTable.getColumnMap().containsKey(k)) {
-                            if (v instanceof Collection) {
-                                List<Object> data = Lists.newArrayList();
-                                data.addAll((Collection<?>) v);
-                                inData.put(k, data);
-                            } else {
-                                eqData.put(k, v);
-                            }
-                        }
-                    });
-                }
-                if (eqData.isEmpty() && inData.isEmpty()) {
-                    log.error("jdbc or mongodb request loss condition makeRequest fail!");
-                    throw new RuntimeException("jdbc or mongodb request loss condition makeRequest fail!");
-                }
-            }
-
+        if (super.initService() && source.getKind().equals("redis")) {
+            dataSource = (RedisSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
         }
-        return req;
-    }
-
-    @Override
-    public boolean checkResult(DataResult result) {
-        if (result == null) {
-            log.warn("result is null!");
+        if (StringUtils.isNotEmpty(sourceTable.getPrefix())) {
+            keyFormat = String.format("%s_%%s", sourceTable.getPrefix());
+        }
+        if (sourceTable.getColumnNames().size() < 2) {
             return false;
         }
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        for (String col : sourceTable.getColumnNames()) {
-            String type = sourceTable.getColumnMap().get(col);
-            Class dataClass = DataTypes.getDataClass(type);
-            if (MapUtils.isNotEmpty(result.getValues())) {
-                Map<String, Object> data = result.getValues();
-                Object value = data.get(col);
-                if (value != null && !dataClass.isInstance(value)) {
-                    log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-                    // return false;
-                }
-            }
-            if (CollectionUtils.isNotEmpty(result.getData())) {
-                for (Map data : result.getData()) {
-                    Object value = data.get(col);
-                    if (value != null && !dataClass.isInstance(value)) {
-                        log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-                        // return false;
-                    }
-                }
-            }
-        }
+        columnNames = sourceTable.getColumnNames();
+        columnKey = columnNames.get(0);
+        redisType = RedisTypeEnum.getEnumByName(getOptionOrDefault("redisType", "hash"));
+        redisType.init(keyFormat, dataSource.getRedisTemplate(), columnNames);
         return true;
     }
 
-    @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult dataResult;
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        int retryNum = 0;
-        long timeOut = 3000L;
-        TimeUnit timeOutUnit = TimeUnit.MILLISECONDS;
-        Map<String, Object> options = sourceTable.getOptions();
-        if (MapUtils.isNotEmpty(options)) {
-            retryNum = (int) options.getOrDefault("retryNum", 0);
-            timeOut = (long) options.getOrDefault("timeOut", 30000L);
-        }
-        retryNum += 1;
-        do {
-            CompletableFuture<DataResult> future = dataSource.execute(makeRequest(sourceTable.getSource(), request, context), context);
-            try {
-                dataResult = future.get(timeOut, timeOutUnit);
-                if (context.getStatus(source.getName(), name) == TaskStatusEnum.SUCCESS) {
-                    return dataResult;
-                }
-                retryNum -= 1;
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("there was an error when executing the CompletableFuture",e);
-            } catch (TimeoutException e) {
-                log.error("when task timeout!",e);
+    private void fillDataList(Object value, List<Map> list, int limit) {
+        if (value instanceof Collection) {
+            for (Object item : (Collection)value) {
+                list.addAll(redisType.process(String.valueOf(item), limit));
             }
-        } while (retryNum >= 0);
-        return null;
+        } else {
+            list.addAll(redisType.process(String.valueOf(value),  limit));
+        }
+    }
+
+    @Override
+    protected DataResult processRequest(ServiceRequest request, DataContext context) {
+        Map<String, Object> data = request.getData();
+        int limit = request.getLimit();
+        List<Map> list = Lists.newArrayList();
+        if (MapUtils.isNotEmpty(data) && data.containsKey(columnKey)) {
+            Object value = data.get(columnKey);
+            fillDataList(value, list, limit);
+        }
+        DataResult result = new DataResult();
+        result.setData(list);
+        return result;
     }
 }

@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package com.dmetasoul.metaspore.recommend.taskService;
+package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
 import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
@@ -32,20 +32,16 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public class LayerTask extends TaskService {
+public class Layer {
 
     private RecommendConfig.Layer layer;
     private LayerBucketizer bucketizer;
 
-    @Override
-    public boolean initService() {
-        layer = taskFlowConfig.getLayers().get(name);
+    public void init() {
         bucketizer = getLayerBucketizer(layer);
         if (bucketizer == null) {
             log.error("layer bucketizer：{} init fail！", layer.getBucketizer());
-            return false;
         }
-        return true;
     }
 
     public LayerBucketizer getLayerBucketizer(RecommendConfig.Layer layer) {
@@ -58,41 +54,11 @@ public class LayerTask extends TaskService {
         return layerBucketizer;
     }
 
-    @Override
-    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        ServiceRequest req = super.makeRequest(depend, request, context);
-        if (MapUtils.isNotEmpty(layer.getOptions())) {
-            req.getData().putAll(layer.getOptions());
-        }
-        return req;
-    }
 
-    @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult result = null;
         String experiment = bucketizer.toBucket(context);
-        TaskService taskService = taskServices.get(experiment);
-        if (taskService == null) {
-            log.error("layer:{} experiment:{} service init fail!", name, experiment);
-            context.setStatus(name, TaskStatusEnum.DEPEND_INIT_FAIL);
-            return result;
-        }
-        ServiceRequest taskRequest = makeRequest(experiment, request, context);
-        if (taskRequest == null) {
-            log.error("layer:{} experiment:{} request init fail!", name, experiment);
-            context.setStatus(name, TaskStatusEnum.DEPEND_INIT_FAIL);
-            return result;
-        }
-        taskService.execute(taskRequest, context);
         result = new DataResult();
-        List<Map> data = getTaskResultByColumns(List.of(experiment), false, layer.getColumnNames(), context);
-        if (data == null) {
-            log.error("layer:{} experiment:{} get result fail!", name, experiment);
-            context.setStatus(name, TaskStatusEnum.EXEC_FAIL);
-            return result;
-        }
-        result.setData(data);
-        context.setStatus(name, TaskStatusEnum.SUCCESS);
         return result;
     }
 }

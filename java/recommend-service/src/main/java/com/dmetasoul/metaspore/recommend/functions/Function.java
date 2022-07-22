@@ -20,7 +20,7 @@ import java.util.Map;
 
 public abstract class Function {
 
-    public Object process(List<Object> values, List<String> types, Map<String, Object> options) {
+    public List<Object> process(List<List<Object>> values, List<String> types, Map<String, Object> options) {
         return values.get(0);
     }
 

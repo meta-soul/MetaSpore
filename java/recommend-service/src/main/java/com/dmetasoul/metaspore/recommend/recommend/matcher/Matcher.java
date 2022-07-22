@@ -25,25 +25,22 @@ import com.dmetasoul.metaspore.recommend.recommend.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.*;
+import java.util.List;
 
 @Slf4j
-@RecommendAnnotation("ItemCfMatcher")
-public class ItemCfMatcher extends Service {
+@RecommendAnnotation("Matcher")
+public class Matcher extends Service {
     public static final int DEFAULT_MAX_RESERVATION = 50;
-    private int maxReservation;
+    protected int maxReservation;
 
-    private String scoreCol = "score";
-    private String idCol = "itemId";
-
-    private DataService dataService;
+    protected DataService dataService;
 
     @Override
     public boolean initService() {
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         List<String> depend = serviceConfig.getDepend();
         if (CollectionUtils.isEmpty(depend) || depend.size() > 1) {
-            log.error("itemcf service depend config error");
+            log.error("matcher service depend config error");
             return false;
         }
         dataService = serviceRegister.getDataServices().get(depend.get(0));

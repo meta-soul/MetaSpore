@@ -23,6 +23,8 @@ public enum ResultTypeEnum {
     FEATUREARRAYS(4,"featureArrays"),
     FEATURETABLE(5,"featureTable"),
 
+    PREDICTRESULT(6,"predictResult"),
+
     EXCEPTION(22,"exception");
 
     private Integer id;

@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.List;
 import java.util.Map;
 
-import static com.dmetasoul.metaspore.recommend.common.Utils.parseIntFromString;
-
 @Slf4j
 @TransformFunction("bucketize")
 public class BucketizeFunction extends Function {
@@ -44,7 +42,7 @@ public class BucketizeFunction extends Function {
     }
 
     @Override
-    public Object process(List<Object> values, List<String> types, Map<String, Object> options) {
+    public List<Object> process(List<List<Object>> values, List<String> types, Map<String, Object> options) {
         return values.get(0);
     }
 }

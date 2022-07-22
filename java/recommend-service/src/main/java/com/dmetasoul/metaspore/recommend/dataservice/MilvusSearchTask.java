@@ -22,87 +22,130 @@ import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.serving.PredictGrpc;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.milvus.response.SearchResultsWrapper;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
+import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
 @DataServiceAnnotation
-public abstract class ItemMatcherTask extends AlgoTransform {
+public abstract class MilvusSearchTask extends AlgoTransform {
     public static final int DEFAULT_ALGO_LEVEL = 3;
     public static final int DEFAULT_MAX_RESERVATION = 50;
-
     private int algoLevel;
     private int maxReservation;
-
-    private String user2itemTask;
+    private String milvusTask;
     private String algoName;
-    private String cfValuesCol;
-    private String userProfileWeightCol;
+    private String milvusItemTask;
+    private String milvusCollectionName;
+    private String embeddingTask;
+
+    private String milvusIdCol;
+    private String milvusItemIdCol;
 
     @Override
     public boolean initService() {
-        config = taskFlowConfig.getAlgoTransforms().get(name);
+        if (!super.initService()) {
+            return false;
+        }
         algoLevel = getOptionOrDefault("algoLevel", DEFAULT_ALGO_LEVEL);
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         algoName = getOptionOrDefault("algo-name", "itemCF");
-        user2itemTask = getOptionOrDefault("weight", "user2item");
-        userProfileWeightCol = getOptionOrDefault("weight", "userProfileWeight");
-        cfValuesCol = getOptionOrDefault("cfValues", "cfValues");
-        Chain chain = new Chain();
-        List<String> depends = List.of(user2itemTask);
-        chain.setThen(depends);
-        chains.add(chain);
-        return true;
+        milvusCollectionName = getOptionOrDefault("milvusCollectionName", "");
+        milvusIdCol = getOptionOrDefault("milvusIdCol", "");
+        milvusItemIdCol = getOptionOrDefault("milvusItemIdCol", "");
+        for (String task : config.getDepend().getThen()) {
+            FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(task);
+            if (algoTransform != null) {
+                embeddingTask = task;
+                continue;
+            }
+            FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(task);
+            if (sourceTable != null && sourceTable.getKind().equals("milvus") && StringUtils.isNotEmpty(embeddingTask)) {
+                milvusTask = task;
+                continue;
+            }
+            if (sourceTable != null && StringUtils.isNotEmpty(milvusTask)) {
+                milvusItemTask = task;
+                if (StringUtils.isEmpty(milvusIdCol)) {
+                    milvusIdCol = sourceTable.getColumnNames().get(0);
+                    milvusItemIdCol = sourceTable.getColumnNames().get(1);
+                }
+            }
+        }
+        return !StringUtils.isEmpty(milvusItemTask) && !StringUtils.isEmpty(milvusCollectionName);
     }
 
     @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult taskResult = getDataResultByName(user2itemTask, context);
-        List<Map> dataColumn = getDataByColumns(taskResult, List.of(cfValuesCol, userProfileWeightCol));
-        HashMap<String, Double> itemToItemScore = new HashMap<>();
-        for (Map<String, Object> item : dataColumn) {
-            List itemCfValue = Utils.getField(item, cfValuesCol, Lists.newArrayList());
-            double userProfileWeight = Utils.getField(item, userProfileWeightCol, 0.0);
-            itemCfValue.forEach(x -> {
-                Map<String, Object> map = (Map<String, Object>) x;
-                String itemId = map.get("_1").toString();
-                Double itemScore = (Double) map.get("_2") * userProfileWeight;
-                if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
-                    itemToItemScore.put(itemId, itemScore);
-                }
-            });
+    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
+        ServiceRequest req = super.makeRequest(depend, request, context);
+        if (depend.equals(milvusTask)) {
+            DataResult taskResult = getDataResultByName(embeddingTask, context);
+            if (taskResult.getPredictResult() == null || taskResult.getPredictResult().getEmbedding() == null) {
+                throw new RuntimeException("embedding gen fail at MilvusSearchTask!");
+            }
+            req.put("embedding", taskResult.getPredictResult().getEmbedding());
+            req.put("collectionName", milvusCollectionName);
+            req.setLimit(maxReservation);
         }
-        ArrayList<Map.Entry<String, Double>> entryList = new ArrayList<>(itemToItemScore.entrySet());
-        entryList.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
-        Double maxScore = entryList.size() > 0 ? entryList.get(0).getValue() : 0.0;
-        Integer finalAlgoLevel = algoLevel;
-        List<Map> data = Lists.newArrayList();
-        entryList.stream().limit(maxReservation).forEach(x -> {
-            Map<String, Object> item = Maps.newHashMap();
-            if (Utils.setFieldFail(item, config.getColumnNames(), 0, x.getKey())) {
-                return;
+        if (depend.equals(milvusItemTask)) {
+            DataResult taskResult = getDataResultByName(milvusTask, context);
+            Map<Integer, List<SearchResultsWrapper.IDScore>> itemVectors = taskResult.getMilvusData();
+            if (itemVectors.size() != 1) {
+                // TODO error log
+                throw new InvalidParameterException("Item vectors size must be 1. But got: " + itemVectors.size());
             }
-            if (Utils.setFieldFail(item, config.getColumnNames(), 1, Utils.getFinalRetrievalScore(x.getValue(), maxScore, finalAlgoLevel))) {
-                return;
-            }
-            Map<String, Object> value = Maps.newHashMap();
-            value.put(algoName, x.getValue());
-            if (Utils.setFieldFail(item, config.getColumnNames(), 2, value)) {
-                return;
-            }
-            data.add(item);
-        });
-        DataResult result = new DataResult();
-        result.setData(data);
-        return result;
+            List<SearchResultsWrapper.IDScore> iDScores = itemVectors.values().iterator().next();
+            // TODO if Milvus return list is sorted, we do not need to use sort it again.
+            iDScores.sort((o1, o2) -> Double.compare(o2.getScore(), o1.getScore()));
+            List<String> milvusIds = iDScores.stream().map(SearchResultsWrapper.IDScore::getLongID).map(String::valueOf).collect(Collectors.toList());
+            req.put(milvusIdCol, milvusIds);
+        }
+        return req;
+    }
+
+        @Override
+    public DataResult process(ServiceRequest request, DataContext context) {
+            DataResult taskResult = getDataResultByName(milvusTask, context);
+            Map<Integer, List<SearchResultsWrapper.IDScore>> itemVectors = taskResult.getMilvusData();
+            List<SearchResultsWrapper.IDScore> iDScores = itemVectors.values().iterator().next();
+            DataResult milvusItemResult = getDataResultByName(milvusItemTask, context);
+            List<Map> milvusItemIds = milvusItemResult.getData();
+            HashMap<String, String> milvusIdToItemIdMap = new HashMap<>();
+            milvusItemIds.forEach(x -> milvusIdToItemIdMap.put(Utils.getField(x, milvusIdCol, ""), Utils.getField(x, milvusItemIdCol, "")));
+
+            List<Map> itemModels = new ArrayList<>();
+            Double maxScore = iDScores.size() > 0 ? iDScores.get(0).getScore() : 0.0;
+            iDScores.forEach(x -> {
+                Map<String, Object> item = Maps.newHashMap();
+                if (Utils.setFieldFail(item, config.getColumnNames(), 0, milvusIdToItemIdMap.get(String.valueOf(x.getLongID())))) {
+                    return;
+                }
+                Double score = (double) x.getScore();
+                if (Utils.setFieldFail(item, config.getColumnNames(), 1, Utils.getFinalRetrievalScore(score, maxScore, algoLevel))) {
+                    return;
+                }
+                Map<String, Object> value = Maps.newHashMap();
+                value.put(algoName, score);
+                if (Utils.setFieldFail(item, config.getColumnNames(), 2, value)) {
+                    return;
+                }
+                itemModels.add(item);
+            });
+            DataResult result = new DataResult();
+            result.setData(itemModels);
+            return result;
     }
 }

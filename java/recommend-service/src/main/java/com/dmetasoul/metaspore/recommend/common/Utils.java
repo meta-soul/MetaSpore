@@ -19,7 +19,9 @@ package com.dmetasoul.metaspore.recommend.common;
 
 import com.dmetasoul.metaspore.serving.ArrowTensor;
 import com.google.common.collect.Maps;
+import io.milvus.param.MetricType;
 import io.milvus.param.R;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Field;
@@ -32,14 +34,34 @@ import java.util.Map;
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
 public class Utils {
-
+    public static MetricType getMetricType(int index) {
+        if (index < 0 || index >= MetricType.values().length) {
+            index = 0;
+        }
+        return MetricType.values()[index];
+    }
     public static <T> T nullThenValue(T value, T defaultValue) {
         return value == null ? defaultValue : value;
     }
 
     public static <T> T getField(Map<String, Object> data, String field, T value) {
-        if (data.containsKey(field)) return (T) data.get(field);
+        if (MapUtils.isNotEmpty(data) && data.containsKey(field)) return (T) data.getOrDefault(field, value);
         return value;
+    }
+
+    public Object getField(Map map, String key) {
+        if (MapUtils.isNotEmpty(map) && map.containsKey(key)) {
+            return map.get(key);
+        }
+        return null;
+    }
+
+    public static boolean setFieldFail(Map map, List<String> columnName, int index, Object value) {
+        if (index < 0 || columnName == null || map == null || index >= columnName.size()) {
+            return true;
+        }
+        map.put(columnName.get(index), value);
+        return false;
     }
 
     public static int parseIntFromString(String str, int defaultValue) {

@@ -16,21 +16,9 @@
 
 package com.dmetasoul.metaspore.recommend.common;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.vector.types.DateUnit;
-import org.apache.arrow.vector.types.FloatingPointPrecision;
-import org.apache.arrow.vector.types.TimeUnit;
-import org.apache.arrow.vector.types.pojo.ArrowType;
-
-import java.math.BigDecimal;
-import java.sql.Blob;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 /**
  * 用于保存数据字段类型与Class信息的映射关系
@@ -38,85 +26,72 @@ import java.util.Map;
  */
 @Slf4j
 public class DataTypes {
-
-    @Data
-    @AllArgsConstructor
-    public static class DataType {
-        Class cls;
-        ArrowType.PrimitiveType type;
-    }
-    private static Map<String, DataType> dataTypes = new HashMap<>();
-    private static Map<String, Class> complexTypes = new HashMap<>();
-
+    private static Map<String, DataTypeEnum> dataTypes = new HashMap<>();
     public static boolean typeIsSupport(String type) {
-        return dataTypes.containsKey(type) || complexTypes.containsKey(type);
+        return dataTypes.containsKey(type);
     }
-    public static DataType getDataType(String name) {
+    public static DataTypeEnum getDataType(String name) {
         return dataTypes.get(name);
     }
 
     public static Class getDataClass(String name) {
-        DataType dataType = dataTypes.get(name);
+        DataTypeEnum dataType = dataTypes.get(name);
         if (dataType != null) {
             return dataType.getCls();
         }
-        return complexTypes.getOrDefault(name, String.class);
-    }
-
-    public static void setDataType(String name, DataType dataType) {
-        DataTypes.dataTypes.put(name, dataType);
+        return DataTypeEnum.DEFAULT.getCls();
     }
 
     static {
         // default
-        dataTypes.put("default", new DataType(String.class, ArrowType.Utf8.INSTANCE));
+        dataTypes.put("default", DataTypeEnum.DEFAULT);
 
         // Java to Java
-        dataTypes.put("string", new DataType(String.class, ArrowType.Utf8.INSTANCE));
-        dataTypes.put("long", new DataType(Long.class, new ArrowType.Int(64, true)));
-        dataTypes.put("Integer", new DataType(Integer.class, new ArrowType.Int(32, true)));
-        dataTypes.put("String", new DataType(String.class, ArrowType.Utf8.INSTANCE));
-        dataTypes.put("Long", new DataType(Long.class, new ArrowType.Int(64, true)));
-        dataTypes.put("Double", new DataType(Double.class, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)));
+        dataTypes.put("string", DataTypeEnum.STRING);
+        dataTypes.put("long", DataTypeEnum.LONG);
+        dataTypes.put("Integer", DataTypeEnum.INT);
+        dataTypes.put("String", DataTypeEnum.STRING);
+        dataTypes.put("Long", DataTypeEnum.LONG);
+        dataTypes.put("Double", DataTypeEnum.DOUBLE);
 
         // Mysql to Java
-        dataTypes.put("bigint", new DataType(Long.class, new ArrowType.Int(64, true)));
-        dataTypes.put("binary", new DataType(Byte.class, ArrowType.Binary.INSTANCE));
-        dataTypes.put("bit", new DataType(Boolean.class, ArrowType.Bool.INSTANCE));
-        dataTypes.put("blob", new DataType(Blob.class, ArrowType.LargeBinary.INSTANCE));
-        dataTypes.put("char", new DataType(String.class, ArrowType.Utf8.INSTANCE));
-        dataTypes.put("date", new DataType(Date.class, new ArrowType.Date(DateUnit.DAY)));
-        dataTypes.put("datetime", new DataType(Timestamp.class, new ArrowType.Date(DateUnit.MILLISECOND)));
-        dataTypes.put("decimal", new DataType(BigDecimal.class, new ArrowType.Decimal(60, 4, 64)));
-        dataTypes.put("double", new DataType(Double.class, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)));
-        dataTypes.put("float", new DataType(Float.class, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)));
-        dataTypes.put("int", new DataType(Integer.class, new ArrowType.Int(32, true)));
-        dataTypes.put("longblob", new DataType(Blob.class, ArrowType.LargeBinary.INSTANCE));
-        dataTypes.put("smallint", new DataType(Short.class, new ArrowType.Int(16, true)));
-        dataTypes.put("text", new DataType(String.class, ArrowType.Utf8.INSTANCE));
-        dataTypes.put("time", new DataType(Time.class, new ArrowType.Time(TimeUnit.SECOND, 32)));
-        dataTypes.put("timestamp", new DataType(Timestamp.class, new ArrowType.Timestamp(TimeUnit.SECOND, "Asia/Shanghai")));
-        dataTypes.put("tinyint", new DataType(Byte.class, new ArrowType.Int(8, true)));
-        dataTypes.put("varchar", new DataType(String.class, ArrowType.Utf8.INSTANCE));
+        dataTypes.put("bigint", DataTypeEnum.LONG);
+        dataTypes.put("binary", DataTypeEnum.BYTE);
+        dataTypes.put("bit", DataTypeEnum.BOOL);
+        dataTypes.put("blob", DataTypeEnum.BLOB);
+        dataTypes.put("char", DataTypeEnum.STRING);
+        dataTypes.put("date", DataTypeEnum.DATE);
+        dataTypes.put("datetime", DataTypeEnum.TIMESTAMP);
+        dataTypes.put("decimal", DataTypeEnum.DECIMAL);
+        dataTypes.put("double", DataTypeEnum.DOUBLE);
+        dataTypes.put("float", DataTypeEnum.FLOAT);
+        dataTypes.put("int", DataTypeEnum.INT);
+        dataTypes.put("longblob", DataTypeEnum.BLOB);
+        dataTypes.put("smallint", DataTypeEnum.SHORT);
+        dataTypes.put("text", DataTypeEnum.STRING);
+        dataTypes.put("time", DataTypeEnum.TIME);
+        dataTypes.put("timestamp", DataTypeEnum.TIMESTAMP);
+        dataTypes.put("tinyint", DataTypeEnum.BYTE);
+        dataTypes.put("varchar", DataTypeEnum.STRING);
 
-        dataTypes.put("bool", new DataType(Boolean.class, ArrowType.Bool.INSTANCE));
-        dataTypes.put("str", new DataType(String.class, ArrowType.Utf8.INSTANCE));
+        dataTypes.put("bool", DataTypeEnum.BOOL);
+        dataTypes.put("str", DataTypeEnum.STRING);
 
-        complexTypes.put("str[]", List.class);
-        complexTypes.put("int[]", List.class);
-        complexTypes.put("double[]", List.class);
-        complexTypes.put("float[]", List.class);
-        complexTypes.put("long[]", List.class);
-        complexTypes.put("list_str", List.class);
-        complexTypes.put("list_int", List.class);
-        complexTypes.put("list_double", List.class);
-        complexTypes.put("list_float", List.class);
-        complexTypes.put("list_long", List.class);
-        complexTypes.put("map_str_str", Map.class);
-        complexTypes.put("map_str_int", Map.class);
-        complexTypes.put("map_str_double", Map.class);
-        complexTypes.put("map_str_float", Map.class);
-        complexTypes.put("list", List.class);
-        complexTypes.put("map", Map.class);
+        dataTypes.put("str[]", DataTypeEnum.LIST_STR);
+        dataTypes.put("int[]", DataTypeEnum.LIST_INT);
+        dataTypes.put("double[]", DataTypeEnum.LIST_DOUBLE);
+        dataTypes.put("float[]", DataTypeEnum.LIST_FLOAT);
+        dataTypes.put("long[]", DataTypeEnum.LIST_LONG);
+        dataTypes.put("list_str", DataTypeEnum.LIST_STR);
+        dataTypes.put("list_int", DataTypeEnum.LIST_INT);
+        dataTypes.put("list_double", DataTypeEnum.LIST_DOUBLE);
+        dataTypes.put("list_float", DataTypeEnum.LIST_FLOAT);
+        dataTypes.put("list_long", DataTypeEnum.LIST_LONG);
+        dataTypes.put("map_str_str", DataTypeEnum.MAP);
+        dataTypes.put("map_str_int", DataTypeEnum.MAP);
+        dataTypes.put("map_str_double", DataTypeEnum.MAP);
+        dataTypes.put("map_str_float", DataTypeEnum.MAP);
+        dataTypes.put("list", DataTypeEnum.LIST);
+        dataTypes.put("map", DataTypeEnum.MAP);
     }
 }

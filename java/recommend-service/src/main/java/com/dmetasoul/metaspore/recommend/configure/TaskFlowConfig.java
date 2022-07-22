@@ -45,15 +45,13 @@ public class TaskFlowConfig {
 
     @Autowired
     private RecommendConfig recommendConfig;
-    @Autowired
-    private FunctionConfig functionConfig;
 
     private Map<String, FeatureConfig.Source> sources = Maps.newHashMap();
     private Map<String, FeatureConfig.SourceTable> sourceTables = Maps.newHashMap();
     private Map<String, FeatureConfig.Feature> features = Maps.newHashMap();
+    private Map<String, FeatureConfig.AlgoInference> algoInferences = Maps.newHashMap();
     private Map<String, FeatureConfig.AlgoTransform> algoTransforms = Maps.newHashMap();
-
-    private Map<String, RecommendConfig.Chain> chains = Maps.newHashMap();
+    private Map<String, Chain> chains = Maps.newHashMap();
     private Map<String, RecommendConfig.Service> services = Maps.newHashMap();
     private Map<String, RecommendConfig.Experiment> experiments = Maps.newHashMap();
     private Map<String, RecommendConfig.Layer> layers = Maps.newHashMap();
@@ -82,6 +80,7 @@ public class TaskFlowConfig {
                 log.error("SourceTable: {} from redis column size only support 2!", item.getName());
                 throw new RuntimeException("SourceTable check fail!");
             }
+            item.setKind(source.getKind());
             sourceTables.put(item.getName(), item);
         }
         for (FeatureConfig.Feature item: featureConfig.getFeature()) {
@@ -91,12 +90,19 @@ public class TaskFlowConfig {
             }
             features.put(item.getName(), item);
         }
-        for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
+        for (FeatureConfig.AlgoInference item : featureConfig.getAlgoInference()) {
             FeatureConfig.Feature feature = features.get(item.getDepend());
             if (feature == null) {
-                log.error("AlgoTransform: {} Feature {} is not config!", item.getName(), item.getDepend());
-                throw new RuntimeException("AlgoTransform check fail!");
+                log.error("AlgoInference: {} Feature {} is not config!", item.getName(), item.getDepend());
+                throw new RuntimeException("AlgoInference check fail!");
             }
+            if (!item.checkAndDefault()) {
+                log.error("AlgoInference item {} is check fail!", item.getName());
+                throw new RuntimeException("AlgoInference check fail!");
+            }
+            algoInferences.put(item.getName(), item);
+        }
+        for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
             if (!item.checkAndDefault()) {
                 log.error("AlgoTransform item {} is check fail!", item.getName());
                 throw new RuntimeException("AlgoTransform check fail!");
@@ -118,7 +124,7 @@ public class TaskFlowConfig {
             List<String> columns = null;
             int chainNum = item.getChains().size();
             for (int index = 0; index < chainNum; ++index) {
-                RecommendConfig.Chain chain = item.getChains().get(index);
+                Chain chain = item.getChains().get(index);
                 if (StringUtils.isNotEmpty(chain.getName())) {
                     chains.put(chain.getName(), chain);
                 }
@@ -177,7 +183,7 @@ public class TaskFlowConfig {
                 log.error("AlgoTransform item {} is check fail!", item.getName());
                 throw new RuntimeException("Scene check fail!");
             }
-            for (RecommendConfig.Chain chain : item.getChains()) {
+            for (Chain chain : item.getChains()) {
                 if (!chain.checkAndDefault()) {
                     log.error("Scene {} chain {} is check fail!", item.getName(), chain.getName());
                     throw new RuntimeException("Scene check fail!");
@@ -210,15 +216,11 @@ public class TaskFlowConfig {
             scenes.put(item.getName(), item);
         }
         checkFeatureAndInit();
-        checkAlgoTransform();
-        if (!functionConfig.checkAndInit()) {
-            log.error("Function init fail!");
-            throw new RuntimeException("Function checkAndInit fail!");
-        }
+        checkAlgoInference();
     }
 
-    private void checkAlgoTransform() {
-        for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
+    private void checkAlgoInference() {
+        for (FeatureConfig.AlgoInference item : featureConfig.getAlgoInference()) {
             FeatureConfig.Feature feature = features.get(item.getDepend());
             if (feature == null) {
                 log.error("AlgoTransform: {} Feature {} is not config!", item.getName(), item.getDepend());
@@ -295,6 +297,34 @@ public class TaskFlowConfig {
                 Map<String, String> columnType = columnTypes.get(field.getTable());
                 columns.put(field.getFieldName(), columnType.get(field.getFieldName()));
             }
+            for (Map.Entry<FeatureConfig.Feature.Field, Map<FeatureConfig.Feature.Field, String>> entry: item.getFilterMap().entrySet()) {
+                FeatureConfig.Feature.Field field = entry.getKey();
+                if (field.getTable() != null && !columnTypes.containsKey(field.getTable())) {
+                    log.error("Feature config the field of filters, field table' must be in the rely!");
+                    throw new RuntimeException("Feature check fail!");
+                }
+                if (field.getTable() == null) {
+                    if (fieldMap.get(field.getFieldName()) == null) {
+                        log.error("Feature: {} filters field: {} has wrong column field!", item.getName(), field.fieldName);
+                        throw new RuntimeException("Feature check fail!");
+                    }
+                    field.setTable(fieldMap.get(field.getFieldName()));
+                }
+                for (Map.Entry<FeatureConfig.Feature.Field, String> entry1 : entry.getValue().entrySet()) {
+                    FeatureConfig.Feature.Field field1 = entry1.getKey();
+                    if (field1.getTable() != null && !columnTypes.containsKey(field1.getTable())) {
+                        log.error("Feature config the field of filter, field table' must be in the rely!");
+                        throw new RuntimeException("Feature check fail!");
+                    }
+                    if (field1.getTable() == null) {
+                        if (fieldMap.get(field1.getFieldName()) == null) {
+                            log.error("Feature: {} filter field: {} has wrong column field!", item.getName(), field1.fieldName);
+                            throw new RuntimeException("Feature check fail!");
+                        }
+                        field1.setTable(fieldMap.get(field1.getFieldName()));
+                    }
+                }
+            }
             item.setColumnMap(columns);
             item.setFromColumns(fromColumns);
             Map<String, List<FeatureConfig.Feature.Condition>> conditionMap = Maps.newHashMap();
@@ -306,10 +336,10 @@ public class TaskFlowConfig {
                                 item.getName(), cond.left.getTable(), cond.left.getFieldName(), cond.right.getFieldName());
                         throw new RuntimeException("Feature check fail!");
                     }
-                    conditionMap.putIfAbsent(cond.left.getTable(), Lists.newArrayList());
-                    conditionMap.putIfAbsent(cond.right.getTable(), Lists.newArrayList());
-                    conditionMap.get(cond.left.getTable()).add(cond);
-                    conditionMap.get(cond.right.getTable()).add(cond);
+                    List<FeatureConfig.Feature.Condition> listLeft = conditionMap.computeIfAbsent(cond.left.getTable(), key->Lists.newArrayList());
+                    List<FeatureConfig.Feature.Condition> listRight = conditionMap.computeIfAbsent(cond.right.getTable(), key->Lists.newArrayList());
+                    listLeft.add(cond);
+                    listRight.add(cond);
                 }
             }
             item.getFrom().forEach(x->{

@@ -48,6 +48,7 @@ public class FeatureConfig {
     private List<Source> source;
     private List<SourceTable> sourceTable;
     private List<Feature> feature;
+    private List<AlgoInference> algoInference;
     private List<AlgoTransform> algoTransform;
 
     @Data
@@ -118,6 +119,7 @@ public class FeatureConfig {
     public static class SourceTable {
         private String name;
         private String source;
+        private String kind;
         private String table;
 
         private String prefix;
@@ -184,9 +186,18 @@ public class FeatureConfig {
 
         private List<String> immediateFrom;
 
-        private Map<String, List<String>> sqlFilters;
-        private Map<String, List<Map<String, Map<String, Object>>>> filters;
-
+        /**
+         * 支持where条件  右值不支持为常数值， 需要右值为常数的过滤可以在sourcetable进行配置
+         * filters:
+         *   - table1.field1:
+         *       ge: table2.field2
+         *       ne: table3.field3
+         *   - table1.field2:
+         *       eq: table4.field2
+         *       in: table5.field3
+         */
+        private List<Map<String, Map<String, Object>>> filters;
+        private Map<Field, Map<Field, String>> filterMap;
         private List<String> columnNames;
         private Map<String, String> columnMap;
         private Map<String, List<String>> fromColumns;
@@ -307,6 +318,21 @@ public class FeatureConfig {
             }
         }
 
+        public void setFilterMap(List<Map<String, Map<String, Object>>> filters) {
+            if (CollectionUtils.isEmpty(filters)) return;
+            filterMap = Maps.newHashMap();
+            filters.forEach(map->{
+                map.forEach((k, v) -> {
+                    Field field1 = Field.create(k);
+                    Map<Field, String> item = filterMap.computeIfAbsent(field1, key->Maps.newHashMap());
+                    v.forEach((op, value) -> {
+                        Field field2 = Field.create((String) value);
+                        item.put(field2, op);
+                    });
+                });
+            });
+        }
+
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name)) {
                 log.error("Feature config name must not be empty!");
@@ -330,6 +356,7 @@ public class FeatureConfig {
                 return false;
             }
             setFields(select);
+            setFilterMap(filters);
             for (Field field: fields) {
                 if (field.getTable() != null && !fromtables.contains(field.getTable())) {
                     log.error("Feature config the field of select, field table' must be in the rely!");
@@ -392,21 +419,64 @@ public class FeatureConfig {
     }
 
     @Data
-    public static class AlgoTransform {
+    public static class AlgoInference {
         private String name;
         private String depend;
         private List<FieldAction> fieldActions;
 
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name) || StringUtils.isEmpty(depend) || CollectionUtils.isEmpty(fieldActions)) {
-                log.error("AlgoTransform config name, fieldActions and depend must not be empty!");
+                log.error("AlgoInference config name, fieldActions and depend must not be empty!");
                 return false;
             }
             for (FieldAction action : fieldActions) {
                 if (!action.checkAndDefault()) {
-                    log.error("AlgoTransform config action must be right!");
+                    log.error("AlgoInference config action must be right!");
                     return false;
                 }
+            }
+            return true;
+        }
+    }
+
+    @Data
+    public static class AlgoTransform {
+        private String name;
+        private String service;
+        private Map<String, Object> options;
+        /**
+         * Transform需要执行的处理流程， chain中的每个节点都是sourceTable, feature, algoInference, algotransform和定义好的chain
+         */
+        private Chain depend;
+        private List<String> columnNames;
+        private Map<String, String> columnMap;
+        /**
+         *  输出数据 字段和类型
+         */
+        private List<Map<String, String>> columns;
+
+        public void setColumnData() {
+            if (CollectionUtils.isNotEmpty(columns)) {
+                this.columnNames = Lists.newArrayList();
+                this.columnMap = Maps.newHashMap();
+                columns.forEach(map -> map.forEach((x, y) -> {
+                    columnNames.add(x);
+                    this.columnMap.put(x, y);
+                }));
+            }
+        }
+        public boolean checkAndDefault() {
+            if (StringUtils.isEmpty(name)) {
+                log.error("AlgoTransform config name must not be empty!");
+                return false;
+            }
+            if (StringUtils.isEmpty(service)) {
+                service = name;
+            }
+            setColumnData();
+            if (!depend.checkAndDefault()) {
+                log.error("AlgoTransform config depend must not be empty!");
+                return false;
             }
             return true;
         }

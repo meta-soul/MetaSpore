@@ -15,85 +15,72 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
+import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
+import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.enums.ResultTypeEnum;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public class AlgoTransformTask extends DataService {
-
-    private Map<String, Function> functionMap;
-
-    @Autowired
+@DataServiceAnnotation
+public class AlgoInferenceTask extends DataService {
     private ExecutorService taskPool;
-
+    private FeatureConfig.AlgoInference algoInference;
+    private FeatureConfig.Feature feature;
+    private Map<String, Function> functionMap;
     private List<Field> algoFields;
 
     @Override
     public boolean initService() {
-        FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(name);
+        algoInference = taskFlowConfig.getAlgoInferences().get(name);
+        feature = taskFlowConfig.getFeatures().get(algoInference.getDepend());
         algoFields = Lists.newArrayList();
-        for (FeatureConfig.FieldAction fieldAction: algoTransform.getFieldActions()) {
-            DataTypes.DataType dataType = DataTypes.getDataType(fieldAction.getType());
-            algoFields.add(Field.nullablePrimitive(fieldAction.getName(), (ArrowType.PrimitiveType) dataType.getType()));
+        for (FeatureConfig.FieldAction fieldAction: algoInference.getFieldActions()) {
+            DataTypeEnum dataType = DataTypes.getDataType(fieldAction.getType());
+            algoFields.add(Field.nullable(fieldAction.getName(), dataType.getType()));
         }
-        functionMap = taskServiceRegister.getFunctions();
-        RecommendConfig.Chain chain = new RecommendConfig.Chain();
-        List<String> depends = List.of(algoTransform.getDepend());
+        Chain chain = new Chain();
+        List<String> depends = List.of(algoInference.getDepend());
         chain.setThen(depends);
         chains.add(chain);
-        this.taskPool = Executors.newFixedThreadPool(2);  //default
+        this.taskPool = taskServiceRegister.getTaskPool();
+        functionMap = taskServiceRegister.getFunctions();
         return true;
     }
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult dataResult;
-        FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(name);
-        String table = algoTransform.getDepend();
-        FeatureConfig.Feature feature = taskFlowConfig.getFeatures().get(name);
-        if (context.getStatus(table) != TaskStatusEnum.SUCCESS) {
-            log.error("depend ：{} result get fail！", table);
-            return null;
-        }
-        DataResult result = context.getResult(name);
-        if (result == null || result.getResultType() != ResultTypeEnum.FEATUREARRAYS) {
-            log.error("depend ：{} result get wrong！", table);
-            return null;
-        }
+        DataResult dataResult = new DataResult();
+        DataResult result = getDataResultByName(algoInference.getDepend(), context);
         FeatureTable featureTable = new FeatureTable(name, algoFields, ArrowAllocator.getAllocator());
         DataResult.FeatureArray featureArray = result.getFeatureArray();
-        dataResult = new DataResult();
-        for (FeatureConfig.FieldAction fieldAction: algoTransform.getFieldActions()) {
+        for (FeatureConfig.FieldAction fieldAction: algoInference.getFieldActions()) {
             List<String> fields = fieldAction.getFields();
             if (StringUtils.isEmpty(fieldAction.getFunc())) {
-                setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), featureArray.get(fields.get(0)));
+                setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), featureArray.getArray(fields.get(0)));
                 continue;
             }
-            List<Object> fieldValues =  Lists.newArrayList();
+            List<List<Object>> fieldValues =  Lists.newArrayList();
             List<String> fieldTypes = Lists.newArrayList();
             for (String field: fieldAction.getFields()) {
-                fieldValues.add(featureArray.get(field));
+                fieldValues.add(featureArray.getArray(field));
                 fieldTypes.add(feature.getColumnMap().get(field));
             }
             Function function = functionMap.get(fieldAction.getFunc());
@@ -101,13 +88,17 @@ public class AlgoTransformTask extends DataService {
                 log.error("function：{} get fail！", fieldAction.getFunc());
                 return null;
             }
-            Object res = function.process(fieldValues, fieldTypes, fieldAction.getOptions());
+            List<Object> res = function.process(fieldValues, fieldTypes, fieldAction.getOptions());
             setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), res);
         }
         dataResult.setFeatureTable(featureTable);
         return dataResult;
     }
 
-    public void setFieldData(FeatureTable featureTable, String col, String type, Object data) {
+    public void setFieldData(FeatureTable featureTable, String col, String type, List<Object> data) {
+        DataTypeEnum dataType = DataTypes.getDataType(type);
+        if (!dataType.set(featureTable, col, data)) {
+            log.error("set featuraTable fail!");
+        }
     }
 }

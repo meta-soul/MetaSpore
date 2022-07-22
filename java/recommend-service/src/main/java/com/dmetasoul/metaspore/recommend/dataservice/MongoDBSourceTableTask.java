@@ -16,204 +16,133 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.datasource.DataSource;
+import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.datasource.MongoDBSource;
+import com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import lombok.Data;
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.bson.Document;
+import org.springframework.data.mongodb.core.query.BasicQuery;
+import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
+
+import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation("SourceTable")
-public class SourceTableTask extends DataService {
+@DataServiceAnnotation
+public class MongoDBSourceTableTask extends SourceTableTask {
 
-    private DataSource dataSource;
-    private FeatureConfig.Source source;
+    private MongoDBSource dataSource;
+    private Document columnsObject;
+    private Document queryObject;
+    private Set<String> columns;
 
     @Override
     public boolean initService() {
-        log.info("test refresh name:{} initService+++++++++++++++++++++++++++++++++++++++++", name);
+        if (super.initService() && source.getKind().equals("mongodb")) {
+            dataSource = (MongoDBSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
+        }
         FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        dataSource = taskServiceRegister.getDataSources().get(sourceTable.getSource());
-        source = taskFlowConfig.getSources().get(sourceTable.getSource());
+        columns = sourceTable.getColumnMap().keySet();
+        columns.forEach(col-> columnsObject.put(col, 1));
+        queryObject=new Document();
+        List<Map<String, Map<String, Object>>> filters = sourceTable.getFilters();
+        if (CollectionUtils.isNotEmpty(filters)) {
+            filters.forEach(x ->processFilters(queryObject, x));
+        }
         return true;
     }
 
-    @Override
-    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        ServiceRequest req = super.makeRequest(depend, request, context);
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        if (Objects.equals(source.getKind(), "redis")) {  // redis source need keys param
-            if (CollectionUtils.isNotEmpty(req.getKeys())) {
-                return req;
-            }
-            List<String> keys = Lists.newArrayList();
-            String key = sourceTable.getColumnNames().get(0);
-            if (MapUtils.isNotEmpty(req.getEqConditions())) {
-                Object value = req.getEqConditions().get(key);
-                if (value != null) {
-                    if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                        keys.add(String.valueOf(value));
-                    } else {
-                        keys.add(String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(value)));
-                    }
-                }
-            }
-            if (MapUtils.isNotEmpty(req.getInConditions())) {
-                List<Object> value = req.getInConditions().get(key);
-                if (CollectionUtils.isNotEmpty(value)) {
-                    if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                        keys.addAll(value.stream().map(String::valueOf).collect(Collectors.toList()));
-                    } else {
-                        keys.addAll(value.stream().map(x -> String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(x))).collect(Collectors.toList()));
-                    }
-                }
-            }
-            if (keys.isEmpty()) {
-                Object value = req.get(key);
-                if (value != null) {
-                    if (value instanceof Collection) {
-                        List<Object> data = Lists.newArrayList();
-                        data.addAll((Collection<?>) value);
-                        if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                            keys.addAll(data.stream().map(String::valueOf).collect(Collectors.toList()));
-                        } else {
-                            keys.addAll(data.stream().map(x -> String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(x))).collect(Collectors.toList()));
-                        }
-                    }else {
-                        if (StringUtils.isEmpty(sourceTable.getPrefix())) {
-                            keys.add(String.valueOf(value));
-                        } else {
-                            keys.add(String.format("%s_%s", sourceTable.getPrefix(), String.valueOf(value)));
-                        }
-                    }
-                }
-            }
-            if (keys.isEmpty()) {
-                log.error("redis request loss keys makeRequest fail!");
-                throw new RuntimeException("redis request loss keys makeRequest fail!");
-            }
-            req.setKeys(keys);
-        } else if (source.getKind().equals("jdbc") || source.getKind().equals("mongodb")) {
-            if (source.getKind().equals("jdbc") && StringUtils.isNotEmpty(req.getJdbcSql())) {
-                return req;
-            }
-            if (req.getEqConditions() == null) req.setEqConditions( Maps.newHashMap());
-            Map<String, Object> eqData = req.getEqConditions();
-            if (MapUtils.isNotEmpty(eqData)) {
-                eqData.keySet().forEach(x->{
-                    if (!sourceTable.getColumnMap().containsKey(x)) {
-                        eqData.remove(x);
-                    }
-                });
-            }
-            if (req.getInConditions() == null) req.setInConditions(Maps.newHashMap());
-            Map<String, List<Object>> inData = req.getInConditions();
-            if (MapUtils.isNotEmpty(inData)) {
-                inData.keySet().forEach(x->{
-                    if (!sourceTable.getColumnMap().containsKey(x)) {
-                        inData.remove(x);
-                    }
-                });
-            }
-            if (MapUtils.isEmpty(eqData) && MapUtils.isEmpty(inData)) {
-                if (MapUtils.isNotEmpty(req.getData())) {
-                    req.getData().forEach((k, v) -> {
-                        if (sourceTable.getColumnMap().containsKey(k)) {
-                            if (v instanceof Collection) {
-                                List<Object> data = Lists.newArrayList();
-                                data.addAll((Collection<?>) v);
-                                inData.put(k, data);
+    private void processFilters(Document query, Map<String, Map<String, Object>> filters) {
+        filters.forEach((key, value) -> value.forEach((key1, value1) -> {
+            if (columns.contains(key)) {
+                ConditionTypeEnum type = getEnumByName(key1);
+                switch (type) {
+                    case EQ:
+                        query.put(key, value1);
+                        break;
+                    case GE:
+                        query.put(key, new BasicDBObject("$gte", value1));
+                        break;
+                    case LE:
+                        query.put(key, new BasicDBObject("$lte", value1));
+                        break;
+                    case GT:
+                        query.put(key, new BasicDBObject("$gt", value1));
+                        break;
+                    case LT:
+                        query.put(key, new BasicDBObject("$lt", value1));
+                        break;
+                    case IN:
+                    case NIN:
+                        if (value1 instanceof Collection) {
+                            BasicDBList values = new BasicDBList();
+                            values.addAll((Collection) value1);
+                            if (type == IN) {
+                                BasicDBObject in = new BasicDBObject("$in", values);
+                                query.put(key, in);
                             } else {
-                                eqData.put(k, v);
+                                BasicDBObject nin = new BasicDBObject("$nin", values);
+                                query.put(key, nin);
                             }
                         }
-                    });
-                }
-                if (eqData.isEmpty() && inData.isEmpty()) {
-                    log.error("jdbc or mongodb request loss condition makeRequest fail!");
-                    throw new RuntimeException("jdbc or mongodb request loss condition makeRequest fail!");
+                        break;
+                    case NE:
+                        query.put(key, new BasicDBObject("$ne", value1));
+                        break;
+                    default:
+                        log.warn("no match filter action[{}] in {}", key1, key);
+                        break;
                 }
             }
+        }));
+    }
 
+    private void fillDocument(String col, Object value) {
+        if (value instanceof Collection) {
+            BasicDBList values = new BasicDBList();
+            values.addAll((Collection) value);
+            BasicDBObject in = new BasicDBObject("$in", values);
+            queryObject.put(col, in);
+        } else {
+            queryObject.put(col, value);
         }
-        return req;
     }
 
     @Override
-    public boolean checkResult(DataResult result) {
-        if (result == null) {
-            log.warn("result is null!");
-            return false;
-        }
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        for (String col : sourceTable.getColumnNames()) {
-            String type = sourceTable.getColumnMap().get(col);
-            Class dataClass = DataTypes.getDataClass(type);
-            if (MapUtils.isNotEmpty(result.getValues())) {
-                Map<String, Object> data = result.getValues();
+    protected DataResult processRequest(ServiceRequest request, DataContext context) {
+        Map<String, Object> data = request.getData();
+        for (String col : columns) {
+            if (MapUtils.isNotEmpty(data) && data.containsKey(col)) {
                 Object value = data.get(col);
-                if (value != null && !dataClass.isInstance(value)) {
-                    log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-                    // return false;
-                }
-            }
-            if (CollectionUtils.isNotEmpty(result.getData())) {
-                for (Map data : result.getData()) {
-                    Object value = data.get(col);
-                    if (value != null && !dataClass.isInstance(value)) {
-                        log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-                        // return false;
-                    }
-                }
+                fillDocument(col, value);
             }
         }
-        return true;
-    }
-
-    @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult dataResult;
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        int retryNum = 0;
-        long timeOut = 3000L;
-        TimeUnit timeOutUnit = TimeUnit.MILLISECONDS;
-        Map<String, Object> options = sourceTable.getOptions();
-        if (MapUtils.isNotEmpty(options)) {
-            retryNum = (int) options.getOrDefault("retryNum", 0);
-            timeOut = (long) options.getOrDefault("timeOut", 30000L);
+        Query query = new BasicQuery(queryObject, columnsObject);
+        if (request.getLimit() > 0) {
+            query.limit(request.getLimit());
         }
-        retryNum += 1;
-        do {
-            CompletableFuture<DataResult> future = dataSource.execute(makeRequest(sourceTable.getSource(), request, context), context);
-            try {
-                dataResult = future.get(timeOut, timeOutUnit);
-                if (context.getStatus(source.getName(), name) == TaskStatusEnum.SUCCESS) {
-                    return dataResult;
-                }
-                retryNum -= 1;
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("there was an error when executing the CompletableFuture",e);
-            } catch (TimeoutException e) {
-                log.error("when task timeout!",e);
+        DataResult result = new DataResult();
+        List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
+        List<Map> list = Lists.newArrayList();
+        res.forEach(map -> {
+            Map<String, Object> item = Maps.newHashMap();
+            for (String col : columns) {
+                item.put(col, map.get(col));
             }
-        } while (retryNum >= 0);
-        return null;
+            list.add(item);
+        });
+        result.setData(list);
+        return result;
     }
 }

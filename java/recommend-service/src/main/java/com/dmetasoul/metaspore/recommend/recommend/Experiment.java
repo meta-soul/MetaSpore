@@ -13,14 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package com.dmetasoul.metaspore.recommend.taskService;
+package com.dmetasoul.metaspore.recommend.recommend;
 
+import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,11 +35,86 @@ import java.util.*;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public class ExperimentTask extends TaskService {
+public class Experiment {
+    private String name;
+    protected TaskServiceRegister serviceRegister;
+
+    protected TaskFlowConfig taskFlowConfig;
     private RecommendConfig.Experiment experiment;
 
-    // last chain set output, if last chain's when is not empty, use when; else use then.get(last_index)
-    @Override
+    protected List<Chain> chains;
+
+    public void init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {
+        if (StringUtils.isEmpty(name)) {
+            log.error("name is null, init fail!");
+        }
+        this.name = name;
+        this.taskFlowConfig = taskFlowConfig;
+        this.serviceRegister = serviceRegister;
+        experiment = taskFlowConfig.getExperiments().get(name);
+        chains = experiment.getChains();
+    }
+
+    public DataResult getDataResultByName(String name, DataContext context) {
+        DataResult result = context.getResult(name);
+        if (result == null || !result.isVaild()) {
+            log.error("name ：{} result get wrong！", name);
+            return null;
+        }
+        return result;
+    }
+
+    public List<DataResult> getDataResultByNames(List<String> names, DataContext context) {
+        List<DataResult> dataResults = Lists.newArrayList();
+        for (String name : names) {
+            DataResult result = getDataResultByName(name, context);
+            if (result != null) {
+                dataResults.add(result);
+            }
+        }
+        return dataResults;
+    }
+    public List<Map> getDataByColumns(DataResult dataResult, List<String> columnNames) {
+        List<Map> data = Lists.newArrayList();
+        if (MapUtils.isNotEmpty(dataResult.getValues())) {
+            Map<String, Object> map = Maps.newHashMap();
+            for (String col : columnNames) {
+                Object value = dataResult.getValues().get(col);
+                map.put(col, value);
+            }
+            data.add(map);
+        } else if (CollectionUtils.isNotEmpty(dataResult.getData())) {
+            for (Map item : dataResult.getData()) {
+                Map<String, Object> map = Maps.newHashMap();
+                for (String col : columnNames) {
+                    Object value = item.get(col);
+                    map.put(col, value);
+                }
+                data.add(map);
+            }
+        } else if (dataResult.getFeatureArray() != null) {
+            DataResult.FeatureArray featureArray = dataResult.getFeatureArray();
+            for (int index = 0; index < featureArray.getMaxIndex(); ++index) {
+                Map<String, Object> map = Maps.newHashMap();
+                for (String col : columnNames) {
+                    Object value = featureArray.get(col, index);
+                    map.put(col, value);
+                }
+                data.add(map);
+            }
+        }
+        return data;
+    }
+
+    public List<Map> getTaskResultByColumns(List<String> taskNames, boolean isAny, List<String> columnNames, DataContext context) {
+        List<DataResult> dataResults = getDataResultByNames(taskNames, context);
+        List<Map> data = Lists.newArrayList();
+        for (DataResult dataResult : dataResults) {
+            data.addAll(getDataByColumns(dataResult, columnNames));
+        }
+        return data;
+    }
+
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult dataResult = null;
         Chain chain = chains.get(chains.size() - 1);
@@ -66,8 +144,7 @@ public class ExperimentTask extends TaskService {
         List<Map> data = getTaskResultByColumns(outputs, isAny, columns, context);
         if (data == null) {
             log.error("experiment:{} task:{} get result fail!", name, outputs);
-            context.setStatus(name, TaskStatusEnum.EXEC_FAIL);
-            return null;
+            throw new RuntimeException("experiment exec fail!");
         }
         if (StringUtils.isNotEmpty(cutField)) {
             for (Map map : data) {
