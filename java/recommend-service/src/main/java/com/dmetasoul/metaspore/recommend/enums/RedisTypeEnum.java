@@ -15,21 +15,25 @@
 //
 package com.dmetasoul.metaspore.recommend.enums;
 
-public enum TaskStatusEnum {
-    INIT(0,"init"),
-    CHECK_FAIL(1, "check_fail"),
-    EXEC_FAIL(2,"exec_fail"),
-    RESULT_ERROR(3, "result_error"),
-    DEPEND_INIT_FAIL(4,"depend_init_fail"),
-    DEPEND_EXEC_FAIL(5,"depend_exec_fail"),
+import lombok.extern.slf4j.Slf4j;
 
-    SUCCESS(20,"success");
+@Slf4j
+public enum ConditionTypeEnum {
+    GT(0,"gt"),
+    GE(1, "ge"),
+    LT(2,"lt"),
+    LE(3, "le"),
+    NE(4,"ne"),
+    EQ(5, "eq"),
+    IN(6,"in"),
+    NIN(7, "nin"),
+    UNKNOWN(20, "unknown");
 
     private Integer id;
 
     private String name;
 
-    TaskStatusEnum(int id, String name){
+    ConditionTypeEnum(int id, String name){
         this.id = id;
         this.name = name;
     }
@@ -50,21 +54,23 @@ public enum TaskStatusEnum {
         this.name = name;
     }
 
-    public static TaskStatusEnum getEnumByName(String name) {
-        for (TaskStatusEnum e : TaskStatusEnum.values()) {
-            if (e.getName().equals(name)) {
+    public static ConditionTypeEnum getEnumByName(String name) {
+        for (ConditionTypeEnum e : ConditionTypeEnum.values()) {
+            if (e.getName().equals(name.strip().toLowerCase())) {
                 return e;
             }
         }
-        return null;
+        log.warn("unknown condition name :{}, default type is unknown", name);
+        return ConditionTypeEnum.UNKNOWN;
     }
 
-    public static TaskStatusEnum getEnumById(int id) {
-        for (TaskStatusEnum e : TaskStatusEnum.values()) {
+    public static ConditionTypeEnum getEnumById(int id) {
+        for (ConditionTypeEnum e : ConditionTypeEnum.values()) {
             if (e.getId() == id) {
                 return e;
             }
         }
-        return null;
+        log.warn("unknown condition id :{}, default type is unknown", id);
+        return ConditionTypeEnum.UNKNOWN;
     }
 }

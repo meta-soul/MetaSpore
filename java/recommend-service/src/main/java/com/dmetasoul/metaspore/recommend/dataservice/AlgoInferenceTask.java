@@ -15,7 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
@@ -41,7 +40,6 @@ import java.util.concurrent.*;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation("AlgoTransform")
 public class AlgoTransformTask extends DataService {
 
     private Map<String, Function> functionMap;

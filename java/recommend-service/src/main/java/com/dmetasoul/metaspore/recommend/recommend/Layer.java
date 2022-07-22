@@ -16,22 +16,15 @@
 package com.dmetasoul.metaspore.recommend.taskService;
 
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
-import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.dataservice.DataService;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
 import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
-import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
@@ -39,7 +32,6 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation("Layer")
 public class LayerTask extends TaskService {
 
     private RecommendConfig.Layer layer;

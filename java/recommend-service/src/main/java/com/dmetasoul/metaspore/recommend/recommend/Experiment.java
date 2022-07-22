@@ -15,44 +15,31 @@
 //
 package com.dmetasoul.metaspore.recommend.taskService;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
-import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.dataservice.DataService;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation("Experiment")
 public class ExperimentTask extends TaskService {
     private RecommendConfig.Experiment experiment;
-
-    @Override
-    public boolean initService() {
-        experiment = taskFlowConfig.getExperiments().get(name);
-        chains = experiment.getChains();
-        return true;
-    }
 
     // last chain set output, if last chain's when is not empty, use when; else use then.get(last_index)
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult dataResult = null;
-        RecommendConfig.Chain chain = chains.get(chains.size() - 1);
+        Chain chain = chains.get(chains.size() - 1);
         List<String> outputs = chain.getWhen();
         boolean isAny = false;
         if (CollectionUtils.isEmpty(outputs)) {
