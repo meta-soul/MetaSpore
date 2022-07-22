@@ -311,14 +311,14 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
             src, attributes = row['src'], row['attributes']
 
             next_index = Node2VecEstimator.draw_alias(attributes['p'], attributes['a'])
-            next_vertice = attributes['neighbors'][next_index]
+            next_vertex = attributes['neighbors'][next_index]
 
             return src, [src, next_vertice]
 
         def _next_step(path, attributes):    
             if attributes is not None:
                 next_index = Node2VecEstimator.draw_alias(attributes['p'], attributes['a'])
-                next_vertice = attributes['dst_neighbors'][next_index]
+                next_vertex = attributes['dst_neighbors'][next_index]
                 path.append(next_vertice)
 
             return path
