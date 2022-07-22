@@ -75,10 +75,11 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
                  behavior_column_name=None,
                  behavior_filter_value=None,
                  max_recommendation_count=20,
-                 random_walk_p = 1.0,
-                 random_walk_q = 1.0,
-                 random_walk_Z = 1.0,
-                 random_walk_steps = 10,
+                 random_walk_p=2.0,
+                 random_walk_q=0.5,
+                 random_walk_Z=1.0,
+                 random_walk_steps=10,
+                 walk_times=8,
                  key_column_name='key',
                  value_column_name='value',
                  vertex_score_delimiter=':',
@@ -103,6 +104,7 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
         self.random_walk_q = random_walk_q
         self.random_walk_Z = random_walk_Z
         self.random_walk_steps = random_walk_steps
+        self.walk_times = walk_times
         self.key_column_name = key_column_name
         self.value_column_name = value_column_name
         self.vertex_score_delimiter = vertex_score_delimiter
@@ -322,7 +324,9 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
             return path
         
         walk_df = self.vertices_lookup.rdd.map(lambda row: _first_step(row)).toDF(['origin', 'path'])
-        
+        for i in range(self.walk_times-1):
+            walk_df = walk_df.union(self.vertices_lookup.rdd.map(lambda row: _first_step(row)).toDF(['origin', 'path']))
+                                    
         next_step_udf = udf(lambda path, attributes: _next_step(path, attributes), ArrayType(StringType()))
         for i in range(self.random_walk_steps - 2):
             walk_df = walk_df.withColumn('src', F.element_at(F.col('path'), -2))
@@ -389,8 +393,8 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
                                     .over(w))\
                                     .filter(f'rn <= %d' % max_recommendation_count)\
                                     .groupby('word_1')\
-                                    .agg(F.collect_list('value').alias(value_column_name))\
-                                    .withColumnRenamed('word_1', key_column_name)
+                                    .agg(F.collect_list('value').alias(self.value_column_name))\
+                                    .withColumnRenamed('word_1', self.key_column_name)
         return recall_df
     
     def _fit(self, dataset):

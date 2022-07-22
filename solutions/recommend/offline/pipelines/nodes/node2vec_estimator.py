@@ -30,6 +30,7 @@ class Node2VecEstimatorNode(PipelineNode):
         random_walk_q = training_conf['random_walk_q']
         random_walk_Z = training_conf['random_walk_Z']
         random_walk_steps = training_conf['random_walk_steps']
+        walk_times = training_conf['walk_times']
         w2v_vector_size = training_conf['w2v_vector_size']
         w2v_window_size = training_conf['w2v_window_size']
         w2v_min_count = training_conf['w2v_min_count']
@@ -44,13 +45,14 @@ class Node2VecEstimatorNode(PipelineNode):
         
         estimator = Node2VecEstimator(source_vertex_column_name=user_id,
                                         destination_vertex_column_name=friend_id,
-                                        trigger_vertex_column_name=friend_id,
+                                        trigger_vertex_column_name=user_id,
                                         behavior_column_name=label,
                                         behavior_filter_value=label_value,
                                         random_walk_p=random_walk_p,
                                         random_walk_q=random_walk_q,
                                         random_walk_Z=random_walk_Z,
                                         random_walk_steps=random_walk_steps,
+                                        walk_times=walk_times,
                                         w2v_vector_size=w2v_vector_size,
                                         w2v_window_size=w2v_window_size,
                                         w2v_min_count=w2v_min_count,

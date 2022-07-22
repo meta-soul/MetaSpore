@@ -1,8 +1,8 @@
 apiVersion: metaspore/v1
 kind: Trainingjob
 metadata:
-  name: fof
-  category: Match/Fof
+  name: node2vec
+  category: Match/node2vec
   pipeline_nodes:
     - class: InitSparkNode
       params:
@@ -31,15 +31,15 @@ spec:
       local: false
       worker_count: 4
       worker_cpu: 4
-      server_count: 2
+      server_count: 4
       server_cpu: 4
       batch_size: 128
-      worker_memory: '6G'
-      server_memory: '6G'
-      coordinator_memory: '6G'
+      worker_memory: '8G'
+      server_memory: '8G'
+      coordinator_memory: '8G'
       
     extended_confs:
-      spark.network.timeout: '500'
+      spark.network.timeout: '1000'
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
       spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
@@ -66,7 +66,8 @@ spec:
     random_walk_q: 0.5
     random_walk_Z: 1.0
     random_walk_steps: 10
-    w2v_vector_size: 5
+    walk_times: 16
+    w2v_vector_size: 64
     w2v_window_size: 30
     w2v_min_count: 0
     w2v_max_iter: 10
