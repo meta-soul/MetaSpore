@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import sys
 import pyspark
 import subprocess
 import yaml
@@ -28,7 +29,9 @@ from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from pyspark.ml.feature import VectorAssembler
 from onnxmltools.convert import convert_lightgbm
 from onnxconverter_common.data_types import FloatTensorType
-from ..common.ks_utils import ks_2samp, ks_curve
+
+sys.path.append('../') 
+from common.ks_utils import ks_2samp, ks_curve
 
 def load_config(path):
     params = dict()
@@ -89,11 +92,11 @@ def get_vectorassembler(dataset, feature_cols, features='features', label='label
     dataset = featurizer.transform(dataset)[label, features]
     return dataset
 
-def train(spark, train_dataset, feature_cols, label_col, **model_params):
-    print('Debug -- model hyper params:\n', model_params)
+def train(spark, train_dataset, label_col, **model_params):
+    print('Debug -- model params:\n', model_params)
     from synapse.ml.lightgbm import LightGBMClassifier
     model = LightGBMClassifier(isProvideTrainingMetric=True, 
-                               featuresCol=feature_cols, labelCol=label_col, 
+                               featuresCol='features', labelCol=label_col, 
                                isUnbalance=True, 
                                **model_params)
     model = model.fit(train_dataset)
@@ -172,7 +175,7 @@ if __name__=="__main__":
     print("Debug -- test input features:")
     test_data.show(10, False)
     ## fit model and test
-    model = train(spark, train_data, feature_cols, label_col, **params['model_params'])
+    model = train(spark, train_data, label_col, **params['model_params'])
 
     ## eval the train dataset
     print("Debug -- train sample prediction:")
@@ -180,14 +183,14 @@ if __name__=="__main__":
     predictions.show(10, False)
     auc, ks = evaluate(spark, predictions, label_col)
     print("Debug -- train auc:", auc)
-    print("Debug -- train ks statistic:", ks)
+    print("Debug -- train ks statistic:", ks.statistic)
     ## eval the test dataset
     print("Debug -- test sample prediction:") 
     predictions = model.transform(test_data)
     predictions.show(10, False)
     auc, ks = evaluate(spark, predictions, label_col)
     print("Debug -- test auc:", auc)
-    print("Debug -- test ks statistic:", ks)
+    print("Debug -- test ks statistic:", ks.statistic)
 
     ## write evaluation to s3
     write_dataset_to_s3(predictions, **params)

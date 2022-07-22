@@ -6,7 +6,7 @@ executor_cores: '4'
 default_parallelism: '400'
 
 ## input dataset configuration
-train_path: ${MY_S3_BUCKET}/risk/risk/ulb/creditcard_train.csv
+train_path: ${MY_S3_BUCKET}/risk/ulb/creditcard_train.csv
 test_path: ${MY_S3_BUCKET}/risk/ulb/creditcard_test.csv
 
 ## output dataset configuration
