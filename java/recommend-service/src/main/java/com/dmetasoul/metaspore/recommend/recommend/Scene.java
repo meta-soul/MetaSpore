@@ -13,10 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package com.dmetasoul.metaspore.recommend.taskService;
+package com.dmetasoul.metaspore.recommend.recommend;
 
+import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -24,6 +26,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -31,26 +34,27 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public class SceneTask extends TaskService {
+public class Scene {
+    private String name;
     private RecommendConfig.Scene scene;
+    protected TaskServiceRegister serviceRegister;
 
-    @Override
-    public boolean initService() {
-        scene = taskFlowConfig.getScenes().get(name);
-        chains = scene.getChains();
-        return true;
-    }
+    protected TaskFlowConfig taskFlowConfig;
+    private RecommendConfig.Experiment experiment;
 
-    @Override
-    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        ServiceRequest req = super.makeRequest(depend, request, context);
-        if (MapUtils.isNotEmpty(scene.getOptions())) {
-            req.getData().putAll(scene.getOptions());
+    protected List<Chain> chains;
+
+    public void init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {
+        if (StringUtils.isEmpty(name)) {
+            log.error("name is null, init fail!");
         }
-        return req;
+        this.name = name;
+        this.taskFlowConfig = taskFlowConfig;
+        this.serviceRegister = serviceRegister;
+        experiment = taskFlowConfig.getExperiments().get(name);
+        chains = experiment.getChains();
     }
 
-    @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult dataResult = null;
         Chain chain = chains.get(chains.size() - 1);
@@ -66,12 +70,7 @@ public class SceneTask extends TaskService {
             isAny = chain.isAny();
         }
         dataResult = new DataResult();
-        List<Map> data = getTaskResultByColumns(outputs, isAny, scene.getColumnNames(), context);
-        if (data == null) {
-            log.error("scene:{} last chain task:{} get result fail!", name, outputs);
-            context.setStatus(name, TaskStatusEnum.EXEC_FAIL);
-            return null;
-        }
+        List<Map> data = null;
         dataResult.setData(data);
         return dataResult;
     }

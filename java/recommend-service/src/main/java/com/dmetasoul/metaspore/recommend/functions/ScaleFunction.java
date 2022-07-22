@@ -28,7 +28,7 @@ public class ScaleFunction extends Function {
     }
 
     @Override
-    public Object process(List<Object> values, List<String> types, Map<String, Object> options) {
+    public List<Object> process(List<List<Object>> values, List<String> types, Map<String, Object> options) {
         return values.get(0);
     }
 }

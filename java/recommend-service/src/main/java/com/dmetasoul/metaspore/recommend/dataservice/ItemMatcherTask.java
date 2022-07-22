@@ -85,12 +85,8 @@ public abstract class ItemMatcherTask extends AlgoTransform {
         List<Map> data = Lists.newArrayList();
         entryList.stream().limit(maxReservation).forEach(x -> {
             Map<String, Object> item = Maps.newHashMap();
-            if (Utils.setFieldFail(item, config.getColumnNames(), 0, x.getKey())) {
-                return;
-            }
-            if (Utils.setFieldFail(item, config.getColumnNames(), 1, Utils.getFinalRetrievalScore(x.getValue(), maxScore, finalAlgoLevel))) {
-                return;
-            }
+            Utils.setFieldFail(item, config.getColumnNames(), 0, x.getKey());
+            Utils.setFieldFail(item, config.getColumnNames(), 1, Utils.getFinalRetrievalScore(x.getValue(), maxScore, finalAlgoLevel));
             Map<String, Object> value = Maps.newHashMap();
             value.put(algoName, x.getValue());
             if (Utils.setFieldFail(item, config.getColumnNames(), 2, value)) {

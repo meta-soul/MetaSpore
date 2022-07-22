@@ -25,81 +25,59 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.dmetasoul.metaspore.recommend.common.Utils.getField;
+
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
 @DataServiceAnnotation
-public abstract class MilvusSearchTask extends AlgoTransform {
-    public static final int DEFAULT_ALGO_LEVEL = 3;
-    public static final int DEFAULT_MAX_RESERVATION = 50;
-
-    private int algoLevel;
-    private int maxReservation;
-
-    private String user2itemTask;
-    private String algoName;
-    private String cfValuesCol;
-    private String userProfileWeightCol;
+public abstract class UserProfileask extends AlgoTransform {
+    private double alpha;
+    private String colRecentItemIds;
+    private static String splitor = "\u0001";
 
     @Override
     public boolean initService() {
-        config = taskFlowConfig.getAlgoTransforms().get(name);
-        algoLevel = getOptionOrDefault("algoLevel", DEFAULT_ALGO_LEVEL);
-        maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
-        algoName = getOptionOrDefault("algo-name", "itemCF");
-        user2itemTask = getOptionOrDefault("weight", "user2item");
-        userProfileWeightCol = getOptionOrDefault("weight", "userProfileWeight");
-        cfValuesCol = getOptionOrDefault("cfValues", "cfValues");
-        Chain chain = new Chain();
-        List<String> depends = List.of(user2itemTask);
-        chain.setThen(depends);
-        chains.add(chain);
+        if (!super.initService()) {
+            return false;
+        }
+        alpha = getOptionOrDefault("alpha", 1.0);
         return true;
     }
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult taskResult = getDataResultByName(user2itemTask, context);
-        List<Map> dataColumn = getDataByColumns(taskResult, List.of(cfValuesCol, userProfileWeightCol));
-        HashMap<String, Double> itemToItemScore = new HashMap<>();
-        for (Map<String, Object> item : dataColumn) {
-            List itemCfValue = Utils.getField(item, cfValuesCol, Lists.newArrayList());
-            double userProfileWeight = Utils.getField(item, userProfileWeightCol, 0.0);
-            itemCfValue.forEach(x -> {
-                Map<String, Object> map = (Map<String, Object>) x;
-                String itemId = map.get("_1").toString();
-                Double itemScore = (Double) map.get("_2") * userProfileWeight;
-                if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
-                    itemToItemScore.put(itemId, itemScore);
-                }
-            });
+        DataResult taskResult = getDataResultByName(config.getDepend().getThen().get(0), context);
+        Object object = getField(taskResult.getValues(), colRecentItemIds, null);
+        if (object == null) {
+            return null;
         }
-        ArrayList<Map.Entry<String, Double>> entryList = new ArrayList<>(itemToItemScore.entrySet());
-        entryList.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
-        Double maxScore = entryList.size() > 0 ? entryList.get(0).getValue() : 0.0;
-        Integer finalAlgoLevel = algoLevel;
+        List<String> recentMovieArr = null;
+        if (object instanceof String) {
+            String recentIdsStr = (String)object;
+            recentMovieArr = List.of(recentIdsStr.split(splitor));
+        }
+        if (object instanceof List && config.getColumnMap().get(colRecentItemIds).equals("str[]")) {
+            recentMovieArr = (List)object;
+        }
         List<Map> data = Lists.newArrayList();
-        entryList.stream().limit(maxReservation).forEach(x -> {
+        for (int i = 0; recentMovieArr != null && i < recentMovieArr.size(); i++) {
             Map<String, Object> item = Maps.newHashMap();
-            if (Utils.setFieldFail(item, config.getColumnNames(), 0, x.getKey())) {
-                return;
+            if (Utils.setFieldFail(item, config.getColumnNames(), 0, recentMovieArr.get(i))) {
+                continue;
             }
-            if (Utils.setFieldFail(item, config.getColumnNames(), 1, Utils.getFinalRetrievalScore(x.getValue(), maxScore, finalAlgoLevel))) {
-                return;
-            }
-            Map<String, Object> value = Maps.newHashMap();
-            value.put(algoName, x.getValue());
-            if (Utils.setFieldFail(item, config.getColumnNames(), 2, value)) {
-                return;
+            if (Utils.setFieldFail(item, config.getColumnNames(), 1, 1 / (1 + Math.pow((recentMovieArr.size() - i - 1), alpha)))) {
+                continue;
             }
             data.add(item);
-        });
+        }
         DataResult result = new DataResult();
         result.setData(data);
         return result;

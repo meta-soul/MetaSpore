@@ -60,6 +60,10 @@ public class FeatureTable {
         return (T) root.getVector(i);
     }
 
+    public void setRowCount(int rowCount) {
+        this.rowCount = rowCount;
+    }
+
     public void setInt(int index, int value, IntVector v) {
         v.setSafe(index, value);
         rowCount = index + 1;

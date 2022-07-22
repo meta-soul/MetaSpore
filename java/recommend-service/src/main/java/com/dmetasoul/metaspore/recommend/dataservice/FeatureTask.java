@@ -16,17 +16,16 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum;
 import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
-import com.dmetasoul.metaspore.recommend.enums.TaskStatusEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -34,23 +33,24 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation("Feature")
+@DataServiceAnnotation
 public class FeatureTask extends DataService {
 
     private FeatureConfig.Feature feature;
     private Set<String> immediateTables;
 
-    Map<FeatureConfig.Feature.Field, FeatureConfig.Feature.Field> rewritedField = Maps.newHashMap();
+    private Map<FeatureConfig.Feature.Field, FeatureConfig.Feature.Field> rewritedField;
 
     @Override
     public boolean initService() {
         feature = taskFlowConfig.getFeatures().get(name);
+        rewritedField = Maps.newHashMap();
         immediateTables = Sets.newHashSet(feature.getImmediateFrom());
-        chains.add(new RecommendConfig.Chain(
-                null, feature.getImmediateFrom(), false, 30000L, TimeUnit.MILLISECONDS));
+        chains.add(new Chain(null, feature.getImmediateFrom(), false, 30000L, TimeUnit.MILLISECONDS));
         Set<String> visitedTables = Sets.newHashSet(feature.getImmediateFrom());
         Set<String> allTables = Sets.newHashSet(feature.getFrom());
         visitedTables.forEach(allTables::remove);
@@ -81,7 +81,7 @@ public class FeatureTask extends DataService {
             if (whenList.isEmpty()) {
                 whenList.addAll(allTables);
             }
-            chains.add(new RecommendConfig.Chain(
+            chains.add(new Chain(
                     null, whenList, false, 30000L, TimeUnit.MILLISECONDS));
             whenList.forEach(allTables::remove);
             visitedTables.addAll(whenList);
@@ -101,22 +101,18 @@ public class FeatureTask extends DataService {
             throw new RuntimeException(String.format("depend ：%s has not executed!", table));
         }
         DataResult dependResult = getDataResultByName(table, context);
-        if (dependResult == null) {
-            log.error("depend ：{} result get fail！", table);
-            throw new RuntimeException(String.format("depend ：%s exec fail in feature！", table));
-        }
         if (MapUtils.isNotEmpty(dependResult.getValues())) {
-            req.putEq(field2.getFieldName(), dependResult.getValues().get(field));
+            req.put(field2.getFieldName(), dependResult.getValues().get(field));
         } else if (CollectionUtils.isNotEmpty(dependResult.getData())) {
             List<Object> ids = Lists.newArrayList();
             for (Map item : dependResult.getData()) {
                 ids.add(item.get(field));
             }
-            req.putIn(field2.getFieldName(), ids);
+            req.put(field2.getFieldName(), ids);
         } else if (dependResult.getFeatureArray() != null) {
             DataResult.FeatureArray featureArray = dependResult.getFeatureArray();
             if (featureArray.inArray(field)) {
-                req.putIn(field2.getFieldName(), featureArray.getArray(field));
+                req.put(field2.getFieldName(), featureArray.getArray(field));
             }
         } else {
             otherRequest(field2.getTable(), dependResult, req);
@@ -164,13 +160,17 @@ public class FeatureTask extends DataService {
                 }
             }
         }
-        if (MapUtils.isNotEmpty(feature.getFilters())) {
-            req.setFilters(feature.getFilters().get(depend));
-        }
-        if (MapUtils.isNotEmpty(feature.getSqlFilters())) {
-            req.setSqlFilters(feature.getSqlFilters().get(depend));
-        }
         return req;
+    }
+
+    public boolean FilterTableArray(FeatureConfig.Feature.Field left, FeatureConfig.Feature.Field right, Pair<Integer, Integer> pair, List<Object> joinedData, List<Object> tableData) {
+        if (MapUtils.isEmpty(feature.getFilterMap())) return true;
+        Map<FeatureConfig.Feature.Field, String> fieldMap = feature.getFilterMap().get(left);
+        if (MapUtils.isEmpty(fieldMap) || !fieldMap.containsKey(right)) return true;
+        ConditionTypeEnum type = getEnumByName(fieldMap.get(right));
+        Object leftValue = pair.getKey() != null && pair.getKey() < joinedData.size() ? joinedData.get(pair.getKey()) : null;
+        Object rightValue = pair.getRight() != null && pair.getRight() < tableData.size() ? tableData.get(pair.getRight()) : null;
+        return type.Op(leftValue, rightValue);
     }
 
     // 同一个table下字段数据列表长度一致
@@ -178,7 +178,6 @@ public class FeatureTask extends DataService {
         Map<FeatureConfig.Feature.Field, List<Object>> featureArray = Maps.newHashMap();
         DataResult result = getDataResultByName(table, context);
         if (result == null) {
-            context.setStatus(name, TaskStatusEnum.EXEC_FAIL);
             return featureArray;
         }
         if (MapUtils.isNotEmpty(result.getValues())) {
@@ -232,6 +231,7 @@ public class FeatureTask extends DataService {
         Map<FeatureConfig.Feature.Field, List<Object>> result = Maps.newHashMap();
         Set<Pair<Integer, Integer>> indexSet = Sets.newHashSet();
         List<Pair<Integer, Integer>> indexResult = Lists.newArrayList();
+        // conditions 中只包含一张待join表和table， indexList始终在固定的两张表之间
         for (FeatureConfig.Feature.Condition cond : conditions) {
             FeatureConfig.Feature.Field fieldJoined = cond.getLeft().getTable().equals(table) ? cond.getRight() : cond.getLeft();
             FeatureConfig.Feature.Field fieldTable = cond.getLeft().getTable().equals(table) ? cond.getLeft() : cond.getRight();
@@ -326,59 +326,62 @@ public class FeatureTask extends DataService {
             }
             indexResult.clear();
             if (indexSet.isEmpty()) {
-                indexResult.addAll(indexList);
-            } else {
-                for (Pair<Integer, Integer> item : indexList) {
-                    if (indexSet.contains(item)) {
-                        indexResult.add(item);
-                    }
+                indexSet.addAll(indexList);
+            }
+            for (Pair<Integer, Integer> item : indexList) {
+                if (indexSet.contains(item) && FilterTableArray(fieldJoined, fieldTable, item, joinedData, tableData)) {
+                    indexResult.add(item);
                 }
             }
             indexSet.clear();
             indexSet.addAll(indexResult);
         }
+
         for (Pair<Integer, Integer> pair : indexResult) {
             for (Map.Entry<FeatureConfig.Feature.Field, List<Object>> entry : joinTable.entrySet()) {
-                result.putIfAbsent(entry.getKey(), Lists.newArrayList());
+                List<Object> list = result.computeIfAbsent(entry.getKey(), key->Lists.newArrayList());
                 if (pair.getKey() == null) {
-                    result.get(entry.getKey()).add(null);
+                    list.add(null);
                 } else {
-                    result.get(entry.getKey()).add(entry.getValue().get(pair.getKey()));
+                    list.add(entry.getValue().get(pair.getKey()));
                 }
             }
             for (Map.Entry<FeatureConfig.Feature.Field, List<Object>> entry : data.entrySet()) {
-                result.putIfAbsent(entry.getKey(), Lists.newArrayList());
+                List<Object> list = result.computeIfAbsent(entry.getKey(), key->Lists.newArrayList());
                 if (pair.getValue() == null) {
-                    result.get(entry.getKey()).add(null);
+                    list.add(null);
                 } else {
-                    result.get(entry.getKey()).add(entry.getValue().get(pair.getValue()));
+                    list.add(entry.getValue().get(pair.getValue()));
                 }
             }
         }
         return result;
     }
 
-
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult dataResult = new DataResult();
         Map<String, List<Object>> featureArrays = Maps.newHashMap();
         Map<String, List<FeatureConfig.Feature.Field>> fieldMap = Maps.newHashMap();
+        // 按table汇总输出column字段
         for (FeatureConfig.Feature.Field field : feature.getFields()) {
             String table = field.getTable();
             fieldMap.putIfAbsent(table, Lists.newArrayList());
             fieldMap.get(table).add(field);
         }
+        // 按table获取每个表的数据结果
         Map<String, Map<FeatureConfig.Feature.Field, List<Object>>> data = Maps.newHashMap();
         for (String table : feature.getFrom()) {
             data.put(table, getTableArray(table, context));
         }
+        // 单表特殊处理
         if (feature.getFrom().size() == 1) {
             String table = feature.getFrom().get(0);
             setFeatureArray(fieldMap.get(table), data.get(table), featureArrays);
             dataResult.setFeatureArray(featureArrays);
             return dataResult;
         }
+        // while 每次完成一次join，已join好的表跟另一个表join，不存在join关系的表直接concat
         Set<String> joinedTables = Sets.newHashSet();
         Set<String> noJoinTables = Sets.newHashSet(feature.getFrom());
         if (!noJoinTables.iterator().hasNext()) {

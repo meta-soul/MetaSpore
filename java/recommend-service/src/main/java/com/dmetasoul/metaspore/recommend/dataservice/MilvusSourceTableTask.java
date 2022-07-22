@@ -16,16 +16,23 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.datasource.MilvusSource;
 import com.dmetasoul.metaspore.recommend.datasource.MongoDBSource;
 import com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import io.milvus.grpc.SearchResults;
+import io.milvus.param.MetricType;
+import io.milvus.param.R;
+import io.milvus.param.dml.SearchParam;
+import io.milvus.response.SearchResultsWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -33,116 +40,72 @@ import org.bson.Document;
 import org.springframework.data.mongodb.core.query.BasicQuery;
 import org.springframework.data.mongodb.core.query.Query;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
+import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.IN;
+import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.getEnumByName;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation
-public class MongoDBSourceTableTask extends SourceTableTask {
+public class MilvusSourceTableTask extends SourceTableTask {
 
-    private MongoDBSource dataSource;
+    private MilvusSource dataSource;
     private Document columnsObject;
     private Document queryObject;
     private Set<String> columns;
 
     @Override
     public boolean initService() {
-        if (super.initService() && source.getKind().equals("mongodb")) {
-            dataSource = (MongoDBSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
+        if (super.initService() && source.getKind().equals("milvus")) {
+            dataSource = (MilvusSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
         }
         FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
         columns = sourceTable.getColumnMap().keySet();
-        columns.forEach(col-> columnsObject.put(col, 1));
-        queryObject=new Document();
-        List<Map<String, Map<String, Object>>> filters = sourceTable.getFilters();
-        if (CollectionUtils.isNotEmpty(filters)) {
-            filters.forEach(x ->processFilters(queryObject, x));
-        }
+        columns.forEach(col -> columnsObject.put(col, 1));
         return true;
-    }
-
-    private void processFilters(Document query, Map<String, Map<String, Object>> filters) {
-        filters.forEach((key, value) -> value.forEach((key1, value1) -> {
-            if (columns.contains(key)) {
-                ConditionTypeEnum type = getEnumByName(key1);
-                switch (type) {
-                    case EQ:
-                        query.put(key, value1);
-                        break;
-                    case GE:
-                        query.put(key, new BasicDBObject("$gte", value1));
-                        break;
-                    case LE:
-                        query.put(key, new BasicDBObject("$lte", value1));
-                        break;
-                    case GT:
-                        query.put(key, new BasicDBObject("$gt", value1));
-                        break;
-                    case LT:
-                        query.put(key, new BasicDBObject("$lt", value1));
-                        break;
-                    case IN:
-                    case NIN:
-                        if (value1 instanceof Collection) {
-                            BasicDBList values = new BasicDBList();
-                            values.addAll((Collection) value1);
-                            if (type == IN) {
-                                BasicDBObject in = new BasicDBObject("$in", values);
-                                query.put(key, in);
-                            } else {
-                                BasicDBObject nin = new BasicDBObject("$nin", values);
-                                query.put(key, nin);
-                            }
-                        }
-                        break;
-                    case NE:
-                        query.put(key, new BasicDBObject("$ne", value1));
-                        break;
-                    default:
-                        log.warn("no match filter action[{}] in {}", key1, key);
-                        break;
-                }
-            }
-        }));
-    }
-
-    private void fillDocument(String col, Object value) {
-        if (value instanceof Collection) {
-            BasicDBList values = new BasicDBList();
-            values.addAll((Collection) value);
-            BasicDBObject in = new BasicDBObject("$in", values);
-            queryObject.put(col, in);
-        } else {
-            queryObject.put(col, value);
-        }
     }
 
     @Override
     protected DataResult processRequest(ServiceRequest request, DataContext context) {
-        Map<String, Object> data = request.getData();
-        for (String col : columns) {
-            if (MapUtils.isNotEmpty(data) && data.containsKey(col)) {
-                Object value = data.get(col);
-                fillDocument(col, value);
-            }
-        }
-        Query query = new BasicQuery(queryObject, columnsObject);
-        if (request.getLimit() > 0) {
-            query.limit(request.getLimit());
-        }
         DataResult result = new DataResult();
-        List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
-        List<Map> list = Lists.newArrayList();
-        res.forEach(map -> {
-            Map<String, Object> item = Maps.newHashMap();
-            for (String col : columns) {
-                item.put(col, map.get(col));
-            }
-            list.add(item);
-        });
-        result.setData(list);
+        List<List<Float>> embedding = (List<List<Float>>) request.get("embedding");
+        String collectionName = request.get("collectionName");
+        int limit = request.getLimit();
+        long timeOut = 30000L;
+        String searchParams = "{\"nprobe\":128}";
+        MetricType metricType = MetricType.IP;
+        Map<String, Object> options = sourceTable.getOptions();
+        String field = request.get("field", "embedding_vector");
+        if (MapUtils.isNotEmpty(options)) {
+            timeOut = (long) options.getOrDefault("timeOut", 3000L);
+            searchParams = (String) options.getOrDefault("searchParams", "{\"nprobe\":128}");
+            metricType = Utils.getMetricType((int) options.getOrDefault("metricType", 2));
+        }
+        SearchParam searchParam = SearchParam.newBuilder()
+                .withCollectionName(collectionName)
+                .withMetricType(metricType)
+                .withOutFields(sourceTable.getColumnNames())
+                .withTopK(limit)
+                .withVectors(embedding)
+                .withVectorFieldName(field)
+                .withExpr("")
+                .withParams(searchParams)
+                .withGuaranteeTimestamp(timeOut)
+                .build();
+
+        R<SearchResults> response = dataSource.getMilvusTemplate().search(searchParam);
+        Utils.handleResponseStatus(response);
+        SearchResultsWrapper wrapper = new SearchResultsWrapper(response.getData().getResults());
+        result.setMilvusData(Maps.newHashMap());
+        Map<Integer, List<SearchResultsWrapper.IDScore>> milvusData = result.getMilvusData();
+        for (int i = 0; i < embedding.size(); ++i) {
+            List<SearchResultsWrapper.IDScore> scores = wrapper.getIDScore(i);
+            milvusData.put(i, scores);
+        }
         return result;
     }
 }

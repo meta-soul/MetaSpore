@@ -20,6 +20,7 @@ import org.springframework.core.annotation.AliasFor;
 import org.springframework.stereotype.Component;
 
 import java.lang.annotation.*;
+
 /**
  * 用于标记实现类为DataSource的注解
  * Created by @author qinyy907 in 14:24 22/07/15.
@@ -29,7 +30,7 @@ import java.lang.annotation.*;
 @Documented
 @Component
 @Scope("prototype")
-public @interface DataSourceAnnotation {
+public @interface DataServiceAnnotation {
     @AliasFor(
             annotation = Component.class
     )

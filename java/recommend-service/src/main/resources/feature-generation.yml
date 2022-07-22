@@ -114,7 +114,12 @@ feature-service:
       condition:
         - userAction.user_id: Recall.user_id
         - itemInfo.movie_id: Recall.item_id
-  AlgoTransform:
+    - name: itemcf
+      from: [ userProfileData, itemcfData ]
+      select: [ userProfileData.item_id, userProfileData.score, itemcfData.cfValues ]
+      condition:
+        - itemcfData.id: userProfileData.item_id
+  AlgoInference:
     - name: algoTwoTowerUser
       depend: twoTower_user
       fieldActions:
@@ -124,6 +129,76 @@ feature-service:
       fieldActions:
         - name: watch_volume
         - name: user_movie_avg_rating
+  AlgoTransform:
+    - name: userProfileData
+      chains: [userAction]
+      columns:
+        - item_id: str
+        - score: double
+    - name: ItemCfMatcher
+      service: ItemMatcher
+      options:
+        itemCfAlgoLevel: 3
+        itemCfMaxReservation: 200
+      chains: [itemcf]
+      columns:
+        - item_id: str
+        - score: double
+        - scores: map
+    - name: SwingMatcher
+      service: ItemMatcher
+      options:
+        swingAlgoLevel: 3
+        swingMaxReservation: 200
+      columns:
+        - item_id: str
+        - score: double
+        - scores: map
+    - name: TwoTowersMatcher
+      depend: [ algoTwoTowerUser, twotowerRecall ]   # depend: xxx  xxx 必须是FeatureService中配置的数据资源
+      options:
+        twoTowersSimpleXModelName: two_towers_simplex
+        twoTowersSimpleXAlgoLevel: 3
+        twoTowersSimpleXMaxReservation: 200
+      columns:
+        - item_id: str
+        - score: double
+        - scores: map
+    - name: WideAndDeepRanker
+      options:
+        modelName: movie_lens_wdl
+        ranker: WideAndDeepRanker
+        maxReservation: 100
+        sortStrategyType: USE_RANK_MULTIPLY_MATCH
+        sortStrategyAlpha: 0.4
+        sortStrategyBeta: 0.6
+      columns:
+        - item_id: str
+        - score: double
+    - name: LightGBMRanker
+      depend: algoLightGBM
+      options:
+        modelName: lightgbm_test_model
+      columns:
+        - item_id: str
+        - score: double
+    - name: diversifyBaseService
+      options:
+        useDiversify: true
+        window: 4
+        tolerance: 4
+      columns:
+        - item_id: str
+        - score: double
+    - name: diversifyMMRService
+      options:
+        useDiversify: true
+        lambda: 0.7
+        window: 5
+        tolerance: 5
+      columns:
+        - item_id: str
+        - score: double
 recommend-service:
   Layers:
     - name: userModel
@@ -185,72 +260,6 @@ recommend-service:
     - name: diversify.MMR
       chains:
         - then: diversifyMMRService
-  Services:
-    - name: userService
-      columns:
-        - item_id: str
-        - score: double
-    - name: ItemCfMatcher
-      options:
-        itemCfAlgoLevel: 3
-        itemCfMaxReservation: 200
-      columns:
-        - item_id: str
-        - score: double
-        - scores: map
-    - name: SwingMatcher
-      options:
-        swingAlgoLevel: 3
-        swingMaxReservation: 200
-      columns:
-        - item_id: str
-        - score: double
-        - scores: map
-    - name: TwoTowersMatcher
-      depend: [algoTwoTowerUser, twotowerRecall]   # depend: xxx  xxx 必须是FeatureService中配置的数据资源
-      options:
-        twoTowersSimpleXModelName: two_towers_simplex
-        twoTowersSimpleXAlgoLevel: 3
-        twoTowersSimpleXMaxReservation: 200
-      columns:
-        - item_id: str
-        - score: double
-        - scores: map
-    - name: WideAndDeepRanker
-      options:
-        modelName: movie_lens_wdl
-        ranker: WideAndDeepRanker
-        maxReservation: 100
-        sortStrategyType: USE_RANK_MULTIPLY_MATCH
-        sortStrategyAlpha: 0.4
-        sortStrategyBeta: 0.6
-      columns:
-        - item_id: str
-        - score: double
-    - name: LightGBMRanker
-      depend: algoLightGBM
-      options:
-        modelName: lightgbm_test_model
-      columns:
-        - item_id: str
-        - score: double
-    - name: diversifyBaseService
-      options:
-        useDiversify: true
-        window: 4
-        tolerance: 4
-      columns:
-        - item_id: str
-        - score: double
-    - name: diversifyMMRService
-      options:
-        useDiversify: true
-        lambda: 0.7
-        window: 5
-        tolerance: 5
-      columns:
-        - item_id: str
-        - score: double
   Scenes:
     - name: guess-you-like
       chains:   # 串行执行chain  执行基于liteflow

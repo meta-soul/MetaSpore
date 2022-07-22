@@ -43,18 +43,7 @@ public class RequestSource extends DataSource {
     }
 
     @Override
-    public void close() {
-
-    }
-
-    @Override
-    public boolean checkRequest(ServiceRequest request, DataContext context) {
-        if (MapUtils.isEmpty(context.getRequest())) {
-            log.error("request data must not be empty!");
-            return false;
-        }
-        return true;
-    }
+    public void close() {}
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
