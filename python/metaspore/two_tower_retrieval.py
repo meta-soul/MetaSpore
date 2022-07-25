@@ -79,32 +79,40 @@ class FaissIndexBuildingAgent(PyTorchAgent):
         self.faiss_index = faiss.IndexIDMap(self.faiss_index)
         self.item_ids_stream = _metaspore.OutputStream(self.item_ids_output_path)
 
-    def feed_validation_dataset(self):
+    def _default_feed_validation_dataset(self):
         import pyspark.sql.functions as F
         df = self.dataset.withColumn(self.item_id_column_name, F.monotonically_increasing_id())
-        df = df.select(self.feed_validation_minibatch()(*df.columns).alias('validate'))
+        func = self.feed_validation_minibatch()
+        df = df.mapInPandas(func, df.schema)
         df.write.format('noop').mode('overwrite').save()
 
-    def preprocess_minibatch(self, minibatch):
-        ndarrays = [col.values for col in minibatch]
-        return ndarrays
+    def _default_preprocess_minibatch(self, minibatch):
+        return minibatch
 
-    def validate_minibatch(self, minibatch):
+    def _default_validate_minibatch(self, minibatch):
         self.model.eval()
-        ndarrays = self.preprocess_minibatch(minibatch)
-        predictions = self.model(ndarrays[:-1])
+        minibatch = self.preprocess_minibatch(minibatch)
+        predictions = self.model(minibatch)
         ids_data = ''
-        id_ndarray = ndarrays[-1]
+        id_ndarray = minibatch[self.item_id_column_name].values
         embeddings = predictions.detach().numpy()
         for i in range(len(id_ndarray)):
             ids_data += str(id_ndarray[i])
             ids_data += self.item_ids_field_delimiter
-            for j, index in enumerate(self.item_ids_column_indices):
-                if j > 0:
-                    ids_data += self.item_ids_value_delimiter
-                field = ndarrays[index][i]
-                if field is not None:
-                    ids_data += str(field)
+            if self.item_ids_column_indices is not None:
+                for j, index in enumerate(self.item_ids_column_indices):
+                    if j > 0:
+                        ids_data += self.item_ids_value_delimiter
+                    field = minibatch.iloc[i, index]
+                    if field is not None:
+                        ids_data += str(field)
+            else:
+                for j, column_name in enumerate(self.item_ids_column_names):
+                    if j > 0:
+                        ids_data += self.item_ids_value_delimiter
+                    field = minibatch.loc[i, column_name]
+                    if field is not None:
+                        ids_data += str(field)
             if self.output_item_embeddings:
                 ids_data += self.item_ids_field_delimiter
                 for k, value in enumerate(embeddings[i]):
@@ -115,6 +123,7 @@ class FaissIndexBuildingAgent(PyTorchAgent):
         ids_data = ids_data.encode('utf-8')
         self.item_ids_stream.write(ids_data)
         self.faiss_index.add_with_ids(embeddings, id_ndarray)
+        return minibatch
 
     def get_index_meta(self):
         meta_version = 1
@@ -194,14 +203,28 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
             df = df.withColumn('item_embedding', F.split(F.col('item_embedding'), ',').cast('array<float>'))
         return df
 
-    def feed_validation_dataset(self):
+    def _default_feed_validation_dataset(self):
         import pyspark.sql.functions as F
         self.item_ids_dataset = self.load_item_ids()
         dataset = self.dataset.withColumn(self.increasing_id_column_name,
                                           F.monotonically_increasing_id())
-        df = dataset.select(self.increasing_id_column_name,
-                            (self.feed_validation_minibatch()(*self.dataset.columns)
-                             .alias(self.recommendation_info_column_name)))
+        df = dataset
+        func = self.feed_validation_minibatch()
+        output_schema = self._make_validation_result_schema(df)
+        df = df.mapInPandas(func, output_schema)
+        if self.output_user_embeddings:
+            df = df.select(self.increasing_id_column_name,
+                           F.struct(
+                                self.recommendation_info_column_name + '_indices',
+                                self.recommendation_info_column_name + '_distances',
+                                self.recommendation_info_column_name + '_user_embedding')
+                            .alias(self.recommendation_info_column_name))
+        else:
+            df = df.select(self.increasing_id_column_name,
+                           F.struct(
+                                self.recommendation_info_column_name + '_indices',
+                                self.recommendation_info_column_name + '_distances')
+                            .alias(self.recommendation_info_column_name))
         self.dataset = dataset
         self.validation_result = df
         # PySpark DataFrame & RDD is lazily evaluated.
@@ -211,35 +234,48 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
         df.cache()
         df.write.format('noop').mode('overwrite').save()
 
-    def feed_validation_minibatch(self):
-        from pyspark.sql.functions import pandas_udf
-        signature = 'indices: array<long>, distances: array<float>'
-        if self.output_user_embeddings:
-            signature += ', user_embedding: array<float>'
-        @pandas_udf(signature)
-        def _feed_validation_minibatch(*minibatch):
-            self = __class__.get_instance()
-            result = self.validate_minibatch(minibatch)
-            return result
-        return _feed_validation_minibatch
+    def _default_preprocess_minibatch(self, minibatch):
+        return minibatch
 
-    def preprocess_minibatch(self, minibatch):
-        ndarrays = [col.values for col in minibatch]
-        return ndarrays
-
-    def validate_minibatch(self, minibatch):
+    def _default_validate_minibatch(self, minibatch):
         import pandas as pd
         self.model.eval()
-        ndarrays = self.preprocess_minibatch(minibatch)
-        predictions = self.model(ndarrays)
+        minibatch = self.preprocess_minibatch(minibatch)
+        predictions = self.model(minibatch)
         embeddings = predictions.detach().numpy()
         distances, indices = self.faiss_index.search(embeddings, self.retrieval_item_count)
-        data = {'indices': list(indices), 'distances': list(distances)}
+        indices_name = self.recommendation_info_column_name + '_indices'
+        distances_name = self.recommendation_info_column_name + '_distances'
+        minibatch[indices_name] = list(indices)
+        minibatch[distances_name] = list(distances)
         if self.output_user_embeddings:
-            data['user_embedding'] = list(embeddings)
-        minibatch_size = len(minibatch[0])
-        index = pd.RangeIndex(minibatch_size)
-        return pd.DataFrame(data=data, index=index)
+            user_embedding_name = self.recommendation_info_column_name + '_user_embedding'
+            minibatch[user_embedding_name] = list(embeddings)
+        return minibatch
+
+    def _make_validation_result_schema(self, df):
+        from pyspark.sql.types import StructType
+        from pyspark.sql.types import ArrayType
+        from pyspark.sql.types import LongType
+        from pyspark.sql.types import FloatType
+        fields = []
+        reserved = set()
+        indices_name = self.recommendation_info_column_name + '_indices'
+        distances_name = self.recommendation_info_column_name + '_distances'
+        reserved.add(indices_name)
+        reserved.add(distances_name)
+        if self.output_user_embeddings:
+            user_embedding_name = self.recommendation_info_column_name + '_user_embedding'
+            reserved.add(user_embedding_name)
+        for field in df.schema.fields:
+            if field.name not in reserved:
+                fields.append(field)
+        result_schema = StructType(fields)
+        result_schema.add(indices_name, ArrayType(LongType()))
+        result_schema.add(distances_name, ArrayType(FloatType()))
+        if self.output_user_embeddings:
+            result_schema.add(user_embedding_name, ArrayType(FloatType()))
+        return result_schema
 
 class TwoTowerRetrievalHelperMixin(object):
     def __init__(self,
@@ -251,6 +287,7 @@ class TwoTowerRetrievalHelperMixin(object):
                  faiss_metric_type='METRIC_INNER_PRODUCT',
                  item_id_column_name='item_id',
                  item_ids_column_indices=None,
+                 item_ids_column_names=None,
                  item_ids_field_delimiter='\002',
                  item_ids_value_delimiter='\001',
                  output_item_embeddings=False,
@@ -269,6 +306,7 @@ class TwoTowerRetrievalHelperMixin(object):
         self.faiss_metric_type = faiss_metric_type
         self.item_id_column_name = item_id_column_name
         self.item_ids_column_indices = item_ids_column_indices
+        self.item_ids_column_names = item_ids_column_names
         self.item_ids_field_delimiter = item_ids_field_delimiter
         self.item_ids_value_delimiter = item_ids_value_delimiter
         self.output_item_embeddings = output_item_embeddings
@@ -282,6 +320,7 @@ class TwoTowerRetrievalHelperMixin(object):
         self.extra_agent_attributes['faiss_metric_type'] = self.faiss_metric_type
         self.extra_agent_attributes['item_id_column_name'] = self.item_id_column_name
         self.extra_agent_attributes['item_ids_column_indices'] = self.item_ids_column_indices
+        self.extra_agent_attributes['item_ids_column_names'] = self.item_ids_column_names
         self.extra_agent_attributes['item_ids_field_delimiter'] = self.item_ids_field_delimiter
         self.extra_agent_attributes['item_ids_value_delimiter'] = self.item_ids_value_delimiter
         self.extra_agent_attributes['output_item_embeddings'] = self.output_item_embeddings
@@ -316,6 +355,11 @@ class TwoTowerRetrievalHelperMixin(object):
            not all(isinstance(x, int) and x >= 0 for x in self.item_ids_column_indices)):
             raise TypeError(f"item_ids_column_indices must be list or tuple of non-negative integers; "
                             f"{self.item_ids_column_indices!r} is invalid")
+        if self.item_ids_column_names is not None and (
+           not isinstance(self.item_ids_column_names, (list, tuple)) or
+           not all(isinstance(x, str) for x in self.item_ids_column_names)):
+            raise TypeError(f"item_ids_column_names must be list or tuple of strings; "
+                            f"{self.item_ids_column_names!r} is invalid")
         if not isinstance(self.item_ids_field_delimiter, str) or len(self.item_ids_field_delimiter) != 1:
             raise TypeError(f"item_ids_field_delimiter must be string of length 1; {self.item_ids_field_delimiter!r} is invalid")
         if not isinstance(self.item_ids_value_delimiter, str) or len(self.item_ids_value_delimiter) != 1:
@@ -348,6 +392,7 @@ class TwoTowerRetrievalHelperMixin(object):
         args['faiss_metric_type'] = self.faiss_metric_type
         args['item_id_column_name'] = self.item_id_column_name
         args['item_ids_column_indices'] = self.item_ids_column_indices
+        args['item_ids_column_names'] = self.item_ids_column_names
         args['item_ids_field_delimiter'] = self.item_ids_field_delimiter
         args['item_ids_value_delimiter'] = self.item_ids_value_delimiter
         args['output_item_embeddings'] = self.output_item_embeddings
@@ -460,10 +505,18 @@ class TwoTowerRetrievalEstimator(TwoTowerRetrievalHelperMixin, PyTorchEstimator)
         super()._check_properties()
         if self.model_export_path is not None and self.item_dataset is None:
             raise RuntimeError("item_dataset must be specified to export model")
-        if not isinstance(self.item_ids_column_indices, (list, tuple)) or \
-           not all(isinstance(x, int) and x >= 0 for x in self.item_ids_column_indices):
+        if self.item_ids_column_indices is None and self.item_ids_column_names is None:
+            raise RuntimeError("one of item_ids_column_indices and item_ids_column_names must be specified")
+        if self.item_ids_column_indices is not None and (
+           not isinstance(self.item_ids_column_indices, (list, tuple)) or
+           not all(isinstance(x, int) and x >= 0 for x in self.item_ids_column_indices)):
             raise TypeError(f"item_ids_column_indices must be list or tuple of non-negative integers; "
                             f"{self.item_ids_column_indices!r} is invalid")
+        if self.item_ids_column_names is not None and (
+           not isinstance(self.item_ids_column_names, (list, tuple)) or
+           not all(isinstance(x, int) for x in self.item_ids_column_names)):
+            raise TypeError(f"item_ids_column_names must be list or tuple of strings; "
+                            f"{self.item_ids_column_names!r} is invalid")
 
     def _copy_faiss_index(self):
         if self.model_export_path is not None:

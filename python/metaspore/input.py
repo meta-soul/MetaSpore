@@ -14,13 +14,13 @@
 # limitations under the License.
 #
 
-def shuffle_df(df, num_workers):
+def shuffle_df(df, num_workers, column_name='srand'):
     from pyspark.sql import functions as F
-    df = df.withColumn('srand', F.rand())
-    df = df.repartition(2 * num_workers, 'srand')
+    df = df.withColumn(column_name, F.rand())
+    df = df.repartition(2 * num_workers, column_name)
     print('shuffle df to partitions {}'.format(df.rdd.getNumPartitions()))
-    df = df.sortWithinPartitions('srand')
-    df = df.drop('srand')
+    df = df.sortWithinPartitions(column_name)
+    df = df.drop(column_name)
     return df
 
 def read_s3_csv(spark_session, url, shuffle=False, num_workers=1,

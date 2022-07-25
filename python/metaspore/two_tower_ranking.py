@@ -151,7 +151,9 @@ class TwoTowerRankingAgent(PyTorchAgent):
             rdd.barrier().mapPartitions(self._pull_model_for_item_predict).collect()
             rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
             rdd.barrier().mapPartitions(self._handle_submodel_for_item_predict).collect()
-            df = self.item_dataset.select(self.feed_item_minibatch()(*self.item_dataset.columns).alias('item_predict'))
+            df = self.item_dataset
+            func = self.feed_item_minibatch()
+            df = df.mapInPandas(func, df.schema)
             df.write.format('noop').mode('overwrite').save()
             rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
             rdd.barrier().mapPartitions(self._restore_handle_submodel_for_item_predict).collect()
@@ -205,20 +207,17 @@ class TwoTowerRankingAgent(PyTorchAgent):
     ## helper methods for item_predict
 
     def feed_item_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_item_minibatch(*minibatch):
+        def _feed_item_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.predict_item_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                self.predict_item_minibatch(minibatch)
+                yield minibatch
         return _feed_item_minibatch
 
-    def _execute_combine(self, module, ndarrays):
+    def _execute_combine(self, module, minibatch):
         for name, mod in module.named_modules():
             if isinstance(mod, EmbeddingOperator):
-                indices, offsets = mod._do_combine(ndarrays)
+                indices, offsets = mod._do_combine(minibatch)
                 return indices
 
     def _execute_push(self, module, keys, embeddings):
@@ -230,8 +229,8 @@ class TwoTowerRankingAgent(PyTorchAgent):
                 mod._clean()
                 return
 
-    def _execute_item_embedding_combine(self, ndarrays):
-        keys = self._execute_combine(self.module.item_embedding_module, ndarrays)
+    def _execute_item_embedding_combine(self, minibatch):
+        keys = self._execute_combine(self.module.item_embedding_module, minibatch)
         return keys
 
     def _execute_item_embedding_push(self, keys, embeddings):
@@ -239,10 +238,9 @@ class TwoTowerRankingAgent(PyTorchAgent):
 
     def predict_item_minibatch(self, minibatch):
         self._item_predict_submodel.eval()
-        ndarrays = [col.values for col in minibatch]
-        predictions = self._item_predict_submodel(ndarrays)
+        predictions = self._item_predict_submodel(minibatch)
         embeddings = predictions.detach().numpy()
-        keys = self._execute_item_embedding_combine(ndarrays)
+        keys = self._execute_item_embedding_combine(minibatch)
         self._execute_item_embedding_push(keys, embeddings)
 
 class TwoTowerRankingLauncher(PyTorchLauncher):

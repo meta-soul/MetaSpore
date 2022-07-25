@@ -695,14 +695,10 @@ class EmbeddingOperator(torch.nn.Module):
         self._data.requires_grad = self.training and self.requires_grad
 
     @torch.jit.unused
-    def _combine_to_indices_and_offsets(self, ndarrays, feature_offset):
+    def _combine_to_indices_and_offsets(self, minibatch, feature_offset):
         # TODO: cf: check feature_offset
-        import pandas as pd
         import pyarrow as pa
-        column_names = self._combine_schema.column_name_source.splitlines()
-        column_names = [x.split()[1] for x in column_names]
-        df = pd.DataFrame({name: ndarray for name, ndarray in zip(column_names, ndarrays)})
-        batch = pa.RecordBatch.from_pandas(df)
+        batch = pa.RecordBatch.from_pandas(minibatch)
         indices, offsets = self._feature_extractor.extract(batch)
         return indices, offsets
 
@@ -712,7 +708,7 @@ class EmbeddingOperator(torch.nn.Module):
         #return indices, offsets
 
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
+    def _do_combine(self, minibatch):
         raise NotImplementedError
 
     @torch.jit.unused
@@ -721,10 +717,10 @@ class EmbeddingOperator(torch.nn.Module):
         return keys
 
     @torch.jit.unused
-    def _combine(self, ndarrays):
+    def _combine(self, minibatch):
         self._clean()
         self._ensure_combine_schema_loaded()
-        self._indices, self._indices_meta = self._do_combine(ndarrays)
+        self._indices, self._indices_meta = self._do_combine(minibatch)
         self._keys = self._uniquify_hash_codes(self._indices)
 
     @torch.jit.unused
@@ -840,8 +836,8 @@ class EmbeddingOperator(torch.nn.Module):
 
 class EmbeddingSumConcat(EmbeddingOperator):
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
-        return self._combine_to_indices_and_offsets(ndarrays, True)
+    def _do_combine(self, minibatch):
+        return self._combine_to_indices_and_offsets(minibatch, True)
 
     @torch.jit.unused
     def _do_compute(self):
@@ -854,8 +850,8 @@ class EmbeddingSumConcat(EmbeddingOperator):
 
 class EmbeddingRangeSum(EmbeddingOperator):
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
-        return self._combine_to_indices_and_offsets(ndarrays, False)
+    def _do_combine(self, minibatch):
+        return self._combine_to_indices_and_offsets(minibatch, False)
 
     @torch.jit.unused
     def _do_compute(self):
@@ -868,8 +864,8 @@ class EmbeddingRangeSum(EmbeddingOperator):
 
 class EmbeddingLookup(EmbeddingOperator):
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
-        return self._combine_to_indices_and_offsets(ndarrays, True)
+    def _do_combine(self, minibatch):
+        return self._combine_to_indices_and_offsets(minibatch, True)
 
     @torch.jit.unused
     def _do_compute(self):

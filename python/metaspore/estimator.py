@@ -72,6 +72,7 @@ class PyTorchAgent(Agent):
         self.consul_endpoint_prefix = None
         self.consul_model_sync_command = None
         self.input_label_column_index = None
+        self.input_label_column_name = None
         self.output_label_column_name = None
         self.output_label_column_type = None
         self.output_prediction_column_name = None
@@ -361,9 +362,9 @@ class PyTorchAgent(Agent):
             self.training_dataset_transformer(self)
         else:
             # For backward compatibility.
-            self._legacy_feed_training_dataset()
+            self._default_feed_training_dataset()
 
-    def _legacy_feed_training_dataset(self):
+    def _default_feed_training_dataset(self):
         from .input import shuffle_df
         for epoch in range(self.training_epoches):
             df = self.dataset
@@ -378,9 +379,9 @@ class PyTorchAgent(Agent):
             self.validation_dataset_transformer(self)
         else:
             # For backward compatibility.
-            self._legacy_feed_validation_dataset()
+            self._default_feed_validation_dataset()
 
-    def _legacy_feed_validation_dataset(self):
+    def _default_feed_validation_dataset(self):
         df = self.dataset
         func = self.feed_validation_minibatch()
         output_schema = self._make_validation_result_schema(df)
@@ -392,22 +393,6 @@ class PyTorchAgent(Agent):
         # PS system has been shutdown.
         df.cache()
         df.write.format('noop').mode('overwrite').save()
-
-    def feed_training_minibatch(self):
-        def _feed_training_minibatch(iterator):
-            self = __class__.get_instance()
-            for minibatch in iterator:
-                result = self.train_minibatch(minibatch)
-                yield  result
-        return _feed_training_minibatch
-
-    def feed_validation_minibatch(self):
-        def _feed_validation_minibatch(iterator):
-            self = __class__.get_instance()
-            for minibatch in iterator:
-                result = self.validate_minibatch(minibatch)
-                yield result
-        return _feed_validation_minibatch
 
     def preprocess_minibatch(self, minibatch):
         if self.is_training_mode and self.training_minibatch_preprocessor is not None:
@@ -421,27 +406,30 @@ class PyTorchAgent(Agent):
             return result
         else:
             # For backward compatibility.
-            result = self._legacy_preprocess_minibatch(minibatch)
+            result = self._default_preprocess_minibatch(minibatch)
             return result
 
-    def _legacy_preprocess_minibatch(self, minibatch):
+    def _default_preprocess_minibatch(self, minibatch):
         import numpy as np
-        ndarrays = [minibatch[c].values for c in minibatch]
-        labels = ndarrays[self.input_label_column_index].astype(np.float32)
-        return ndarrays, labels
+        if self.input_label_column_name is not None:
+            label_column_name = self.input_label_column_name
+        else:
+            label_column_name = minibatch.columns[self.input_label_column_index]
+        labels = minibatch[label_column_name].values.astype(np.float32)
+        return minibatch, labels
 
     def train_minibatch(self, minibatch):
         if self.training_minibatch_transformer is not None:
             self.training_minibatch_transformer(self, minibatch)
         else:
             # For backward compatibility.
-            self._legacy_train_minibatch(minibatch)
+            self._default_train_minibatch(minibatch)
         return minibatch
 
-    def _legacy_train_minibatch(self, minibatch):
+    def _default_train_minibatch(self, minibatch):
         self.model.train()
-        ndarrays, labels = self.preprocess_minibatch(minibatch)
-        predictions = self.model(ndarrays)
+        minibatch, labels = self.preprocess_minibatch(minibatch)
+        predictions = self.model(minibatch)
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
         self.trainer.train(loss)
@@ -454,13 +442,13 @@ class PyTorchAgent(Agent):
             return result
         else:
             # For backward compatibility.
-            result = self._legacy_validate_minibatch(minibatch)
+            result = self._default_validate_minibatch(minibatch)
             return result
 
-    def _legacy_validate_minibatch(self, minibatch):
+    def _default_validate_minibatch(self, minibatch):
         self.model.eval()
-        ndarrays, labels = self.preprocess_minibatch(minibatch)
-        predictions = self.model(ndarrays)
+        minibatch, labels = self.preprocess_minibatch(minibatch)
+        predictions = self.model(minibatch)
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
         self.update_progress(batch_size=len(labels), batch_loss=loss,
@@ -476,7 +464,12 @@ class PyTorchAgent(Agent):
 
     def _make_validation_result_schema(self, df):
         from pyspark.sql.types import StructType
-        result_schema = StructType(df.schema.fields[:])
+        fields = []
+        reserved = set([self.output_label_column_name, self.output_prediction_column_name])
+        for field in df.schema.fields:
+            if field.name not in reserved:
+                fields.append(field)
+        result_schema = StructType(fields)
         result_schema.add(self.output_label_column_name, self.output_label_column_type)
         result_schema.add(self.output_prediction_column_name, self.output_prediction_column_type)
         return result_schema
@@ -487,10 +480,10 @@ class PyTorchAgent(Agent):
             return loss
         else:
             # For backward compatibility.
-            loss = self._legacy_compute_loss(predictions, labels)
+            loss = self._default_compute_loss(predictions, labels)
             return loss
 
-    def _legacy_compute_loss(self, predictions, labels):
+    def _default_compute_loss(self, predictions, labels):
         from .loss_utils import log_loss
         loss = log_loss(predictions, labels) / labels.shape[0]
         return loss
@@ -551,6 +544,7 @@ class PyTorchLauncher(PSLauncher):
         self.consul_endpoint_prefix = None
         self.consul_model_sync_command = None
         self.input_label_column_index = None
+        self.input_label_column_name = None
         self.output_label_column_name = None
         self.output_label_column_type = None
         self.output_prediction_column_name = None
@@ -604,6 +598,7 @@ class PyTorchLauncher(PSLauncher):
         self._agent_attributes['consul_endpoint_prefix'] = self.consul_endpoint_prefix
         self._agent_attributes['consul_model_sync_command'] = self.consul_model_sync_command
         self._agent_attributes['input_label_column_index'] = self.input_label_column_index
+        self._agent_attributes['input_label_column_name'] = self.input_label_column_name
         self._agent_attributes['output_label_column_name'] = self.output_label_column_name
         self._agent_attributes['output_label_column_type'] = self.output_label_column_type
         self._agent_attributes['output_prediction_column_name'] = self.output_prediction_column_name
@@ -649,7 +644,8 @@ class PyTorchHelperMixin(object):
                  consul_port=None,
                  consul_endpoint_prefix=None,
                  consul_model_sync_command=None,
-                 input_label_column_index=1,
+                 input_label_column_index=None,
+                 input_label_column_name='label',
                  output_label_column_name='label',
                  output_label_column_type='double',
                  output_prediction_column_name='rawPrediction',
@@ -692,6 +688,7 @@ class PyTorchHelperMixin(object):
         self.consul_endpoint_prefix = consul_endpoint_prefix
         self.consul_model_sync_command = consul_model_sync_command
         self.input_label_column_index = input_label_column_index
+        self.input_label_column_name = input_label_column_name
         self.output_label_column_name = output_label_column_name
         self.output_label_column_type = output_label_column_type
         self.output_prediction_column_name = output_prediction_column_name
@@ -780,8 +777,11 @@ class PyTorchHelperMixin(object):
             self.consul_endpoint_prefix = self.consul_endpoint_prefix.strip('/')
         if self.consul_model_sync_command is not None and not isinstance(self.consul_model_sync_command, str):
             raise TypeError(f"consul_model_sync_command must be string; {self.consul_model_sync_command!r} is invalid")
-        if not isinstance(self.input_label_column_index, int) or self.input_label_column_index < 0:
-            raise TypeError(f"input_label_column_index must be non-negative integer; {self.input_label_column_index!r} is invalid")
+        if self.input_label_column_index is not None:
+            if not isinstance(self.input_label_column_index, int) or self.input_label_column_index < 0:
+                raise TypeError(f"input_label_column_index must be non-negative integer; {self.input_label_column_index!r} is invalid")
+        if self.input_label_column_name is not None and not isinstance(self.input_label_column_name, str):
+            raise TypeError(f"input_label_column_name must be string; {self.input_label_column_name!r} is invalid")
         if not isinstance(self.output_label_column_name, str):
             raise TypeError(f"output_label_column_name must be string; {self.output_label_column_name!r} is invalid")
         if not isinstance(self.output_label_column_type, str):
@@ -850,6 +850,7 @@ class PyTorchHelperMixin(object):
         launcher.consul_endpoint_prefix = self.consul_endpoint_prefix
         launcher.consul_model_sync_command = self.consul_model_sync_command
         launcher.input_label_column_index = self.input_label_column_index
+        launcher.input_label_column_name = self.input_label_column_name
         launcher.output_label_column_name = self.output_label_column_name
         launcher.output_label_column_type = self.output_label_column_type
         launcher.output_prediction_column_name = self.output_prediction_column_name
@@ -890,6 +891,7 @@ class PyTorchHelperMixin(object):
         args['consul_endpoint_prefix'] = self.consul_endpoint_prefix
         args['consul_model_sync_command'] = self.consul_model_sync_command
         args['input_label_column_index'] = self.input_label_column_index
+        args['input_label_column_name'] = self.input_label_column_name
         args['output_label_column_name'] = self.output_label_column_name
         args['output_label_column_type'] = self.output_label_column_type
         args['output_prediction_column_name'] = self.output_prediction_column_name

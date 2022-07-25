@@ -366,63 +366,32 @@ class Agent(object):
     def feed_training_dataset(self, dataset_path, nepoches=1):
         for epoch in range(nepoches):
             df = self.load_dataset(dataset_path)
-            df = df.select(self.feed_training_minibatch()(*df.columns).alias('train'))
+            func = self.feed_training_minibatch()
+            df = df.mapInPandas(func, df.schema)
             df.write.format('noop').mode('overwrite').save()
 
     def feed_validation_dataset(self, dataset_path, nepoches=1):
         for epoch in range(nepoches):
             df = self.load_dataset(dataset_path)
-            df = df.select(self.feed_validation_minibatch()(*df.columns).alias('validate'))
+            func = self.feed_validation_minibatch()
+            df = df.mapInPandas(func, df.schema)
             df.write.format('noop').mode('overwrite').save()
 
     def feed_training_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_training_minibatch(minibatch):
+        def _feed_training_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.train_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                result = self.train_minibatch(minibatch)
+                yield  result
         return _feed_training_minibatch
 
     def feed_validation_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_validation_minibatch(minibatch):
+        def _feed_validation_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.validate_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                result = self.validate_minibatch(minibatch)
+                yield result
         return _feed_validation_minibatch
-
-    def preprocess_minibatch(self, minibatch):
-        import numpy as np
-        import pandas as pd
-        columns = minibatch.apply(pd.Series)
-        ndarrays = list(columns.values.T)
-        labels = columns[1].values.astype(np.float32)
-        return ndarrays, labels
-
-    def process_minibatch_result(self, minibatch, result):
-        import pandas as pd
-        if result is None:
-            result = pd.Series([0.0] * len(minibatch))
-        if len(result) != len(minibatch):
-            message = "result length (%d) and " % len(result)
-            message += "minibatch size (%d) mismatch" % len(minibatch)
-            raise RuntimeError(message)
-        if not isinstance(result, pd.Series):
-            if len(result.reshape(-1)) == len(minibatch):
-                result = result.reshape(-1)
-            else:
-                message = "result can not be converted to pandas series; "
-                message += "result.shape: {}, ".format(result.shape)
-                message += "minibatch_size: {}".format(len(minibatch))
-                raise RuntimeError(message)
-            result = pd.Series(result)
-        return result
 
     def train_minibatch(self, minibatch):
         message = "Agent.train_minibatch method is not implemented"
