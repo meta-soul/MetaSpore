@@ -403,12 +403,6 @@ class TwoTowerRetrievalHelperMixin(object):
         args['retrieval_item_count'] = self.retrieval_item_count
         return args
 
-    def _reload_combine_schemas(self, module):
-        for name, mod in module.named_modules():
-            if isinstance(mod, EmbeddingOperator):
-                if mod.has_alternative_column_name_file_path:
-                    mod.reload_combine_schema(True)
-
 class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
     def _transform_rec_info(self, rec_info, item_ids_dataset):
         import pyspark.sql.functions as F
@@ -453,7 +447,6 @@ class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
         return df
 
     def _transform(self, dataset):
-        self._reload_combine_schemas(self.module)
         launcher = self._create_launcher(dataset, False)
         launcher.module = self.module.user_module
         launcher.tensor_name_prefix = '_user_module.'
@@ -532,7 +525,6 @@ class TwoTowerRetrievalEstimator(TwoTowerRetrievalHelperMixin, PyTorchEstimator)
         launcher.model_export_selector = lambda m: m.user_module, '_user_module.'
         launcher.launch()
         module = launcher.agent_object.module
-        self._reload_combine_schemas(module)
         module.eval()
         if self.item_dataset is not None:
             launcher2 = self._create_launcher(self.item_dataset, False)

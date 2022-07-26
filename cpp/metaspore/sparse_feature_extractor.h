@@ -28,6 +28,7 @@ public:
 
     const std::string &get_source_table_name() const { return source_table_name_; }
     const std::string &get_schema_source() const { return schema_source_; }
+    int get_feature_count() const { return feature_count_; }
 
 private:
     void check_construct(const status &the_status);
@@ -36,6 +37,7 @@ private:
 
     std::string source_table_name_;
     std::string schema_source_;
+    int feature_count_;
     FeatureComputeExec executor_;
 };
 

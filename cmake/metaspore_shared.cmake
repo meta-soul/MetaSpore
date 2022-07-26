@@ -103,8 +103,6 @@ add_library(metaspore_shared SHARED
     cpp/metaspore/sparse_tensor.cpp
     cpp/metaspore/ps_default_agent.cpp
     cpp/metaspore/ps_helper.cpp
-    cpp/metaspore/combine_schema.cpp
-    cpp/metaspore/index_batch.cpp
     cpp/metaspore/sparse_feature_extractor.cpp
     cpp/metaspore/model_metric_buffer.cpp
     cpp/metaspore/tensor_utils.cpp

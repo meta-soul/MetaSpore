@@ -30,11 +30,12 @@ namespace metaspore {
 SparseFeatureExtractor::SparseFeatureExtractor(const std::string &source_table_name,
                                                const std::string &schema_source)
     : source_table_name_(source_table_name)
-    , schema_source_(schema_source) {
+    , schema_source_(schema_source)
+    , feature_count_(0) {
     auto the_status = executor_.add_source(source_table_name);
     check_construct(the_status);
     std::istringstream stream(schema_source);
-    the_status = FeatureSchemaParser::parse_hash_and_combine(stream, executor_);
+    the_status = FeatureSchemaParser::parse_hash_and_combine(stream, executor_, feature_count_);
     check_construct(the_status);
 }
 

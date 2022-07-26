@@ -93,12 +93,6 @@ class TwoTowerRankingAgent(PyTorchAgent):
             if isinstance(mod, EmbeddingOperator):
                 mod.is_backing = False
 
-    def _reload_combine_schemas(self, module, use_alternative_column_name_file):
-        for name, mod in module.named_modules():
-            if isinstance(mod, EmbeddingOperator):
-                if mod.has_alternative_column_name_file_path:
-                    mod.reload_combine_schema(use_alternative_column_name_file)
-
     ## train
 
     @classmethod
@@ -132,16 +126,12 @@ class TwoTowerRankingAgent(PyTorchAgent):
     @classmethod
     def _handle_submodel_for_item_predict(cls, _):
         self = __class__.get_instance()
-        self._reload_combine_schemas(self.module.item_module, True)
-        self._reload_combine_schemas(self.module.item_embedding_module, True)
         self._item_predict_submodel = self.model.get_submodel(self.module.item_module, '_item_module.')
         return _
 
     @classmethod
     def _restore_handle_submodel_for_item_predict(cls, _):
         self = __class__.get_instance()
-        self._reload_combine_schemas(self.module.item_module, False)
-        self._reload_combine_schemas(self.module.item_embedding_module, False)
         del self._item_predict_submodel
         return _
 

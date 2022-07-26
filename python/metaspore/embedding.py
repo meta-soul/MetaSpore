@@ -19,8 +19,6 @@ import os
 import numpy
 import torch
 from . import _metaspore
-from ._metaspore import CombineSchema
-from ._metaspore import IndexBatch
 from ._metaspore import SparseFeatureExtractor
 from ._metaspore import HashUniquifier
 from .url_utils import is_url
@@ -79,79 +77,21 @@ class EmbeddingBagModule(torch.nn.Module):
 class EmbeddingOperator(torch.nn.Module):
     def __init__(self,
                  embedding_size=None,
-                 column_name_file_path=None,
+                 combine_schema_source=None,
                  combine_schema_file_path=None,
                  delimiter=None,
                  dtype=torch.float32,
                  requires_grad=True,
                  updater=None,
                  initializer=None,
-                 alternative_column_name_file_path=None,
                  output_batchsize1_if_only_level0=False,
                  use_nan_fill=False,
                  save_as_text=False,
-                 embedding_bag_mode='sum',
-                 combine_schema_source=None,
-                 column_name_source=None,
-                 alternative_column_name_source=None,
+                 embedding_bag_mode='sum'
                 ):
         if embedding_size is not None:
             if not isinstance(embedding_size, int) or embedding_size <= 0:
                 raise TypeError(f"embedding_size must be positive integer; {embedding_size!r} is invalid")
-        if combine_schema_source is not None and not isinstance(combine_schema_source, str):
-            raise TypeError(f"combine_schema_source must be string; {combine_schema_source!r} is invalid")
-        if column_name_source is not None and not isinstance(column_name_source, str):
-            raise TypeError(f"column_name_source must be string; {column_name_source!r} is invalid")
-        if alternative_column_name_source is not None and not isinstance(alternative_column_name_source, str):
-            raise TypeError(f"alternative_column_name_source must be string; {alternative_column_name_source!r} is invalid")
-        if combine_schema_file_path is not None and not isinstance(combine_schema_file_path, str):
-            raise TypeError(f"combine_schema_file_path must be string; {combine_schema_file_path!r} is invalid")
-        if column_name_file_path is not None and not isinstance(column_name_file_path, str):
-            raise TypeError(f"column_name_file_path must be string; {column_name_file_path!r} is invalid")
-        if alternative_column_name_file_path is not None and not isinstance(alternative_column_name_file_path, str):
-            raise TypeError(f"alternative_column_name_file_path must be string; {alternative_column_name_file_path!r} is invalid")
-        if combine_schema_file_path is not None and combine_schema_source is not None:
-            raise ValueError("combine_schema_file_path and combine_schema_source must not be both specified")
-        if column_name_file_path is not None and column_name_source is not None:
-            raise ValueError("column_name_file_path and combine_schema_source must not be both specified")
-        if alternative_column_name_file_path is not None and alternative_column_name_source is not None:
-            raise ValueError("alternative_column_name_file_path and alternative_column_name_source must not be both specified")
-        if combine_schema_source is not None:
-            combine_schema_file_path = '<string>'
-        elif combine_schema_file_path is not None:
-            if is_url(combine_schema_file_path):
-                combine_schema_file_path = use_s3(combine_schema_file_path)
-                if not file_exists(column_name_file_path):
-                    raise RuntimeError(f"column_name_file {column_name_file_path!r} not found")
-                combine_schema_data = _metaspore.stream_read_all(combine_schema_file_path)
-                combine_schema_source = combine_schema_data.decode('utf-8')
-            else:
-                combine_schema_source = combine_schema_file_path
-                combine_schema_file_path = '<string>'
-        if column_name_source is not None:
-            column_name_file_path = '<string>'
-        elif column_name_file_path is not None:
-            if is_url(column_name_file_path):
-                column_name_file_path = use_s3(column_name_file_path)
-                if not file_exists(combine_schema_file_path):
-                    raise RuntimeError(f"combine_schema_file {combine_schema_file_path!r} not found")
-                column_name_data = _metaspore.stream_read_all(column_name_file_path)
-                column_name_source = column_name_data.decode('utf-8')
-            else:
-                column_name_source = column_name_file_path
-                column_name_file_path = '<string>'
-        if alternative_column_name_source is not None:
-            alternative_column_name_file_path = '<string>'
-        elif alternative_column_name_file_path is not None:
-            if is_url(alternative_column_name_file_path):
-                alternative_column_name_file_path = use_s3(alternative_column_name_file_path)
-                if not file_exists(alternative_column_name_file_path):
-                    raise RuntimeError(f"alternative column name file {alternative_column_name_file_path!r} not found")
-                alternative_column_name_data = _metaspore.stream_read_all(alternative_column_name_file_path)
-                alternative_column_name_source = alternative_column_name_data.decode('utf-8')
-            else:
-                alternative_column_name_source = alternative_column_name_file_path
-                alternative_column_name_file_path = '<string>'
         if delimiter is not None:
             if not isinstance(delimiter, str) or len(delimiter) != 1:
                 raise TypeError(f"delimiter must be string of length 1; {delimiter!r} is invalid")
@@ -166,12 +106,12 @@ class EmbeddingOperator(torch.nn.Module):
         self._check_embedding_bag_mode(embedding_bag_mode)
         super().__init__()
         self._embedding_size = embedding_size
-        self._combine_schema_source = combine_schema_source
-        self._column_name_source = column_name_source
-        self._alternative_column_name_source = alternative_column_name_source
-        self._combine_schema_file_path = combine_schema_file_path
-        self._column_name_file_path = column_name_file_path
-        self._alternative_column_name_file_path = alternative_column_name_file_path
+        self._combine_schema_source = None
+        self._combine_schema_file_path = None
+        if combine_schema_file_path is not None:
+            self.combine_schema_file_path = combine_schema_file_path
+        elif combine_schema_source is not None:
+            self.combine_schema_source = combine_schema_source
         self._delimiter = delimiter
         self._dtype = dtype
         self._requires_grad = requires_grad
@@ -184,8 +124,8 @@ class EmbeddingOperator(torch.nn.Module):
         self._save_as_text = save_as_text
         self._embedding_bag_mode = embedding_bag_mode
         self._distributed_tensor = None
-        self._combine_schema = None
-        if self._combine_schema_source is not None and self._column_name_source is not None:
+        self._feature_extractor = None
+        if self._combine_schema_source is not None:
             self._load_combine_schema()
 
         # init a embedding_bag
@@ -198,41 +138,24 @@ class EmbeddingOperator(torch.nn.Module):
         self.sparse_embedding_bag.export_onnx(path, name)
 
     @torch.jit.unused
-    def _load_combine_schema(self, use_alternative_column_names=False):
-        if self._combine_schema is not None:
+    def _load_combine_schema(self):
+        if self._feature_extractor is not None:
             raise RuntimeError("combine schema has been loaded")
-        if use_alternative_column_names:
-            column_name_source = self._checked_get_alternative_column_name_source()
-        else:
-            column_name_source = self._checked_get_column_name_source()
         combine_schema_source = self._checked_get_combine_schema_source()
-        self._combine_schema = CombineSchema()
-        self._combine_schema.load_column_name_from_source(column_name_source)
-        self._combine_schema.load_combine_schema_from_source(combine_schema_source)
         self._feature_extractor = SparseFeatureExtractor('sparse', combine_schema_source)
         string = f"\033[32mloaded combine schema from\033[m "
-        string += f"\033[32mcolumn name file \033[m{self.column_name_file_path!r} "
-        string += f"\033[32mand combine schema file \033[m{self.combine_schema_file_path!r}"
+        string += f"\033[32mcombine schema file \033[m{self.combine_schema_file_path!r}"
         print(string)
 
     @torch.jit.unused
-    def reload_combine_schema(self, use_alternative_column_names=False):
-        if use_alternative_column_names and self._alternative_column_name_file_path is None:
-            raise RuntimeError("alternative_column_name_file_path is not set")
-        self._combine_schema = None
-        self._load_combine_schema(use_alternative_column_names)
-
-    @torch.jit.unused
     def _ensure_combine_schema_loaded(self):
-        if self._combine_schema is None:
+        if self._feature_extractor is None:
             self._load_combine_schema()
 
     def __repr__(self):
         args = []
         if self._embedding_size is not None:
             args.append(f"{self._embedding_size}")
-        if self._column_name_file_path is not None:
-            args.append(f"column_name_file_path={self._column_name_file_path!r}")
         if self._combine_schema_file_path is not None:
             args.append(f"combine_schema_file_path={self._combine_schema_file_path!r}")
         if self._delimiter is not None:
@@ -245,8 +168,6 @@ class EmbeddingOperator(torch.nn.Module):
             args.append(f"updater={self._updater!r}")
         if self._initializer is not None:
             args.append(f"initializer={self._initializer!r}")
-        if self._alternative_column_name_file_path is not None:
-            args.append(f"alternative_column_name_file_path={self._alternative_column_name_file_path!r}")
         if self._output_batchsize1_if_only_level0:
             args.append(f"output_batchsize1_if_only_level0={self._output_batchsize1_if_only_level0!r}")
         if self._use_nan_fill:
@@ -309,12 +230,7 @@ class EmbeddingOperator(torch.nn.Module):
                 raise TypeError(f"combine_schema_source must be string; {value!r} is invalid")
         if self._combine_schema_source is not None:
             raise RuntimeError(f"can not reset combine_schema_source {self._combine_schema_source!r} to {value!r}")
-        if value is None:
-            self._combine_schema_source = None
-            self._combine_schema_file_path = None
-        else:
-            self._combine_schema_source = value
-            self._combine_schema_file_path = '<string>'
+        self.combine_schema_file_path = value
 
     @torch.jit.unused
     def _checked_get_combine_schema_source(self):
@@ -358,131 +274,6 @@ class EmbeddingOperator(torch.nn.Module):
 
     @property
     @torch.jit.unused
-    def column_name_source(self):
-        return self._column_name_source
-
-    @column_name_source.setter
-    @torch.jit.unused
-    def column_name_source(self, value):
-        if value is not None:
-            if not isinstance(value, str):
-                raise TypeError(f"column_name_source must be string; {value!r} is invalid")
-        if self._column_name_source is not None:
-            raise RuntimeError(f"can not reset column_name_source {self._column_name_source!r} to {value!r}")
-        if value is None:
-            self._column_name_source = None
-            self._column_name_file_path = None
-        else:
-            self._column_name_source = value
-            self._column_name_file_path = '<string>'
-
-    @torch.jit.unused
-    def _checked_get_column_name_source(self):
-        if self._column_name_source is None:
-            raise RuntimeError("column_name_source is not set")
-        return self._column_name_source
-
-    @property
-    @torch.jit.unused
-    def column_name_file_path(self):
-        return self._column_name_file_path
-
-    @column_name_file_path.setter
-    @torch.jit.unused
-    def column_name_file_path(self, value):
-        if value is not None:
-            if not isinstance(value, str):
-                raise TypeError(f"column_name_file_path must be string; {value!r} is invalid")
-        if self._column_name_file_path is not None:
-            raise RuntimeError(f"can not reset column_name_file_path {self._column_name_file_path!r} to {value!r}")
-        if value is None:
-            self._column_name_source = None
-            self._column_name_file_path = None
-        else:
-            if is_url(value):
-                value = use_s3(value)
-                if not file_exists(value):
-                    raise RuntimeError(f"column name file {value!r} not found")
-                column_name_data = _metaspore.stream_read_all(value)
-                self._column_name_source = column_name_data.decode('utf-8')
-                self._column_name_file_path = value
-            else:
-                self._column_name_source = value
-                self._column_name_file_path = '<string>'
-
-    @torch.jit.unused
-    def _checked_get_column_name_file_path(self):
-        if self._column_name_file_path is None:
-            raise RuntimeError("column_name_file_path is not set")
-        return self._column_name_file_path
-
-    @property
-    @torch.jit.unused
-    def has_alternative_column_name_file_path(self):
-        return self._alternative_column_name_file_path is not None
-
-    @property
-    @torch.jit.unused
-    def alternative_column_name_source(self):
-        return self._alternative_column_name_source
-
-    @alternative_column_name_source.setter
-    @torch.jit.unused
-    def alternative_column_name_source(self, value):
-        if value is not None:
-            if not isinstance(value, str):
-                raise TypeError(f"alternative_column_name_source must be string; {value!r} is invalid")
-        if self._alternative_column_name_source is not None:
-            raise RuntimeError(f"can not reset alternative_column_name_source {self._alternative_column_name_source!r} to {value!r}")
-        if value is None:
-            self._alternative_column_name_source = None
-            self._alternative_column_name_file_path = None
-        else:
-            self._alternative_column_name_source = value
-            self._alternative_column_name_file_path = '<string>'
-
-    @torch.jit.unused
-    def _checked_get_alternative_column_name_source(self):
-        if self._alternative_column_name_source is None:
-            raise RuntimeError("alternative_column_name_source is not set")
-        return self._alternative_column_name_source
-
-    @property
-    @torch.jit.unused
-    def alternative_column_name_file_path(self):
-        return self._alternative_column_name_file_path
-
-    @alternative_column_name_file_path.setter
-    @torch.jit.unused
-    def alternative_column_name_file_path(self, value):
-        if value is not None:
-            if not isinstance(value, str):
-                raise TypeError(f"alternative_column_name_file_path must be string; {value!r} is invalid")
-        if self._alternative_column_name_file_path is not None:
-            raise RuntimeError(f"can not reset alternative_column_name_file_path {self._alternative_column_name_file_path!r} to {value!r}")
-        if value is None:
-            self._alternative_column_name_source = None
-            self._alternative_column_name_file_path = None
-        else:
-            if is_url(value):
-                value = use_s3(value)
-                if not file_exists(value):
-                    raise RuntimeError(f"alternative column name file {value!r} not found")
-                alternative_column_name_data = _metaspore.stream_read_all(value)
-                self._alternative_column_name_source = alternative_column_name_data.decode('utf-8')
-                self._alternative_column_name_file_path = value
-            else:
-                self._alternative_column_name_source = value
-                self._alternative_column_name_file_path = '<string>'
-
-    @torch.jit.unused
-    def _checked_get_alternative_column_name_file_path(self):
-        if self._alternative_column_name_file_path is None:
-            raise RuntimeError("alternative_column_name_file_path is not set")
-        return self._alternative_column_name_file_path
-
-    @property
-    @torch.jit.unused
     def delimiter(self):
         return self._delimiter
 
@@ -505,10 +296,10 @@ class EmbeddingOperator(torch.nn.Module):
     @property
     @torch.jit.unused
     def feature_count(self):
-        schema = self._combine_schema
-        if schema is None:
+        extractor = self._feature_extractor
+        if extractor is None:
             raise RuntimeError(f"combine schema is not loaded; can not get feature count")
-        count = schema.feature_count
+        count = extractor.feature_count
         return count
 
     @property
@@ -701,11 +492,6 @@ class EmbeddingOperator(torch.nn.Module):
         batch = pa.RecordBatch.from_pandas(minibatch)
         indices, offsets = self._feature_extractor.extract(batch)
         return indices, offsets
-
-        #delim = self._checked_get_delimiter()
-        #batch = IndexBatch(ndarrays, delim)
-        #indices, offsets = self._combine_schema.combine_to_indices_and_offsets(batch, feature_offset)
-        #return indices, offsets
 
     @torch.jit.unused
     def _do_combine(self, minibatch):
