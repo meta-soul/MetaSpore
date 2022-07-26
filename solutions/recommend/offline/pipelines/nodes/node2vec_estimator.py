@@ -26,6 +26,8 @@ class Node2VecEstimatorNode(PipelineNode):
         friend_id = conf['dataset']['item_id_column']
         label = conf['dataset']['label_column']
         label_value = conf['dataset']['label_value']
+        max_recommendation_count = training_conf['max_recommendation_count']
+        max_out_degree = training_conf['max_out_degree']
         random_walk_p = training_conf['random_walk_p']
         random_walk_q = training_conf['random_walk_q']
         random_walk_Z = training_conf['random_walk_Z']
@@ -48,6 +50,8 @@ class Node2VecEstimatorNode(PipelineNode):
                                         trigger_vertex_column_name=user_id,
                                         behavior_column_name=label,
                                         behavior_filter_value=label_value,
+                                        max_recommendation_count=max_recommendation_count,
+                                        max_out_degree=max_out_degree,
                                         random_walk_p=random_walk_p,
                                         random_walk_q=random_walk_q,
                                         random_walk_Z=random_walk_Z,
@@ -70,7 +74,7 @@ class Node2VecEstimatorNode(PipelineNode):
         
         ## transform test dataset
         test_result = model.transform(test_dataset)
-        
+
         from pyspark.sql import functions as F 
         str_schema = 'array<struct<name:string,_2:double>>'
         test_result = test_result.withColumn('rec_info', F.col('value').cast(str_schema))

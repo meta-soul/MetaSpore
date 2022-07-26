@@ -19,7 +19,7 @@ import pyspark.sql.functions as F
 from pyspark.sql import Window
 from pyspark.sql.types import Row
 from pyspark.sql.functions import udf
-from pyspark.sql.types import StringType, ArrayType, FloatType
+from pyspark.sql.types import StringType, ArrayType, FloatType, StructType, StructField
 from pyspark.ml.feature import Word2Vec, BucketedRandomProjectionLSH, VectorAssembler, MinMaxScaler
 
 class Node2VecModel(pyspark.ml.base.Model):
@@ -74,6 +74,7 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
                  trigger_vertex_column_name=None,
                  behavior_column_name=None,
                  behavior_filter_value=None,
+                 max_out_degree = 30, 
                  max_recommendation_count=20,
                  random_walk_p=2.0,
                  random_walk_q=0.5,
@@ -99,6 +100,7 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
         self.trigger_vertex_column_name = trigger_vertex_column_name
         self.behavior_column_name = behavior_column_name
         self.behavior_filter_value = behavior_filter_value
+        self.max_out_degree = max_out_degree
         self.max_recommendation_count = max_recommendation_count
         self.random_walk_p = random_walk_p
         self.random_walk_q = random_walk_q
@@ -193,10 +195,17 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
             raise ValueError("trigger_vertex_column_name is required")
         
         if self.weight_column_name is None:
+            w = Window.partitionBy(self.trigger_vertex_column_name).orderBy(F.rand())
+            dataset = dataset.withColumn("rn", F.row_number().over(w))\
+                                                .filter(F.col("rn")<=self.max_out_degree).drop(F.col("rn"))
+                                                
             return dataset.select(F.col(self.source_vertex_column_name).alias("src"), 
                                   F.col(self.destination_vertex_column_name).alias("dst"),
                                   F.lit(1.0).alias("weight"))
         else:
+            w = Window.partitionBy(self.source_vertex_column_name).orderBy(F.col(self.weight_column_name).desc())
+            dataset = dataset.withColumn("rn", F.row_number().over(w))\
+                                                .filter(F.col("rn")<self.max_out_degree).drop(F.col("rn"))
             return dataset.select(F.col(self.source_vertex_column_name).alias("src"), 
                                   F.col(self.destination_vertex_column_name).alias("dst"),
                                   F.col(self.weight_column_name).alias("weight"))
@@ -323,23 +332,27 @@ class Node2VecEstimator(pyspark.ml.base.Estimator):
 
             return path
         
-        walk_df = self.vertices_lookup.rdd.map(lambda row: _first_step(row)).toDF(['origin', 'path'])
+        def _get_walk_df():       
+            walk_df = self.vertices_lookup.rdd.map(lambda row: _first_step(row)).toDF(['origin', 'path'])                                    
+            next_step_udf = udf(lambda path, attributes: _next_step(path, attributes), ArrayType(StringType()))
+            for i in range(self.random_walk_steps - 2):
+                walk_df = walk_df.withColumn('src', F.element_at(F.col('path'), -2))
+                walk_df = walk_df.withColumn('dst', F.element_at(F.col('path'), -1))  
+                walk_df = walk_df.join(self.edges_lookup, on=['src', 'dst'], how='leftouter')
+                walk_df = walk_df.select('origin', next_step_udf('path', 'attributes').alias('path'))
+            return walk_df
+        
+        total_walk_df = _get_walk_df()
         for i in range(self.walk_times-1):
-            walk_df = walk_df.union(self.vertices_lookup.rdd.map(lambda row: _first_step(row)).toDF(['origin', 'path']))
-                                    
-        next_step_udf = udf(lambda path, attributes: _next_step(path, attributes), ArrayType(StringType()))
-        for i in range(self.random_walk_steps - 2):
-            walk_df = walk_df.withColumn('src', F.element_at(F.col('path'), -2))
-            walk_df = walk_df.withColumn('dst', F.element_at(F.col('path'), -1))  
-            walk_df = walk_df.join(self.edges_lookup, on=['src', 'dst'], how='leftouter')
-            walk_df = walk_df.select('origin', next_step_udf('path', 'attributes').alias('path'))
+            walk_df = _get_walk_df()
+            total_walk_df.union(walk_df)
             
         if self.debug:
             print('Debug - walk_df:')
-            walk_df.show(10, False)
-            walk_df.printSchema()
+            total_walk_df.show(10, False)
+            total_walk_df.printSchema()
             
-        return walk_df
+        return total_walk_df
     
     def _word2vec(self, random_walk_paths):
         word2Vec = Word2Vec(vectorSize=self.w2v_vector_size, inputCol="path", outputCol="model", \
