@@ -487,10 +487,11 @@ class EmbeddingOperator(torch.nn.Module):
 
     @torch.jit.unused
     def _combine_to_indices_and_offsets(self, minibatch, feature_offset):
-        # TODO: cf: check feature_offset
         import pyarrow as pa
         batch = pa.RecordBatch.from_pandas(minibatch)
         indices, offsets = self._feature_extractor.extract(batch)
+        if not feature_offset:
+            offsets = offsets[::self.feature_count]
         return indices, offsets
 
     @torch.jit.unused
