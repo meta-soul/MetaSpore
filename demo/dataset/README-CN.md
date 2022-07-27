@@ -11,6 +11,7 @@
 | [Census](#Census)               | [MMoE Demo](../multitask/mmoe/)                    | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
 | [Ali-CCP](#Ali-CCP)             | [ESMM Demo](../multitask/esmm/)                    | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
 | [Tianchi-Loan](#Tianchi-Loan)             | [Loan Default Demo](../riskmodels/loan_default/)                    | [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
+| [ULB-CreditCard](#ULB-CreditCard)             | [Fraud Detection Demo](../riskmodels/fraud_detection/)                    | [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) |
 
 ## 初始化模型配置文件
 首先，我们需要初始化配置文件，我们需要通过给出的 YAML 配置模版对不同阶段的配置文件进行初始化，主要是替换模版中一些需要定制的变量。举例来说，我们需要替换自己具体的 S3 路径 `MY_S3_BUCKET`:
@@ -157,4 +158,14 @@ python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
 
 ### Feature Generation
 下载完成后，我们可以使用 [fg.ipynb](./tianchi_loan/fg.ipynb) 来生成我们模型中使用的数值特征。
+
+
+## ULB-CreditCard
+在这一节中，我们将介绍如何 ULB 提供的 [信用卡欺诈检测数据集](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)的中数据。
+
+### Download Data
+首先我们应该从 [ULB 信用卡欺诈数据在 Kaggle 的主页](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)上手动下载这个数据集。
+
+### Feature Generation
+下载完成后，我们可以使用 [fg.ipynb](./tianchi_loan/fg.ipynb) 来生成我们模型中使用的数值特征并使用 [SMOTE](https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html) 算法对正样本进行上采样。
 
