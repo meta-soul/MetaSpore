@@ -14,6 +14,8 @@
 # limitations under the License.
 #
 
+from logging import Logger
+
 import metaspore as ms
 from logging import Logger
 from ..utils import get_class
@@ -22,18 +24,18 @@ import attrs
 from typing import Dict, Tuple, Optional
 from pyspark.sql import DataFrame
 from pyspark.mllib.evaluation import RankingMetrics
+from pyspark.sql import functions as F 
 
 
-@attr.frozen
+@attrs.frozen
 class I2IRetrievalConfig:
     i2i_estimator_class: Dict[str, str]
     model_out_path: Optional[str]
-    max_recommendation_count: attrs.field(default=20, validator=[attr.validators.ge(0), attr.validators.le(100), attrs.validators.instance_of(int)])
+    max_recommendation_count: attrs.field(default=20, validator=[attrs.validators.ge(0), attrs.validators.le(100), attrs.validators.instance_of(int)])
 
 class I2IRetrievalModule():
-    def __init__(self, conf: I2IRetrievalConfig, spark: SparkSession, logger: Logger):
+    def __init__(self, conf: I2IRetrievalConfig, logger: Logger):
         self.conf = conf
-        self.spark = spark
         self.logger = logger
         self.model = None
         self.metric_position_k = 20
@@ -51,24 +53,23 @@ class I2IRetrievalModule():
     def predict(self, test_dataset):
         # prepare trigger item id 
         original_item_id ='original_item_id'
-        test_df = test_dataset.withColumnRenamed(item_id, original_item_id)
-        test_df = test_df.withColumnRenamed(last_item_id, item_id)
+        test_df = test_dataset.withColumnRenamed('item_id', original_item_id)
+        test_df = test_df.withColumnRenamed('last_item_id', 'item_id')
         
         # transform test dataset
         test_result = self.model.transform(test_df)
         
         # revert original item id
-        test_result = test_result.withColumnRenamed(item_id, last_item_id)
-        test_result = test_result.withColumnRenamed(original_item_id, item_id)
+        test_result = test_result.withColumnRenamed('item_id', 'last_item_id')
+        test_result = test_result.withColumnRenamed(original_item_id, 'item_id')
         
-        from pyspark.sql import functions as F 
+        
         str_schema = "array<struct<name:string,_2:double>>"
         test_result = test_result.withColumn('rec_info', F.col("value").cast(str_schema))
         
         return test_result
     
     def evaluate(self, test_result):
-        from pyspark.sql import functions as F
         print('Debug -- test sample:')
         test_result.select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
         
@@ -104,7 +105,7 @@ class I2IRetrievalModule():
         metric_dict = self.evaluate(test_result)
         
         # 4. save model.df to storage if needed.
-        print('Debug - model_out_path': type(model_out_path))
+        print('Debug - model_out_path: ', type(model_out_path))
         if model_out_path:
             model.df.write.parquet(self.conf.model_out_path, mode="overwrite")
         

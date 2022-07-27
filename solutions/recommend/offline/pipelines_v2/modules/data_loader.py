@@ -17,15 +17,14 @@
 from logging import Logger
 
 import attrs
-from attrs import frozen
 from typing import Optional, Dict
 from pyspark.sql import SparkSession, DataFrame
 
-@frozen
+@attrs.frozen
 class DataLoaderConfig:
     train_path: str
     test_path: str
-    item_path: Optional[str]
+    item_path: Optional[str] = attrs.field(default=None)
 
 class DataLoaderModule():
     def __init__(self, conf: DataLoaderConfig, spark: SparkSession, logger: Logger):
@@ -36,14 +35,14 @@ class DataLoaderModule():
     def run(self) -> Dict[str, DataFrame]:
         dataset_dict = {}
         
-        dataset_dict['train_dataset'] = self.spark.read.parquet(self.conf.train_path)
+        dataset_dict['train'] = self.spark.read.parquet(self.conf.train_path)
         self.logger.info('Train dataset is loaded: {}'.format(self.conf.train_path))
         
-        dataset_dict['test_dataset'] = self.spark.read.parquet(self.conf.test_path)
+        dataset_dict['test'] = self.spark.read.parquet(self.conf.test_path)
         self.logger.info('Test dataset is loaded: {}'.format(self.conf.test_path))
         
-        if item_path:
-            dataset_dict['item_dataset'] = self.spark.read.parquet(self.conf.item_path)
+        if self.conf.item_path:
+            dataset_dict['item'] = self.spark.read.parquet(self.conf.item_path)
             self.logger.info('Item dataset is loaded: {}'.format(self.conf.item_path))
         
         return dataset_dict

@@ -14,34 +14,42 @@
 # limitations under the License.
 #
 
-from pyspark.sql import SparkSession
+from logging import Logger
+
 import pymongo
-from .node import PipelineNode
-from ..utils import start_logging
+import attrs
+from typing import Optional, List
 
-class MongoDBDumperNode(PipelineNode):
-    def __call__(self, **payload) -> dict:
-        
-        mongodb = payload['conf'][self._node_conf]
-        df_to_mongodb = payload['df_to_mongodb']
-        logger = start_logging(**payload['conf']['logging'])
 
-        logger.info('Dump to MongoDB: start')
+@attrs.frozen
+class DumpToMongoDBConfig:
+    write_mode: attrs.field(validator=attrs.validators.matches_re('^append$|^overwrite$'))
+    uri: attrs.field(validator=attrs.validators.matches_re('^mongodb://.+$'))
+    database: str
+    collection: str
+    index_fields: Optional[List[int]]
+    index_unique: Optional[bool]
+    
+
+class DumpToMongoDBModule():
+    def __init__(self, conf: DumpToMongoDBConfig, logger: Logger):
+        self.conf = conf
+        self.logger = logger
+    
+    def run(self, df_to_mongodb) -> dict:
+        self.logger.info('Dump to MongoDB: start')
         df_to_mongodb.write \
             .format("mongo") \
-            .mode(mongodb['write_mode']) \
-            .option("uri", mongodb['uri']) \
-            .option("database", mongodb['database']) \
-            .option("collection", mongodb['collection']) \
+            .mode(self.conf.write_mode) \
+            .option("uri", self.conf.uri) \
+            .option("database", self.conf.database) \
+            .option("collection", self.conf.collection) \
             .save()
         
-        logger.info('Dump to MongoDB: index')
-        if len(mongodb['index_fields']) > 0:
-            client = pymongo.MongoClient(mongodb['connection_uri'])
-            collection = client[mongodb['database']][mongodb['collection']]
-            for field_name in mongodb['index_fields']:
-                collection.create_index([(field_name, pymongo.ASCENDING)], unique=mongodb['index_unique'])
-                
-        logger.info('Dump to MongoDB: done')
-        
-        return payload
+        self.logger.info('Dump to MongoDB: index')
+        if len(self.conf.index_fields) > 0:
+            client = pymongo.MongoClient(self.conf.uri)
+            collection = client[self.conf.database][self.conf.collection]
+            for field_name in self.conf.index_fields:
+                collection.create_index([(field_name, pymongo.ASCENDING)], unique=self.conf.index_unique)           
+        self.logger.info('Dump to MongoDB: done')
