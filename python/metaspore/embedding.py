@@ -79,7 +79,6 @@ class EmbeddingOperator(torch.nn.Module):
                  embedding_size=None,
                  combine_schema_source=None,
                  combine_schema_file_path=None,
-                 delimiter=None,
                  dtype=torch.float32,
                  requires_grad=True,
                  updater=None,
@@ -92,9 +91,6 @@ class EmbeddingOperator(torch.nn.Module):
         if embedding_size is not None:
             if not isinstance(embedding_size, int) or embedding_size <= 0:
                 raise TypeError(f"embedding_size must be positive integer; {embedding_size!r} is invalid")
-        if delimiter is not None:
-            if not isinstance(delimiter, str) or len(delimiter) != 1:
-                raise TypeError(f"delimiter must be string of length 1; {delimiter!r} is invalid")
         if dtype not in (torch.float32, torch.float64):
             raise TypeError(f"dtype must be one of: torch.float32, torch.float64; {dtype!r} is invalid")
         if updater is not None:
@@ -112,7 +108,6 @@ class EmbeddingOperator(torch.nn.Module):
             self.combine_schema_file_path = combine_schema_file_path
         elif combine_schema_source is not None:
             self.combine_schema_source = combine_schema_source
-        self._delimiter = delimiter
         self._dtype = dtype
         self._requires_grad = requires_grad
         self._updater = updater
@@ -158,8 +153,6 @@ class EmbeddingOperator(torch.nn.Module):
             args.append(f"{self._embedding_size}")
         if self._combine_schema_file_path is not None:
             args.append(f"combine_schema_file_path={self._combine_schema_file_path!r}")
-        if self._delimiter is not None:
-            args.append(f"delimiter={self._delimiter!r}")
         if self._dtype is not None and self._dtype is not torch.float32:
             args.append(f"dtype={self._dtype}")
         if not self._requires_grad:
@@ -271,27 +264,6 @@ class EmbeddingOperator(torch.nn.Module):
         if self._combine_schema_file_path is None:
             raise RuntimeError("combine_schema_file_path is not set")
         return self._combine_schema_file_path
-
-    @property
-    @torch.jit.unused
-    def delimiter(self):
-        return self._delimiter
-
-    @delimiter.setter
-    @torch.jit.unused
-    def delimiter(self, value):
-        if value is not None:
-            if not isinstance(value, str) or len(value) != 1:
-                raise TypeError(f"delimiter must be string of length 1; {value!r} is invalid")
-        if self._delimiter is not None:
-            raise RuntimeError(f"can not reset delimiter {self._delimiter!r} to {value!r}")
-        self._delimiter = value
-
-    @torch.jit.unused
-    def _checked_get_delimiter(self):
-        if self._delimiter is None:
-            return '\001'
-        return self._delimiter
 
     @property
     @torch.jit.unused
