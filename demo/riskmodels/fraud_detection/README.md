@@ -8,7 +8,7 @@ As we known, it is very important to recognize fraudulent credit card transactio
 
 |    Dataset    | Model      |  Train AUC | Test AUC |
 |:-------------:|:----------:|:----------:|:--------:|
-| ULB Credit Card |  LightGBM  | `0.9985`  | `0.9715` |
+| ULB Credit Card |  LightGBM  | `0.9982`  | `0.9813` |
 | ULB Credit Card |  Isolation Forest  | `0.9490`  | `0.9772` |
 
 ## How to run
