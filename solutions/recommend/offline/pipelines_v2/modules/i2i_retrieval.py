@@ -49,6 +49,7 @@ class I2IRetrievalModule():
                                     behavior_filter_value = '1',
                                     max_recommendation_count = self.conf.max_recommendation_count)
         self.model = estimator.fit(train_dataset)
+        self.logger.info('I2I - training: done')
     
     def predict(self, test_dataset):
         # prepare trigger item id 
@@ -66,6 +67,7 @@ class I2IRetrievalModule():
         str_schema = "array<struct<name:string,_2:double>>"
         test_result = test_result.withColumn('rec_info', F.col("value").cast(str_schema))
         
+        self.logger.info('I2I - inference: done')
         return test_result
     
     def evaluate(self, test_result):
@@ -85,6 +87,7 @@ class I2IRetrievalModule():
         metric_dict['NDCG@{}'.format(self.metric_position_k)] = metrics.ndcgAt(self.metric_position_k)
         print('Debug -- metric_dict: ', metric_dict)
         
+        self.logger.info('I2I - evaluation: done')
         return metric_dict
         
     
@@ -106,5 +109,6 @@ class I2IRetrievalModule():
         # 4. save model.df to storage if needed.
         if self.conf.model_out_path:
             self.model.df.write.parquet(self.conf.model_out_path, mode="overwrite")
+            self.logger.info('I2I - persistence: done')
         
         return self.model.df, metric_dict
