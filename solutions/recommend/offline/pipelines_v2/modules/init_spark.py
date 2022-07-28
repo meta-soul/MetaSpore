@@ -24,9 +24,9 @@ from pyspark.sql import SparkSession
 
 @attrs.frozen
 class InitSparkConfig:
-    session_confs: Dict
-    extended_confs: Dict
-    pyzip: Optional[Dict]
+    session_confs = attrs.field(validator=attrs.validators.instance_of(Dict))
+    extended_confs = attrs.field(validator=attrs.validators.instance_of(Dict))
+    pyzip = attrs.field(default=None, validator=attrs.validators.instance_of(Dict))
 
 class InitSparkModule():
     def __init__(self, conf: InitSparkConfig, logger: Logger):

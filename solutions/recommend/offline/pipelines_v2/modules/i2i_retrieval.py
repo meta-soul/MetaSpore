@@ -29,9 +29,9 @@ from pyspark.sql import functions as F
 
 @attrs.frozen
 class I2IRetrievalConfig:
-    i2i_estimator_class: Dict[str, str]
-    model_out_path: Optional[str]
-    max_recommendation_count: attrs.field(default=20, validator=[attrs.validators.ge(0), attrs.validators.le(100), attrs.validators.instance_of(int)])
+    i2i_estimator_class = attrs.field(validator=attrs.validators.instance_of(Dict))
+    model_out_path = attrs.field(default=None, validator=attrs.validators.instance_of(str))
+    max_recommendation_count = attrs.field(default=20, validator=[attrs.validators.instance_of(int), attrs.validators.ge(0), attrs.validators.le(100)])
 
 class I2IRetrievalModule():
     def __init__(self, conf: I2IRetrievalConfig, logger: Logger):
@@ -63,7 +63,6 @@ class I2IRetrievalModule():
         test_result = test_result.withColumnRenamed('item_id', 'last_item_id')
         test_result = test_result.withColumnRenamed(original_item_id, 'item_id')
         
-        
         str_schema = "array<struct<name:string,_2:double>>"
         test_result = test_result.withColumn('rec_info', F.col("value").cast(str_schema))
         
@@ -71,7 +70,7 @@ class I2IRetrievalModule():
     
     def evaluate(self, test_result):
         print('Debug -- test sample:')
-        test_result.select(user_id, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
+        test_result.select('user_id', (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
         
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
                                                 [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
@@ -105,8 +104,7 @@ class I2IRetrievalModule():
         metric_dict = self.evaluate(test_result)
         
         # 4. save model.df to storage if needed.
-        print('Debug - model_out_path: ', type(model_out_path))
-        if model_out_path:
-            model.df.write.parquet(self.conf.model_out_path, mode="overwrite")
+        if self.conf.model_out_path:
+            self.model.df.write.parquet(self.conf.model_out_path, mode="overwrite")
         
-        return model.df, metric_dict
+        return self.model.df, metric_dict

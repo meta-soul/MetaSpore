@@ -4,7 +4,7 @@ import argparse
 import yaml
 from pipelines_v2.utils import start_logging
 import cattrs
-from pipelines_v2.modules import DataLoaderModule, DataLoaderConfig, InitSparkModule, InitSparkConfig, I2IRetrievalModule, I2IRetrievalConfig, DumpToMongoDBModule, DumpToMongoDBConfig
+from pipelines_v2.modules import InitSparkModule, InitSparkConfig, DataLoaderModule, DataLoaderConfig, I2IRetrievalModule, I2IRetrievalConfig, DumpToMongoDBModule, DumpToMongoDBConfig
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -27,6 +27,8 @@ if __name__ == '__main__':
     # 2. load dataset
     dataLoaderModule = DataLoaderModule(cattrs.structure(spec['dataset'], DataLoaderConfig), spark, logger)
     dataset_dict = dataLoaderModule.run()
+    # the logic below will be removed when FG generate the dataset using some 
+    # conventional column names such as 'label', 'user_id', 'last_item_id', etc.
     import pyspark.sql.functions as F
     for key in dataset_dict:
         df = dataset_dict[key]
@@ -34,5 +36,13 @@ if __name__ == '__main__':
         df = df.withColumn('last_item_id', F.col('item_id'))
         dataset_dict[key] = df
     
-    # 
+    # 3. train, predict and evaluate
+    i2IRetrievalModule = I2IRetrievalModule(cattrs.structure(spec['training'], I2IRetrievalConfig), logger)
+    model_df_to_mongo, metric_dict = i2IRetrievalModule.run(dataset_dict['train'], dataset_dict['test'])
+    
+    # 4. dump to mongo_db
+    dumpToMongoDBModule = DumpToMongoDBModule(cattrs.structure(spec['mongodb'], DumpToMongoDBConfig), logger)
+    dumpToMongoDBModule.run(model_df_to_mongo)
+    
+    # 5. stop spark session
     spark.stop()

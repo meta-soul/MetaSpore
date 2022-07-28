@@ -22,9 +22,9 @@ from pyspark.sql import SparkSession, DataFrame
 
 @attrs.frozen
 class DataLoaderConfig:
-    train_path: str
-    test_path: str
-    item_path: Optional[str] = attrs.field(default=None)
+    train_path = attrs.field(validator=attrs.validators.instance_of(str))
+    test_path = attrs.field(validator=attrs.validators.instance_of(str))
+    item_path = attrs.field(default=None, validator=attrs.validators.instance_of((type(None),str)))
 
 class DataLoaderModule():
     def __init__(self, conf: DataLoaderConfig, spark: SparkSession, logger: Logger):

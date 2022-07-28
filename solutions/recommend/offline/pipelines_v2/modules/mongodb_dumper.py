@@ -23,12 +23,12 @@ from typing import Optional, List
 
 @attrs.frozen
 class DumpToMongoDBConfig:
-    write_mode: attrs.field(validator=attrs.validators.matches_re('^append$|^overwrite$'))
-    uri: attrs.field(validator=attrs.validators.matches_re('^mongodb://.+$'))
-    database: str
-    collection: str
-    index_fields: Optional[List[int]]
-    index_unique: Optional[bool]
+    write_mode = attrs.field(validator=attrs.validators.matches_re('^append$|^overwrite$'))
+    uri = attrs.field(validator=attrs.validators.matches_re('^mongodb://.+$'))
+    database = attrs.field(validator=attrs.validators.instance_of(str))
+    collection = attrs.field(validator=attrs.validators.instance_of(str))
+    index_fields = attrs.field(default=[], validator=attrs.validators.instance_of(List))
+    index_unique = attrs.field(default=None, validator=attrs.validators.instance_of((type(None), bool)))
     
 
 class DumpToMongoDBModule():
