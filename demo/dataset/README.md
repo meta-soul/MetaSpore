@@ -14,6 +14,7 @@ Here is the overview of the datasets:
 | [Census](#Census)               | [MMoE Demo](../multitask/mmoe/)                    | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
 | [Ali-CCP](#Ali-CCP)             | [ESMM Demo](../multitask/esmm/)                    | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
 | [Tianchi-Loan](#Tianchi-Loan)             | [Loan Default Demo](../riskmodels/loan_default/)                    | [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
+| [ULB-CreditCard](#ULB-CreditCard)             | [Fraud Detection Demo](../riskmodels/fraud_detection/)                    | [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) |
 
 ## Initialize the Configuration Files
 First of all, we should initialize the config files from their YAML template for substituting some variables. For example
@@ -162,3 +163,13 @@ First we should download this dataset from [Tianchi Loan Default Estimation Comp
 
 ### Feature Generation
 After the download is completed, we can use execute [fg.ipynb](./tianchi_loan/fg.ipynb) to generate numerical features that are using in our models.
+
+
+## ULB-CreditCard
+In this section, We will introduce how to process the dataset of [ULB Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud).
+
+### Download Data
+First we should download this dataset from [ULB Credit Card Fraud Detection on Kaggle](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) mannually.
+
+### Feature Generation
+After the download is completed, we can use execute [fg.ipynb](./ulb_creditcard/fg.ipynb) to generate numerical features and upsample the positive samples using [SMOTE](https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html) that are using in our models.

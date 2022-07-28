@@ -1,0 +1,38 @@
+## spark session
+app_name: CreditCard Fraud Detection
+executor_memory: '8G'
+executor_instances: '4'
+executor_cores: '4'
+default_parallelism: '400'
+
+## input dataset configuration
+train_path: ${MY_S3_BUCKET}/risk/ulb/creditcard_train.csv
+test_path: ${MY_S3_BUCKET}/risk/ulb/creditcard_test.csv
+
+## output dataset configuration
+eval_out_path: ${MY_S3_BUCKET}/risk/ulb/eval_test_dataset.parquet
+
+## labelCol
+label_col: Class
+
+## lightgbm hyper params
+model_params:
+  boostingType: gbdt
+  objective: binary
+  metric: auc
+  numLeaves: 7
+  maxDepth: 4
+  minDataInLeaf: 100
+  maxBin: 100
+  minGainToSplit: 0.0
+  featureFraction: 0.7
+  baggingFraction: 0.9
+  baggingFreq: 1
+  learningRate: 0.01
+  numIterations: 300
+  earlyStoppingRound: 100
+  verbosity: 1
+  numThreads: 16
+
+## model export
+model_onnx_path: ${MY_S3_BUCKET}/risk/ulb/model/lightgbm/onnx_out/lightgbm.onnx
