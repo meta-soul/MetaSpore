@@ -121,32 +121,28 @@ def convert_model(lgbm_model: LGBMClassifier or Booster, input_size: int) -> byt
     onnx_model = convert_lightgbm(lgbm_model, initial_types=initial_types, target_opset = 9)
     return onnx_model   
 
-def get_onnx_model(model, len_data_columns):
+def get_onnx_model(model, len_data_columns, model_onnx_path, **kwargs):
+    ## convert to onnx model
     booster_model_str = model.getLightGBMBooster()
     booster_model_str = booster_model_str.modelStr()
     booster_model_str = booster_model_str.get()
     booster = lgb.Booster(model_str = booster_model_str)
     onnx_model = convert_model(booster, len_data_columns)
-    return onnx_model
-
-def save_onnx_model(onnx_model, model_onnx_path, **kwargs):
-    onnxmltools.utils.save_model(onnx_model,'lightgbm.onnx')
-    loaded_model = onnxmltools.utils.load_model('lightgbm.onnx')
+    ## save model file
+    onnxmltools.utils.save_model(onnx_model, 'lightgbm.onnx')
     subprocess.run(['aws', 's3', 'cp', 'lightgbm.onnx', model_onnx_path], cwd='./')
-    print(type(onnx_model))
-    print(type(loaded_model))
+    ## load onnx model
+    loaded_model = onnxmltools.utils.load_model('lightgbm.onnx')
     return loaded_model
 
-def load_onnx(onnx_ml):
+
+def launch_onnx_model(loaded_model, **kwargs):
+    from synapse.ml.onnx import ONNXModel
+    onnx_ml = ONNXModel().setModelPayload(loaded_model.SerializeToString())
     onnx_ml = onnx_ml.setDeviceType("CPU") \
                      .setFeedDict({"input": "features"}) \
                      .setFetchDict({"probability": "probabilities", "prediction": "label"}) \
                      .setMiniBatchSize(5000)
-    return onnx_ml
-
-def launch_onnx_model(loaded_model):
-    from synapse.ml.onnx import ONNXModel
-    onnx_ml = ONNXModel().setModelPayload(loaded_model.SerializeToString())
     print("Model inputs:" + str(onnx_ml.getModelInputs()))
     print("Model outputs:" + str(onnx_ml.getModelOutputs()))
     print("Model type:" )
@@ -196,9 +192,7 @@ if __name__=="__main__":
     write_dataset_to_s3(predictions, **params)
     ## convert model to onnx format & load the model
     print("Debug -- transform lightgbm model into ONNX format...") 
-    onnx_model = get_onnx_model(model,len(train_dataset.columns)-1)
-    loaded_model = save_onnx_model(onnx_model, **params)
-    onnx_ml = launch_onnx_model(loaded_model)
+    loaded_model = get_onnx_model(model,len(train_dataset.columns)-1, **params)
+    onnx_model = launch_onnx_model(loaded_model)
     ## predicting using onnx lightgbm model
-    onnx_ml = load_onnx(onnx_ml)
-    onnx_transform(onnx_ml, test_data)
+    onnx_transform(onnx_model, test_data)
