@@ -19,6 +19,7 @@ from logging import Logger
 import pymongo
 import attrs
 from typing import Optional, List
+from pyspark.sql import DataFrame
 
 
 @attrs.frozen
@@ -36,7 +37,10 @@ class DumpToMongoDBModule():
         self.conf = conf
         self.logger = logger
     
-    def run(self, df_to_mongodb) -> dict:
+    def run(self, df_to_mongodb) -> None:
+        if not isinstance(df_to_mongodb, DataFrame):
+            raise ValueError("Type of df_to_mongodb must be DataFrame.")
+        
         self.logger.info('Dump to MongoDB: start')
         df_to_mongodb.write \
             .format("mongo") \
