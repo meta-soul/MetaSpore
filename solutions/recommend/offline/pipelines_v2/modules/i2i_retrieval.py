@@ -17,7 +17,6 @@
 from logging import Logger
 
 import metaspore as ms
-from logging import Logger
 from ..utils import get_class
 
 import attrs

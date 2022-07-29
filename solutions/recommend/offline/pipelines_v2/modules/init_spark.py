@@ -59,5 +59,5 @@ class InitSparkModule():
         self.logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl: {}'\
                      .format( sc.version, sc.applicationId, sc.uiWebUrl))
         
-        return spark
+        return spark, session_confs['worker_count'], session_confs['server_count']
     
