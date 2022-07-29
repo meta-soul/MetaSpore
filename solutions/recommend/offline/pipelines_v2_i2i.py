@@ -22,7 +22,7 @@ if __name__ == '__main__':
     
     # 1. init spark
     initSparkModule = InitSparkModule(cattrs.structure(spec['spark'], InitSparkConfig), logger)
-    spark = initSparkModule.run()
+    spark, _, _ = initSparkModule.run()
     
     # 2. load dataset
     dataLoaderModule = DataLoaderModule(cattrs.structure(spec['dataset'], DataLoaderConfig), spark, logger)

@@ -48,7 +48,7 @@ class DeepCTRModule():
         
         self.logger.info('DeepCTR - training: done')
     
-    def evaluate(self, test_result):
+    def evaluate(self, train_result, test_result):
         train_evaluator = BinaryClassificationEvaluator()
         test_evaluator = BinaryClassificationEvaluator()
         
@@ -60,7 +60,7 @@ class DeepCTRModule():
         self.logger.info('DeepCTR - evaluation: done')
         return metric_dict
     
-    def run(self, train_dataset, test_dataset, worker_count, server_count) -> :
+    def run(self, train_dataset, test_dataset, worker_count, server_count) -> Dict[str, float]:
         if not isinstance(train_dataset, DataFrame):
             raise ValueError("Type of train_dataset must be DataFrame.")
         if not isinstance(test_dataset, DataFrame):
@@ -70,8 +70,8 @@ class DeepCTRModule():
         self.train(train_dataset, worker_count, server_count)
         
         # 2. transform train and test data using self.model
-        train_result = model.transform(train_dataset)
-        test_result = model.transform(test_dataset)
+        train_result = self.model.transform(train_dataset)
+        test_result = self.model.transform(test_dataset)
         self.logger.info('DeepCTR - inference: done')
         
         # 3. get metric dictionary (metric name -> metric value)
