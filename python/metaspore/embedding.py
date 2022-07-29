@@ -21,6 +21,7 @@ import torch
 from . import _metaspore
 from ._metaspore import SparseFeatureExtractor
 from ._metaspore import HashUniquifier
+from .feature_group import SparseFeatureGroup
 from .url_utils import is_url
 from .url_utils import use_s3
 from .file_utils import file_exists
@@ -91,6 +92,10 @@ class EmbeddingOperator(torch.nn.Module):
         if embedding_size is not None:
             if not isinstance(embedding_size, int) or embedding_size <= 0:
                 raise TypeError(f"embedding_size must be positive integer; {embedding_size!r} is invalid")
+        if isinstance(combine_schema_source, SparseFeatureGroup):
+            if combine_schema_file_path is not None:
+                raise ValueError("can not specify combine_schema_file_path when SparseFeatureGroup is provided")
+            combine_schema_source = combine_schema_source.schema_source
         if dtype not in (torch.float32, torch.float64):
             raise TypeError(f"dtype must be one of: torch.float32, torch.float64; {dtype!r} is invalid")
         if updater is not None:

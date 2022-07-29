@@ -33,6 +33,7 @@ set(python_files
     python/metaspore/agent.py
     python/metaspore/metric.py
     python/metaspore/loss_utils.py
+    python/metaspore/feature_group.py
     python/metaspore/embedding.py
     python/metaspore/cast.py
     python/metaspore/input.py

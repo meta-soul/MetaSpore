@@ -43,7 +43,9 @@ dependencies = [
     'boto3>=1.17.41',
     'python-consul>=1.1.0',
     'findspark>=1.4.2',
-    'tabulate'
+    'attrs>=21.4.0',
+    'cattrs>=22.1.0',
+    'tabulate>=0.8.9',
 ]
 
 [project.urls]
