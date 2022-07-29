@@ -252,6 +252,19 @@ public class FeatureConfig {
                 type = JoinTypeEnum.INNER;
             }
 
+            public static Condition reverse(Condition cond) {
+                Condition condition = new Condition();
+                condition.left = cond.getRight();
+                condition.right = cond.getLeft();
+                if (cond.getType() == JoinTypeEnum.LEFT) {
+                    condition.setType(JoinTypeEnum.RIGHT);
+                }
+                if (cond.getType() == JoinTypeEnum.RIGHT) {
+                    condition.setType(JoinTypeEnum.LEFT);
+                }
+                return condition;
+            }
+
             public static Condition create(Map<String, String> data) {
                 if (MapUtils.isEmpty(data)) {
                     log.error("feature condition config is wrong");

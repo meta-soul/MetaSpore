@@ -17,8 +17,6 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.Chain;
-import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -26,7 +24,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -36,8 +33,8 @@ import java.util.Map;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation
-public abstract class ItemMatcherTask extends AlgoTransform {
+@DataServiceAnnotation("ItemMatcher")
+public class ItemMatcherTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
     public static final int DEFAULT_MAX_RESERVATION = 50;
 
@@ -49,10 +46,7 @@ public abstract class ItemMatcherTask extends AlgoTransform {
     private String userProfileWeightCol;
 
     @Override
-    public boolean initService() {
-        if (!super.initService()) {
-            return false;
-        }
+    public boolean initTask() {
         algoLevel = getOptionOrDefault("algoLevel", DEFAULT_ALGO_LEVEL);
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         algoName = getOptionOrDefault("algo-name", "itemCF");

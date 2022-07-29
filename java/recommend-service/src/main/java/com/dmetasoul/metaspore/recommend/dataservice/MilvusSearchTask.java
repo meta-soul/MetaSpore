@@ -17,13 +17,10 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.serving.PredictGrpc;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.response.SearchResultsWrapper;
 import lombok.Data;
@@ -38,10 +35,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("rawtypes")
-@Data
 @Slf4j
-@DataServiceAnnotation
-public abstract class MilvusSearchTask extends AlgoTransform {
+@DataServiceAnnotation("MilvusSearch")
+public class MilvusSearchTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
     public static final int DEFAULT_MAX_RESERVATION = 50;
     private int algoLevel;
@@ -56,10 +52,7 @@ public abstract class MilvusSearchTask extends AlgoTransform {
     private String milvusItemIdCol;
 
     @Override
-    public boolean initService() {
-        if (!super.initService()) {
-            return false;
-        }
+    public boolean initTask() {
         algoLevel = getOptionOrDefault("algoLevel", DEFAULT_ALGO_LEVEL);
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         algoName = getOptionOrDefault("algo-name", "itemCF");

@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Map;
 import java.util.UUID;
 
+import static com.dmetasoul.metaspore.recommend.common.Utils.genResultKey;
 import static com.dmetasoul.metaspore.recommend.common.Utils.getObjectToMap;
 /**
  * 用于服务请求中的上下文数据
@@ -77,5 +78,13 @@ public class DataContext {
         results.put(name, result);
     }
 
+    public DataResult getResult(String name, String taskName) {
+        String key = genResultKey(name, taskName);
+        return results.get(key);
+    }
+    public void setResult(String name, String taskName, DataResult result) {
+        String key = genResultKey(name, taskName);
+        results.put(key, result);
+    }
 
 }

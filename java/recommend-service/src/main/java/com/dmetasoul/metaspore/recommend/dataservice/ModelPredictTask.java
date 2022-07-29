@@ -17,7 +17,6 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -26,22 +25,20 @@ import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.dmetasoul.metaspore.serving.PredictGrpc;
 import com.dmetasoul.metaspore.serving.ServingClient;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation
-public abstract class ModelPredictTask extends AlgoTransform {
+@DataServiceAnnotation("ModelPredict")
+public class ModelPredictTask extends AlgoTransformTask {
     public static final String DEFAULT_MODEL_NAME = "two_towers_simplex";
     public static final String TARGET_KEY = "output";
     public static final int TARGET_INDEX = -1;
@@ -53,21 +50,30 @@ public abstract class ModelPredictTask extends AlgoTransform {
     private String host;
     private int port;
 
+    private ManagedChannel channel;
+
     private PredictGrpc.PredictBlockingStub client;
 
     @Override
-    public boolean initService() {
-        if (!super.initService()) {
-            return false;
-        }
+    public boolean initTask() {
         modelName = getOptionOrDefault("modelName", DEFAULT_MODEL_NAME);
         targetKey = getOptionOrDefault("targetKey", TARGET_KEY);
         targetIndex = getOptionOrDefault("targetIndex", TARGET_INDEX);
         host = getOptionOrDefault("host", "127.0.0.1");
         port = getOptionOrDefault("port", 9091);
-        ManagedChannel channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+        channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
         client = PredictGrpc.newBlockingStub(channel);
         return true;
+    }
+    @Override
+    public void close() {
+        try {
+            while(!channel.isTerminated() && channel.awaitTermination(10, TimeUnit.MILLISECONDS)) {
+                Thread.yield();
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

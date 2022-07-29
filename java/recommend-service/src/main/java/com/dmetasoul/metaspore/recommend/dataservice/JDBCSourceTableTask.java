@@ -30,7 +30,7 @@ import java.util.*;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation
+@DataServiceAnnotation("JDBCSourceTable")
 public class JDBCSourceTableTask extends SourceTableTask {
 
     private JDBCSource dataSource;
@@ -61,7 +61,7 @@ public class JDBCSourceTableTask extends SourceTableTask {
             parts.add(String.format("%s in(:%s)", col, col));
             params.put(col, list);
         } else {
-            parts.add(String.format("%s =:%s)", col, col));
+            parts.add(String.format("%s =:%s", col, col));
             params.put(col, value);
         }
     }
@@ -96,6 +96,6 @@ public class JDBCSourceTableTask extends SourceTableTask {
             }
             return list;
         }));
-        return dataSource.process(request, context);
+        return result;
     }
 }

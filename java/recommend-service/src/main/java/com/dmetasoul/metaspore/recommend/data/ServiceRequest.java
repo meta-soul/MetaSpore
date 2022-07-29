@@ -40,19 +40,26 @@ import java.util.Set;
 @Data
 public class ServiceRequest implements java.io.Serializable {
     private Map<String, Object> data;
-    private int limit;
+    private int limit = 100;
 
     public ServiceRequest(DataContext context) {
         if (context != null&& MapUtils.isNotEmpty(context.getRequest())) {
             Map<String, Object> request = context.getRequest();
-            this.limit = (int) request.getOrDefault("limit", -1);
+            this.limit = (int) request.getOrDefault("limit", 100);
+        }
+    }
+
+    public ServiceRequest(Map<String, Object> req) {
+        if (MapUtils.isNotEmpty(req)) {
+            data = Maps.newHashMap();
+            data.putAll(req);
         }
     }
 
     public ServiceRequest(ServiceRequest req, DataContext context) {
         if (context != null&& MapUtils.isNotEmpty(context.getRequest())) {
             Map<String, Object> request = context.getRequest();
-            this.limit = (int) request.getOrDefault("limit", -1);
+            this.limit = (int) request.getOrDefault("limit", 100);
         }
         this.copy(req);
     }

@@ -59,7 +59,7 @@ public class AlgoInferenceTask extends DataService {
         Chain chain = new Chain();
         List<String> depends = List.of(algoInference.getDepend());
         chain.setThen(depends);
-        chains.add(chain);
+        taskFlow.offer(chain);
         this.taskPool = taskServiceRegister.getTaskPool();
         functionMap = taskServiceRegister.getFunctions();
         return true;

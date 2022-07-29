@@ -16,32 +16,43 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.functions.Function;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public abstract class AlgoTransform extends DataService {
+public abstract class AlgoTransformTask extends DataService {
+
+    private ExecutorService taskPool;
 
     protected FeatureConfig.AlgoTransform config;
+
+    private Map<String, Function> functionMap;
 
     @Override
     public boolean initService() {
         config = taskFlowConfig.getAlgoTransforms().get(name);
-        chains.add(config.getDepend());
-        return true;
+        taskFlow.offer(config.getDepend());
+        return initTask();
     }
+
+    public abstract boolean initTask();
 
     public <T> T getOptionOrDefault(String key, T value) {
         return Utils.getField(config.getOptions(), key, value);
     }
 
     @Override
-    public abstract DataResult process(ServiceRequest request, DataContext context);
+    public DataResult process(ServiceRequest request, DataContext context) {
+        return null;
+    }
 }

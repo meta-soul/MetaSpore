@@ -21,7 +21,7 @@ feature-service:
       kind: redis
       options:
         cluster: false  # if true, is redis cluster, else is standalone redis
-          # redis cluster need nodes in options
+        # redis cluster need nodes in options
         # redis standalone need host and port in options
         host: localhost # if not set, default localhost
         port: 6379      # if not set, default 6379
@@ -77,6 +77,17 @@ feature-service:
         - movie_avg_rating: double
         - movie_greater_than_three_rate: double
         - watch_volume: double
+    - name: itemcfData
+      source: mongodb
+      columns:
+        - id: str
+        - item_id: str
+    - name: milvusItem
+      source: mongodb
+      columns:
+        - id: str
+        - title: str
+        - cfValues: str
     - name: usercf
       source: recall
       opType: hash  # opType is only use for redis, opType in (list, value, hash, set, zset), only hash has more 2 columns
@@ -87,26 +98,15 @@ feature-service:
     - name: twotowerRecall
       source: modelRecall
       columns:
-        - user_id: str
-        - item_id: str
+        - id: str
         - itemScore: double
   Feature:
-    - name: twoTower_user
-      from: [ userAction, userProfile]
-      select: [ userAction.user_id, userAction.recent_movie_ids, gender, age, name ]
+    - name: feature_user
+      from: [ userAction, userProfile, userReq]
+      select: [ userProfile.user_id, userAction.recent_movie_ids, gender, age, name, userReq.language ]
       condition:
         - userAction.user_id: userProfile.user_id
-    - name: twoTower_user2
-      from: [ userAction, userProfile, userReq]
-      select: [ userAction.user_id, userAction.recent_movie_ids, gender, age, name, language ]
-      condition:
-        - userAction.user_id: userProfile.user_id
-        - userAction.user_id: userReq.user_id
-    - name: twoTower_user3
-      from: [ userAction, userProfile, userReq]
-      select: [ userAction.user_id, userAction.recent_movie_ids, gender, age, name, language ]
-      condition:
-        - userProfile.user_id: userReq.user_id
+          type: right
         - userAction.user_id: userReq.user_id
     - name: lightGBM
       from: [ userAction, itemInfo, Recall ]
@@ -119,9 +119,14 @@ feature-service:
       select: [ userProfileData.item_id, userProfileData.score, itemcfData.cfValues ]
       condition:
         - itemcfData.id: userProfileData.item_id
+    - name: itemcf
+      from: [ userProfileData, itemcfData ]
+      select: [ userProfileData.item_id, userProfileData.score, itemcfData.cfValues ]
+      condition:
+        - itemcfData.id: userProfileData.item_id
   AlgoInference:
     - name: algoTwoTowerUser
-      depend: twoTower_user
+      depend: feature_user
       fieldActions:
         - name: user_id
     - name: algoLightGBM
@@ -131,7 +136,9 @@ feature-service:
         - name: user_movie_avg_rating
   AlgoTransform:
     - name: userProfileData
-      chains: [userAction]
+      service: UserProfile
+      depend:
+        then: [feature_user]
       columns:
         - item_id: str
         - score: double
@@ -140,13 +147,16 @@ feature-service:
       options:
         itemCfAlgoLevel: 3
         itemCfMaxReservation: 200
-      chains: [itemcf]
+      depend:
+        then: [itemcf]
       columns:
         - item_id: str
         - score: double
         - scores: map
     - name: SwingMatcher
       service: ItemMatcher
+      depend:
+        then: [itemcf]
       options:
         swingAlgoLevel: 3
         swingMaxReservation: 200
@@ -154,9 +164,16 @@ feature-service:
         - item_id: str
         - score: double
         - scores: map
+    - name: TwoTowerEmbedding
+      service: ModelPredict
+      depend:
+        then: [algoTwoTowerUser]
     - name: TwoTowersMatcher
-      depend: [ algoTwoTowerUser, twotowerRecall ]   # depend: xxx  xxx 必须是FeatureService中配置的数据资源
+      service: MilvusSearch
+      depend:
+        then: [ TwoTowerEmbedding, twotowerRecall, milvusItem ]
       options:
+        milvusCollectionName: two_towers_simplex
         twoTowersSimpleXModelName: two_towers_simplex
         twoTowersSimpleXAlgoLevel: 3
         twoTowersSimpleXMaxReservation: 200
@@ -165,6 +182,9 @@ feature-service:
         - score: double
         - scores: map
     - name: WideAndDeepRanker
+      service: ModelPredict
+      depend:
+        then: algoLightGBM
       options:
         modelName: movie_lens_wdl
         ranker: WideAndDeepRanker
@@ -176,12 +196,16 @@ feature-service:
         - item_id: str
         - score: double
     - name: LightGBMRanker
-      depend: algoLightGBM
+      service: ModelPredict
+      depend:
+        then: algoLightGBM
       options:
         modelName: lightgbm_test_model
       columns:
         - item_id: str
         - score: double
+recommend-service:
+  Services:
     - name: diversifyBaseService
       options:
         useDiversify: true
@@ -199,7 +223,6 @@ feature-service:
       columns:
         - item_id: str
         - score: double
-recommend-service:
   Layers:
     - name: userModel
       experiments:
@@ -228,7 +251,7 @@ recommend-service:
   Experiments:
     - name: userModel.base
       chains:
-        - then: userService
+        - then: userProfileData
     - name: match.base
       options:
         maxReservation: 200

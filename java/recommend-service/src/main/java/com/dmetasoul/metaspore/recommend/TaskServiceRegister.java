@@ -18,7 +18,6 @@ package com.dmetasoul.metaspore.recommend;
 
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
 import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
-import com.dmetasoul.metaspore.recommend.annotation.RecommendAnnotation;
 import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
 import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
 import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
@@ -129,7 +128,7 @@ public class TaskServiceRegister {
         }
     }
 
-    public DataService getTaskService(String name) {
+    public DataService getDataService(String name) {
         return dataServices.get(name);
     }
     /**
@@ -137,19 +136,18 @@ public class TaskServiceRegister {
      */
     public void initDataService() {
         dataServices = Maps.newHashMap();
-        Map<String, FeatureConfig.Source> sources = taskFlowConfig.getSources();
         taskFlowConfig.getSourceTables().forEach((name, config) -> {
             SourceTableTask task;
-            String sourceName = config.getSource();
-            FeatureConfig.Source source = sources.get(sourceName);
-            if (source.getKind().equals("jdbc")) {
+            if (config.getKind().equals("jdbc")) {
                 task = SpringBeanUtil.getBean(JDBCSourceTableTask.class);
-            } else if (source.getKind().equals("redis")) {
+            } else if (config.getKind().equals("redis")) {
                 task = SpringBeanUtil.getBean(RedisSourceTableTask.class);
-            } else if (source.getKind().equals("mongodb")) {
+            } else if (config.getKind().equals("mongodb")) {
                 task = SpringBeanUtil.getBean(MongoDBSourceTableTask.class);
+            } else if (config.getKind().equals("milvus")) {
+                task = SpringBeanUtil.getBean(MilvusSourceTableTask.class);
             } else {
-                task = SpringBeanUtil.getBean(SourceTableTask.class);
+                task = (SourceTableTask) SpringBeanUtil.getBean("SourceTable");
             }
             if (task == null) {
                 log.error("the sourceTableTask:{} load fail!", name);
@@ -186,7 +184,7 @@ public class TaskServiceRegister {
             }
         });
         taskFlowConfig.getAlgoTransforms().forEach((name, config) -> {
-            AlgoTransform task = (AlgoTransform) SpringBeanUtil.getBean(config.getService());
+            AlgoTransformTask task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getService());
             if (task == null) {
                 log.error("the AlgoTransformTask:{} load fail!", name);
                 throw new RuntimeException(String.format("the AlgoTransformTask:%s load fail!", name));

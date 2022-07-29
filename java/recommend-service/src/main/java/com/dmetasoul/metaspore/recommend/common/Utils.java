@@ -34,6 +34,9 @@ import java.util.Map;
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
 public class Utils {
+    public static String genResultKey(String name, String taskName) {
+        return String.format("%s_%s", name, taskName);
+    }
     public static MetricType getMetricType(int index) {
         if (index < 0 || index >= MetricType.values().length) {
             index = 0;

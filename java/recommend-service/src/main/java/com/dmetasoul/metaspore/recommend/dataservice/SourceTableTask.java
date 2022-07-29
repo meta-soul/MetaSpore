@@ -32,7 +32,7 @@ import java.util.concurrent.*;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation
+@DataServiceAnnotation("SourceTable")
 public class SourceTableTask extends DataService {
 
     private DataSource dataSource;

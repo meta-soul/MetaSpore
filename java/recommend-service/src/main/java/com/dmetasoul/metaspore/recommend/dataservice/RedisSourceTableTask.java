@@ -32,7 +32,7 @@ import java.util.Map;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation
+@DataServiceAnnotation("RedisSourceTable")
 public class RedisSourceTableTask extends SourceTableTask {
 
     private RedisSource dataSource;

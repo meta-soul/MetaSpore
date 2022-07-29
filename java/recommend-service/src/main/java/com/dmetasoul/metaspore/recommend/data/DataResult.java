@@ -150,6 +150,14 @@ public class DataResult {
         return resultType != ResultTypeEnum.EMPTY && resultType != ResultTypeEnum.EXCEPTION;
     }
 
+    public boolean isNull() {
+        return (resultType == ResultTypeEnum.VALUES && values == null) ||
+                (resultType == ResultTypeEnum.DATA && data == null) ||
+                (resultType == ResultTypeEnum.FEATUREARRAYS && featureArray == null) ||
+                (resultType == ResultTypeEnum.FEATURETABLE && featureTable == null) ||
+                (resultType == ResultTypeEnum.PREDICTRESULT && predictResult == null);
+    }
+
     public static DataResult merge(List<DataResult> dataResults, String name) {
         DataResult result = null;
         if (CollectionUtils.isEmpty(dataResults)) return result;
@@ -242,4 +250,57 @@ public class DataResult {
         return null;
     }
 
+    public <T> T get(String field) {
+        if (!isVaild() && isNull()) return null;
+        switch (resultType) {
+            case VALUES:
+                return (T) values.get(field);
+            case DATA:
+                List<Object> ids = Lists.newArrayList();
+                for (Map item : data) {
+                    ids.add(item.get(field));
+                }
+                return (T) ids;
+            case FEATUREARRAYS:
+                return (T) featureArray.getArray(field);
+            default:
+                return null;
+        }
+    }
+
+    public List<Object> getList(String field) {
+        if (!isVaild() && isNull()) return null;
+        switch (resultType) {
+            case VALUES:
+                return List.of(values.get(field));
+            case DATA:
+                List<Object> ids = Lists.newArrayList();
+                for (Map item : data) {
+                    ids.add(item.get(field));
+                }
+                return ids;
+            case FEATUREARRAYS:
+                return featureArray.getArray(field);
+            default:
+                return null;
+        }
+    }
+
+    public List<Map> getData(List<String> columnNames) {
+        List<Map> data = Lists.newArrayList();
+        if (!isVaild() && isNull()) return data;
+        for (String col : columnNames) {
+            List<Object> items = getList(col);
+            for (int i = 0; i < items.size(); ++i) {
+                if (i < data.size()) {
+                    data.get(i).put(col, items.get(i));
+                } else {
+                    Map<String, Object> map = Maps.newHashMap();
+                    map.put(col, items.get(i));
+                    data.add(map);
+                }
+            }
+        }
+        return data;
+    }
 }

@@ -23,9 +23,9 @@ public class Chain {
 
     private boolean isAny;
 
-    private Long timeOut;
+    private Long timeOut = 30000L;
 
-    private TimeUnit timeOutUnit;
+    private TimeUnit timeOutUnit = TimeUnit.MILLISECONDS;
     private List<String> columnNames;
     private Map<String, String> columnMap;
     private List<Map<String, String>> columns;
@@ -54,6 +54,39 @@ public class Chain {
         this.isAny = isAny;
         this.timeOut = timeOut;
         this.timeOutUnit = timeOutUnit;
+    }
+
+    public Chain(List<String> then, List<String> when, boolean isAny) {
+        this.then = then;
+        this.when = when;
+        this.isAny = isAny;
+    }
+
+    public Chain(String taskName) {
+        this.then = List.of(taskName);
+    }
+
+    public boolean isEmpty() {
+        return CollectionUtils.isEmpty(then) && CollectionUtils.isEmpty(when);
+    }
+
+    public boolean noChanged(Chain chain) {
+        if (chain == null) {
+            return isEmpty();
+        }
+        if (CollectionUtils.isNotEmpty(then) && CollectionUtils.isNotEmpty(chain.getThen()) && then.size() != chain.getThen().size()) {
+            return false;
+        }
+        if (CollectionUtils.isNotEmpty(when) && CollectionUtils.isNotEmpty(chain.getWhen()) && when.size() != chain.getWhen().size()) {
+            return false;
+        }
+        if (CollectionUtils.isNotEmpty(when) != CollectionUtils.isNotEmpty(chain.getWhen())) {
+            return false;
+        }
+        if (CollectionUtils.isNotEmpty(then) != CollectionUtils.isNotEmpty(chain.getThen())) {
+            return false;
+        }
+        return true;
     }
 
     public void setColumnMap(List<Map<String, String>> columnMap) {

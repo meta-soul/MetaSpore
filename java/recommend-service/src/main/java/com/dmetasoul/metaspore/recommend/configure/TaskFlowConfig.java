@@ -15,6 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.configure;
 
+import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -31,6 +32,8 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 服务配置汇总与初始化
  * Created by @author qinyy907 in 14:24 22/07/15.
@@ -59,14 +62,21 @@ public class TaskFlowConfig {
 
     @PostConstruct
     public void checkAndInit() {
-        for (FeatureConfig.Source item: featureConfig.getSource()) {
+        featureCheckAndInit();
+        recommendCheckAndInit();
+        checkFeatureAndInit();
+        checkAlgoInference();
+    }
+
+    public void featureCheckAndInit() {
+        for (FeatureConfig.Source item : featureConfig.getSource()) {
             if (!item.checkAndDefault()) {
                 log.error("Source item {} is check fail!", item.getName());
                 throw new RuntimeException("Source check fail!");
             }
             sources.put(item.getName(), item);
         }
-        for (FeatureConfig.SourceTable item: featureConfig.getSourceTable()) {
+        for (FeatureConfig.SourceTable item : featureConfig.getSourceTable()) {
             FeatureConfig.Source source = sources.get(item.getSource());
             if (source == null) {
                 log.error("SourceTable: {} source {} is not config!", item.getName(), item.getSource());
@@ -83,7 +93,7 @@ public class TaskFlowConfig {
             item.setKind(source.getKind());
             sourceTables.put(item.getName(), item);
         }
-        for (FeatureConfig.Feature item: featureConfig.getFeature()) {
+        for (FeatureConfig.Feature item : featureConfig.getFeature()) {
             if (!item.checkAndDefault()) {
                 log.error("Feature item {} is check fail!", item.getName());
                 throw new RuntimeException("Feature check fail!");
@@ -109,6 +119,8 @@ public class TaskFlowConfig {
             }
             algoTransforms.put(item.getName(), item);
         }
+    }
+    public void recommendCheckAndInit() {
         for (RecommendConfig.Service item: recommendConfig.getServices()) {
             if (!item.checkAndDefault()) {
                 log.error("Service item {} is check fail!", item.getName());
@@ -131,19 +143,24 @@ public class TaskFlowConfig {
                 if (CollectionUtils.isNotEmpty(chain.getThen())) {
                     for (int i = 0; i < chain.getThen().size(); ++i) {
                         String rely = chain.getThen().get(i);
-                        if (!services.containsKey(rely)) {
-                            log.error("Experiment: {} Service {} is not config in then!", item.getName(), rely);
+                        if (!services.containsKey(rely) && !algoTransforms.containsKey(rely)) {
+                            log.error("Experiment: {} Service or algotransform {} is not config in then!", item.getName(), rely);
                             throw new RuntimeException("Experiment check fail!");
                         }
                         if (CollectionUtils.isEmpty(chain.getColumnNames()) && i == chain.getThen().size() - 1) {
                             RecommendConfig.Service service = services.get(rely);
-                            chain.setColumnMap(service.getColumns());
+                            if (service != null) {
+                                chain.setColumnMap(service.getColumns());
+                            } else {
+                                FeatureConfig.AlgoTransform algoTransform = algoTransforms.get(rely);
+                                chain.setColumnMap(algoTransform.getColumns());
+                            }
                         }
                     }
                 }
                 if (CollectionUtils.isNotEmpty(chain.getWhen())) {
                     for (String rely : chain.getWhen()) {
-                        if (!services.containsKey(rely)) {
+                        if (!services.containsKey(rely) && !algoTransforms.containsKey(rely)) {
                             log.error("Experiment: {} Service {} is not config in when!", item.getName(), rely);
                             throw new RuntimeException("Experiment check fail!");
                         }
@@ -215,8 +232,6 @@ public class TaskFlowConfig {
             }
             scenes.put(item.getName(), item);
         }
-        checkFeatureAndInit();
-        checkAlgoInference();
     }
 
     private void checkAlgoInference() {
@@ -245,19 +260,16 @@ public class TaskFlowConfig {
     private void checkFeatureAndInit() {
         for (FeatureConfig.Feature item: featureConfig.getFeature()) {
             Set<String> immediateSet = Sets.newHashSet();
-            if (CollectionUtils.isNotEmpty(item.getImmediateFrom())) {
-                immediateSet.addAll(item.getImmediateFrom());
-            }
             Map<String, String> fieldMap = Maps.newHashMap();
             Map<String, Map<String, String>> columnTypes = Maps.newHashMap();
             Map<String, List<String>> fromColumns = Maps.newHashMap();
             for (String rely : item.getFrom()) {
-                if (!sourceTables.containsKey(rely) && !features.containsKey(rely) && !chains.containsKey(rely)) {
+                if (!sourceTables.containsKey(rely) && !features.containsKey(rely) && !chains.containsKey(rely) && !algoTransforms.containsKey(rely)) {
                     log.error("Feature: {} rely {} is not config!", item.getName(), rely);
                     throw new RuntimeException("Feature check fail!");
                 }
                 // 默认feature， chain数据都是计算好的中间结果，可以直接获取到
-                if (features.containsKey(rely) || chains.containsKey(rely) || sources.get(sourceTables.get(rely).getSource()).getKind().equals("request")) {
+                if (!sourceTables.containsKey(rely) || sourceTables.get(rely).getKind().equals("request")) {
                     immediateSet.add(rely);
                 }
                 List<String> columnNames = null;
@@ -272,6 +284,10 @@ public class TaskFlowConfig {
                 if (chains.containsKey(rely)) {
                     columnNames = chains.get(rely).getColumnNames();
                     columnTypes.put(rely, chains.get(rely).getColumnMap());
+                }
+                if (algoTransforms.containsKey(rely)) {
+                    columnNames = algoTransforms.get(rely).getColumnNames();
+                    columnTypes.put(rely, algoTransforms.get(rely).getColumnMap());
                 }
                 fromColumns.put(rely, columnNames);
                 if (CollectionUtils.isNotEmpty(columnNames)) {
@@ -297,31 +313,33 @@ public class TaskFlowConfig {
                 Map<String, String> columnType = columnTypes.get(field.getTable());
                 columns.put(field.getFieldName(), columnType.get(field.getFieldName()));
             }
-            for (Map.Entry<FeatureConfig.Feature.Field, Map<FeatureConfig.Feature.Field, String>> entry: item.getFilterMap().entrySet()) {
-                FeatureConfig.Feature.Field field = entry.getKey();
-                if (field.getTable() != null && !columnTypes.containsKey(field.getTable())) {
-                    log.error("Feature config the field of filters, field table' must be in the rely!");
-                    throw new RuntimeException("Feature check fail!");
-                }
-                if (field.getTable() == null) {
-                    if (fieldMap.get(field.getFieldName()) == null) {
-                        log.error("Feature: {} filters field: {} has wrong column field!", item.getName(), field.fieldName);
+            if (MapUtils.isNotEmpty(item.getFilterMap())) {
+                for (Map.Entry<FeatureConfig.Feature.Field, Map<FeatureConfig.Feature.Field, String>> entry : item.getFilterMap().entrySet()) {
+                    FeatureConfig.Feature.Field field = entry.getKey();
+                    if (field.getTable() != null && !columnTypes.containsKey(field.getTable())) {
+                        log.error("Feature config the field of filters, field table' must be in the rely!");
                         throw new RuntimeException("Feature check fail!");
                     }
-                    field.setTable(fieldMap.get(field.getFieldName()));
-                }
-                for (Map.Entry<FeatureConfig.Feature.Field, String> entry1 : entry.getValue().entrySet()) {
-                    FeatureConfig.Feature.Field field1 = entry1.getKey();
-                    if (field1.getTable() != null && !columnTypes.containsKey(field1.getTable())) {
-                        log.error("Feature config the field of filter, field table' must be in the rely!");
-                        throw new RuntimeException("Feature check fail!");
-                    }
-                    if (field1.getTable() == null) {
-                        if (fieldMap.get(field1.getFieldName()) == null) {
-                            log.error("Feature: {} filter field: {} has wrong column field!", item.getName(), field1.fieldName);
+                    if (field.getTable() == null) {
+                        if (fieldMap.get(field.getFieldName()) == null) {
+                            log.error("Feature: {} filters field: {} has wrong column field!", item.getName(), field.fieldName);
                             throw new RuntimeException("Feature check fail!");
                         }
-                        field1.setTable(fieldMap.get(field1.getFieldName()));
+                        field.setTable(fieldMap.get(field.getFieldName()));
+                    }
+                    for (Map.Entry<FeatureConfig.Feature.Field, String> entry1 : entry.getValue().entrySet()) {
+                        FeatureConfig.Feature.Field field1 = entry1.getKey();
+                        if (field1.getTable() != null && !columnTypes.containsKey(field1.getTable())) {
+                            log.error("Feature config the field of filter, field table' must be in the rely!");
+                            throw new RuntimeException("Feature check fail!");
+                        }
+                        if (field1.getTable() == null) {
+                            if (fieldMap.get(field1.getFieldName()) == null) {
+                                log.error("Feature: {} filter field: {} has wrong column field!", item.getName(), field1.fieldName);
+                                throw new RuntimeException("Feature check fail!");
+                            }
+                            field1.setTable(fieldMap.get(field1.getFieldName()));
+                        }
                     }
                 }
             }
@@ -336,10 +354,14 @@ public class TaskFlowConfig {
                                 item.getName(), cond.left.getTable(), cond.left.getFieldName(), cond.right.getFieldName());
                         throw new RuntimeException("Feature check fail!");
                     }
-                    List<FeatureConfig.Feature.Condition> listLeft = conditionMap.computeIfAbsent(cond.left.getTable(), key->Lists.newArrayList());
-                    List<FeatureConfig.Feature.Condition> listRight = conditionMap.computeIfAbsent(cond.right.getTable(), key->Lists.newArrayList());
-                    listLeft.add(cond);
-                    listRight.add(cond);
+                    if (cond.getType() == JoinTypeEnum.INNER) {
+                        conditionMap.computeIfAbsent(cond.left.getTable(), key->Lists.newArrayList()).add(cond);
+                        conditionMap.computeIfAbsent(cond.right.getTable(), key->Lists.newArrayList()).add(FeatureConfig.Feature.Condition.reverse(cond));
+                    } else if (cond.getType() == JoinTypeEnum.LEFT) {
+                        conditionMap.computeIfAbsent(cond.right.getTable(), key->Lists.newArrayList()).add(FeatureConfig.Feature.Condition.reverse(cond));
+                    } else if (cond.getType() == JoinTypeEnum.RIGHT) {
+                        conditionMap.computeIfAbsent(cond.left.getTable(), key->Lists.newArrayList()).add(cond);
+                    }
                 }
             }
             item.getFrom().forEach(x->{

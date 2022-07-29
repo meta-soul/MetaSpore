@@ -17,7 +17,6 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -25,10 +24,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,17 +33,14 @@ import static com.dmetasoul.metaspore.recommend.common.Utils.getField;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation
-public abstract class UserProfileask extends AlgoTransform {
+@DataServiceAnnotation("UserProfile")
+public class UserProfileTask extends AlgoTransformTask {
     private double alpha;
     private String colRecentItemIds;
     private static String splitor = "\u0001";
 
     @Override
-    public boolean initService() {
-        if (!super.initService()) {
-            return false;
-        }
+    public boolean initTask() {
         alpha = getOptionOrDefault("alpha", 1.0);
         return true;
     }

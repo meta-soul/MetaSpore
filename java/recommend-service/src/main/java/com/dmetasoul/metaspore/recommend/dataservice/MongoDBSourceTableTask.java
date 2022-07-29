@@ -39,7 +39,7 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation
+@DataServiceAnnotation("MongoDBSourceTable")
 public class MongoDBSourceTableTask extends SourceTableTask {
 
     private MongoDBSource dataSource;
@@ -54,6 +54,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         }
         FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
         columns = sourceTable.getColumnMap().keySet();
+        columnsObject = new Document();
         columns.forEach(col-> columnsObject.put(col, 1));
         queryObject=new Document();
         List<Map<String, Map<String, Object>>> filters = sourceTable.getFilters();

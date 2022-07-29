@@ -19,17 +19,14 @@ import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
+import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.data.ServiceResult;
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.google.common.collect.Maps;
-import com.google.gson.JsonParser;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.bson.json.JsonObject;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.json.GsonJsonParser;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 /**
@@ -63,15 +59,18 @@ public class ServiceController {
      * Created by @author qinyy907 in 14:24 22/07/15.
      */
     @RequestMapping(value = "/get/{task}", method = POST, produces = "application/json")
-    public ServiceResult getTaskData(@PathVariable String task, @RequestBody Map<String, Object> req) {
-        log.info("get task :{}, request:{}", task, req);
-        log.info("test services: {}", taskServiceRegister.getDataServices().get("twoTower_user4"));
-
-        DataService taskService = taskServiceRegister.getTaskService(task);
+    public ServiceResult getDataServiceResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
+        DataService taskService = taskServiceRegister.getDataService(task);
         if (taskService == null) {
             return ServiceResult.of(-1, "taskService is not exist!");
         }
-        DataResult result = taskService.execute(new DataContext(req));
+        DataResult result;
+        DataContext context = new DataContext(req);
+        if (taskFlowConfig.getSourceTables().containsKey(task) && !taskFlowConfig.getSourceTables().get(task).getKind().equals("request")) {
+            result = taskService.execute(new ServiceRequest(req), context);
+        } else {
+            result = taskService.execute(context);
+        }
         if (result == null) {
             return ServiceResult.of(-1, "taskService execute fail!");
         }
@@ -91,7 +90,7 @@ public class ServiceController {
      */
     @RequestMapping(value = "/recommend/{scene}/{id}", method = POST, produces = "application/json")
     public ServiceResult recommend(@PathVariable String scene, @PathVariable String id, @RequestBody Map<String, Object> req) {
-        DataService taskService = taskServiceRegister.getTaskService(scene);
+        DataService taskService = taskServiceRegister.getDataService(scene);
         if (taskService == null) {
             return ServiceResult.of(-1, String.format("scene:%s is not support!", scene));
         }
@@ -114,47 +113,5 @@ public class ServiceController {
             result.setValues(values);
         }
         return ServiceResult.of(result, id);
-    }
-
-    /**
-     * for debug configure use
-     * @param name config name
-     * @return config content
-     */
-    @RequestMapping(value = "/config/{name}", method = GET, produces = "application/json")
-    public ServiceResult getConfig(@PathVariable String name) {
-        log.info("get config :{}", name);
-        Map<String, Object> values = Maps.newHashMap();
-        values.put(name, null);
-        if (taskFlowConfig.getServices() != null && taskFlowConfig.getServices().containsKey(name)) {
-            values.put(name, taskFlowConfig.getServices().get(name));
-        }
-        if (taskFlowConfig.getChains() != null && taskFlowConfig.getChains().containsKey(name)) {
-            values.put(name, taskFlowConfig.getChains().get(name));
-        }
-        if (taskFlowConfig.getAlgoTransforms() != null && taskFlowConfig.getAlgoTransforms().containsKey(name)) {
-            values.put(name, taskFlowConfig.getAlgoTransforms().get(name));
-        }
-        if (taskFlowConfig.getFeatures() != null && taskFlowConfig.getFeatures().containsKey(name)) {
-            values.put(name, taskFlowConfig.getFeatures().get(name));
-        }
-        if (taskFlowConfig.getSourceTables() != null && taskFlowConfig.getSourceTables().containsKey(name)) {
-            values.put(name, taskFlowConfig.getSourceTables().get(name));
-        }
-        if (taskFlowConfig.getLayers() != null && taskFlowConfig.getLayers().containsKey(name)) {
-            values.put(name, taskFlowConfig.getLayers().get(name));
-        }
-        if (taskFlowConfig.getScenes() != null && taskFlowConfig.getScenes().containsKey(name)) {
-            values.put(name, taskFlowConfig.getScenes().get(name));
-        }
-        if (taskFlowConfig.getExperiments() != null && taskFlowConfig.getExperiments().containsKey(name)) {
-            values.put(name, taskFlowConfig.getExperiments().get(name));
-        }
-        if (taskFlowConfig.getSources() != null && taskFlowConfig.getSources().containsKey(name)) {
-            values.put(name, taskFlowConfig.getSources().get(name));
-        }
-        DataResult result = new DataResult();
-        result.setValues(values);
-        return ServiceResult.of(result);
     }
 }

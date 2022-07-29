@@ -50,12 +50,10 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.getEnumB
 
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation
+@DataServiceAnnotation("MilvusSourceTable")
 public class MilvusSourceTableTask extends SourceTableTask {
 
     private MilvusSource dataSource;
-    private Document columnsObject;
-    private Document queryObject;
     private Set<String> columns;
 
     @Override
@@ -65,7 +63,6 @@ public class MilvusSourceTableTask extends SourceTableTask {
         }
         FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
         columns = sourceTable.getColumnMap().keySet();
-        columns.forEach(col -> columnsObject.put(col, 1));
         return true;
     }
 
