@@ -34,16 +34,40 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
-
+/**
+ * Feature的DataService的实现类
+ * Feature用于从一个或多个数据表中select相关字段，数据表之间按照join条件连接在一起，并通过where条件对连接好的数据进行过滤
+ * 注解DataServiceAnnotation 必须设置
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation
 public class FeatureTask extends DataService {
-
+    /**
+     * Feature相关的配置数据对象
+     */
     private FeatureConfig.Feature feature;
+    /**
+     * 不需要设置查询条件，直接获取数据的数据表集合
+     * 比如request数据，
+     *    其他可直接计算的数据（参与join的feature数据被认为是直接可以计算获得数据的数据）
+     */
     private Set<String> immediateTables;
-
+    /**
+     * select字段，按照from的表分类，生成表-->字段的映射，用于计算数据的辅助数据
+     */
     private Map<String, List<FeatureConfig.Feature.Field>> fieldMap;
+    /**
+     * join条件处理：
+     * 如果 A inner join B on A.a = B.b, B inner join C on B.b = C.c
+     * 如果获取A表的数据，需要构建查询条件 where A.a = B.b
+     *    获取B表的数据，需要构建查询条件 where B.b = A.a and B.b = C.c
+     *    获取C表的数据，需要构建查询条件 where C.c = B.b
+     * 假设C表的数据已经成功获取到了， 可构建rewritedField映射 B.b -> C.c, A.a -> C.c
+     * 如果获取A表的数据，需要构建查询条件 where A.a = C.c
+     *    获取B表的数据，需要构建查询条件 where B.b = C.c and B.b = C.c
+     */
     private Map<FeatureConfig.Feature.Field, FeatureConfig.Feature.Field> rewritedField;
 
     @Override

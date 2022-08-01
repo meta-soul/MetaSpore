@@ -36,7 +36,12 @@ import org.springframework.data.mongodb.core.query.Query;
 import java.util.*;
 
 import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
-
+/**
+ * 针对source.kind=mongodb的SourceTable的DataService的实现类
+ * 调用MongoDB DataSource获取MongoDB中的数据
+ * 注解DataServiceAnnotation 必须设置， value应设置为MongoDBSourceTable。
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation("MongoDBSourceTable")

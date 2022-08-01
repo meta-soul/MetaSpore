@@ -47,7 +47,12 @@ import java.util.Set;
 
 import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.IN;
 import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.getEnumByName;
-
+/**
+ * 针对source.kind=Milvus的SourceTable的DataService的实现类
+ * 调用Milvus DataSource获取Milvus中的数据
+ * 注解DataServiceAnnotation 必须设置， value应设置为MilvusSourceTable。
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation("MilvusSourceTable")

@@ -29,7 +29,12 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
+/**
+ * 针对source.kind=redis的SourceTable的DataService的实现类
+ * 调用redis DataSource获取redis中的数据
+ * 注解DataServiceAnnotation 必须设置， value应设置为RedisSourceTable。
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation("RedisSourceTable")

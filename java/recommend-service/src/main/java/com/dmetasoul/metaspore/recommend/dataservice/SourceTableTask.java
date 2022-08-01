@@ -16,7 +16,6 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
@@ -24,12 +23,13 @@ import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
-
-import java.util.*;
 import java.util.concurrent.*;
-
+/**
+ * SourceTable的DataService的实现类
+ * SourceTable用于调用source数据源信息请求相关数据，sourcetable配置定义了数据的schema和部分条件
+ * 注解DataServiceAnnotation 必须设置， value应设置为SourceTable。
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation("SourceTable")
@@ -49,32 +49,31 @@ public class SourceTableTask extends DataService {
 
     @Override
     public boolean checkResult(DataResult result) {
-        if (result == null) {
-            log.warn("result is null!");
+        if (!super.checkResult(result)) {
             return false;
         }
-        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-        for (String col : sourceTable.getColumnNames()) {
-            String type = sourceTable.getColumnMap().get(col);
-            Class dataClass = DataTypes.getDataClass(type);
-            if (MapUtils.isNotEmpty(result.getValues())) {
-                Map<String, Object> data = result.getValues();
-                Object value = data.get(col);
-                if (value != null && !dataClass.isInstance(value)) {
-                    log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-                    // return false;
-                }
-            }
-            if (CollectionUtils.isNotEmpty(result.getData())) {
-                for (Map data : result.getData()) {
-                    Object value = data.get(col);
-                    if (value != null && !dataClass.isInstance(value)) {
-                        log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-                        // return false;
-                    }
-                }
-            }
-        }
+//        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
+//        for (String col : sourceTable.getColumnNames()) {
+//            String type = sourceTable.getColumnMap().get(col);
+//            Class dataClass = DataTypes.getDataClass(type);
+//            if (MapUtils.isNotEmpty(result.getValues())) {
+//                Map<String, Object> data = result.getValues();
+//                Object value = data.get(col);
+//                if (value != null && !dataClass.isInstance(value)) {
+//                    log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
+//                    // return false;
+//                }
+//            }
+//            if (CollectionUtils.isNotEmpty(result.getData())) {
+//                for (Map data : result.getData()) {
+//                    Object value = data.get(col);
+//                    if (value != null && !dataClass.isInstance(value)) {
+//                        log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
+//                        // return false;
+//                    }
+//                }
+//            }
+//        }
         return true;
     }
 
