@@ -14,13 +14,15 @@
 # limitations under the License.
 #
 
-from logging import Logger
-
+import logging
 import attrs
-from typing import Optional, Dict
 import metaspore as ms
 import subprocess
+
+from typing import Optional, Dict
 from pyspark.sql import SparkSession
+
+logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class InitSparkConfig:
@@ -29,9 +31,8 @@ class InitSparkConfig:
     pyzip = attrs.field(default=None, validator=attrs.validators.instance_of(Dict))
 
 class InitSparkModule():
-    def __init__(self, conf: InitSparkConfig, logger: Logger):
+    def __init__(self, conf: InitSparkConfig):
         self.conf = conf
-        self.logger = logger
     
     def run(self) -> SparkSession:
         session_confs = self.conf.session_confs
@@ -56,8 +57,8 @@ class InitSparkModule():
                                      coordinator_memory=session_confs['coordinator_memory'] or '5G',
                                      spark_confs=extended_confs)
         sc = spark.sparkContext
-        self.logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl: {}'\
-                     .format( sc.version, sc.applicationId, sc.uiWebUrl))
+        logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl: {}'\
+              .format( sc.version, sc.applicationId, sc.uiWebUrl))
         
         return spark, session_confs['worker_count'], session_confs['server_count']
     

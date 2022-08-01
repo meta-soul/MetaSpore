@@ -17,7 +17,7 @@
 import sys
 import logging
 
-LOG_FORMAT  = '[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s'
+LOG_FORMAT  = '%(asctime)s [%(levelname)s] {%(name)s-%(filename)s:%(lineno)s} %(message)s'
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 DEFAULT_LEVEL = 'info'
 LEVELS = {
@@ -28,10 +28,14 @@ LEVELS = {
     'critical':logging.CRITICAL
 }
 
-def setup_logging(loglevel=None, **params):
+def setup_logging(loglevel=None, name=None, **params):
     loglevel = LEVELS[loglevel] if loglevel else logging.INFO    
-    logging.basicConfig(level=loglevel, 
-                        datefmt=DATE_FORMAT, 
-                        format=LOG_FORMAT, 
-                        handlers=[logging.StreamHandler(sys.stdout)], 
-                        force=True)
+    formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
+    console_handler = logging.StreamHandler(stream=sys.stdout)
+    console_handler.setLevel(loglevel)
+    console_handler.setFormatter(formatter)
+    logger = logging.getLogger(name)
+    logger.addHandler(console_handler)
+    logger.setLevel(logging.DEBUG)
+    logger.propagate = False
+    return logger

@@ -14,13 +14,15 @@
 # limitations under the License.
 #
 
-from logging import Logger
-
 import pymongo
 import attrs
+import logging
+
+from logging import Logger
 from typing import Optional, List
 from pyspark.sql import DataFrame
 
+logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class DumpToMongoDBConfig:
@@ -33,15 +35,14 @@ class DumpToMongoDBConfig:
     
 
 class DumpToMongoDBModule():
-    def __init__(self, conf: DumpToMongoDBConfig, logger: Logger):
+    def __init__(self, conf: DumpToMongoDBConfig):
         self.conf = conf
-        self.logger = logger
     
     def run(self, df_to_mongodb) -> None:
         if not isinstance(df_to_mongodb, DataFrame):
             raise ValueError("Type of df_to_mongodb must be DataFrame.")
         
-        self.logger.info('Dump to MongoDB: start')
+        logger.info('Dump to MongoDB: start')
         df_to_mongodb.write \
             .format("mongo") \
             .mode(self.conf.write_mode) \
@@ -50,10 +51,10 @@ class DumpToMongoDBModule():
             .option("collection", self.conf.collection) \
             .save()
         
-        self.logger.info('Dump to MongoDB: index')
+        logger.info('Dump to MongoDB: index')
         if len(self.conf.index_fields) > 0:
             client = pymongo.MongoClient(self.conf.uri)
             collection = client[self.conf.database][self.conf.collection]
             for field_name in self.conf.index_fields:
                 collection.create_index([(field_name, pymongo.ASCENDING)], unique=self.conf.index_unique)           
-        self.logger.info('Dump to MongoDB: done')
+        logger.info('Dump to MongoDB: done')

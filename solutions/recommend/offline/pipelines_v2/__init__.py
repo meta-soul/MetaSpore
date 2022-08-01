@@ -13,3 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+
+'''
+Initalize the logging settings for this package, avoid the conflicts with the root logging.
+'''
+from .utils.logger import setup_logging as setup_logging_core
+def setup_logging(loglevel=None, **params):
+    setup_logging_core(loglevel, __name__)

@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
-from logging import Logger
+import logging
 
 import attrs
 from typing import Optional, Dict
 from pyspark.sql import SparkSession, DataFrame
+
+logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class DataLoaderConfig:
@@ -27,22 +29,21 @@ class DataLoaderConfig:
     item_path = attrs.field(default=None, validator=attrs.validators.instance_of((type(None),str)))
 
 class DataLoaderModule():
-    def __init__(self, conf: DataLoaderConfig, spark: SparkSession, logger: Logger):
+    def __init__(self, conf: DataLoaderConfig, spark: SparkSession):
         self.conf = conf
         self.spark = spark
-        self.logger = logger
     
     def run(self) -> Dict[str, DataFrame]:
         dataset_dict = {}
         
         dataset_dict['train'] = self.spark.read.parquet(self.conf.train_path)
-        self.logger.info('Train dataset is loaded: {}'.format(self.conf.train_path))
+        logger.info('Train dataset is loaded: {}'.format(self.conf.train_path))
         
         dataset_dict['test'] = self.spark.read.parquet(self.conf.test_path)
-        self.logger.info('Test dataset is loaded: {}'.format(self.conf.test_path))
+        logger.info('Test dataset is loaded: {}'.format(self.conf.test_path))
         
         if self.conf.item_path:
             dataset_dict['item'] = self.spark.read.parquet(self.conf.item_path)
-            self.logger.info('Item dataset is loaded: {}'.format(self.conf.item_path))
+            logger.info('Item dataset is loaded: {}'.format(self.conf.item_path))
         
         return dataset_dict

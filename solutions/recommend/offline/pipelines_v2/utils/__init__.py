@@ -14,6 +14,5 @@
 # limitations under the License.
 #
 
-from .logger import setup_logging
 from .class_utils import get_class
 # from .elasticsearch_utils import *

@@ -14,17 +14,18 @@
 # limitations under the License.
 #
 
-from logging import Logger
-
 import metaspore as ms
-from ..utils import get_class
-
 import attrs
+import logging
+
+from logging import Logger
 from typing import Dict, Tuple, Optional
 from pyspark.sql import DataFrame
 from pyspark.mllib.evaluation import RankingMetrics
 from pyspark.sql import functions as F 
+from ..utils import get_class
 
+logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class I2IRetrievalConfig:
@@ -33,9 +34,8 @@ class I2IRetrievalConfig:
     max_recommendation_count = attrs.field(default=20, validator=[attrs.validators.instance_of(int), attrs.validators.ge(0), attrs.validators.le(100)])
 
 class I2IRetrievalModule():
-    def __init__(self, conf: I2IRetrievalConfig, logger: Logger):
+    def __init__(self, conf: I2IRetrievalConfig):
         self.conf = conf
-        self.logger = logger
         self.model = None
         self.metric_position_k = 20
         
@@ -48,7 +48,7 @@ class I2IRetrievalModule():
                                     behavior_filter_value = '1',
                                     max_recommendation_count = self.conf.max_recommendation_count)
         self.model = estimator.fit(train_dataset)
-        self.logger.info('I2I - training: done')
+        logger.info('I2I - training: done')
     
     def predict(self, test_dataset):
         # prepare trigger item id 
@@ -66,7 +66,7 @@ class I2IRetrievalModule():
         str_schema = "array<struct<name:string,_2:double>>"
         test_result = test_result.withColumn('rec_info', F.col("value").cast(str_schema))
         
-        self.logger.info('I2I - inference: done')
+        logger.info('I2I - inference: done')
         return test_result
     
     def evaluate(self, test_result):
@@ -86,7 +86,7 @@ class I2IRetrievalModule():
         metric_dict['NDCG@{}'.format(self.metric_position_k)] = metrics.ndcgAt(self.metric_position_k)
         print('Debug -- metric_dict: ', metric_dict)
         
-        self.logger.info('I2I - evaluation: done')
+        logger.info('I2I - evaluation: done')
         return metric_dict
         
     
@@ -108,6 +108,6 @@ class I2IRetrievalModule():
         # 4. save model.df to storage if needed.
         if self.conf.model_out_path:
             self.model.df.write.parquet(self.conf.model_out_path, mode="overwrite")
-            self.logger.info('I2I - persistence: done')
+            logger.info('I2I - persistence: done')
         
         return self.model.df, metric_dict

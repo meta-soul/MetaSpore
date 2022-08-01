@@ -14,14 +14,16 @@
 # limitations under the License.
 #
 
-from logging import Logger
-
 import metaspore as ms
-from ..utils import get_class
 import attrs
+import logging
+
 from typing import Dict, Tuple, Optional
 from pyspark.sql import DataFrame
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
+from ..utils import get_class
+
+logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class DeepCTRConfig:
@@ -30,9 +32,8 @@ class DeepCTRConfig:
     estimator_params = attrs.field(validator=attrs.validators.instance_of(Dict))
     
 class DeepCTRModule():
-    def __init__(self, conf: DeepCTRConfig, logger: Logger):
+    def __init__(self, conf: DeepCTRConfig):
         self.conf = conf
-        self.logger = logger
         self.model = None
         
     def train(self, train_dataset, worker_count, server_count):
@@ -46,7 +47,7 @@ class DeepCTRModule():
         estimator.updater = ms.AdamTensorUpdater(self.conf.estimator_params['adam_learning_rate'])
         self.model = estimator.fit(train_dataset)
         
-        self.logger.info('DeepCTR - training: done')
+        logger.info('DeepCTR - training: done')
     
     def evaluate(self, train_result, test_result):
         train_evaluator = BinaryClassificationEvaluator()
@@ -57,7 +58,7 @@ class DeepCTRModule():
         metric_dict['test_auc'] = test_evaluator.evaluate(test_result)
         print('Debug -- metric_dict: ', metric_dict)
         
-        self.logger.info('DeepCTR - evaluation: done')
+        logger.info('DeepCTR - evaluation: done')
         return metric_dict
     
     def run(self, train_dataset, test_dataset, worker_count, server_count) -> Dict[str, float]:
@@ -72,7 +73,7 @@ class DeepCTRModule():
         # 2. transform train and test data using self.model
         train_result = self.model.transform(train_dataset)
         test_result = self.model.transform(test_dataset)
-        self.logger.info('DeepCTR - inference: done')
+        logger.info('DeepCTR - inference: done')
         
         # 3. get metric dictionary (metric name -> metric value)
         metric_dict = self.evaluate(train_result, test_result)
