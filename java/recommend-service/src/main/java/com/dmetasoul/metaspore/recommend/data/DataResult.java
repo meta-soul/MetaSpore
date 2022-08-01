@@ -268,8 +268,8 @@ public class DataResult {
         }
     }
 
-    public List<Object> getList(String field) {
-        if (!isVaild() && isNull()) return null;
+    public List<Object> getList(String field, List<Object> value) {
+        if (!isVaild() && isNull()) return value;
         switch (resultType) {
             case VALUES:
                 return List.of(values.get(field));
@@ -282,8 +282,12 @@ public class DataResult {
             case FEATUREARRAYS:
                 return featureArray.getArray(field);
             default:
-                return null;
+                return value;
         }
+    }
+
+    public List<Object> getList(String field) {
+        return getList(field, Lists.newArrayList());
     }
 
     public List<Map> getData(List<String> columnNames) {

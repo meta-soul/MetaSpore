@@ -118,28 +118,8 @@ public class FeatureTask extends DataService {
         if (result == null) {
             return featureArray;
         }
-        if (MapUtils.isNotEmpty(result.getValues())) {
-            for (String fieldName : feature.getFromColumns().get(table)) {
-                Object value = result.getValues().get(fieldName);
-                featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), List.of(value));
-            }
-        } else if (CollectionUtils.isNotEmpty(result.getData())) {
-            for (String fieldName : feature.getFromColumns().get(table)) {
-                List<Object> ids = Lists.newArrayList();
-                for (Map item : result.getData()) {
-                    ids.add(item.get(fieldName));
-                }
-                featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), ids);
-            }
-        } else if (result.getFeatureArray() != null) {
-            for (String fieldName : feature.getFromColumns().get(table)) {
-                DataResult.FeatureArray data = result.getFeatureArray();
-                featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), data.getArray(fieldName));
-            }
-        } else {
-            for (String fieldName : feature.getFromColumns().get(table)) {
-                featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), Lists.newArrayList());
-            }
+        for (String fieldName : feature.getFromColumns().get(table)) {
+            featureArray.put(new FeatureConfig.Feature.Field(table, fieldName), result.getList(fieldName));
         }
         return featureArray;
     }
@@ -165,7 +145,7 @@ public class FeatureTask extends DataService {
                 (table.equals(cond.getRight().getTable()) && joinedTable.contains(cond.getLeft().getTable()));
     }
 
-    public Map<FeatureConfig.Feature.Field, List<Object>> JoinFeatureArray(String table, List<FeatureConfig.Feature.Condition> conditions, Map<FeatureConfig.Feature.Field, List<Object>> data, Map<FeatureConfig.Feature.Field, List<Object>> joinTable) {
+    public Map<FeatureConfig.Feature.Field, List<Object>> JoinFeatureArray(List<FeatureConfig.Feature.Condition> conditions, Map<FeatureConfig.Feature.Field, List<Object>> data, Map<FeatureConfig.Feature.Field, List<Object>> joinTable) {
         Map<FeatureConfig.Feature.Field, List<Object>> result = Maps.newHashMap();
         Set<Pair<Integer, Integer>> indexSet = Sets.newHashSet();
         List<Pair<Integer, Integer>> indexResult = Lists.newArrayList();
@@ -288,7 +268,7 @@ public class FeatureTask extends DataService {
                     }
                 });
                 if (!conditions.isEmpty()) {
-                    joinTable = JoinFeatureArray(table, conditions, data.get(table), joinTable);
+                    joinTable = JoinFeatureArray(conditions, data.get(table), joinTable);
                     joinedTables.add(table);
                 }
             }

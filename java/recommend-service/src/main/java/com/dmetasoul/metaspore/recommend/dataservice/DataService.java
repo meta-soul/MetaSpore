@@ -21,32 +21,56 @@ import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.enums.ResultTypeEnum;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.*;
-
+/**
+ * DataService的base类
+ * DataService用于实现各种数据获取和计算的任务，DataService Task互相组织在一起构成一系列任务流，来完成实现推荐服务中的服务功能
+ * DataService 依赖配置中的FeatureConfig， 服务实例注册在类TaskServiceRegister中。
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @Slf4j
 public abstract class DataService {
+    /**
+     *  DataService 名称 与配置feature-config中sourcetable， feature， algoInference， algotransform的name对应
+     */
     protected String name;
+    /**
+     *  用于执行DataService任务流的线程池
+     */
     protected ExecutorService workFlowPool;
+    /**
+     *  配置数据对象
+     */
     protected TaskFlowConfig taskFlowConfig;
+    /**
+     *  DataService的依赖任务队列。
+     *  为了支持更灵活的DataService任务，相关依赖任务执行过程中，可以根据需要动态的添加相关的依赖任务，来完成更复杂的数据转换计算任务
+     */
     protected LinkedBlockingQueue<Chain> taskFlow;
+    /**
+     *  DataService的依赖任务流chain未能执行成功重新加入执行队列的次数。
+     */
     protected int executeNum = 1;
-
+    /**
+     *  对于某些依赖任务执行比较确定的DataService，初始化过程中确定的依赖任务执行流程chain。
+     */
     protected Chain depend;
-    protected Map<String, DataService> dataServices;
+    /**
+     *  DataService实例注册类对象
+     *  服务实例注册在类TaskServiceRegister中。
+     */
     protected TaskServiceRegister taskServiceRegister;
-
+    /**
+     *  DataService base 类初始化， 外部使用DataService需要调用此函数进行初始化
+     *  DataService实例不能通过Autowired注解来获取配置数据对象，DataService实例注册类对象和线程池对象，所以需要在init初始化的时候加载进来
+     */
     public boolean init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister taskServiceRegister, ExecutorService workFlowPool) {
         if (StringUtils.isEmpty(name)) {
             log.error("name is null or taskServices is null , init fail!");
@@ -54,15 +78,22 @@ public abstract class DataService {
         }
         this.name = name;
         this.workFlowPool = workFlowPool;
-        this.dataServices = taskServiceRegister.getDataServices();
         this.taskFlowConfig = taskFlowConfig;
         this.taskServiceRegister = taskServiceRegister;
         this.taskFlow = new LinkedBlockingQueue<>();
         return initService();
     }
+    /**
+     *  DataService 具体实现子类初始化， 由base类init函数调用，对外不可见
+     */
     protected abstract boolean initService();
+    /**
+     *  用于DataService 具体实现子类关闭外部服务连接等操作
+     */
     public void close() {}
-
+    /**
+     *  用于验证DataService生成的result是否正确，保证输出的result为正确结果
+     */
     public boolean checkResult(DataResult result) {
         if (result == null) {
             return false;
@@ -75,10 +106,12 @@ public abstract class DataService {
             log.warn("task: {} result data is null!", name);
             return false;
         }
-        result.setName(name);
         return true;
     }
-
+    /**
+     *  根据DataService的依赖任务的名称taskName，获取由该DataService调用taskName的任务生成的结果
+     *  这里认为同一个DataService在执行同一个请求的过程中，多次执行依赖任务taskName，获取的都是相同的数据结果
+     */
     public DataResult getDataResultByName(String taskName, DataContext context) {
         DataResult result = context.getResult(name, taskName);
         if (!checkResult(result)) {
@@ -86,7 +119,9 @@ public abstract class DataService {
         }
         return result;
     }
-
+    /**
+     *  根据DataService的依赖任务的名称集合names，获取相关的任务生成的结果集合, 获取不到结果的直接忽略
+     */
     public List<DataResult> getDataResultByNames(List<String> names, DataContext context) {
         List<DataResult> dataResults = Lists.newArrayList();
         for (String taskName : names) {
@@ -97,7 +132,9 @@ public abstract class DataService {
         }
         return dataResults;
     }
-
+    /**
+     *  根据DataService的依赖任务的名称集合names，获取相关的任务生成的结果集合, 获取不到结果的直接throw new RuntimeException
+     */
     public List<DataResult> getDataResultByRelys(List<String> names, boolean isAny, DataContext context) {
         List<DataResult> dataResults = getDataResultByNames(names, context);
         if (isAny && dataResults.isEmpty()) {
@@ -109,22 +146,34 @@ public abstract class DataService {
         return dataResults;
     }
 
+    /**
+     *  从DataResult中提取相关字段集合的数据List<Map>
+     */
     public List<Map> getDataByColumns(DataResult dataResult, List<String> columnNames) {
         return dataResult.getData(columnNames);
     }
 
+    /**
+     *  基于当前DataService的请求数据和上下文数据，构建依赖任务name的请求
+     */
     public ServiceRequest makeRequest(String name, ServiceRequest request, DataContext context) {
         return new ServiceRequest(request, context);
     }
-
+    /**
+     *  基于上下文数据，构建当前任务的请求
+     */
     public ServiceRequest makeRequest(DataContext context) {
         return new ServiceRequest(context);
     }
-
+    /**
+     *  基于上下文数据，构建当前任务的请求，来执行当前的DataService
+     */
     public DataResult execute(DataContext context) {
         return execute(name, makeRequest(context), context);
     }
-
+    /**
+     *  执行DataService所依赖的任务执行流chain
+     */
     public Chain executeChain(Chain chain, ServiceRequest request, DataContext context) {
         Chain lastChain = new Chain();
         List<String> then = chain.getThen();
@@ -177,13 +226,19 @@ public abstract class DataService {
         }
         return lastChain;
     }
-
+    /**
+     *  正确执行DataService所依赖的任务taskName之后，所进行的操作
+     */
+    public void afterProcess(String taskName, ServiceRequest request, DataContext context) {}
+    /**
+     *  执行DataService所依赖的任务taskName
+     */
     public DataResult execute(String taskName, ServiceRequest request, DataContext context) {
         DataResult result = getDataResultByName(taskName, context);
         if (result != null) {
             return result;
         }
-        DataService dataService = dataServices.get(taskName);
+        DataService dataService = taskServiceRegister.getDataService(taskName);
         if (dataService == null) {
             log.error("task:{} depend:{} service init fail!", name, taskName);
             return null;
@@ -195,20 +250,24 @@ public abstract class DataService {
         }
         result = dataService.execute(taskRequest, context);
         if (checkResult(result)) {
-            // 同一个任务下的依赖子任务不重复计算，子任务请求一般不会变化
             context.setResult(name, taskName, result);
+            afterProcess(taskName, request, context);
             return result;
         }
         return null;
     }
-
+    /**
+     *  执行DataService任务前，进行任务的预处理操作
+     */
     protected void preCondition(ServiceRequest request, DataContext context) {
         if (depend != null && !depend.isEmpty()) {
             taskFlow.offer(depend);
         }
     }
 
-
+    /**
+     *  执行DataService任务流程
+     */
     public DataResult execute(ServiceRequest request, DataContext context){
         // 0, 跟上次请求没变化，则直接使用上次处理结果
         DataResult result = getDataResultByName(name, context);
@@ -239,6 +298,7 @@ public abstract class DataService {
             result = process(request, context);
             if (checkResult(result)) {
                 result.setReqSign(reqSign);
+                result.setName(name);
                 // 缓存结果， 相同的请求不重复计算
                 context.setResult(name, result);
                 return result;
@@ -247,6 +307,8 @@ public abstract class DataService {
         throw new RuntimeException(String.format("task:%s exec fail!", name));
     }
 
-
+    /**
+     *  DataService任务具体的处理流程
+     */
     protected abstract DataResult process(ServiceRequest request, DataContext context);
 }

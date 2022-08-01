@@ -21,7 +21,11 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
-
+/**
+ * source.kind=mongodb的DataSource实现类
+ * 配置中的source.kind需要与注解DataSourceAnnotation中value保持一致
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @Slf4j
 @Data
 @DataSourceAnnotation("mongodb")

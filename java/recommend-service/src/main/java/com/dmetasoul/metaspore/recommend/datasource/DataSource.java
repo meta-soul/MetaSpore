@@ -25,13 +25,29 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.concurrent.ExecutorService;
 
+/**
+ * DataSource的base类， 用于初始化连接各种数据源
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @Slf4j
 @Data
 public abstract class DataSource {
+    /**
+     *  datasource 名称 与配置feature-config中的source.name对应
+     */
     protected String name;
+    /**
+     *  datasource 用来连接获取数据源中数据的线程池
+     */
     protected ExecutorService featurePool;
+    /**
+     *  配置数据对象
+     */
     protected TaskFlowConfig taskFlowConfig;
 
+    /**
+     *  datasource base 类初始化， 外部使用datasource需要调用此函数进行初始化
+     */
     public boolean init(String name, TaskFlowConfig taskFlowConfig, ExecutorService featurePool) {
         if (StringUtils.isEmpty(name)) {
             log.error("name is null, init fail!");
@@ -42,9 +58,16 @@ public abstract class DataSource {
         this.taskFlowConfig = taskFlowConfig;
         return initService();
     }
+    /**
+     *  datasource 具体实现子类初始化， 由base类init函数调用，对外不可见
+     */
     protected abstract boolean initService();
-
+    /**
+     *  用于datasource 具体实现子类关闭数据源连接等操作
+     */
     public abstract void close();
-
+    /**
+     *  datasource 根据request和context获取数据，目前除source=request外，获取数据的操作均转移到具体的SourceTableTask中实现
+     */
     public DataResult process(ServiceRequest request, DataContext context) {return null;}
 }

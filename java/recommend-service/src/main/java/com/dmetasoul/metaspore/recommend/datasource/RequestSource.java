@@ -25,7 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 
 import java.util.Map;
-
+/**
+ * source.kind=request的DataSource实现类
+ * 配置中的source.kind需要与注解DataSourceAnnotation中value保持一致
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
@@ -45,6 +49,12 @@ public class RequestSource extends DataSource {
     @Override
     public void close() {}
 
+    /**
+     * 直接返回请求中的request参数
+     * @param request datasource 相关请求
+     * @param context 服务请求相关参数和任务的上下文信息数据
+     * @return datasource获取的数据
+     */
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         DataResult result = new DataResult();

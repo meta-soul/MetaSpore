@@ -42,7 +42,11 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
+/**
+ * source.kind=redis的DataSource实现类
+ * 配置中的source.kind需要与注解DataSourceAnnotation中value保持一致
+ * Created by @author qinyy907 in 14:24 22/08/01.
+ */
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
