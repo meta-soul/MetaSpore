@@ -15,36 +15,64 @@
 #
 
 import metaspore as ms
-import attrs
 import logging
+import cattrs
 
-from typing import Dict, Tuple, Optional
+from typing import Dict
 from pyspark.sql import DataFrame
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 from ..utils import get_class
 
 logger = logging.getLogger(__name__)
 
-@attrs.frozen
-class DeepCTRConfig:
-    deep_ctr_model_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    model_params = attrs.field(validator=attrs.validators.instance_of(Dict))
-    estimator_params = attrs.field(validator=attrs.validators.instance_of(Dict))
     
-class DeepCTRModule():
-    def __init__(self, conf: DeepCTRConfig):
-        self.conf = conf
+class DeepCTRModule:
+    def __init__(self, conf: dict):
+        self.model_params, self.estimator_params = DeepCTRModule.validate(conf)
+        self.deep_ctr_model_class = conf['deep_ctr_model_class']
         self.model = None
         
+    @staticmethod
+    def validate(conf: dict):
+        if not 'deep_ctr_model_class' in conf:
+            raise ValueError("Dict of DeepCTRModule must have key 'deep_ctr_model_class' !")
+        if not 'model_params' in conf:
+            raise ValueError("Dict of DeepCTRModule must have key 'model_params' !")
+        if not 'estimator_params' in conf:
+            raise ValueError("Dict of DeepCTRModule must have key 'estimator_params' !")
+            
+        module_name = conf['deep_ctr_model_class'].get('module_name', '')
+        class_name = conf['deep_ctr_model_class'].get('class_name', '')
+        mn_list = module_name.split('.')
+        mn_list.insert(len(mn_list)-1, 'config')
+        
+        mn_list[-1] = mn_list[-1].replace('_net', '_config')
+        module_name = '.'.join(mn_list)
+        class_name = class_name + 'Config'
+        model_config_class = get_class(module_name=module_name, class_name=class_name)
+        
+        mn_list[-1] = 'deep_ctr_estimator_config'
+        module_name = '.'.join(mn_list)
+        class_name = 'DeepCTREstimatorConfig'
+        estimator_config_class = get_class(module_name=module_name, class_name=class_name)
+
+        model_params = cattrs.structure(conf['model_params'], model_config_class)
+        print('Debug - model_params: ', model_params)
+
+        estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
+        print('Debug - estimator_params: ', estimator_params)
+        
+        return model_params, estimator_params
+        
     def train(self, train_dataset, worker_count, server_count):
-        deepCTRModel = get_class(**self.conf.deep_ctr_model_class)
-        module = deepCTRModel(**self.conf.model_params)
+        deepCTRModel = get_class(**self.deep_ctr_model_class)
+        module = deepCTRModel(**cattrs.unstructure(self.model_params))
         estimator = ms.PyTorchEstimator(module = module,
                                         worker_count = worker_count,
                                         server_count = server_count,
-                                        **self.conf.estimator_params)
+                                        **cattrs.unstructure(self.estimator_params))
         ## model train
-        estimator.updater = ms.AdamTensorUpdater(self.conf.estimator_params['adam_learning_rate'])
+        estimator.updater = ms.AdamTensorUpdater(self.estimator_params.adam_learning_rate)
         self.model = estimator.fit(train_dataset)
         
         logger.info('DeepCTR - training: done')

@@ -18,4 +18,4 @@ from .data_loader import DataLoaderModule, DataLoaderConfig
 from .init_spark import InitSparkModule, InitSparkConfig
 from .i2i_retrieval import I2IRetrievalModule, I2IRetrievalConfig
 from .mongodb_dumper import DumpToMongoDBModule, DumpToMongoDBConfig
-from .deep_ctr import DeepCTRModule, DeepCTRConfig
+from .deep_ctr import DeepCTRModule

@@ -28,7 +28,7 @@ class DataLoaderConfig:
     test_path = attrs.field(validator=attrs.validators.instance_of(str))
     item_path = attrs.field(default=None, validator=attrs.validators.instance_of((type(None),str)))
 
-class DataLoaderModule():
+class DataLoaderModule:
     def __init__(self, conf: DataLoaderConfig, spark: SparkSession):
         self.conf = conf
         self.spark = spark

@@ -34,7 +34,7 @@ class DumpToMongoDBConfig:
     index_unique = attrs.field(default=None, validator=attrs.validators.instance_of((type(None), bool)))
     
 
-class DumpToMongoDBModule():
+class DumpToMongoDBModule:
     def __init__(self, conf: DumpToMongoDBConfig):
         self.conf = conf
     

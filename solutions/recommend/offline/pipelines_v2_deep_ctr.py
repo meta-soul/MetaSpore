@@ -4,7 +4,7 @@ import argparse
 import yaml
 import cattrs
 
-from pipelines_v2.modules import InitSparkModule, InitSparkConfig, DataLoaderModule, DataLoaderConfig, DeepCTRModule, DeepCTRConfig
+from pipelines_v2.modules import InitSparkModule, InitSparkConfig, DataLoaderModule, DataLoaderConfig, DeepCTRModule
 from pipelines_v2 import setup_logging
 
 if __name__ == '__main__':
@@ -28,7 +28,7 @@ if __name__ == '__main__':
     dataset_dict = dataLoaderModule.run()
     
     # 3. train, predict and evaluate
-    deepCTRModule = DeepCTRModule(cattrs.structure(spec['training'], DeepCTRConfig))
+    deepCTRModule = DeepCTRModule(spec['training'])
     metric_dict = deepCTRModule.run(dataset_dict['train'], dataset_dict['test'], worker_count, server_count)
     
     # 5. stop spark session

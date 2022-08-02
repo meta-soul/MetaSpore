@@ -33,7 +33,7 @@ class I2IRetrievalConfig:
     model_out_path = attrs.field(default=None, validator=attrs.validators.instance_of(str))
     max_recommendation_count = attrs.field(default=20, validator=[attrs.validators.instance_of(int), attrs.validators.ge(0), attrs.validators.le(100)])
 
-class I2IRetrievalModule():
+class I2IRetrievalModule:
     def __init__(self, conf: I2IRetrievalConfig):
         self.conf = conf
         self.model = None
