@@ -38,18 +38,18 @@ public enum RedisTypeEnum {
         }
 
         @Override
-        protected List<Map> process(String key, int limit) {
+        protected List<Map<String, Object>> process(String key, int limit) {
             return List.of(getMap(key, ops(key, limit)));
         }
     }),
-    HASH(1,"hash", new RedisOpsFor<Map>(){
+    HASH(1,"hash", new RedisOpsFor<Map<String, Object>>(){
         @Override
         protected Map ops(String key, int limit) {
             return redisTemplate.opsForHash().entries(getRedisKey(key));
         }
 
         @Override
-        protected List<Map> process(String key, int limit) {
+        protected List<Map<String, Object>> process(String key, int limit) {
             Map<String, Object> map = getMap(key, ops(key, limit));
             map.put(columnNames.get(0), key);
             for (int i = 1; i < columnNames.size(); ++i) {
@@ -66,8 +66,8 @@ public enum RedisTypeEnum {
         }
 
         @Override
-        protected List<Map> process(String key, int limit) {
-            List<Map> data = Lists.newArrayList();
+        protected List<Map<String, Object>> process(String key, int limit) {
+            List<Map<String, Object>> data = Lists.newArrayList();
             for (Object value : ops(key, limit)) {
                 data.add(getMap(key, value));
             }
@@ -81,8 +81,8 @@ public enum RedisTypeEnum {
         }
 
         @Override
-        protected List<Map> process(String key, int limit) {
-            List<Map> data = Lists.newArrayList();
+        protected List<Map<String, Object>> process(String key, int limit) {
+            List<Map<String, Object>> data = Lists.newArrayList();
             for (Object value : ops(key, limit)) {
                 data.add(getMap(key, value));
             }
@@ -96,8 +96,8 @@ public enum RedisTypeEnum {
         }
 
         @Override
-        protected List<Map> process(String key, int limit) {
-            List<Map> data = Lists.newArrayList();
+        protected List<Map<String, Object>> process(String key, int limit) {
+            List<Map<String, Object>> data = Lists.newArrayList();
             for ( ZSetOperations.TypedTuple<Object> value : ops(key, limit)) {
                 Map<String, Object> map = Maps.newHashMap();
                 map.put(columnNames.get(0), key);
@@ -130,7 +130,7 @@ public enum RedisTypeEnum {
         return name;
     }
 
-    public List<Map> process(String key, int limit) {
+    public List<Map<String, Object>> process(String key, int limit) {
         if (!ops.isInit) {
             throw new RuntimeException("redis ops is not init!");
         }
@@ -181,7 +181,7 @@ public enum RedisTypeEnum {
         }
         protected abstract R ops(String key, int limit);
 
-        protected abstract List<Map> process(String key, int limit);
+        protected abstract List<Map<String, Object>> process(String key, int limit);
 
         protected String getRedisKey(String key) {
             if (StringUtils.isNotEmpty(keyFormat)) {

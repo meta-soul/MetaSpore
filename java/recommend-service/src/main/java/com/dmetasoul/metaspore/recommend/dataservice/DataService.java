@@ -21,9 +21,14 @@ import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.serving.ArrowAllocator;
+import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -62,6 +67,8 @@ public abstract class DataService {
      *  对于某些依赖任务执行比较确定的DataService，初始化过程中确定的依赖任务执行流程chain。
      */
     protected Chain depend;
+    protected List<Field> resFields;
+    protected List<DataTypeEnum> dataTypes;
     /**
      *  DataService实例注册类对象
      *  服务实例注册在类TaskServiceRegister中。
@@ -81,6 +88,8 @@ public abstract class DataService {
         this.taskFlowConfig = taskFlowConfig;
         this.taskServiceRegister = taskServiceRegister;
         this.taskFlow = new LinkedBlockingQueue<>();
+        resFields = Lists.newArrayList();
+        dataTypes = Lists.newArrayList();
         return initService();
     }
     /**
@@ -96,10 +105,6 @@ public abstract class DataService {
      */
     public boolean checkResult(DataResult result) {
         if (result == null) {
-            return false;
-        }
-        if (!result.isVaild()) {
-            log.warn("task: {} result is error!", name);
             return false;
         }
         if (result.isNull()) {
@@ -151,11 +156,66 @@ public abstract class DataService {
         return dataResults;
     }
 
+    public DataResult setDataResult(List<Map<String, Object>> res) {
+        if (res == null) {
+            return null;
+        }
+        DataResult result = new DataResult();
+        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        result.setFeatureTable(featureTable);
+        if (CollectionUtils.isEmpty(res)) {
+            return result;
+        }
+        for (int i = 0; i < resFields.size(); ++i) {
+            DataTypeEnum dataType = dataTypes.get(i);
+            Field field = resFields.get(i);
+            String col = field.getName();
+            for (Map<String, Object> map : res) {
+                if (!dataType.set(featureTable, col, map.get(col))) {
+                    log.error("set featuraTable fail!");
+                }
+            }
+        }
+        return result;
+    }
+
+    public DataResult setDataResult(Map<String, List<Object>> res) {
+        if (res == null) {
+            return null;
+        }
+        DataResult result = new DataResult();
+        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        result.setFeatureTable(featureTable);
+        if (MapUtils.isEmpty(res)) {
+            return result;
+        }
+        for (int i = 0; i < resFields.size(); ++i) {
+            DataTypeEnum dataType = dataTypes.get(i);
+            Field field = resFields.get(i);
+            String col = field.getName();
+            if (!dataType.set(featureTable, col, res.get(col))) {
+                log.error("set featuraTable fail!");
+            }
+        }
+        return result;
+    }
+
     /**
      *  从DataResult中提取相关字段集合的数据List<Map>
      */
-    public List<Map> getDataByColumns(DataResult dataResult, List<String> columnNames) {
-        return dataResult.getData(columnNames);
+    public List<List<Object>> getDataByColumns(DataResult dataResult, List<String> columnNames) {
+        List<List<Object>> res = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(columnNames)) {
+            for (String col : columnNames) {
+                List<Object> values = dataResult.get(col);
+                if (values == null) {
+                    log.error("featuraTable not has col:{}!", col);
+                    values = Lists.newArrayList();
+                }
+                res.add(values);
+            }
+        }
+        return res;
     }
 
     /**

@@ -144,8 +144,6 @@ public class TaskServiceRegister {
                 task = SpringBeanUtil.getBean(RedisSourceTableTask.class);
             } else if (config.getKind().equals("mongodb")) {
                 task = SpringBeanUtil.getBean(MongoDBSourceTableTask.class);
-            } else if (config.getKind().equals("milvus")) {
-                task = SpringBeanUtil.getBean(MilvusSourceTableTask.class);
             } else {
                 task = (SourceTableTask) SpringBeanUtil.getBean("SourceTable");
             }

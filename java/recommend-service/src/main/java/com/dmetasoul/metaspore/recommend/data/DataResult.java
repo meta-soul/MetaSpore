@@ -15,20 +15,20 @@
 //
 package com.dmetasoul.metaspore.recommend.data;
 
-import com.dmetasoul.metaspore.recommend.enums.ResultTypeEnum;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.response.SearchResultsWrapper;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 /**
@@ -38,273 +38,25 @@ import java.util.Map;
 @Slf4j
 @Data
 public class DataResult {
-    String name;
-    String reqSign;
-    @Getter
-    ResultTypeEnum resultType;
-    Map<String, Object> values;
-    List<Map> data;
-    Map<Integer, List<SearchResultsWrapper.IDScore>> milvusData;
+    protected String name;
+    protected String reqSign;
+    protected FeatureTable featureTable;
 
-    FeatureArray featureArray;
-
-    FeatureTable featureTable;
-
-    PredictResult predictResult;
-
-    @Data
-    public static class PredictResult {
-        ResultType type = ResultType.Other;
-        private List<List<Float>> embedding;
-        private List<Float> score;
-
-        public List<List<Float>> getEmbedding() {
-            if (type.equals(ResultType.Embedding)) {
-                return embedding;
-            }
-            return null;
+    public List<Object> get(String field) {
+        if (featureTable == null || featureTable.getVector(field) == null) return Lists.newArrayList();
+        FieldVector vector = featureTable.getVector(field);
+        List<Object> values = Lists.newArrayList();
+        for (int i = 0; i < vector.getValueCount(); ++i) {
+            values.add(vector.getObject(i));
         }
-        public List<Float> getScore() {
-            if (type.equals(ResultType.Score)) {
-                return  score;
-            }
-            return null;
-        }
-
-        public void setEmbedding(List<List<Float>> embedding) {
-            if (embedding == null) {
-                return;
-            }
-            this.embedding = embedding;
-            type = ResultType.Embedding;
-        }
-        public void setScore(List<Float> score) {
-            if (score == null) {
-                return;
-            }
-            this.score = score;
-            type = ResultType.Score;
-        }
-
-        enum ResultType {
-            Embedding(0,"embedding"),
-            Score(1, "score"),
-            Other(10, "other");
-            private Integer id;
-            private String name;
-
-            ResultType(int id, String name){
-                this.id = id;
-                this.name = name;
-            }
-        }
-    }
-
-    @Data
-    public static class FeatureArray {
-        Map<String, List<Object>> arrays;
-
-        int maxIndex;
-        public FeatureArray(Map<String, List<Object>> arrays) {
-            if (arrays == null) {
-                arrays = Maps.newHashMap();
-            }
-            this.maxIndex = 0;
-            this.arrays = arrays;
-            arrays.forEach((k,v) -> {
-                if (v.size() > maxIndex) maxIndex = v.size();
-            });
-        }
-
-        public boolean isInvalidIndex(int index) {
-            return index < 0 || index >= maxIndex;
-        }
-
-        public Object get(String fieldName, int index) {
-            if (isInvalidIndex(index)) return null;
-            if (arrays.containsKey(fieldName)) {
-                List<Object> data = arrays.get(fieldName);
-                if (index >= data.size()) return null;
-                return data.get(index);
-            }
-            return null;
-        }
-
-        public boolean inArray(String fieldName) {
-            return arrays.containsKey(fieldName);
-        }
-        public List<Object> getArray(String fieldName) {
-            return arrays.get(fieldName);
-        }
-
-        public Object get(String fieldName) {
-            return get(fieldName, 0);
-        }
-    }
-    public DataResult() {
-        resultType = ResultTypeEnum.EMPTY;
-        reqSign = "";
-    }
-
-    public boolean isVaild() {
-        return resultType != ResultTypeEnum.EMPTY && resultType != ResultTypeEnum.EXCEPTION;
-    }
-
-    public boolean isNull() {
-        return (resultType == ResultTypeEnum.VALUES && values == null) ||
-                (resultType == ResultTypeEnum.DATA && data == null) ||
-                (resultType == ResultTypeEnum.FEATUREARRAYS && featureArray == null) ||
-                (resultType == ResultTypeEnum.FEATURETABLE && featureTable == null) ||
-                (resultType == ResultTypeEnum.PREDICTRESULT && predictResult == null);
-    }
-
-    public static DataResult merge(List<DataResult> dataResults, String name) {
-        DataResult result = null;
-        if (CollectionUtils.isEmpty(dataResults)) return result;
-        String dataName = name;
-        if (StringUtils.isEmpty(dataName)) dataName = dataResults.get(0).getName();
-        result = new DataResult();
-        List<Map> data = Lists.newArrayList();
-        for (DataResult item : dataResults) {
-            Map<String, Object> map = item.getValues();
-            if (map != null) {
-                data.add(map);
-                continue;
-            }
-            List<Map> list = item.getData();
-            if (list != null) {
-                data.addAll(list);
-            }
-        }
-        result.setData(data);
-        return result;
-    }
-
-    public void setValues(Map<String, Object> values) {
-        resultType = ResultTypeEnum.VALUES;
-        this.values = values;
-    }
-
-    public Map<String, Object> getValues() {
-        if(resultType == ResultTypeEnum.VALUES) {
-            return this.values;
-        }
-        return null;
-    }
-
-    public void setData(List<Map> data) {
-        resultType = ResultTypeEnum.DATA;
-        this.data = data;
-    }
-
-    public List<Map> getData() {
-        if(resultType == ResultTypeEnum.DATA) {
-            return this.data;
-        }
-        return null;
-    }
-
-    public void setMilvusData(Map<Integer, List<SearchResultsWrapper.IDScore>> milvusData) {
-        resultType = ResultTypeEnum.MILVUS;
-        this.milvusData = milvusData;
-    }
-
-    public void setFeatureArray(FeatureArray featureArray) {
-        resultType = ResultTypeEnum.FEATUREARRAYS;
-        this.featureArray = featureArray;
-    }
-
-    public void setFeatureArray(Map<String, List<Object>> arrays) {
-        resultType = ResultTypeEnum.FEATUREARRAYS;
-        this.featureArray = new FeatureArray(arrays);
-    }
-
-    public FeatureArray getFeatureArray() {
-        if(resultType == ResultTypeEnum.FEATUREARRAYS) {
-            return this.featureArray;
-        }
-        return null;
+        return values;
     }
 
     public void setFeatureTable(FeatureTable featureTable) {
-        resultType = ResultTypeEnum.FEATURETABLE;
         this.featureTable = featureTable;
     }
 
-    public FeatureTable getFeatureTable() {
-        if(resultType == ResultTypeEnum.FEATURETABLE) {
-            return this.featureTable;
-        }
-        return null;
-    }
-
-    public void setPredictResult(PredictResult predictResult) {
-        resultType = ResultTypeEnum.PREDICTRESULT;
-        this.predictResult = predictResult;
-    }
-
-    public PredictResult getPredictResult() {
-        if(resultType == ResultTypeEnum.PREDICTRESULT) {
-            return this.predictResult;
-        }
-        return null;
-    }
-
-    public <T> T get(String field) {
-        if (!isVaild() && isNull()) return null;
-        switch (resultType) {
-            case VALUES:
-                return (T) values.get(field);
-            case DATA:
-                List<Object> ids = Lists.newArrayList();
-                for (Map item : data) {
-                    ids.add(item.get(field));
-                }
-                return (T) ids;
-            case FEATUREARRAYS:
-                return (T) featureArray.getArray(field);
-            default:
-                return null;
-        }
-    }
-
-    public List<Object> getList(String field, List<Object> value) {
-        if (!isVaild() && isNull()) return value;
-        switch (resultType) {
-            case VALUES:
-                return List.of(values.get(field));
-            case DATA:
-                List<Object> ids = Lists.newArrayList();
-                for (Map item : data) {
-                    ids.add(item.get(field));
-                }
-                return ids;
-            case FEATUREARRAYS:
-                return featureArray.getArray(field);
-            default:
-                return value;
-        }
-    }
-
-    public List<Object> getList(String field) {
-        return getList(field, Lists.newArrayList());
-    }
-
-    public List<Map> getData(List<String> columnNames) {
-        List<Map> data = Lists.newArrayList();
-        if (!isVaild() && isNull()) return data;
-        for (String col : columnNames) {
-            List<Object> items = getList(col);
-            for (int i = 0; i < items.size(); ++i) {
-                if (i < data.size()) {
-                    data.get(i).put(col, items.get(i));
-                } else {
-                    Map<String, Object> map = Maps.newHashMap();
-                    map.put(col, items.get(i));
-                    data.add(map);
-                }
-            }
-        }
-        return data;
+    public boolean isNull() {
+        return featureTable == null;
     }
 }

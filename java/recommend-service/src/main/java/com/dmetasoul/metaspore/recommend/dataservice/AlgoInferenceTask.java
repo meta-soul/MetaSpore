@@ -55,7 +55,6 @@ public class AlgoInferenceTask extends DataService {
     protected FeatureConfig.AlgoInference algoInference;
     private List<FeatureConfig.Feature> features;
     protected Map<String, Function> functionMap;
-    private List<Field> algoFields;
     private String modelName;
     private String targetKey;
     private int targetIndex;
@@ -80,10 +79,10 @@ public class AlgoInferenceTask extends DataService {
     }
 
     public boolean initTask() {
-        algoFields = Lists.newArrayList();
         for (FeatureConfig.FieldAction fieldAction: algoInference.getFieldActions()) {
             DataTypeEnum dataType = DataTypes.getDataType(fieldAction.getType());
-            algoFields.add(Field.nullable(fieldAction.getName(), dataType.getType()));
+            resFields.add(Field.nullable(fieldAction.getName(), dataType.getType()));
+            dataTypes.add(dataType);
         }
         features = Lists.newArrayList();
         for (String feature : algoInference.getFeature()) {
@@ -113,36 +112,33 @@ public class AlgoInferenceTask extends DataService {
         }
     }
 
-    private Map<String, DataResult.FeatureArray> getFeatureArrays(List<DataResult> result) {
-        Map<String, DataResult.FeatureArray> featureArrays = Maps.newHashMap();
+    private Map<String, DataResult> getDataResults(List<DataResult> result) {
+        Map<String, DataResult> data = Maps.newHashMap();
         if (CollectionUtils.isNotEmpty(result)) {
             for (DataResult dataResult : result) {
-                DataResult.FeatureArray featureArray = dataResult.getFeatureArray();
-                if (featureArray != null) {
-                    featureArrays.put(dataResult.getName(), featureArray);
-                }
+                data.put(dataResult.getName(), dataResult);
             }
         }
-        return featureArrays;
+        return data;
     }
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         List<DataResult> result = getDataResultByNames(algoInference.getFeature(), context);
-        FeatureTable featureTable = new FeatureTable(name, algoFields, ArrowAllocator.getAllocator());
-        Map<String, DataResult.FeatureArray> featureArrays = getFeatureArrays(result);
+        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        Map<String, DataResult> dataResultMap = getDataResults(result);
         for (FeatureConfig.FieldAction fieldAction : algoInference.getFieldActions()) {
             List<FeatureConfig.Field> fields = fieldAction.getFields();
             if (StringUtils.isEmpty(fieldAction.getFunc()) && CollectionUtils.isNotEmpty(fields)) {
-                DataResult.FeatureArray featureArray = featureArrays.get(fields.get(0).getTable());
-                setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), featureArray.getArray(fields.get(0).getFieldName()));
+                DataResult dataResult = dataResultMap.get(fields.get(0).getTable());
+                setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), dataResult.get(fields.get(0).getFieldName()));
                 continue;
             }
             List<List<Object>> fieldValues = Lists.newArrayList();
             List<String> fieldTypes = Lists.newArrayList();
             for (FeatureConfig.Field field : fieldAction.getFields()) {
-                DataResult.FeatureArray featureArray = featureArrays.get(field.getTable());
-                fieldValues.add(featureArray.getArray(field.getFieldName()));
+                DataResult dataResult = dataResultMap.get(field.getTable());
+                fieldValues.add(dataResult.get(field.getFieldName()));
                 FeatureConfig.Feature feature = taskFlowConfig.getFeatures().get(field.getTable());
                 fieldTypes.add(feature.getColumnMap().get(field.getFieldName()));
             }

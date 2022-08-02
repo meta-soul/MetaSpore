@@ -16,17 +16,20 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -74,6 +77,9 @@ public class FeatureTask extends DataService {
      */
     private Map<FeatureConfig.Field, FeatureConfig.Field> immediateRewritedField;
 
+    private List<Field> resFields;
+    private List<DataTypeEnum> dataTypes;
+
     /**
      * 初始化FeatureTask
      */
@@ -86,6 +92,9 @@ public class FeatureTask extends DataService {
         fieldMap = Maps.newHashMap();
         executeNum = 5; // 由于每次执行都是部分构建rewritedField，所以需要多次入队执行，确保makeRequest构建正确
         for (FeatureConfig.Field field : feature.getFields()) {
+            DataTypeEnum dataType = DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName()));
+            resFields.add(Field.nullable(field.getFieldName(), dataType.getType()));
+            dataTypes.add(dataType);
             fieldMap.computeIfAbsent(field.getTable(), k->Lists.newArrayList()).add(field);
         }
         for (String table : immediateTables) {
@@ -153,7 +162,12 @@ public class FeatureTask extends DataService {
                     if (dependResult == null) {
                         return null;
                     }
-                    req.put(cond.getLeft().getFieldName(), dependResult.get(field.getFieldName()));
+                    List<Object> values = dependResult.get(field.getFieldName());
+                    if (CollectionUtils.isNotEmpty(values) && values.size() == 1) {
+                        req.put(cond.getLeft().getFieldName(), values.get(0));
+                    } else {
+                        req.put(cond.getLeft().getFieldName(), values);
+                    }
                 }
             }
         }
@@ -178,7 +192,7 @@ public class FeatureTask extends DataService {
             return featureArray;
         }
         for (String fieldName : feature.getFromColumns().get(table)) {
-            featureArray.put(new FeatureConfig.Field(table, fieldName), result.getList(fieldName));
+            featureArray.put(new FeatureConfig.Field(table, fieldName), result.get(fieldName));
         }
         return featureArray;
     }
@@ -291,7 +305,6 @@ public class FeatureTask extends DataService {
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult dataResult = new DataResult();
         Map<String, List<Object>> featureArrays = Maps.newHashMap();
         // 按table获取每个表的数据结果
         Map<String, Map<FeatureConfig.Field, List<Object>>> data = Maps.newHashMap();
@@ -302,14 +315,13 @@ public class FeatureTask extends DataService {
         if (feature.getFrom().size() == 1) {
             String table = feature.getFrom().get(0);
             setFeatureArray(fieldMap.get(table), data.get(table), featureArrays);
-            dataResult.setFeatureArray(featureArrays);
-            return dataResult;
+            return setDataResult(featureArrays);
         }
         // while 每次完成一次join，已join好的表跟另一个表join，不存在join关系的表直接concat
         Set<String> joinedTables = Sets.newHashSet();
         Set<String> noJoinTables = Sets.newHashSet(feature.getFrom());
         if (!noJoinTables.iterator().hasNext()) {
-            return dataResult;
+            return null;
         }
         String firstTable = noJoinTables.iterator().next();
         joinedTables.add(firstTable);
@@ -342,7 +354,6 @@ public class FeatureTask extends DataService {
                 joinTable = data.get(firstTable);
             }
         }
-        dataResult.setFeatureArray(featureArrays);
-        return dataResult;
+        return setDataResult(featureArrays);
     }
 }

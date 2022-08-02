@@ -22,8 +22,15 @@ import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.google.common.collect.Maps;
+import io.milvus.client.MilvusServiceClient;
+import io.milvus.grpc.SearchResults;
+import io.milvus.param.ConnectParam;
+import io.milvus.param.MetricType;
+import io.milvus.param.R;
+import io.milvus.param.dml.SearchParam;
 import io.milvus.response.SearchResultsWrapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.security.InvalidParameterException;
@@ -39,6 +46,7 @@ import java.util.stream.Collectors;
 public class MilvusSearchTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
     public static final int DEFAULT_MAX_RESERVATION = 50;
+    private MilvusServiceClient milvusTemplate;
     private int algoLevel;
     private int maxReservation;
     private String milvusTask;
@@ -47,8 +55,8 @@ public class MilvusSearchTask extends AlgoTransformTask {
     private String milvusCollectionName;
     private String embeddingTask;
 
-    private String milvusIdCol;
-    private String milvusItemIdCol;
+    private String host;
+    private int port;
 
     @Override
     public boolean initTask() {
@@ -56,28 +64,19 @@ public class MilvusSearchTask extends AlgoTransformTask {
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         algoName = getOptionOrDefault("algo-name", "itemCF");
         milvusCollectionName = getOptionOrDefault("milvusCollectionName", "");
-        milvusIdCol = getOptionOrDefault("milvusIdCol", "");
-        milvusItemIdCol = getOptionOrDefault("milvusItemIdCol", "");
-        for (String task : config.getDepend().getThen()) {
-            FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(task);
-            if (algoTransform != null) {
-                embeddingTask = task;
-                continue;
-            }
-            FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(task);
-            if (sourceTable != null && sourceTable.getKind().equals("milvus") && StringUtils.isNotEmpty(embeddingTask)) {
-                milvusTask = task;
-                continue;
-            }
-            if (sourceTable != null && StringUtils.isNotEmpty(milvusTask)) {
-                milvusItemTask = task;
-                if (StringUtils.isEmpty(milvusIdCol)) {
-                    milvusIdCol = sourceTable.getColumnNames().get(0);
-                    milvusItemIdCol = sourceTable.getColumnNames().get(1);
-                }
-            }
-        }
+        host = getOptionOrDefault("host", "localhost");
+        port = getOptionOrDefault("port", 9000);
+        ConnectParam connectParam = ConnectParam.newBuilder()
+                .withHost(host)
+                .withPort(port)
+                .build();
+        milvusTemplate = new MilvusServiceClient(connectParam);
         return !StringUtils.isEmpty(milvusItemTask) && !StringUtils.isEmpty(milvusCollectionName);
+    }
+
+    @Override
+    public void close() {
+        milvusTemplate.close();
     }
 
     @Override
@@ -107,7 +106,43 @@ public class MilvusSearchTask extends AlgoTransformTask {
         }
         return req;
     }
+    protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
+        DataResult result = new DataResult();
+        List<List<Float>> embedding = (List<List<Float>>) request.get("embedding");
+        String collectionName = request.get("collectionName");
+        int limit = request.getLimit();
+        long timeOut = 30000L;
+        String searchParams = "{\"nprobe\":128}";
+        MetricType metricType = MetricType.IP;
+        Map<String, Object> options = sourceTable.getOptions();
+        String field = request.get("field", "embedding_vector");
+        if (MapUtils.isNotEmpty(options)) {
+            timeOut = (long) options.getOrDefault("timeOut", 3000L);
+            searchParams = (String) options.getOrDefault("searchParams", "{\"nprobe\":128}");
+            metricType = Utils.getMetricType((int) options.getOrDefault("metricType", 2));
+        }
+        SearchParam searchParam = SearchParam.newBuilder()
+                .withCollectionName(collectionName)
+                .withMetricType(metricType)
+                .withOutFields(sourceTable.getColumnNames())
+                .withTopK(limit)
+                .withVectors(embedding)
+                .withVectorFieldName(field)
+                .withExpr("")
+                .withParams(searchParams)
+                .withGuaranteeTimestamp(timeOut)
+                .build();
 
+        R<SearchResults> response = dataSource.getMilvusTemplate().search(searchParam);
+        Utils.handleResponseStatus(response);
+        SearchResultsWrapper wrapper = new SearchResultsWrapper(response.getData().getResults());
+        Map<Integer, List<SearchResultsWrapper.IDScore>> milvusData = Maps.newHashMap();
+        for (int i = 0; i < embedding.size(); ++i) {
+            List<SearchResultsWrapper.IDScore> scores = wrapper.getIDScore(i);
+            milvusData.put(i, scores);
+        }
+        return result;
+    }
         @Override
     public DataResult process(ServiceRequest request, DataContext context) {
             DataResult taskResult = getDataResultByName(milvusTask, context);

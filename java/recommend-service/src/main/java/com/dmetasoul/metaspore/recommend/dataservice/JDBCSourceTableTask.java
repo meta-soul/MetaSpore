@@ -17,7 +17,6 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.datasource.JDBCSource;
 import com.google.common.collect.Lists;
@@ -33,7 +32,6 @@ import java.util.*;
  * 注解DataServiceAnnotation 必须设置， value应设置为JDBCSourceTable。
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
-@SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation("JDBCSourceTable")
 public class JDBCSourceTableTask extends SourceTableTask {
@@ -72,7 +70,7 @@ public class JDBCSourceTableTask extends SourceTableTask {
     }
 
     @Override
-    protected DataResult processRequest(ServiceRequest request, DataContext context) {
+    protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
         Map<String, Object> data = request.getData();
         Map<String, Object> params = Maps.newHashMap();
         List<String> parts = Lists.newArrayList();
@@ -89,9 +87,8 @@ public class JDBCSourceTableTask extends SourceTableTask {
         if (request.getLimit() > 0) {
             sql += String.format(" limit %d", request.getLimit());
         }
-        DataResult result = new DataResult();
-        result.setData(dataSource.getNamedTemplate().query(sql, params, rs -> {
-            List<Map> list = Lists.newArrayList();
+        return dataSource.getNamedTemplate().query(sql, params, rs -> {
+            List<Map<String, Object>> list = Lists.newArrayList();
             while (rs.next()) {
                 Map<String, Object> item = Maps.newHashMap();
                 for (String col : columnNames) {
@@ -100,7 +97,6 @@ public class JDBCSourceTableTask extends SourceTableTask {
                 list.add(item);
             }
             return list;
-        }));
-        return result;
+        });
     }
 }

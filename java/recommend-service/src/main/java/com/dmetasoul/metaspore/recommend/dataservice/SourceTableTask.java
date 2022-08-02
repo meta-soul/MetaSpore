@@ -48,51 +48,17 @@ public class SourceTableTask extends DataService {
     private DataSource dataSource;
     protected FeatureConfig.Source source;
     protected FeatureConfig.SourceTable sourceTable;
-    protected List<Field> resFields;
-    protected List<DataTypeEnum> dataTypes;
 
     @Override
     public boolean initService() {
         sourceTable = taskFlowConfig.getSourceTables().get(name);
         dataSource = taskServiceRegister.getDataSources().get(sourceTable.getSource());
         source = taskFlowConfig.getSources().get(sourceTable.getSource());
-        resFields = Lists.newArrayList();
-        dataTypes = Lists.newArrayList();
         for (String col: sourceTable.getColumnNames()) {
             DataTypeEnum dataType = DataTypes.getDataType(sourceTable.getColumnMap().get(col));
             resFields.add(Field.nullable(col, dataType.getType()));
             dataTypes.add(dataType);
         }
-        return true;
-    }
-
-    @Override
-    public boolean checkResult(DataResult result) {
-        if (!super.checkResult(result)) {
-            return false;
-        }
-//        FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
-//        for (String col : sourceTable.getColumnNames()) {
-//            String type = sourceTable.getColumnMap().get(col);
-//            Class dataClass = DataTypes.getDataClass(type);
-//            if (MapUtils.isNotEmpty(result.getValues())) {
-//                Map<String, Object> data = result.getValues();
-//                Object value = data.get(col);
-//                if (value != null && !dataClass.isInstance(value)) {
-//                    log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-//                    // return false;
-//                }
-//            }
-//            if (CollectionUtils.isNotEmpty(result.getData())) {
-//                for (Map data : result.getData()) {
-//                    Object value = data.get(col);
-//                    if (value != null && !dataClass.isInstance(value)) {
-//                        log.warn("sourceTable {} get result col:{} type is wrong, value:{}", name, col, value);
-//                        // return false;
-//                    }
-//                }
-//            }
-//        }
         return true;
     }
 
@@ -102,24 +68,6 @@ public class SourceTableTask extends DataService {
 
     public <T> T getOptionOrDefault(String key, T value) {
         return Utils.getField(sourceTable.getOptions(), key, value);
-    }
-
-    public FeatureTable setFeatureTable(List<Map<String, Object>> res, List<Field> resFields, List<DataTypeEnum> dataTypes) {
-        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
-        if (CollectionUtils.isEmpty(res)) {
-            return featureTable;
-        }
-        for (int i = 0; i < resFields.size(); ++i) {
-            DataTypeEnum dataType = dataTypes.get(i);
-            Field field = resFields.get(i);
-            String col = field.getName();
-            for (Map<String, Object> map : res) {
-                if (!dataType.set(featureTable, col, map.get(col))) {
-                    log.error("set featuraTable fail!");
-                }
-            }
-        }
-        return featureTable;
     }
 
     @Override
@@ -132,8 +80,9 @@ public class SourceTableTask extends DataService {
         do {
             CompletableFuture<DataResult> future = CompletableFuture.supplyAsync(() -> {
                 List<Map<String, Object>> res = processRequest(request, context);
-                if (checkResult(res)) {
-                    return res;
+                DataResult result = setDataResult(res);
+                if (checkResult(result)) {
+                    return result;
                 } else {
                     return null;
                 }

@@ -126,7 +126,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
     }
 
     @Override
-    protected DataResult processRequest(ServiceRequest request, DataContext context) {
+    protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
         Map<String, Object> data = request.getData();
         for (String col : columns) {
             if (MapUtils.isNotEmpty(data) && data.containsKey(col)) {
@@ -138,9 +138,8 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         if (request.getLimit() > 0) {
             query.limit(request.getLimit());
         }
-        DataResult result = new DataResult();
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
-        List<Map> list = Lists.newArrayList();
+        List<Map<String, Object>> list = Lists.newArrayList();
         res.forEach(map -> {
             Map<String, Object> item = Maps.newHashMap();
             for (String col : columns) {
@@ -148,7 +147,6 @@ public class MongoDBSourceTableTask extends SourceTableTask {
             }
             list.add(item);
         });
-        result.setData(list);
-        return result;
+        return list;
     }
 }

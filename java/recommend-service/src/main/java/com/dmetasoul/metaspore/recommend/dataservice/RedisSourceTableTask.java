@@ -64,7 +64,7 @@ public class RedisSourceTableTask extends SourceTableTask {
         return true;
     }
 
-    private void fillDataList(Object value, List<Map> list, int limit) {
+    private void fillDataList(Object value, List<Map<String, Object>> list, int limit) {
         if (value instanceof Collection) {
             for (Object item : (Collection)value) {
                 list.addAll(redisType.process(String.valueOf(item), limit));
@@ -75,16 +75,14 @@ public class RedisSourceTableTask extends SourceTableTask {
     }
 
     @Override
-    protected DataResult processRequest(ServiceRequest request, DataContext context) {
+    protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
         Map<String, Object> data = request.getData();
         int limit = request.getLimit();
-        List<Map> list = Lists.newArrayList();
+        List<Map<String, Object>> list = Lists.newArrayList();
         if (MapUtils.isNotEmpty(data) && data.containsKey(columnKey)) {
             Object value = data.get(columnKey);
             fillDataList(value, list, limit);
         }
-        DataResult result = new DataResult();
-        result.setData(list);
-        return result;
+        return list;
     }
 }
