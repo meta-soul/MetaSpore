@@ -142,7 +142,9 @@ class EmbeddingOperator(torch.nn.Module):
         if self._feature_extractor is not None:
             raise RuntimeError("combine schema has been loaded")
         combine_schema_source = self._checked_get_combine_schema_source()
-        self._feature_extractor = SparseFeatureExtractor('sparse', combine_schema_source)
+        # For offline, the table name does not matter. Use a placeholder value.
+        table_name = '_sparse'
+        self._feature_extractor = SparseFeatureExtractor(table_name, combine_schema_source)
         string = f"\033[32mloaded combine schema from\033[m "
         string += f"\033[32mcombine schema file \033[m{self.combine_schema_file_path!r}"
         print(string)
