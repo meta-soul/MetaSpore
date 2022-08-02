@@ -49,6 +49,8 @@ class DeepFMConfig:
     use_bias = attrs.field(validator=attrs.validators.instance_of(bool))
     net_dropout = attrs.field(validator=prob_like_validator)
     batch_norm = attrs.field(validator=attrs.validators.instance_of(bool))
+    embedding_regularizer = attrs.field(default=None, validator=attrs.validators.instance_of((type(None), str)))
+    net_regularizer = attrs.field(default=None, validator=attrs.validators.instance_of((type(None), str)))
     ftrl_l1 = attrs.field(validator=attrs.validators.instance_of(float))
     ftrl_l2 = attrs.field(validator=attrs.validators.instance_of(float))
     ftrl_alpha = attrs.field(validator=attrs.validators.instance_of(float))

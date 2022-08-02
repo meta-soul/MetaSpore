@@ -24,7 +24,7 @@ from pyspark.sql import SparkSession
 
 logger = logging.getLogger(__name__)
 
-@attrs.frozen
+@attrs.frozen(kw_only=True)
 class InitSparkConfig:
     session_confs = attrs.field(validator=attrs.validators.instance_of(Dict))
     extended_confs = attrs.field(validator=attrs.validators.instance_of(Dict))

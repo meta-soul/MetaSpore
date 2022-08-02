@@ -27,7 +27,7 @@ from ..utils import get_class
 
 logger = logging.getLogger(__name__)
 
-@attrs.frozen
+@attrs.frozen(kw_only=True)
 class I2IRetrievalConfig:
     i2i_estimator_class = attrs.field(validator=attrs.validators.instance_of(Dict))
     model_out_path = attrs.field(default=None, validator=attrs.validators.instance_of(str))

@@ -24,7 +24,7 @@ from pyspark.sql import DataFrame
 
 logger = logging.getLogger(__name__)
 
-@attrs.frozen
+@attrs.frozen(kw_only=True)
 class DumpToMongoDBConfig:
     write_mode = attrs.field(validator=attrs.validators.matches_re('^append$|^overwrite$'))
     uri = attrs.field(validator=attrs.validators.matches_re('^mongodb://.+$'))

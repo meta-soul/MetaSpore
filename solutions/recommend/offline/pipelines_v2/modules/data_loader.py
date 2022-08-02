@@ -22,7 +22,7 @@ from pyspark.sql import SparkSession, DataFrame
 
 logger = logging.getLogger(__name__)
 
-@attrs.frozen
+@attrs.frozen(kw_only=True)
 class DataLoaderConfig:
     train_path = attrs.field(validator=attrs.validators.instance_of(str))
     test_path = attrs.field(validator=attrs.validators.instance_of(str))
