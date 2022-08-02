@@ -390,6 +390,21 @@ public enum DataTypeEnum {
         }
         return true;
     }
+
+    public boolean set(FeatureTable featureTable, String col, Object data) {
+        op.init(featureTable);
+        if (op.featureTable == null) return false;
+        int index = op.featureTable.g
+        if (CollectionUtils.isNotEmpty(data)) {
+            for (int i = 0; i < data.size(); ++i) {
+                Object value = data.get(i);
+                if (!this.op.set(i, col, value)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
     public Class<?> getCls() {
         return cls;
     }

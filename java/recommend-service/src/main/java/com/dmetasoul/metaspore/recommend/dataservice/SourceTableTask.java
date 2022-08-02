@@ -16,13 +16,23 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.serving.ArrowAllocator;
+import com.dmetasoul.metaspore.serving.FeatureTable;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 /**
  * SourceTable的DataService的实现类
@@ -38,12 +48,21 @@ public class SourceTableTask extends DataService {
     private DataSource dataSource;
     protected FeatureConfig.Source source;
     protected FeatureConfig.SourceTable sourceTable;
+    protected List<Field> resFields;
+    protected List<DataTypeEnum> dataTypes;
 
     @Override
     public boolean initService() {
         sourceTable = taskFlowConfig.getSourceTables().get(name);
         dataSource = taskServiceRegister.getDataSources().get(sourceTable.getSource());
         source = taskFlowConfig.getSources().get(sourceTable.getSource());
+        resFields = Lists.newArrayList();
+        dataTypes = Lists.newArrayList();
+        for (String col: sourceTable.getColumnNames()) {
+            DataTypeEnum dataType = DataTypes.getDataType(sourceTable.getColumnMap().get(col));
+            resFields.add(Field.nullable(col, dataType.getType()));
+            dataTypes.add(dataType);
+        }
         return true;
     }
 
@@ -77,12 +96,30 @@ public class SourceTableTask extends DataService {
         return true;
     }
 
-    protected DataResult processRequest(ServiceRequest request, DataContext context) {
+    protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
         return dataSource.process(request, context);
     }
 
     public <T> T getOptionOrDefault(String key, T value) {
         return Utils.getField(sourceTable.getOptions(), key, value);
+    }
+
+    public FeatureTable setFeatureTable(List<Map<String, Object>> res, List<Field> resFields, List<DataTypeEnum> dataTypes) {
+        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        if (CollectionUtils.isEmpty(res)) {
+            return featureTable;
+        }
+        for (int i = 0; i < resFields.size(); ++i) {
+            DataTypeEnum dataType = dataTypes.get(i);
+            Field field = resFields.get(i);
+            String col = field.getName();
+            for (Map<String, Object> map : res) {
+                if (!dataType.set(featureTable, col, map.get(col))) {
+                    log.error("set featuraTable fail!");
+                }
+            }
+        }
+        return featureTable;
     }
 
     @Override
@@ -94,7 +131,7 @@ public class SourceTableTask extends DataService {
         retryNum += 1;
         do {
             CompletableFuture<DataResult> future = CompletableFuture.supplyAsync(() -> {
-                DataResult res = processRequest(request, context);
+                List<Map<String, Object>> res = processRequest(request, context);
                 if (checkResult(res)) {
                     return res;
                 } else {

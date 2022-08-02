@@ -23,7 +23,6 @@ import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.google.common.collect.Maps;
 import io.milvus.response.SearchResultsWrapper;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 

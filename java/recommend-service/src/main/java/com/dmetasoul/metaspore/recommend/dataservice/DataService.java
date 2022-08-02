@@ -113,7 +113,12 @@ public abstract class DataService {
      *  这里认为同一个DataService在执行同一个请求的过程中，多次执行依赖任务taskName，获取的都是相同的数据结果
      */
     public DataResult getDataResultByName(String taskName, DataContext context) {
-        DataResult result = context.getResult(name, taskName);
+        DataResult result;
+        if (name.equals(taskName)) {
+            result = context.getResult(name);
+        } else {
+            result = context.getResult(name, taskName);
+        }
         if (!checkResult(result)) {
             return null;
         }
@@ -175,8 +180,10 @@ public abstract class DataService {
      *  执行DataService所依赖的任务执行流chain
      */
     public Chain executeChain(Chain chain, ServiceRequest request, DataContext context) {
+        // lastChain 用于记录未执行成功的task
         Chain lastChain = new Chain();
         List<String> then = chain.getThen();
+        // 顺序执行任务then
         if (CollectionUtils.isNotEmpty(then)) {
             int i = 0;
             for (; i < then.size(); ++i) {
@@ -188,6 +195,7 @@ public abstract class DataService {
             }
             lastChain.setThen(then.subList(i, then.size()));
         }
+        // 并行执行任务when
         if (CollectionUtils.isNotEmpty(chain.getWhen())) {
             List<CompletableFuture<?>> whenList = Lists.newArrayList();
             for (String taskName : chain.getWhen()) {
@@ -203,16 +211,19 @@ public abstract class DataService {
                 );
             }
             CompletableFuture<?> resultFuture;
+            // 设置any or all
             if (chain.isAny()) {
                 resultFuture = CompletableFuture.anyOf(whenList.toArray(new CompletableFuture[]{}));
             } else {
                 resultFuture = CompletableFuture.allOf(whenList.toArray(new CompletableFuture[]{}));
             }
+            // 获取并发执行结果
             try {
                 resultFuture.get(chain.getTimeOut(), chain.getTimeOutUnit());
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 log.error("there was an error when executing the CompletableFuture", e);
             }
+            // 记录未执行成功的when任务
             List<String> noExecuteTasks = Lists.newArrayList();
             for (String taskName : chain.getWhen()) {
                 if (getDataResultByName(taskName, context) == null) {
@@ -234,6 +245,7 @@ public abstract class DataService {
      *  执行DataService所依赖的任务taskName
      */
     public DataResult execute(String taskName, ServiceRequest request, DataContext context) {
+        // 如果任务已经被执行过，则直接获取结果
         DataResult result = getDataResultByName(taskName, context);
         if (result != null) {
             return result;
@@ -251,6 +263,7 @@ public abstract class DataService {
         result = dataService.execute(taskRequest, context);
         if (checkResult(result)) {
             context.setResult(name, taskName, result);
+            // 根据需要，执行taskName执行完毕后的处理逻辑
             afterProcess(taskName, request, context);
             return result;
         }

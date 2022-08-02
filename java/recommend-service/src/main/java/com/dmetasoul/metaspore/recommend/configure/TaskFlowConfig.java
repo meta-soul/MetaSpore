@@ -32,7 +32,6 @@ import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 服务配置汇总与初始化
@@ -101,11 +100,6 @@ public class TaskFlowConfig {
             features.put(item.getName(), item);
         }
         for (FeatureConfig.AlgoInference item : featureConfig.getAlgoInference()) {
-            FeatureConfig.Feature feature = features.get(item.getDepend());
-            if (feature == null) {
-                log.error("AlgoInference: {} Feature {} is not config!", item.getName(), item.getDepend());
-                throw new RuntimeException("AlgoInference check fail!");
-            }
             if (!item.checkAndDefault()) {
                 log.error("AlgoInference item {} is check fail!", item.getName());
                 throw new RuntimeException("AlgoInference check fail!");
@@ -153,7 +147,7 @@ public class TaskFlowConfig {
                                 chain.setColumnMap(service.getColumns());
                             } else {
                                 FeatureConfig.AlgoTransform algoTransform = algoTransforms.get(rely);
-                                chain.setColumnMap(algoTransform.getColumns());
+                                chain.setColumnMap(List.of(algoTransform.getColumnMap()));
                             }
                         }
                     }
@@ -236,22 +230,41 @@ public class TaskFlowConfig {
 
     private void checkAlgoInference() {
         for (FeatureConfig.AlgoInference item : featureConfig.getAlgoInference()) {
-            FeatureConfig.Feature feature = features.get(item.getDepend());
-            if (feature == null) {
-                log.error("AlgoTransform: {} Feature {} is not config!", item.getName(), item.getDepend());
-                throw new RuntimeException("AlgoTransform check fail!");
+            Map<String, FeatureConfig.Feature> features = Maps.newHashMap();
+            Map<String, String> fieldMap = Maps.newHashMap();
+            for (String featureItem : item.getFeature()) {
+                FeatureConfig.Feature feature = features.get(featureItem);
+                if (feature == null) {
+                    log.error("AlgoInference: {} Feature {} is not config!", item.getName(), featureItem);
+                    throw new RuntimeException("AlgoInference check fail!");
+                }
+                features.put(featureItem, feature);
+                for (String col : feature.getColumnNames()) {
+                    if (fieldMap.containsKey(col)) {
+                        fieldMap.put(col, null);
+                    } else {
+                        fieldMap.put(col, featureItem);
+                    }
+                }
             }
             for (int index = 0; index < item.getFieldActions().size(); ++index) {
                 FeatureConfig.FieldAction fieldAction = item.getFieldActions().get(index);
-                List<String> fields = fieldAction.getFields();
-                for (String field : fields) {
-                    if (!feature.getColumnMap().containsKey(field)) {
-                        log.error("AlgoTransform {} fieldAction fields {} must in feature columns!", item.getName(), field);
+                List<FeatureConfig.Field> fields = fieldAction.getFields();
+                for (FeatureConfig.Field field : fields) {
+                    if (StringUtils.isEmpty(field.getTable())) {
+                        if (!fieldMap.containsKey(field.getFieldName()) || fieldMap.get(field.getFieldName()) == null) {
+                            log.error("AlgoInference: {} fieldAction {} Field {} not exist!", item.getName(), fieldAction.getName(), field);
+                            throw new RuntimeException("AlgoInference check fail!");
+                        }
+                        field.setTable(fieldMap.get(field.getFieldName()));
+                    } else if (!features.containsKey(field.getTable())) {
+                        log.error("AlgoTransform {} fieldAction fields {} table must in feature!", item.getName(), field);
                         throw new RuntimeException("AlgoTransform check fail!");
                     }
                 }
                 if (fields.size() == 1 && StringUtils.isEmpty(fieldAction.getType())) {
-                    fieldAction.setType(feature.getColumnMap().get(fields.get(0)));
+                    FeatureConfig.Feature feature = features.get(fields.get(0).getTable());
+                    fieldAction.setType(feature.getColumnMap().get(fields.get(0).getFieldName()));
                 }
             }
         }
@@ -302,7 +315,7 @@ public class TaskFlowConfig {
             }
             Map<String, String> columns = Maps.newHashMap();
             for (int index = 0; index < item.getFields().size(); ++index) {
-                FeatureConfig.Feature.Field field = item.getFields().get(index);
+                FeatureConfig.Field field = item.getFields().get(index);
                 if (field.getTable() == null) {
                     if (fieldMap.get(field.getFieldName()) == null) {
                         log.error("Feature: {} select field: {} has wrong column field!", item.getName(), field.fieldName);
@@ -314,8 +327,8 @@ public class TaskFlowConfig {
                 columns.put(field.getFieldName(), columnType.get(field.getFieldName()));
             }
             if (MapUtils.isNotEmpty(item.getFilterMap())) {
-                for (Map.Entry<FeatureConfig.Feature.Field, Map<FeatureConfig.Feature.Field, String>> entry : item.getFilterMap().entrySet()) {
-                    FeatureConfig.Feature.Field field = entry.getKey();
+                for (Map.Entry<FeatureConfig.Field, Map<FeatureConfig.Field, String>> entry : item.getFilterMap().entrySet()) {
+                    FeatureConfig.Field field = entry.getKey();
                     if (field.getTable() != null && !columnTypes.containsKey(field.getTable())) {
                         log.error("Feature config the field of filters, field table' must be in the rely!");
                         throw new RuntimeException("Feature check fail!");
@@ -327,8 +340,8 @@ public class TaskFlowConfig {
                         }
                         field.setTable(fieldMap.get(field.getFieldName()));
                     }
-                    for (Map.Entry<FeatureConfig.Feature.Field, String> entry1 : entry.getValue().entrySet()) {
-                        FeatureConfig.Feature.Field field1 = entry1.getKey();
+                    for (Map.Entry<FeatureConfig.Field, String> entry1 : entry.getValue().entrySet()) {
+                        FeatureConfig.Field field1 = entry1.getKey();
                         if (field1.getTable() != null && !columnTypes.containsKey(field1.getTable())) {
                             log.error("Feature config the field of filter, field table' must be in the rely!");
                             throw new RuntimeException("Feature check fail!");

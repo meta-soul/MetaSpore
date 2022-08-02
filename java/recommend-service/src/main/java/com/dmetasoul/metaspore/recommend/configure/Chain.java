@@ -61,6 +61,9 @@ public class Chain {
         this.when = when;
         this.isAny = isAny;
     }
+    public Chain(List<String> then) {
+        this.then = then;
+    }
 
     public Chain(String taskName) {
         this.then = List.of(taskName);

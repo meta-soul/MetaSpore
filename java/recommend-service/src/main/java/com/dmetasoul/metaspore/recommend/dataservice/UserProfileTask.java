@@ -47,7 +47,7 @@ public class UserProfileTask extends AlgoTransformTask {
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult taskResult = getDataResultByName(config.getDepend().getThen().get(0), context);
+        DataResult taskResult = getDataResultByName(config.getFeature().getThen().get(0), context);
         Object object = getField(taskResult.getValues(), colRecentItemIds, null);
         if (object == null) {
             return null;

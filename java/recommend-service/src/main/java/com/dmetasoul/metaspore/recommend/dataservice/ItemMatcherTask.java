@@ -57,7 +57,7 @@ public class ItemMatcherTask extends AlgoTransformTask {
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult taskResult = getDataResultByName(config.getDepend().getThen().get(0), context);
+        DataResult taskResult = getDataResultByName(config.getFeature().getThen().get(0), context);
         List<Map> dataColumn = getDataByColumns(taskResult, List.of(cfValuesCol, userProfileWeightCol));
         HashMap<String, Double> itemToItemScore = new HashMap<>();
         for (Map<String, Object> item : dataColumn) {

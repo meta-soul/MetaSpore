@@ -15,44 +15,31 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.functions.Function;
+import com.dmetasoul.metaspore.serving.FeatureTable;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public abstract class AlgoTransformTask extends DataService {
-
-    private ExecutorService taskPool;
-
-    protected FeatureConfig.AlgoTransform config;
-
-    private Map<String, Function> functionMap;
+public abstract class AlgoTransformTask extends AlgoInferenceTask {
 
     @Override
-    public boolean initService() {
-        config = taskFlowConfig.getAlgoTransforms().get(name);
-        taskFlow.offer(config.getDepend());
-        return initTask();
-    }
+    public void close() {}
 
     public abstract boolean initTask();
 
-    public <T> T getOptionOrDefault(String key, T value) {
-        return Utils.getField(config.getOptions(), key, value);
+    @Override
+    public DataResult process(ServiceRequest request, DataContext context) {
+        return null;
     }
 
     @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
+    protected DataResult transform(FeatureTable featureTable, DataContext context) {
         return null;
     }
 }

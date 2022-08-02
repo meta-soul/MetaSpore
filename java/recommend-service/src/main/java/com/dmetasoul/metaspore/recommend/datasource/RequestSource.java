@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 
+import java.util.List;
 import java.util.Map;
 /**
  * source.kind=request的DataSource实现类
@@ -56,9 +57,7 @@ public class RequestSource extends DataSource {
      * @return datasource获取的数据
      */
     @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult result = new DataResult();
-        result.setValues(context.getRequest());
-        return result;
+    public List<Map<String, Object>> process(ServiceRequest request, DataContext context) {
+        return List.of(context.getRequest());
     }
 }

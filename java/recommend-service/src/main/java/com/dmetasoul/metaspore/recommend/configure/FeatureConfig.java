@@ -32,6 +32,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.dmetasoul.metaspore.recommend.common.DataTypes.typeIsSupport;
@@ -177,6 +178,50 @@ public class FeatureConfig {
     }
 
     @Data
+    @AllArgsConstructor
+    public static class Field {
+        String table;
+        String fieldName;
+
+        public static Field create(String str) {
+            String[] array = str.split("\\.");
+            if (array.length == 2) {
+                return new Field(array[0], array[1]);
+            } else if (array.length == 1) {
+                return new Field(null, array[0]);
+            }
+            return null;
+        }
+
+        public static List<Field> create(List<String> strs) {
+            List<Field> fields = Lists.newArrayList();
+            for (String s : strs) {
+                fields.add(create(s));
+            }
+            return fields;
+        }
+
+        @Override
+        public int hashCode() {
+            return String.format("%s.%s", table, fieldName).hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (obj == null) return false;
+            if (obj instanceof Field) {
+                Field field = (Field) obj;
+                if ((fieldName != null && !fieldName.equals(field.getFieldName())) || (fieldName == null && field.getFieldName() != null)) {
+                    return false;
+                } else
+                    return (table == null || table.equals(field.getTable())) && (table != null || field.getTable() == null);
+            }
+            return false;
+        }
+    }
+
+    @Data
     public static class Feature {
         private String name;
         private List<String> from;
@@ -205,42 +250,6 @@ public class FeatureConfig {
         private List<Map<String, String>> columns;
 
         private Map<String, List<Condition>> conditionMap;
-
-        @Data
-        @AllArgsConstructor
-        public static class Field {
-            String table;
-            String fieldName;
-
-            public static Field create(String str) {
-                String[] array = str.split("\\.");
-                if (array.length == 2) {
-                    return new Field(array[0], array[1]);
-                } else if (array.length == 1) {
-                    return new Field(null, array[0]);
-                }
-                return null;
-            }
-
-            @Override
-            public int hashCode() {
-                return String.format("%s.%s", table, fieldName).hashCode();
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                if (obj == this) return true;
-                if (obj == null) return false;
-                if (obj instanceof Field) {
-                    Field field = (Field) obj;
-                    if ((fieldName != null && !fieldName.equals(field.getFieldName())) || (fieldName == null && field.getFieldName() != null)) {
-                        return false;
-                    } else
-                        return (table == null || table.equals(field.getTable())) && (table != null || field.getTable() == null);
-                }
-                return false;
-            }
-        }
 
         @Data
         @AllArgsConstructor
@@ -396,18 +405,18 @@ public class FeatureConfig {
     public static class FieldAction {
         private String name;
         private String type;
-        private List<String> fields;
+        private List<Field> fields;
         private String func;
         private Map<String, Object> options;
 
         public void setFields(List<String> fields) {
             if (CollectionUtils.isEmpty(fields)) return;
-            this.fields = fields;
+            this.fields = Field.create(fields);
         }
 
         public void setField(String field) {
             if (StringUtils.isEmpty(field)) return;
-            this.fields = List.of(field);
+            this.fields = List.of(Objects.requireNonNull(Field.create(field)));
         }
 
         public boolean checkAndDefault() {
@@ -416,7 +425,7 @@ public class FeatureConfig {
                 return false;
             }
             if (CollectionUtils.isEmpty(fields)) {
-                fields = List.of(name);
+                fields = List.of(Objects.requireNonNull(Field.create(name)));
             }
             if (!StringUtils.isEmpty(type)) {
                 if (DataTypes.getDataType(type) == null) {
@@ -433,65 +442,83 @@ public class FeatureConfig {
 
     @Data
     public static class AlgoInference {
-        private String name;
-        private String depend;
-        private List<FieldAction> fieldActions;
+        protected String name;
+        protected List<String> feature;
+        protected List<FieldAction> fieldActions;
+        protected Map<String, Object> options;
+
+        protected List<String> columnNames;
+        protected Map<String, String> columnMap;
+
+        public void setFeature(List<String> list) {
+            feature = list;
+        }
+
+        public void setFeature(String str) {
+            feature = List.of(str);
+        }
 
         public boolean checkAndDefault() {
-            if (StringUtils.isEmpty(name) || StringUtils.isEmpty(depend) || CollectionUtils.isEmpty(fieldActions)) {
-                log.error("AlgoInference config name, fieldActions and depend must not be empty!");
+            if (!check()) {
                 return false;
             }
+            columnNames = Lists.newArrayList();
+            columnMap = Maps.newHashMap();
             for (FieldAction action : fieldActions) {
                 if (!action.checkAndDefault()) {
                     log.error("AlgoInference config action must be right!");
                     return false;
                 }
+                columnNames.add(action.getName());
+                columnMap.put(action.getName(), action.getType());
+            }
+            return true;
+        }
+
+        protected boolean check() {
+            if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(feature) || CollectionUtils.isEmpty(fieldActions)) {
+                log.error("AlgoInference config name, fieldActions and feature depend must not be empty!");
+                return false;
             }
             return true;
         }
     }
 
     @Data
-    public static class AlgoTransform {
-        private String name;
-        private String service;
-        private Map<String, Object> options;
+    public static class AlgoTransform extends AlgoInference {
         /**
          * Transform需要执行的处理流程， chain中的每个节点都是sourceTable, feature, algoInference, algotransform和定义好的chain
          */
         private Chain depend;
-        private List<String> columnNames;
-        private Map<String, String> columnMap;
-        /**
-         *  输出数据 字段和类型
-         */
-        private List<Map<String, String>> columns;
 
-        public void setColumnData() {
-            if (CollectionUtils.isNotEmpty(columns)) {
-                this.columnNames = Lists.newArrayList();
-                this.columnMap = Maps.newHashMap();
-                columns.forEach(map -> map.forEach((x, y) -> {
-                    columnNames.add(x);
-                    this.columnMap.put(x, y);
-                }));
-            }
+        public void setDepend(List<String> list) {
+            depend = new Chain(list);
         }
-        public boolean checkAndDefault() {
+
+        public void setDepend(String str) {
+            depend = new Chain(str);
+        }
+
+        public void setDepend(Chain chain) {
+            depend = chain;
+        }
+
+        @Override
+        public boolean check() {
             if (StringUtils.isEmpty(name)) {
                 log.error("AlgoTransform config name must not be empty!");
                 return false;
             }
-            if (StringUtils.isEmpty(service)) {
-                service = name;
-            }
-            setColumnData();
             if (!depend.checkAndDefault()) {
                 log.error("AlgoTransform config depend must not be empty!");
                 return false;
             }
             return true;
+        }
+
+        @Override
+        public boolean checkAndDefault() {
+            return super.checkAndDefault();
         }
     }
 }
