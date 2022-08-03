@@ -17,5 +17,6 @@
 from .data_loader import DataLoaderModule, DataLoaderConfig
 from .init_spark import InitSparkModule, InitSparkConfig
 from .i2i_retrieval import I2IRetrievalModule, I2IRetrievalConfig
+from .twotower_retrieval import TwoTowersRetrievalConfig, TwoTowersRetrievalModule
 from .mongodb_dumper import DumpToMongoDBModule, DumpToMongoDBConfig
 from .deep_ctr import DeepCTRModule
