@@ -36,7 +36,7 @@ public class SpringBeanUtil implements ApplicationContextAware {
     private static ApplicationContext ctx;
 
     @Override
-    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+    public void setApplicationContext(@SuppressWarnings("NullableProblems") ApplicationContext applicationContext) throws BeansException {
         SpringBeanUtil.ctx = applicationContext;
     }
 

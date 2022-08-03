@@ -33,6 +33,7 @@ import java.util.Map;
  * 工具类
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
+@SuppressWarnings("rawtypes")
 public class Utils {
     public static String genResultKey(String name, String taskName) {
         return String.format("%s_%s", name, taskName);
@@ -47,6 +48,7 @@ public class Utils {
         return value == null ? defaultValue : value;
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> T getField(Map<String, Object> data, String field, T value) {
         if (MapUtils.isNotEmpty(data) && data.containsKey(field)) return (T) data.getOrDefault(field, value);
         return value;
@@ -59,6 +61,7 @@ public class Utils {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     public static boolean setFieldFail(Map map, List<String> columnName, int index, Object value) {
         if (index < 0 || columnName == null || map == null || index >= columnName.size()) {
             return true;
@@ -68,6 +71,7 @@ public class Utils {
     }
 
     public static int parseIntFromString(String str, int defaultValue) {
+        //noinspection deprecation
         if (StringUtils.isEmpty(str)) {
             return defaultValue;
         }

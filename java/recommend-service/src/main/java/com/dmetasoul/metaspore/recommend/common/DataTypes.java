@@ -20,13 +20,15 @@ import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+
 /**
  * 用于保存数据字段类型与Class信息的映射关系
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
 @Slf4j
 public class DataTypes {
-    private static Map<String, DataTypeEnum> dataTypes = new HashMap<>();
+    private static final Map<String, DataTypeEnum> dataTypes = new HashMap<>();
     public static boolean typeIsSupport(String type) {
         return dataTypes.containsKey(type);
     }
@@ -34,12 +36,10 @@ public class DataTypes {
         return dataTypes.get(name);
     }
 
+    @SuppressWarnings("rawtypes")
     public static Class getDataClass(String name) {
         DataTypeEnum dataType = dataTypes.get(name);
-        if (dataType != null) {
-            return dataType.getCls();
-        }
-        return DataTypeEnum.DEFAULT.getCls();
+        return Objects.requireNonNullElse(dataType, DataTypeEnum.DEFAULT).getCls();
     }
 
     static {

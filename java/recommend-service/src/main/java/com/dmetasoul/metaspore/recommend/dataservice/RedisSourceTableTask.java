@@ -17,7 +17,6 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.datasource.RedisSource;
 import com.dmetasoul.metaspore.recommend.enums.RedisTypeEnum;
@@ -35,7 +34,7 @@ import java.util.Map;
  * 注解DataServiceAnnotation 必须设置， value应设置为RedisSourceTable。
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
-@SuppressWarnings("rawtypes")
+
 @Slf4j
 @DataServiceAnnotation("RedisSourceTable")
 public class RedisSourceTableTask extends SourceTableTask {
@@ -43,7 +42,6 @@ public class RedisSourceTableTask extends SourceTableTask {
     private RedisSource dataSource;
     private String columnKey;
     private String keyFormat;
-    private List<String> columnNames;
     private RedisTypeEnum redisType;
 
     @Override
@@ -57,13 +55,14 @@ public class RedisSourceTableTask extends SourceTableTask {
         if (sourceTable.getColumnNames().size() < 2) {
             return false;
         }
-        columnNames = sourceTable.getColumnNames();
+        List<String> columnNames = sourceTable.getColumnNames();
         columnKey = columnNames.get(0);
         redisType = RedisTypeEnum.getEnumByName(getOptionOrDefault("redisType", "hash"));
         redisType.init(keyFormat, dataSource.getRedisTemplate(), columnNames);
         return true;
     }
 
+    @SuppressWarnings("rawtypes")
     private void fillDataList(Object value, List<Map<String, Object>> list, int limit) {
         if (value instanceof Collection) {
             for (Object item : (Collection)value) {

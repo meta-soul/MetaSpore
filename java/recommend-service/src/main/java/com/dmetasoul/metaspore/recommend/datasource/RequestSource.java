@@ -18,11 +18,9 @@ package com.dmetasoul.metaspore.recommend.datasource;
 import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -31,7 +29,6 @@ import java.util.Map;
  * 配置中的source.kind需要与注解DataSourceAnnotation中value保持一致
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
-@SuppressWarnings("rawtypes")
 @Data
 @Slf4j
 @DataSourceAnnotation("request")

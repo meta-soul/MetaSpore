@@ -24,12 +24,8 @@ import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.ArrowAllocator;
-import com.dmetasoul.metaspore.serving.FeatureTable;
-import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -40,7 +36,7 @@ import java.util.concurrent.*;
  * 注解DataServiceAnnotation 必须设置， value应设置为SourceTable。
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
-@SuppressWarnings("rawtypes")
+
 @Slf4j
 @DataServiceAnnotation("SourceTable")
 public class SourceTableTask extends DataService {

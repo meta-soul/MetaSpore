@@ -74,9 +74,6 @@ public class ServiceController {
         if (result == null) {
             return ServiceResult.of(-1, "taskService execute fail!");
         }
-        if (!result.isVaild()) {
-            return ServiceResult.of(-1, "taskService result is invalid!");
-        }
         return ServiceResult.of(result);
     }
     /**

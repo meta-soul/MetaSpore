@@ -17,7 +17,6 @@ package com.dmetasoul.metaspore.recommend.datasource;
 
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

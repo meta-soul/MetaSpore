@@ -25,11 +25,6 @@ feature-service:
         # redis standalone need host and port in options
         host: localhost # if not set, default localhost
         port: 6379      # if not set, default 6379
-    - name: modelRecall
-      kind: milvus
-      options:
-        host: localhost  # host need in milvus
-        port: 9000
   SourceTable:
     - name: userProfile
       source: mysql
@@ -95,11 +90,6 @@ feature-service:
       columns:
         - user_key: str    # default col is key, other is value
         - item_ids: map_str_double
-    - name: twotowerRecall
-      source: modelRecall
-      columns:
-        - id: str
-        - itemScore: double
   Feature:
     - name: feature_user
       from: [ userAction, userProfile, userReq]

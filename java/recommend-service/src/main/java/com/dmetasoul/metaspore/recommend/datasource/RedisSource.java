@@ -17,18 +17,11 @@ package com.dmetasoul.metaspore.recommend.datasource;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.redis.connection.RedisClusterConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -60,16 +53,17 @@ public class RedisSource extends DataSource {
         String[] args = StringUtils.split(hostAndPort, ":");
         Assert.notNull(args, "HostAndPort need to be seperated by  ':'.");
         Assert.isTrue(args.length == 2, "Host and Port String needs to specified as host:port");
-        return new RedisNode(args[0], Integer.valueOf(args[1]));
+        return new RedisNode(args[0], Integer.parseInt(args[1]));
     }
 
     public RedisTemplate<String, Object> getRedisTemplate(RedisConnectionFactory factory) {
-        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+        @SuppressWarnings("unchecked") Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
         ObjectMapper om = new ObjectMapper();
         om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        //noinspection deprecation
         om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
         jackson2JsonRedisSerializer.setObjectMapper(om);
-        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<String, Object>();
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setConnectionFactory(factory);
         StringRedisSerializer stringSerializer = new StringRedisSerializer();
 

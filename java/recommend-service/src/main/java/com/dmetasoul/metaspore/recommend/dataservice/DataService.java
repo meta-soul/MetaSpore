@@ -142,20 +142,6 @@ public abstract class DataService {
         }
         return dataResults;
     }
-    /**
-     *  根据DataService的依赖任务的名称集合names，获取相关的任务生成的结果集合, 获取不到结果的直接throw new RuntimeException
-     */
-    public List<DataResult> getDataResultByRelys(List<String> names, boolean isAny, DataContext context) {
-        List<DataResult> dataResults = getDataResultByNames(names, context);
-        if (isAny && dataResults.isEmpty()) {
-            throw new RuntimeException(String.format("task: %s get rely result fail any at empty !", name));
-        }
-        if (!isAny && dataResults.size() != names.size()) {
-            throw new RuntimeException(String.format("task: %s get rely result fail not any but loss!", name));
-        }
-        return dataResults;
-    }
-
     public DataResult setDataResult(List<Map<String, Object>> res) {
         if (res == null) {
             return null;

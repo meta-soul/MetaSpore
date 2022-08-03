@@ -42,7 +42,6 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
  * 注解DataServiceAnnotation 必须设置
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
-@SuppressWarnings("rawtypes")
 @Slf4j
 @DataServiceAnnotation
 public class FeatureTask extends DataService {
@@ -76,9 +75,6 @@ public class FeatureTask extends DataService {
      * 类似于rewritedField， immediateRewritedField主要在初始化过程中构建
      */
     private Map<FeatureConfig.Field, FeatureConfig.Field> immediateRewritedField;
-
-    private List<Field> resFields;
-    private List<DataTypeEnum> dataTypes;
 
     /**
      * 初始化FeatureTask

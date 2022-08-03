@@ -57,6 +57,7 @@ public class JDBCSourceTableTask extends SourceTableTask {
         return true;
     }
 
+    @SuppressWarnings("rawtypes")
     private void fillParts(String col, Object value, List<String> parts, Map<String, Object> params) {
         if (value instanceof Collection) {
             List<Object> list = Lists.newArrayList();

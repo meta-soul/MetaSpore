@@ -127,7 +127,6 @@ public class TaskFlowConfig {
                 log.error("Experiment item {} is check fail!", item.getName());
                 throw new RuntimeException("Experiment check fail!");
             }
-            List<String> columns = null;
             int chainNum = item.getChains().size();
             for (int index = 0; index < chainNum; ++index) {
                 Chain chain = item.getChains().get(index);
