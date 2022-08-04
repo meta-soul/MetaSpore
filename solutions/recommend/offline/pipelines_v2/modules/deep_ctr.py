@@ -56,7 +56,7 @@ class DeepCTRModule:
         get_estimator_config_fun = get_class('python.algos.config.get_estimator_config_class')
         get_module_config_fun = get_class('python.algos.config.get_module_config_class')
         estimator_config_class = get_estimator_config_fun(deep_ctr_model_class)
-        model_config_class = get_estimator_config_fun(deep_ctr_model_class)
+        model_config_class = get_module_config_fun(deep_ctr_model_class)
         model_params = cattrs.structure(conf['model_params'], model_config_class)
         estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
         
