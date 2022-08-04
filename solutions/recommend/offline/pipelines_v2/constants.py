@@ -13,24 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-from .deepctr_config import *
-from ..widedeep_net import WideDeep
-from ..deepfm_net import DeepFM
 
-ESTIMATOR_CONFIG = {
-    WideDeep: DeepCTREstimatorConfig,
-    DeepFM: DeepCTREstimatorConfig
-}
+from .utils import get_class
 
-MODULE_CONFIG = {
-    WideDeep: WideDeepConfig,
-    DeepFM: DeepFMConfig
-}
-
-def get_estimator_config_class(algo_module_class):
-    estimator_config_class = ESTIMATOR_CONFIG.get(algo_module_class, None)
-    return estimator_config_class
-
-def get_model_config_class(algo_module_class):
-    module_config_class = MODULE_CONFIG.get(algo_module_class, None)
-    return module_config_class
+get_estimator_config_func = get_class('python.algos.config.get_estimator_config_class')
+get_model_config_func = get_class('python.algos.config.get_model_config_class')

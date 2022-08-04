@@ -18,4 +18,4 @@ from .deepctr_config import DeepCTREstimatorConfig
 from .deepctr_config import WideDeepConfig
 from .deepctr_config import DeepFMConfig
 
-from .config_factory import get_estimator_config_class, get_module_config_class
+from .config_factory import get_estimator_config_class, get_model_config_class
