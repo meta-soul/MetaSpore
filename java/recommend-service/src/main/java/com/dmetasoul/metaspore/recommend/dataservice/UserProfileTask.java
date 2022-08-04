@@ -17,20 +17,19 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.recommend.functions.FlatFunction;
+import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.util.Assert;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.dmetasoul.metaspore.recommend.common.Utils.getField;
-
-@SuppressWarnings("rawtypes")
 @Data
 @Slf4j
 @DataServiceAnnotation("UserProfile")
@@ -42,37 +41,66 @@ public class UserProfileTask extends AlgoTransformTask {
     @Override
     public boolean initTask() {
         alpha = getOptionOrDefault("alpha", 1.0);
+        splitor = getOptionOrDefault("splitor", splitor);
         return true;
     }
-
     @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult taskResult = getDataResultByName(config.getFeature().getThen().get(0), context);
-        Object object = getField(taskResult.getValues(), colRecentItemIds, null);
-        if (object == null) {
-            return null;
-        }
-        List<String> recentMovieArr = null;
-        if (object instanceof String) {
-            String recentIdsStr = (String)object;
-            recentMovieArr = List.of(recentIdsStr.split(splitor));
-        }
-        if (object instanceof List && config.getColumnMap().get(colRecentItemIds).equals("str[]")) {
-            recentMovieArr = (List)object;
-        }
-        List<Map> data = Lists.newArrayList();
-        for (int i = 0; recentMovieArr != null && i < recentMovieArr.size(); i++) {
-            Map<String, Object> item = Maps.newHashMap();
-            if (Utils.setFieldFail(item, config.getColumnNames(), 0, recentMovieArr.get(i))) {
-                continue;
+    public void addFunctions() {
+        addFunction("splitRecentIds", new Function() {
+            @Override
+            public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(values) && values.size() == 1, "input values size must eq 1");
+                Assert.isTrue(CollectionUtils.isNotEmpty(types) && types.get(0).equals(DataTypeEnum.STRING), "split input must string!");
+                String split = Utils.getField(options, "splitor", splitor);
+                List<Object> input = values.get(0);
+                List<Object> res = Lists.newArrayList();
+                for (Object o : input) {
+                    Assert.isTrue(o instanceof String, "value must string!");
+                    String value = (String) o;
+                    res.add(List.of(value.split(split)));
+                }
+                return res;
             }
-            if (Utils.setFieldFail(item, config.getColumnNames(), 1, 1 / (1 + Math.pow((recentMovieArr.size() - i - 1), alpha)))) {
-                continue;
+        });
+        addFunction("recentItemId", new FlatFunction() {
+            @Override
+            public List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(values) && indexs != null, "input data is not null");
+                List<Object> res = Lists.newArrayList();
+                List<Object> input = values.get(0);
+                int num = 0;
+                for (int i = 0; i < input.size(); ++i) {
+                    Object item = input.get(i);
+                    Assert.isInstanceOf(Collection.class, item);
+                    Collection<?> list = (Collection<?>) item;
+                    for (Object o : list) {
+                        num += 1;
+                        indexs.add(i);
+                        res.add(o);
+                    }
+                }
+                return res;
             }
-            data.add(item);
-        }
-        DataResult result = new DataResult();
-        result.setData(data);
-        return result;
+        });
+        addFunction("recentWeight", new FlatFunction() {
+            @Override
+            public List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(values) && indexs != null, "input data is not null");
+                List<Object> res = Lists.newArrayList();
+                List<Object> input = values.get(0);
+                int num = 0;
+                for (int i = 0; i < input.size(); ++i) {
+                    Object item = input.get(i);
+                    Assert.isInstanceOf(Collection.class, item);
+                    Collection<?> list = (Collection<?>) item;
+                    for (Object o : list) {
+                        num += 1;
+                        indexs.add(i);
+                        res.add(1 / (1 + Math.pow((list.size() - i - 1), alpha)));
+                    }
+                }
+                return res;
+            }
+        });
     }
 }

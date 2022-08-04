@@ -16,21 +16,13 @@
 package com.dmetasoul.metaspore.recommend.data;
 
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import io.milvus.response.SearchResultsWrapper;
 import lombok.Data;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.FieldVector;
-import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
-import java.util.Map;
 /**
  * 用于保存服务结果
  * Created by @author qinyy907 in 14:24 22/07/15.
@@ -43,7 +35,7 @@ public class DataResult {
     protected FeatureTable featureTable;
 
     public List<Object> get(String field) {
-        if (featureTable == null || featureTable.getVector(field) == null) return Lists.newArrayList();
+        if (featureTable == null || featureTable.getVector(field) == null) throw new IllegalArgumentException("featureTable is null or field not exist");
         FieldVector vector = featureTable.getVector(field);
         List<Object> values = Lists.newArrayList();
         for (int i = 0; i < vector.getValueCount(); ++i) {
@@ -52,8 +44,15 @@ public class DataResult {
         return values;
     }
 
-    public void setFeatureTable(FeatureTable featureTable) {
-        this.featureTable = featureTable;
+    public FieldVector getVector(String field) {
+        if (featureTable == null || featureTable.getVector(field) == null) throw new IllegalArgumentException("featureTable is null or field not exist");
+        return featureTable.getVector(field);
+    }
+
+    public DataTypeEnum getType(String field) {
+        if (featureTable == null || featureTable.getVector(field) == null) throw new IllegalArgumentException("featureTable is null or field not exist");
+        FieldVector vector = featureTable.getVector(field);
+        return DataTypeEnum.getEnumByType(vector.getField().getType());
     }
 
     public boolean isNull() {

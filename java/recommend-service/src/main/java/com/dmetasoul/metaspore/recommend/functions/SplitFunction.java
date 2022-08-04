@@ -16,24 +16,31 @@
 package com.dmetasoul.metaspore.recommend.functions;
 
 import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.FeatureTable;
-import org.apache.arrow.vector.FieldVector;
+import com.google.common.collect.Lists;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
 
-@TransformFunction("enum")
-public class EnumFunction extends Function{
-
-
-    @Override
-    public void init(Map<String, Object> params) {
-
-    }
+@TransformFunction("split")
+public class SplitFunction extends Function{
+    private static final String SPLITOR = "\u0001";
 
     @Override
     public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
-        return null;
+        Assert.isTrue(CollectionUtils.isNotEmpty(values) && values.size() == 1, "input values size must eq 1");
+        Assert.isTrue(CollectionUtils.isNotEmpty(types) && types.get(0).equals(DataTypeEnum.STRING), "split input must string!");
+        String splitor = Utils.getField(options, "splitor", SPLITOR);
+        List<Object> input = values.get(0);
+        List<Object> res = Lists.newArrayList();
+        for (Object o : input) {
+            Assert.isTrue(o instanceof String, "value must string!");
+            String value = (String) o;
+            res.add(List.of(value.split(splitor)));
+        }
+        return res;
     }
 }

@@ -15,14 +15,13 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+
 import java.util.List;
 import java.util.Map;
 
 public abstract class Function {
 
-    public List<Object> process(List<List<Object>> values, List<String> types, Map<String, Object> options) {
-        return values.get(0);
-    }
-
-    public abstract void init(Map<String, Object> params);
+    public abstract List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options);
+    public void init(Map<String, Object> params) {}
 }

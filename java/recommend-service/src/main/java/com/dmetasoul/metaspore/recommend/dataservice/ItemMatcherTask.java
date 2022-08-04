@@ -20,15 +20,17 @@ import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.recommend.functions.FlatFunction;
+import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuppressWarnings("rawtypes")
 @Data
@@ -53,6 +55,64 @@ public class ItemMatcherTask extends AlgoTransformTask {
         userProfileWeightCol = getOptionOrDefault("weight", "userProfileWeight");
         cfValuesCol = getOptionOrDefault("cfValues", "cfValues");
         return true;
+    }
+
+    @Override
+    public void addFunctions() {
+        addFunction("toItemScore", new FlatFunction() {
+            @Override
+            public List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(values) && indexs != null, "input data is not null");
+                Assert.isTrue(types.get(0).equals(DataTypeEnum.MAP_STR_OBJECT), "toItemScore type is map<string, object>");
+                Map<String, Double> itemToItemScore = new HashMap<>();
+                for (Map<String, Object> item : dataColumn) {
+                    List itemCfValue = Utils.getField(item, cfValuesCol, Lists.newArrayList());
+                    double userProfileWeight = Utils.getField(item, userProfileWeightCol, 0.0);
+                    itemCfValue.forEach(x -> {
+                        Map<String, Object> map = (Map<String, Object>) x;
+                        String itemId = map.get("_1").toString();
+                        Double itemScore = (Double) map.get("_2") * userProfileWeight;
+                        if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
+                            itemToItemScore.put(itemId, itemScore);
+                        }
+                    });
+                }
+                ArrayList<Map.Entry<String, Double>> entryList = new ArrayList<>(itemToItemScore.entrySet());
+                entryList.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
+                List<Object> res = Lists.newArrayList();
+                int num = 0;
+                for (int i = 0; i < input.size(); ++i) {
+                    Object item = input.get(i);
+                    Assert.isInstanceOf(Collection.class, item);
+                    Collection<?> list = (Collection<?>) item;
+                    for (Object o : list) {
+                        num += 1;
+                        indexs.add(i);
+                        res.add(o);
+                    }
+                }
+                return res;
+            }
+        });
+        addFunction("recentWeight", new FlatFunction() {
+            @Override
+            public List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(values) && indexs != null, "input data is not null");
+                List<Object> res = Lists.newArrayList();
+                int num = 0;
+                for (int i = 0; i < input.size(); ++i) {
+                    Object item = input.get(i);
+                    Assert.isInstanceOf(Collection.class, item);
+                    Collection<?> list = (Collection<?>) item;
+                    for (Object o : list) {
+                        num += 1;
+                        indexs.add(i);
+                        res.add(1 / (1 + Math.pow((list.size() - i - 1), alpha)));
+                    }
+                }
+                return res;
+            }
+        });
     }
 
     @Override

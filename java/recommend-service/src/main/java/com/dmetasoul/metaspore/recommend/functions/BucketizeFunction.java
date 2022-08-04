@@ -17,8 +17,11 @@ package com.dmetasoul.metaspore.recommend.functions;
 
 
 import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.FieldVector;
 
 import java.util.List;
 import java.util.Map;
@@ -42,7 +45,7 @@ public class BucketizeFunction extends Function {
     }
 
     @Override
-    public List<Object> process(List<List<Object>> values, List<String> types, Map<String, Object> options) {
-        return values.get(0);
+    public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+        return null;
     }
 }

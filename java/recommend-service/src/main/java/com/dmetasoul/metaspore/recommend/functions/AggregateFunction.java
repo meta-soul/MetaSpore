@@ -15,25 +15,19 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.FeatureTable;
-import org.apache.arrow.vector.FieldVector;
 
 import java.util.List;
 import java.util.Map;
 
-@TransformFunction("enum")
-public class EnumFunction extends Function{
-
-
-    @Override
-    public void init(Map<String, Object> params) {
-
-    }
+public abstract class AggregateFunction extends Function {
 
     @Override
     public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
-        return null;
+        throw new IllegalCallerException("AggregateFunction only has aggregate function!");
     }
+
+    public abstract Object aggregate(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options);
+
+    public void init(Map<String, Object> params) {}
 }

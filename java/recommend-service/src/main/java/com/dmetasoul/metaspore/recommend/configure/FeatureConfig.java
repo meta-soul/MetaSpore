@@ -19,6 +19,7 @@ import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +30,9 @@ import org.elasticsearch.common.util.set.Sets;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.Assert;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.dmetasoul.metaspore.recommend.common.DataTypes.typeIsSupport;
 /**
@@ -49,7 +48,6 @@ public class FeatureConfig {
     private List<Source> source;
     private List<SourceTable> sourceTable;
     private List<Feature> feature;
-    private List<AlgoInference> algoInference;
     private List<AlgoTransform> algoTransform;
 
     @Data
@@ -406,6 +404,7 @@ public class FeatureConfig {
         private String name;
         private String type;
         private List<Field> fields;
+        private List<String> input;
         private String func;
         private Map<String, Object> options;
 
@@ -419,36 +418,42 @@ public class FeatureConfig {
             this.fields = List.of(Objects.requireNonNull(Field.create(field)));
         }
 
+        public void setInput(List<String> input) {
+            if (CollectionUtils.isEmpty(input)) return;
+            this.input = input;
+        }
+
+        public void setInput(String input) {
+            if (StringUtils.isEmpty(input)) return;
+            this.input = List.of(input);
+        }
+
         public boolean checkAndDefault() {
-            if (StringUtils.isEmpty(name)) {
-                log.error("AlgoTransform Action name must not be empty!");
-                return false;
-            }
-            if (CollectionUtils.isEmpty(fields)) {
-                fields = List.of(Objects.requireNonNull(Field.create(name)));
-            }
-            if (!StringUtils.isEmpty(type)) {
-                if (DataTypes.getDataType(type) == null) {
+            if (StringUtils.isNotEmpty(func)) {
+                if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
                     log.error("AlgoTransform FieldAction config type:{} must be support!", type);
                     return false;
                 }
-            } else if (fields.size() > 1) {
-                log.error("AlgoTransform Action duplicate field must define type!");
-                return false;
+            }
+            if (CollectionUtils.isEmpty(input) && CollectionUtils.isEmpty(fields)) {
+                throw new RuntimeException("fieldaction input and field must not be empty at the same time");
             }
             return true;
         }
     }
 
     @Data
-    public static class AlgoInference {
-        protected String name;
-        protected List<String> feature;
-        protected List<FieldAction> fieldActions;
-        protected Map<String, Object> options;
+    public static class AlgoTransform {
+        private String name;
+        private List<String> feature;
+        private Map<String, FieldAction> fieldActions;
+        private List<String> output;
+        private Map<String, Object> options;
 
         protected List<String> columnNames;
         protected Map<String, String> columnMap;
+
+        private List<FieldAction> actionList;
 
         public void setFeature(List<String> list) {
             feature = list;
@@ -462,63 +467,49 @@ public class FeatureConfig {
             if (!check()) {
                 return false;
             }
-            columnNames = Lists.newArrayList();
+            columnNames = output;
             columnMap = Maps.newHashMap();
-            for (FieldAction action : fieldActions) {
-                if (!action.checkAndDefault()) {
-                    log.error("AlgoInference config action must be right!");
-                    return false;
+            actionList = Lists.newArrayList();
+            Stack<FieldAction> stack = new Stack<>();
+            Set<String> actionSet = Sets.newHashSet();
+            for (String col : output) {
+                FieldAction action = fieldActions.get(col);
+                Assert.notNull(action, "output col must has Action colName:" + col);
+                stack.push(action);
+                action.setName(col);
+                Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + col);
+                columnMap.put(col, action.getType());
+            }
+            boolean enableAction;
+            while (!stack.empty()) {
+                FieldAction action = stack.peek();
+                enableAction = true;
+                for (String item : action.getInput()) {
+                    if (actionSet.contains(item)) {
+                        continue;
+                    }
+                    FieldAction fieldAction = fieldActions.get(item);
+                    Assert.notNull(fieldAction, "FieldAction.input item must has Action item:" + item);
+                    stack.push(fieldAction);
+                    action.setName(item);
+                    Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + item);
+                    enableAction = false;
                 }
-                columnNames.add(action.getName());
-                columnMap.put(action.getName(), action.getType());
+                if (enableAction) {
+                    actionList.add(action);
+                    stack.pop();
+                    actionSet.add(action.getName());
+                }
             }
             return true;
         }
 
         protected boolean check() {
-            if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(feature) || CollectionUtils.isEmpty(fieldActions)) {
+            if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(feature) || CollectionUtils.isEmpty(output)) {
                 log.error("AlgoInference config name, fieldActions and feature depend must not be empty!");
                 return false;
             }
             return true;
-        }
-    }
-
-    @Data
-    public static class AlgoTransform extends AlgoInference {
-        /**
-         * Transform需要执行的处理流程， chain中的每个节点都是sourceTable, feature, algoInference, algotransform和定义好的chain
-         */
-        private Chain depend;
-
-        public void setDepend(List<String> list) {
-            depend = new Chain(list);
-        }
-
-        public void setDepend(String str) {
-            depend = new Chain(str);
-        }
-
-        public void setDepend(Chain chain) {
-            depend = chain;
-        }
-
-        @Override
-        public boolean check() {
-            if (StringUtils.isEmpty(name)) {
-                log.error("AlgoTransform config name must not be empty!");
-                return false;
-            }
-            if (!depend.checkAndDefault()) {
-                log.error("AlgoTransform config depend must not be empty!");
-                return false;
-            }
-            return true;
-        }
-
-        @Override
-        public boolean checkAndDefault() {
-            return super.checkAndDefault();
         }
     }
 }

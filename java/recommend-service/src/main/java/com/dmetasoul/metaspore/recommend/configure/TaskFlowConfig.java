@@ -51,7 +51,6 @@ public class TaskFlowConfig {
     private Map<String, FeatureConfig.Source> sources = Maps.newHashMap();
     private Map<String, FeatureConfig.SourceTable> sourceTables = Maps.newHashMap();
     private Map<String, FeatureConfig.Feature> features = Maps.newHashMap();
-    private Map<String, FeatureConfig.AlgoInference> algoInferences = Maps.newHashMap();
     private Map<String, FeatureConfig.AlgoTransform> algoTransforms = Maps.newHashMap();
     private Map<String, Chain> chains = Maps.newHashMap();
     private Map<String, RecommendConfig.Service> services = Maps.newHashMap();
@@ -64,7 +63,7 @@ public class TaskFlowConfig {
         featureCheckAndInit();
         recommendCheckAndInit();
         checkFeatureAndInit();
-        checkAlgoInference();
+        checkAlgoTransform();
     }
 
     public void featureCheckAndInit() {
@@ -98,13 +97,6 @@ public class TaskFlowConfig {
                 throw new RuntimeException("Feature check fail!");
             }
             features.put(item.getName(), item);
-        }
-        for (FeatureConfig.AlgoInference item : featureConfig.getAlgoInference()) {
-            if (!item.checkAndDefault()) {
-                log.error("AlgoInference item {} is check fail!", item.getName());
-                throw new RuntimeException("AlgoInference check fail!");
-            }
-            algoInferences.put(item.getName(), item);
         }
         for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
             if (!item.checkAndDefault()) {
@@ -227,8 +219,8 @@ public class TaskFlowConfig {
         }
     }
 
-    private void checkAlgoInference() {
-        for (FeatureConfig.AlgoInference item : featureConfig.getAlgoInference()) {
+    private void checkAlgoTransform() {
+        for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
             Map<String, FeatureConfig.Feature> features = Maps.newHashMap();
             Map<String, String> fieldMap = Maps.newHashMap();
             for (String featureItem : item.getFeature()) {
@@ -246,24 +238,32 @@ public class TaskFlowConfig {
                     }
                 }
             }
-            for (int index = 0; index < item.getFieldActions().size(); ++index) {
-                FeatureConfig.FieldAction fieldAction = item.getFieldActions().get(index);
+            for (FeatureConfig.FieldAction fieldAction : item.getActionList()) {
                 List<FeatureConfig.Field> fields = fieldAction.getFields();
-                for (FeatureConfig.Field field : fields) {
-                    if (StringUtils.isEmpty(field.getTable())) {
-                        if (!fieldMap.containsKey(field.getFieldName()) || fieldMap.get(field.getFieldName()) == null) {
-                            log.error("AlgoInference: {} fieldAction {} Field {} not exist!", item.getName(), fieldAction.getName(), field);
-                            throw new RuntimeException("AlgoInference check fail!");
+                if (CollectionUtils.isNotEmpty(fields)) {
+                    for (FeatureConfig.Field field : fields) {
+                        if (StringUtils.isEmpty(field.getTable())) {
+                            if (!fieldMap.containsKey(field.getFieldName()) || fieldMap.get(field.getFieldName()) == null) {
+                                log.error("AlgoInference: {} fieldAction {} Field {} not exist!", item.getName(), fieldAction.getName(), field);
+                                throw new RuntimeException("AlgoInference check fail!");
+                            }
+                            field.setTable(fieldMap.get(field.getFieldName()));
+                        } else if (!features.containsKey(field.getTable())) {
+                            log.error("AlgoTransform {} fieldAction fields {} table must in feature!", item.getName(), field);
+                            throw new RuntimeException("AlgoTransform check fail!");
                         }
-                        field.setTable(fieldMap.get(field.getFieldName()));
-                    } else if (!features.containsKey(field.getTable())) {
-                        log.error("AlgoTransform {} fieldAction fields {} table must in feature!", item.getName(), field);
-                        throw new RuntimeException("AlgoTransform check fail!");
+                    }
+                    if (StringUtils.isEmpty(fieldAction.getFunc())) {
+                        FeatureConfig.Feature feature = features.get(fields.get(0).getTable());
+                        fieldAction.setType(feature.getColumnMap().get(fields.get(0).getFieldName()));
                     }
                 }
-                if (fields.size() == 1 && StringUtils.isEmpty(fieldAction.getType())) {
-                    FeatureConfig.Feature feature = features.get(fields.get(0).getTable());
-                    fieldAction.setType(feature.getColumnMap().get(fields.get(0).getFieldName()));
+                List<String> input = fieldAction.getInput();
+                if (CollectionUtils.isNotEmpty(input) && CollectionUtils.isEmpty(fields)) {
+                    if (StringUtils.isEmpty(fieldAction.getFunc())) {
+                        FeatureConfig.FieldAction action = item.getFieldActions().get(input.get(0));
+                        fieldAction.setType(action.getType());
+                    }
                 }
             }
         }

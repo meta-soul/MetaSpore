@@ -16,45 +16,29 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.Chain;
-import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.Function;
+import com.dmetasoul.metaspore.recommend.data.TensorResult;
 import com.dmetasoul.metaspore.serving.*;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
 @DataServiceAnnotation
-public class AlgoInferenceTask extends DataService {
+public class AlgoInferenceTask extends AlgoTransformTask {
     private static final String DEFAULT_MODEL_NAME = "two_towers_simplex";
     private static final String TARGET_KEY = "output";
     private static final int TARGET_INDEX = -1;
-    protected ExecutorService taskPool;
-    protected FeatureConfig.AlgoInference algoInference;
-    private List<FeatureConfig.Feature> features;
-    protected Map<String, Function> functionMap;
     private String modelName;
     private String targetKey;
     private int targetIndex;
@@ -66,32 +50,7 @@ public class AlgoInferenceTask extends DataService {
 
     private PredictGrpc.PredictBlockingStub client;
 
-    public <T> T getOptionOrDefault(String key, T value) {
-        return Utils.getField(algoInference.getOptions(), key, value);
-    }
-
-    @Override
-    public boolean initService() {
-        algoInference = taskFlowConfig.getAlgoInferences().get(name);
-        this.taskPool = taskServiceRegister.getTaskPool();
-        functionMap = taskServiceRegister.getFunctions();
-        return initTask();
-    }
-
     public boolean initTask() {
-        for (FeatureConfig.FieldAction fieldAction: algoInference.getFieldActions()) {
-            DataTypeEnum dataType = DataTypes.getDataType(fieldAction.getType());
-            resFields.add(Field.nullable(fieldAction.getName(), dataType.getType()));
-            dataTypes.add(dataType);
-        }
-        features = Lists.newArrayList();
-        for (String feature : algoInference.getFeature()) {
-            features.add(taskFlowConfig.getFeatures().get(feature));
-        }
-        Chain chain = new Chain();
-        List<String> depends = algoInference.getFeature();
-        chain.setThen(depends);
-        taskFlow.offer(chain);
         modelName = getOptionOrDefault("modelName", DEFAULT_MODEL_NAME);
         targetKey = getOptionOrDefault("targetKey", TARGET_KEY);
         targetIndex = getOptionOrDefault("targetIndex", TARGET_INDEX);
@@ -112,70 +71,18 @@ public class AlgoInferenceTask extends DataService {
         }
     }
 
-    private Map<String, DataResult> getDataResults(List<DataResult> result) {
-        Map<String, DataResult> data = Maps.newHashMap();
-        if (CollectionUtils.isNotEmpty(result)) {
-            for (DataResult dataResult : result) {
-                data.put(dataResult.getName(), dataResult);
-            }
-        }
-        return data;
-    }
-
-    @Override
-    public DataResult process(ServiceRequest request, DataContext context) {
-        List<DataResult> result = getDataResultByNames(algoInference.getFeature(), context);
-        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
-        Map<String, DataResult> dataResultMap = getDataResults(result);
-        for (FeatureConfig.FieldAction fieldAction : algoInference.getFieldActions()) {
-            List<FeatureConfig.Field> fields = fieldAction.getFields();
-            if (StringUtils.isEmpty(fieldAction.getFunc()) && CollectionUtils.isNotEmpty(fields)) {
-                DataResult dataResult = dataResultMap.get(fields.get(0).getTable());
-                setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), dataResult.get(fields.get(0).getFieldName()));
-                continue;
-            }
-            List<List<Object>> fieldValues = Lists.newArrayList();
-            List<String> fieldTypes = Lists.newArrayList();
-            for (FeatureConfig.Field field : fieldAction.getFields()) {
-                DataResult dataResult = dataResultMap.get(field.getTable());
-                fieldValues.add(dataResult.get(field.getFieldName()));
-                FeatureConfig.Feature feature = taskFlowConfig.getFeatures().get(field.getTable());
-                fieldTypes.add(feature.getColumnMap().get(field.getFieldName()));
-            }
-            Function function = functionMap.get(fieldAction.getFunc());
-            if (function == null) {
-                log.error("function：{} get fail！", fieldAction.getFunc());
-                return null;
-            }
-            List<Object> res = function.process(fieldValues, fieldTypes, fieldAction.getOptions());
-            setFieldData(featureTable, fieldAction.getName(), fieldAction.getType(), res);
-        }
-        return transform(featureTable, context);
-    }
-
     protected DataResult transform(FeatureTable featureTable, DataContext context) {
-        DataResult dataResult = new DataResult();
-        Map<String, ArrowTensor> npsResultMap = null;
+        TensorResult dataResult = new TensorResult();
+        Map<String, ArrowTensor> npsResultMap;
         try {
             npsResultMap = ServingClient.predictBlocking(client, modelName, List.of(featureTable), Collections.emptyMap());
         } catch (IOException e) {
             log.error("TwoTower request nps fail!");
             throw new RuntimeException(e);
         }
-        DataResult.PredictResult predictResult = new DataResult.PredictResult();
-        if (targetIndex < 0) {
-            predictResult.setEmbedding(Utils.getVectorsFromNpsResult(npsResultMap, TARGET_KEY));
-        } else {
-            predictResult.setScore(Utils.getScoresFromNpsResult(npsResultMap, TARGET_KEY, TARGET_INDEX));
-        }
-        dataResult.setPredictResult(predictResult);
+        dataResult.setTensor(npsResultMap.get(targetKey));
+        dataResult.setIndex(targetIndex);
+        dataResult.setFeatureTable(featureTable);
         return dataResult;
-    }
-
-    public void setFieldData(FeatureTable featureTable, String col, String type, List<Object> data) {
-        DataTypeEnum dataType = DataTypes.getDataType(type);
-        if (!dataType.set(featureTable, col, data)) {
-            log.error("set featuraTable fail!");
-        }
     }
 }

@@ -287,18 +287,25 @@ public class ArrowTensor {
         return prod;
     }
 
-    static public class FloatTensorAccessor {
+    static public abstract class TensorAccessor<T> {
+        public abstract T get(int index);
+        public abstract T get(int row, int col);
+    }
+
+    static public class FloatTensorAccessor extends TensorAccessor<Float> {
 
         FloatTensorAccessor(FloatBuffer buffer, int cols) {
             this.buffer = buffer;
             this.cols = cols;
         }
 
-        public float get(int index) {
+        @Override
+        public Float get(int index) {
             return buffer.get(index);
         }
 
-        public float get(int row, int col) {
+        @Override
+        public Float get(int row, int col) {
             return buffer.get(row * cols + col);
         }
 
@@ -307,18 +314,18 @@ public class ArrowTensor {
         private final FloatBuffer buffer;
     }
 
-    static public class DoubleTensorAccessor {
+    static public class DoubleTensorAccessor extends TensorAccessor<Double> {
 
         DoubleTensorAccessor(DoubleBuffer buffer, int cols) {
             this.buffer = buffer;
             this.cols = cols;
         }
 
-        public double get(int index) {
+        public Double get(int index) {
             return buffer.get(index);
         }
 
-        public double get(int row, int col) {
+        public Double get(int row, int col) {
             return buffer.get(row * cols + col);
         }
 
@@ -327,18 +334,18 @@ public class ArrowTensor {
         private final DoubleBuffer buffer;
     }
 
-    static public class IntTensorAccessor {
+    static public class IntTensorAccessor extends TensorAccessor<Integer> {
 
         IntTensorAccessor(IntBuffer buffer, int cols) {
             this.buffer = buffer;
             this.cols = cols;
         }
 
-        public int get(int index) {
+        public Integer get(int index) {
             return buffer.get(index);
         }
 
-        public int get(int row, int col) {
+        public Integer get(int row, int col) {
             return buffer.get(row * cols + col);
         }
 
@@ -347,18 +354,18 @@ public class ArrowTensor {
         private final IntBuffer buffer;
     }
 
-    static public class LongTensorAccessor {
+    static public class LongTensorAccessor extends TensorAccessor<Long> {
 
         LongTensorAccessor(LongBuffer buffer, int cols) {
             this.buffer = buffer;
             this.cols = cols;
         }
 
-        public long get(int index) {
+        public Long get(int index) {
             return buffer.get(index);
         }
 
-        public long get(int row, int col) {
+        public Long get(int row, int col) {
             return buffer.get(row * cols + col);
         }
 

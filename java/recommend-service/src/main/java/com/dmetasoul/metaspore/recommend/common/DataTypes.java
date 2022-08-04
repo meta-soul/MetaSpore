@@ -87,11 +87,14 @@ public class DataTypes {
         dataTypes.put("list_double", DataTypeEnum.LIST_DOUBLE);
         dataTypes.put("list_float", DataTypeEnum.LIST_FLOAT);
         dataTypes.put("list_long", DataTypeEnum.LIST_LONG);
-        dataTypes.put("map_str_str", DataTypeEnum.MAP);
-        dataTypes.put("map_str_int", DataTypeEnum.MAP);
-        dataTypes.put("map_str_double", DataTypeEnum.MAP);
-        dataTypes.put("map_str_float", DataTypeEnum.MAP);
-        dataTypes.put("list", DataTypeEnum.LIST);
-        dataTypes.put("map", DataTypeEnum.MAP);
+        dataTypes.put("map_str_str", DataTypeEnum.MAP_STR_STR);
+        dataTypes.put("map_str_int", DataTypeEnum.MAP_STR_INT);
+        dataTypes.put("map_str_long", DataTypeEnum.MAP_STR_LONG);
+        dataTypes.put("map_str_double", DataTypeEnum.MAP_STR_DOUBLE);
+        dataTypes.put("map_str_float", DataTypeEnum.MAP_STR_FLOAT);
+        // value object only support string, int, long, float, double
+        dataTypes.put("map_str_object", DataTypeEnum.MAP_STR_OBJECT);
+        dataTypes.put("map_int_object", DataTypeEnum.MAP_INT_OBJECT);
+        dataTypes.put("map_long_object", DataTypeEnum.MAP_LONG_OBJECT);
     }
 }
