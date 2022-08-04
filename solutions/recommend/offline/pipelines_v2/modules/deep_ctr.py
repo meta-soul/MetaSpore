@@ -24,7 +24,7 @@ from pyspark.sql import DataFrame
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
 from ..utils import get_class
-from ..constants import get_estimator_config_func, get_model_config_func
+from ..constants import ESITMATOR_CONFIG_CLASS, MODEL_CONFIG_CLASS
 
 logger = logging.getLogger(__name__)
 
@@ -55,8 +55,8 @@ class DeepCTRModule:
             raise ValueError("Dict of DeepCTRModule must have key 'estimator_params' !")
             
         deep_ctr_model_class = get_class(conf['deep_ctr_model_class'])
-        estimator_config_class = get_estimator_config_func(deep_ctr_model_class)
-        model_config_class = get_model_config_func(deep_ctr_model_class)
+        estimator_config_class = get_class(ESITMATOR_CONFIG_CLASS)(deep_ctr_model_class)
+        model_config_class = get_class(MODEL_CONFIG_CLASS)(deep_ctr_model_class)
         model_params = cattrs.structure(conf['model_params'], model_config_class)
         estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
         

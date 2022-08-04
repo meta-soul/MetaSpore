@@ -14,7 +14,5 @@
 # limitations under the License.
 #
 
-from .utils import get_class
-
-get_estimator_config_func = get_class('python.algos.config.get_estimator_config_class')
-get_model_config_func = get_class('python.algos.config.get_model_config_class')
+ESITMATOR_CONFIG_CLASS = 'python.algos.config.get_estimator_config_class'
+MODEL_CONFIG_CLASS = 'python.algos.config.get_model_config_class'
