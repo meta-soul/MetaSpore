@@ -35,11 +35,7 @@ spec:
     test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset_rank.parquet
 
   training:
-    deep_ctr_model_class:
-      module_name: python.algos.deepfm_net
-      class_name: DeepFM
-      # module_name: python.algos.widedeep_net
-      # class_name: WideDeep
+    deep_ctr_model_class: python.algos.deepfm_net.DeepFM
     
     model_params: 
       wide_column_name_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt

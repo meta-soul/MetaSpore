@@ -16,7 +16,19 @@
 
 import importlib
 
-def get_class(module_name, class_name):
+def get_class(full_class_name):
+    def parse_class_desc(class_desc, path_sep='.'):
+        if not class_desc or len(class_desc)<=0:
+            print('Error -- empty class desc:', class_desc)
+            return None
+        class_path_list = class_desc.split(path_sep)
+        if len(class_path_list) <= 1:
+            print('Error -- empty module name:', class_desc)
+        return path_sep.join(class_path_list[:-1]), class_path_list[-1]
+
+    if not full_class_name or len(full_class_name) == 0:
+        raise TypeError("Class name is None, current class is {}".format(type(full_class_name)))
+    module_name, class_name = parse_class_desc(full_class_name)
     clazz = getattr(importlib.import_module(module_name), class_name)
-    print('Debug - clazz: ', clazz)
+    print('Debug -- get class:', clazz)
     return clazz
