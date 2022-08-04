@@ -18,4 +18,6 @@ from .deepctr_config import DeepCTREstimatorConfig
 from .deepctr_config import WideDeepConfig
 from .deepctr_config import DeepFMConfig
 
+from .i2i_retrieval_config import SwingEstimatorConfig, ItemCFEstimatorConfig
+
 from .config_factory import get_estimator_config_class, get_model_config_class

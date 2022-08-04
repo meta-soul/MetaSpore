@@ -13,24 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from .deepctr_config import *
+from .i2i_retrieval_config import *
 from ..widedeep_net import WideDeep
 from ..deepfm_net import DeepFM
+from metaspore import SwingEstimator
+from ..item_cf_retrieval import ItemCFEstimator
 
 ESTIMATOR_CONFIG = {
     WideDeep: DeepCTREstimatorConfig,
-    DeepFM: DeepCTREstimatorConfig
+    DeepFM: DeepCTREstimatorConfig,
+    SwingEstimator: SwingEstimatorConfig,
+    ItemCFEstimator: ItemCFEstimatorConfig
 }
 
-MODULE_CONFIG = {
+MODEL_CONFIG = {
     WideDeep: WideDeepConfig,
     DeepFM: DeepFMConfig
 }
 
-def get_estimator_config_class(algo_module_class):
-    estimator_config_class = ESTIMATOR_CONFIG.get(algo_module_class, None)
+def get_estimator_config_class(algo_estimator_class):
+    estimator_config_class = ESTIMATOR_CONFIG.get(algo_estimator_class, None)
     return estimator_config_class
 
-def get_model_config_class(algo_module_class):
-    module_config_class = MODULE_CONFIG.get(algo_module_class, None)
-    return module_config_class
+def get_model_config_class(algo_model_class):
+    model_config_class = MODEL_CONFIG.get(algo_model_class, None)
+    return model_config_class
