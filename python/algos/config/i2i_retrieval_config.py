@@ -14,49 +14,42 @@
 # limitations under the License.
 #
 
-import attrs
-
+from attrs import frozen, field
 from attrs.validators import optional, instance_of
 from .common_validators import recommendation_count_validator
 
-@attrs.frozen(kw_only=True)
+@frozen(kw_only=True)
 class SwingEstimatorConfig:
-    user_id_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    item_id_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    behavior_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    behavior_filter_value = attrs.field(default=None, validator=optional(instance_of(str)))
-    use_plain_weight = attrs.field(default=None, validator=optional(instance_of(bool)))
-    smoothing_coefficient = attrs.field(default=None, validator=optional(instance_of(float)))
-    max_recommendation_count = attrs.field(default=None, validator=optional(recommendation_count_validator))
-    key_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    value_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    item_score_delimiter = attrs.field(default=None, validator=optional(instance_of(str)))
-    item_score_pair_delimiter = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_catalog = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_host_ip = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_port = attrs.field(default=None, validator=optional(instance_of(int)))
-    cassandra_user_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_password = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_db_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_db_properties = attrs.field(default=None, validator=optional(instance_of(str)))
-    cassandra_table_name = attrs.field(default=None, validator=optional(instance_of(str)))
+    user_id_column_name = field(default=None, validator=optional(instance_of(str)))
+    item_id_column_name = field(default=None, validator=optional(instance_of(str)))
+    behavior_column_name = field(default=None, validator=optional(instance_of(str)))
+    behavior_filter_value = field(default=None, validator=optional(instance_of(str)))
+    use_plain_weight = field(default=None, validator=optional(instance_of(bool)))
+    smoothing_coefficient = field(default=None, validator=optional(instance_of(float)))
+    max_recommendation_count = field(default=None, validator=optional(recommendation_count_validator))
+    key_column_name = field(default=None, validator=optional(instance_of(str)))
+    value_column_name = field(default=None, validator=optional(instance_of(str)))
+    item_score_delimiter = field(default=None, validator=optional(instance_of(str)))
+    item_score_pair_delimiter = field(default=None, validator=optional(instance_of(str)))
+    cassandra_catalog = field(default=None, validator=optional(instance_of(str)))
+    cassandra_host_ip = field(default=None, validator=optional(instance_of(str)))
+    cassandra_port = field(default=None, validator=optional(instance_of(int)))
+    cassandra_user_name = field(default=None, validator=optional(instance_of(str)))
+    cassandra_password = field(default=None, validator=optional(instance_of(str)))
+    cassandra_db_name = field(default=None, validator=optional(instance_of(str)))
+    cassandra_db_properties = field(default=None, validator=optional(instance_of(str)))
+    cassandra_table_name = field(default=None, validator=optional(instance_of(str)))
     
     
-@attrs.frozen(kw_only=True)
+@frozen(kw_only=True)
 class ItemCFEstimatorConfig:
-    user_id_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    item_id_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    behavior_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    behavior_filter_value = attrs.field(default=None, validator=optional(instance_of(str)))
-    max_recommendation_count = attrs.field(default=None, validator=optional(recommendation_count_validator))
-    key_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    value_column_name = attrs.field(default=None, validator=optional(instance_of(str)))
-    item_score_delimiter = attrs.field(default=None, validator=optional(instance_of(str)))
-    item_score_pair_delimiter = attrs.field(default=None, validator=optional(instance_of(str)))
-    debug = attrs.field(default=None, validator=optional(instance_of(bool)))
-
-    
-
-    
-
-    
+    user_id_column_name = field(default=None, validator=optional(instance_of(str)))
+    item_id_column_name = field(default=None, validator=optional(instance_of(str)))
+    behavior_column_name = field(default=None, validator=optional(instance_of(str)))
+    behavior_filter_value = field(default=None, validator=optional(instance_of(str)))
+    max_recommendation_count = field(default=None, validator=optional(recommendation_count_validator))
+    key_column_name = field(default=None, validator=optional(instance_of(str)))
+    value_column_name = field(default=None, validator=optional(instance_of(str)))
+    item_score_delimiter = field(default=None, validator=optional(instance_of(str)))
+    item_score_pair_delimiter = field(default=None, validator=optional(instance_of(str)))
+    debug = field(default=None, validator=optional(instance_of(bool)))
