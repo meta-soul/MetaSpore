@@ -77,7 +77,7 @@ class TwoTowersRetrievalModule():
             estimator_params
         )
 
-    def _construct_net_with_params(self, module_type, module_class, model_params):
+    def _init_net_with_params(self, module_type, module_class, model_params):
         if module_type in ['user', 'item']:
             return  module_class(column_name_path = model_params['user_column_name'], \
                                  combine_schema_path = model_params['user_combine_schema'], \
@@ -98,17 +98,17 @@ class TwoTowersRetrievalModule():
         # init user module, item module, similarity module
         model_params_dict = remove_none_value(cattrs.unstructure(self.conf.model_params))
         estimator_params_dict = remove_none_value(cattrs.unstructure(self.conf.estimator_params))
-        user_module = self._construct_net_with_params(
+        user_module = self._init_net_with_params(
             'user',
             self.conf.user_module_class, 
             model_params_dict
         )
-        item_module = self._construct_net_with_params(
+        item_module = self._init_net_with_params(
             'item', 
             self.conf.item_module_class, 
             model_params_dict
         )
-        similarity_module = self._construct_net_with_params(
+        similarity_module = self._init_net_with_params(
             'sim', 
             self.conf.similarity_module_class, 
             model_params_dict

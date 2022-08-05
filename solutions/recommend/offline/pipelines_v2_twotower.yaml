@@ -1,8 +1,8 @@
 apiVersion: metaspore/v1
 kind: TrainingJob
 metadata:
-  name: BatchNegativeSampling
-  category: Match/TwoTower/BatchNegativeSampling
+  name: DSSM
+  category: Match/TwoTower/DSSM
 
 spec:
   logging:
