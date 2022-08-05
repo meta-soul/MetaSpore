@@ -29,11 +29,20 @@ if __name__ == '__main__':
     # the logic below will be removed when FG generate the dataset using some 
     # conventional column names such as 'label', 'user_id', 'last_item_id', etc.
     import pyspark.sql.functions as F
-    for key in dataset_dict:
-        df = dataset_dict[key]
-        df = df.withColumnRenamed('friend_id', 'item_id')
-        df = df.withColumn('last_item_id', F.col('item_id'))
-        dataset_dict[key] = df
+    columns = dataset_dict['train'].columns
+    if 'friend_id' in columns: # pokec
+        for key in dataset_dict:
+            df = dataset_dict[key]
+            df = df.withColumnRenamed('friend_id', 'item_id')
+            df = df.withColumn('last_item_id', F.col('item_id'))
+            dataset_dict[key] = df
+    elif 'movie_id' in columns: # movielens
+        for key in dataset_dict:
+            df = dataset_dict[key]
+            df = df.withColumnRenamed('movie_id', 'item_id')
+            df = df.withColumnRenamed('last_movie', 'last_item_id')
+            dataset_dict[key] = df
+    dataset_dict['train'].show()
     
     # 3. train, predict and evaluate
     i2IRetrievalModule = I2IRetrievalModule(spec['training'])

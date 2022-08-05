@@ -19,6 +19,7 @@ MODEL_CONFIG_CLASS = 'python.algos.config.get_model_config_class'
 
 USER_ID_COLUMN_NAME = 'user_id'
 ITEM_ID_COLUMN_NAME = 'item_id'
+LAST_ITEM_ID_COLUMN_NAME = 'last_item_id'
 BEHAVIOR_COLUMN_NAME = 'label'
 BEHAVIOR_FILTER_VALUE = '1'
 

@@ -80,15 +80,15 @@ class I2IRetrievalModule:
     def predict(self, test_dataset):
         # prepare trigger item id 
         original_item_id ='original_item_id'
-        test_df = test_dataset.withColumnRenamed('item_id', original_item_id)
-        test_df = test_df.withColumnRenamed('last_item_id', 'item_id')
+        test_df = test_dataset.withColumnRenamed(ITEM_ID_COLUMN_NAME, original_item_id)
+        test_df = test_df.withColumnRenamed(LAST_ITEM_ID_COLUMN_NAME, ITEM_ID_COLUMN_NAME)
         
         # transform test dataset
         test_result = self.model.transform(test_df)
         
         # revert original item id
-        test_result = test_result.withColumnRenamed('item_id', 'last_item_id')
-        test_result = test_result.withColumnRenamed(original_item_id, 'item_id')
+        test_result = test_result.withColumnRenamed(ITEM_ID_COLUMN_NAME, LAST_ITEM_ID_COLUMN_NAME)
+        test_result = test_result.withColumnRenamed(original_item_id, ITEM_ID_COLUMN_NAME)
         
         str_schema = "array<struct<name:string,_2:double>>"
         test_result = test_result.withColumn('rec_info', F.col("value").cast(str_schema))
@@ -97,12 +97,16 @@ class I2IRetrievalModule:
         return test_result
     
     def evaluate(self, test_result):
-        print('Debug -- test sample:')
-        test_result.select('user_id', (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
+        # print('Debug -- test sample:')
+        # test_result.select('user_id', (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
+        print('Debug - test_result.columns: ', test_result.columns)
+        test_result.printSchema()
+        test_result.show()
+        test_result.cache()
         
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
                                                 [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
-                                                [getattr(x, 'item_id')]))
+                                                [getattr(x, ITEM_ID_COLUMN_NAME)]))
 
         metrics = RankingMetrics(prediction_label_rdd)
         

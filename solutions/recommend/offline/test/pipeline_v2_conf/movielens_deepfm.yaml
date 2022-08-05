@@ -1,0 +1,72 @@
+apiVersion: metaspore/v1
+kind: TrainingJob
+metadata:
+  name: DeepFM
+  category: Rank/DeepCTR/DeepFM
+
+spec:
+  logging:
+    loglevel: debug
+
+  spark:
+    session_confs:
+      app_name: 'Deep CTR Pipeline Demo'
+      local: True
+      worker_count: 2
+      worker_cpu: 1
+      server_count: 2
+      server_cpu: 1
+      batch_size: 128
+      worker_memory: '7G'
+      server_memory: '7G'
+      coordinator_memory: '7G'
+
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/movielens/rank/train.parquet
+    test_path: s3://dmetasoul-bucket/demo/movielens/rank/test.parquet
+
+  training:
+    deep_ctr_model_class: python.algos.deepfm_net.DeepFM
+    
+    model_params: 
+      wide_column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema
+      wide_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/wide_combine_column_schema
+      deep_column_name_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/column_schema
+      deep_combine_schema_path: s3://dmetasoul-bucket/demo/movielens/schema/widedeep/ml_1m/combine_column_schema
+      use_wide: True
+      use_dnn: True
+      use_fm: True
+      wide_embedding_dim: 10
+      deep_embedding_dim: 10
+      ftrl_l1: 1.0
+      ftrl_l2: 120.0
+      ftrl_alpha: 0.5
+      ftrl_beta: 1.0
+      dnn_hidden_units: [1024, 1024, 1024]
+      sparse_init_var: 0.01
+      dnn_hidden_activations: ReLU
+      use_bias: True
+      batch_norm: True
+      net_dropout: 0
+      net_regularizer: null
+    
+    estimator_params:
+      model_in_path: null
+      model_out_path: s3://dmetasoul-bucket/demo/movielens/model/deepfm/model_out/ml_1m/
+      # model_export_path: s3://dmetasoul-bucket/demo/movielens/model/deepfm/model_export/ml_1m/
+      model_version: '0.1'
+      experiment_name: movielens_1m_deepfm
+      input_label_column_index: 0
+      metric_update_interval: 100
+      adam_learning_rate: 0.0001
+      training_epoches: 1
+      shuffle_training_dataset: True
