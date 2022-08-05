@@ -13,24 +13,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+from metaspore import SwingEstimator
 
 from .deepctr_config import *
 from .i2i_retrieval_config import *
+from .twotower_config import *
+
 from ..widedeep_net import WideDeep
 from ..deepfm_net import DeepFM
-from metaspore import SwingEstimator
 from ..item_cf_retrieval import ItemCFEstimator
+from ..twotower.dssm import UserModule as DSSMUserModule, ItemModule as DSSMItemModule, SimilarityModule as DSSMSimlarityModule
 
 ESTIMATOR_CONFIG = {
+    # Deep CTR
     WideDeep: DeepCTREstimatorConfig,
     DeepFM: DeepCTREstimatorConfig,
+    # I2I
     SwingEstimator: SwingEstimatorConfig,
-    ItemCFEstimator: ItemCFEstimatorConfig
+    ItemCFEstimator: ItemCFEstimatorConfig,
+    # TwoTowers
+    DSSMUserModule: TwoTowerEstimatorConfig,
+    DSSMItemModule: TwoTowerEstimatorConfig,
+    DSSMSimlarityModule: TwoTowerEstimatorConfig
 }
 
 MODEL_CONFIG = {
+    # Deep CTR
     WideDeep: WideDeepConfig,
-    DeepFM: DeepFMConfig
+    DeepFM: DeepFMConfig,
+    # TwoTowers
+    DSSMUserModule: DSSMModelConfig,
+    DSSMItemModule: DSSMModelConfig,
+    DSSMSimlarityModule: DSSMModelConfig
 }
 
 def get_estimator_config_class(algo_estimator_class):
