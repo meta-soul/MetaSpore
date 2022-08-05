@@ -16,6 +16,7 @@
 
 import metaspore as ms
 import attrs
+import cattrs
 import logging
 
 from logging import Logger
@@ -23,30 +24,56 @@ from typing import Dict, Tuple, Optional
 from pyspark.sql import DataFrame
 from pyspark.mllib.evaluation import RankingMetrics
 from pyspark.sql import functions as F 
-from ..utils import get_class
+from ..utils import get_class, remove_none_value
+from attrs.validators import optional, instance_of
+from ..constants import *
 
 logger = logging.getLogger(__name__)
 
 @attrs.frozen(kw_only=True)
 class I2IRetrievalConfig:
-    i2i_estimator_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    model_out_path = attrs.field(default=None, validator=attrs.validators.instance_of(str))
-    max_recommendation_count = attrs.field(default=20, validator=[attrs.validators.instance_of(int), attrs.validators.ge(0), attrs.validators.le(100)])
+    i2i_estimator_class = attrs.field()
+    model_out_path = attrs.field(default=None, validator=optional(instance_of(str)))
+    estimator_params = attrs.field()
 
 class I2IRetrievalModule:
-    def __init__(self, conf: I2IRetrievalConfig):
-        self.conf = conf
+    def __init__(self, conf):
+        if isinstance(conf, dict):
+            self.conf = I2IRetrievalModule.convert(conf)
+        elif isinstance(conf, I2IRetrievalConfig):
+            self.conf = conf
+        else:
+            raise TypeError("Type of 'conf' must be dict or I2IRetrievalConfig. Current type is {}".format(type(conf)))
+
         self.model = None
-        self.metric_position_k = 20
         
+    @staticmethod
+    def convert(conf: dict) -> I2IRetrievalConfig:
+        if not 'i2i_estimator_class' in conf:
+            raise ValueError("Dict of DeepCTRModule must have key 'deep_ctr_model_class' !")
+        if not 'estimator_params' in conf:
+            raise ValueError("Dict of DeepCTRModule must have key 'estimator_params' !")
+        
+        conf = conf.copy()
+        
+        i2i_estimator_class = get_class(conf['i2i_estimator_class'])
+        estimator_config_class = get_class(ESITMATOR_CONFIG_CLASS)(i2i_estimator_class)
+        
+        conventional_param_dict = {'user_id_column_name': USER_ID_COLUMN_NAME,
+                                   'item_id_column_name': ITEM_ID_COLUMN_NAME,
+                                   'behavior_column_name': BEHAVIOR_COLUMN_NAME,
+                                   'behavior_filter_value': BEHAVIOR_FILTER_VALUE}
+        conf['estimator_params'].update(conventional_param_dict)
+        estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
+        
+        conf['i2i_estimator_class'] = i2i_estimator_class
+        conf['estimator_params'] = estimator_params
+        
+        return I2IRetrievalConfig(**conf)
+
     def train(self, train_dataset):
-        estimator_class = get_class(**self.conf.i2i_estimator_class)
+        estimator = self.conf.i2i_estimator_class(**remove_none_value(cattrs.unstructure(self.conf.estimator_params)))
         
-        estimator = estimator_class(user_id_column_name = 'user_id',
-                                    item_id_column_name = 'item_id',
-                                    behavior_column_name = 'label',
-                                    behavior_filter_value = '1',
-                                    max_recommendation_count = self.conf.max_recommendation_count)
         self.model = estimator.fit(train_dataset)
         logger.info('I2I - training: done')
     
@@ -80,10 +107,10 @@ class I2IRetrievalModule:
         metrics = RankingMetrics(prediction_label_rdd)
         
         metric_dict = {}
-        metric_dict['Precision@{}'.format(self.metric_position_k)] = metrics.precisionAt(self.metric_position_k)
-        metric_dict['Recall@{}'.format(self.metric_position_k)] = metrics.recallAt(self.metric_position_k)
-        metric_dict['MAP@{}'.format(self.metric_position_k)] = metrics.meanAveragePrecisionAt(self.metric_position_k)
-        metric_dict['NDCG@{}'.format(self.metric_position_k)] = metrics.ndcgAt(self.metric_position_k)
+        metric_dict['Precision@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.precisionAt(METRIC_RETRIEVAL_COUNT)
+        metric_dict['Recall@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.recallAt(METRIC_RETRIEVAL_COUNT)
+        metric_dict['MAP@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.meanAveragePrecisionAt(METRIC_RETRIEVAL_COUNT)
+        metric_dict['NDCG@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.ndcgAt(METRIC_RETRIEVAL_COUNT)
         print('Debug -- metric_dict: ', metric_dict)
         
         logger.info('I2I - evaluation: done')

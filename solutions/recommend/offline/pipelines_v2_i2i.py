@@ -36,7 +36,7 @@ if __name__ == '__main__':
         dataset_dict[key] = df
     
     # 3. train, predict and evaluate
-    i2IRetrievalModule = I2IRetrievalModule(cattrs.structure(spec['training'], I2IRetrievalConfig))
+    i2IRetrievalModule = I2IRetrievalModule(spec['training'])
     model_df_to_mongo, metric_dict = i2IRetrievalModule.run(dataset_dict['train'], dataset_dict['test'])
     
     # 4. dump to mongo_db

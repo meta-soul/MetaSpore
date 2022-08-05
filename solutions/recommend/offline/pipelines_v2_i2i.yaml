@@ -37,16 +37,11 @@ spec:
     # item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
   
   training:
-    i2i_estimator_class:
-      module_name: python.algos.item_cf_retrieval
-      class_name: ItemCFEstimator
-  
-  #  i2i_estimator_class:
-  #    module_name: metaspore
-  #    class_name: SwingEstimator
-  
-    model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/model/item_cf/model_out/df.parquet
-    max_recommendation_count: 20
+    i2i_estimator_class: python.algos.item_cf_retrieval.ItemCFEstimator
+    # i2i_estimator_class: metaspore.SwingEstimator
+    # model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/model/item_cf/model_out/df.parquet
+    estimator_params:
+      max_recommendation_count: 20
   
   mongodb:
     uri: mongodb://172.31.37.47:27017/

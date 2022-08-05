@@ -23,7 +23,7 @@ from typing import Dict
 from pyspark.sql import DataFrame
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
 
-from ..utils import get_class
+from ..utils import get_class, remove_none_value
 from ..constants import ESITMATOR_CONFIG_CLASS, MODEL_CONFIG_CLASS
 
 logger = logging.getLogger(__name__)
@@ -63,11 +63,11 @@ class DeepCTRModule:
         return DeepCTRConfig(deep_ctr_model_class, model_params, estimator_params)
         
     def train(self, train_dataset, worker_count, server_count):
-        module = self.conf.deep_ctr_model_class(**cattrs.unstructure(self.conf.model_params))
+        module = self.conf.deep_ctr_model_class(**remove_none_value(cattrs.unstructure(self.conf.model_params)))
         estimator = ms.PyTorchEstimator(module = module,
                                         worker_count = worker_count,
                                         server_count = server_count,
-                                        **cattrs.unstructure(self.conf.estimator_params))
+                                        **remove_none_value(cattrs.unstructure(self.conf.estimator_params)))
         ## model train
         estimator.updater = ms.AdamTensorUpdater(self.conf.estimator_params.adam_learning_rate)
         self.model = estimator.fit(train_dataset)
