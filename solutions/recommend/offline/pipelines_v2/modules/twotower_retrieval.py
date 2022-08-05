@@ -1,33 +1,82 @@
 import metaspore as ms
-import logging
 import attrs
+import cattrs
 import logging
 
-from typing import Dict, Tuple, Optional
 from pyspark.sql import DataFrame
 from pyspark.mllib.evaluation import RankingMetrics
 from pyspark.sql import functions as F
-from ..utils import get_class
+from typing import Dict
+
+from ..utils import get_class, remove_none_value
+from ..constants import ESITMATOR_CONFIG_CLASS, MODEL_CONFIG_CLASS
 
 logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class TwoTowersRetrievalConfig:
-    user_module_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    item_module_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    similarity_module_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    two_tower_retrieval_module_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    two_tower_agent_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    two_tower_estimator_class = attrs.field(validator=attrs.validators.instance_of(Dict))
-    model_params = attrs.field(validator=attrs.validators.instance_of(Dict))
-    estimator_params = attrs.field(validator=attrs.validators.instance_of(Dict))
-    
+    user_module_class: object
+    item_module_class: object
+    similarity_module_class: object
+    two_tower_retrieval_module_class: object
+    two_tower_agent_class: object
+    two_tower_estimator_class: object
+    model_params: object
+    estimator_params: object
+        
 class TwoTowersRetrievalModule():
     def __init__(self, conf: TwoTowersRetrievalConfig):
-        self.conf = conf
+        if isinstance(conf, conf):
+            self.conf = TwoTowersRetrievalModule.convert(conf)
+        elif isinstance(conf, TwoTowersRetrievalConfig):
+            self.conf = conf
+        else:
+            raise TypeError("Type of 'conf' must be dict or TwoTowersRetrievalConfig. Current type is {}".format(type(conf)))
         self.model = None
         self.metric_position_k = 20
     
+    @staticmethod
+    def convert(conf: dict) -> TwoTowersRetrievalConfig:
+        if not 'user_module_class' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'user_module_class' !")
+        if not 'item_module_class' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'item_module_class' !")
+        if not 'similarity_module_class' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'similarity_module_class' !")
+        if not 'two_tower_retrieval_module_class' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'two_tower_retrieval_module_class' !")
+        if not 'two_tower_agent_class' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'two_tower_agent_class' !")
+        if not 'two_tower_estimator_class' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'two_tower_estimator_class' !")
+        if not 'model_params' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'model_params' !")
+        if not 'estimator_params' in conf:
+            raise ValueError("Dict of TwoTowersRetrievalModule must have key 'estimator_params' !")
+
+        user_module_class = get_class(conf['user_module_class'])
+        item_module_class = get_class(conf['item_module_class'])
+        similarity_module_class = get_class(conf['similarity_module_class'])
+        two_tower_retrieval_module_class = get_class(conf['two_tower_retrieval_module_class'])
+        two_tower_agent_class = get_class(conf['two_tower_agent_class'])
+        two_tower_estimator_class = get_class(conf['two_tower_estimator_class'])
+
+        estimator_config_class = get_class(ESITMATOR_CONFIG_CLASS)(user_module_class)
+        model_config_class = get_class(MODEL_CONFIG_CLASS)(user_module_class)
+        model_params = cattrs.structure(conf['model_params'], model_config_class)
+        estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
+        
+        return TwoTowersRetrievalConfig(
+            user_module_class,
+            item_module_class,
+            similarity_module_class,
+            two_tower_retrieval_module_class,
+            two_tower_agent_class,
+            two_tower_estimator_class,
+            model_params,
+            estimator_params
+        )
+
     def _construct_net_with_params(self, module_type, module_class, model_params):
         if module_type in ['user', 'item']:
             return  module_class(column_name_path = model_params['user_column_name'], \
@@ -47,29 +96,41 @@ class TwoTowersRetrievalModule():
     
     def train(self, train_dataset, item_dataset, worker_count, server_count):
         # init user module, item module, similarity module
-        user_module_class = get_class(**self.conf.user_module_class)
-        user_module = self._construct_net_with_params('user', user_module_class, self.conf.model_params)
-        item_module_class = get_class(**self.conf.item_module_class)
-        item_module = self._construct_net_with_params('item', item_module_class, self.conf.model_params)
-        similarity_class = get_class(**self.conf.similarity_module_class)
-        similarity_module = self._construct_net_with_params('sim', similarity_class, self.conf.model_params)
+        user_module = self._construct_net_with_params(
+            'user',
+            self.conf.user_module_class, 
+            remove_none_value(cattrs.unstructure(self.conf.model_params))
+        )
+        item_module = self._construct_net_with_params(
+            'item', 
+            self.conf.item_module_class, 
+            remove_none_value(cattrs.unstructure(self.conf.model_params))
+        )
+        similarity_module = self._construct_net_with_params(
+            'sim', 
+            self.conf.similarity_module_class, 
+            remove_none_value(cattrs.unstructure(self.conf.model_params))
+        )
+
         # init two tower module
-        two_tower_retrieval_module_class = get_class(**self.conf.two_tower_retrieval_module_class)
-        two_tower_retrieval_module = two_tower_retrieval_module_class(user_module, item_module, similarity_module)
-        # init agent
-        two_tower_agent_class = get_class(**self.conf.two_tower_agent_class)
+        two_tower_retrieval_module = self.conf.two_tower_retrieval_module_class(
+            user_module, 
+            item_module, 
+            similarity_module
+        )
+
         ## init estimator
-        two_tower_estimator_class = get_class(**self.conf.two_tower_estimator_class)
-        two_tower_estimator = two_tower_estimator_class(
+        two_tower_estimator = self.conf.two_tower_estimator_class(
             module = two_tower_retrieval_module,
             item_dataset = item_dataset,
-            agent_class = two_tower_agent_class,
+            agent_class = self.conf.two_tower_agent_class,
             worker_count = worker_count,
             server_count = server_count,
             **{**self.conf.model_params, **self.conf.estimator_params}
         )
+
         # model train
-        two_tower_estimator.updater = ms.AdamTensorUpdater(self.conf.model_params['adam_learning_rate'])
+        two_tower_estimator.updater = ms.AdamTensorUpdater(self.conf.model_params.adam_learning_rate)
         self.model = two_tower_estimator.fit(train_dataset)
         
         logger.info('DeepCTR - training: done')
