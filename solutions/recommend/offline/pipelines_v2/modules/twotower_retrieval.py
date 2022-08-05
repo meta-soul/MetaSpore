@@ -26,7 +26,7 @@ class TwoTowersRetrievalConfig:
         
 class TwoTowersRetrievalModule():
     def __init__(self, conf: TwoTowersRetrievalConfig):
-        if isinstance(conf, conf):
+        if isinstance(conf, dict):
             self.conf = TwoTowersRetrievalModule.convert(conf)
         elif isinstance(conf, TwoTowersRetrievalConfig):
             self.conf = conf
@@ -96,20 +96,22 @@ class TwoTowersRetrievalModule():
     
     def train(self, train_dataset, item_dataset, worker_count, server_count):
         # init user module, item module, similarity module
+        model_params_dict = remove_none_value(cattrs.unstructure(self.conf.model_params))
+        estimator_params_dict = remove_none_value(cattrs.unstructure(self.conf.estimator_params))
         user_module = self._construct_net_with_params(
             'user',
             self.conf.user_module_class, 
-            remove_none_value(cattrs.unstructure(self.conf.model_params))
+            model_params_dict
         )
         item_module = self._construct_net_with_params(
             'item', 
             self.conf.item_module_class, 
-            remove_none_value(cattrs.unstructure(self.conf.model_params))
+            model_params_dict
         )
         similarity_module = self._construct_net_with_params(
             'sim', 
             self.conf.similarity_module_class, 
-            remove_none_value(cattrs.unstructure(self.conf.model_params))
+            model_params_dict
         )
 
         # init two tower module
@@ -126,11 +128,11 @@ class TwoTowersRetrievalModule():
             agent_class = self.conf.two_tower_agent_class,
             worker_count = worker_count,
             server_count = server_count,
-            **{**self.conf.model_params, **self.conf.estimator_params}
+            **{**model_params_dict, **estimator_params_dict}
         )
 
         # model train
-        two_tower_estimator.updater = ms.AdamTensorUpdater(self.conf.model_params.adam_learning_rate)
+        two_tower_estimator.updater = ms.AdamTensorUpdater(model_params_dict['adam_learning_rate'])
         self.model = two_tower_estimator.fit(train_dataset)
         
         logger.info('DeepCTR - training: done')
