@@ -17,7 +17,7 @@
 import sys
 import logging
 
-LOG_FORMAT  = '%(asctime)s [%(levelname)s] {%(name)s-%(filename)s:%(lineno)s} %(message)s'
+LOG_FORMAT  = '%(asctime)s [%(levelname)s] {%(name)s:%(lineno)s} %(message)s'
 DATE_FORMAT = '%Y-%m-%d %H:%M:%S'
 DEFAULT_LEVEL = 'info'
 LEVELS = {

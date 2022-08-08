@@ -32,10 +32,8 @@ spec:
       zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
   
   dataset:
-    # train_path: s3://dmetasoul-bucket/demo/movielens/1m/cf/train.parquet
-    # test_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/num_negs_10/test.parquet
-    train_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/train.parquet
-    test_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/test.parquet
+    train_path: s3://dmetasoul-bucket/demo/movielens/1m/cf/train.parquet
+    test_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/num_negs_10/test.parquet
     # user_id_column: user_id
     # item_id_column: movie_id
     # label_column: label
