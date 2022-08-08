@@ -99,10 +99,6 @@ class I2IRetrievalModule:
     def evaluate(self, test_result):
         # print('Debug -- test sample:')
         # test_result.select('user_id', (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(60)
-        print('Debug - test_result.columns: ', test_result.columns)
-        test_result.printSchema()
-        test_result.show()
-        test_result.cache()
         
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
                                                 [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \

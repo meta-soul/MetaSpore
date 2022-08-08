@@ -26,8 +26,10 @@ if __name__ == '__main__':
     # 2. load dataset
     dataLoaderModule = DataLoaderModule(cattrs.structure(spec['dataset'], DataLoaderConfig), spark)
     dataset_dict = dataLoaderModule.run()
+    
     # the logic below will be removed when FG generate the dataset using some 
     # conventional column names such as 'label', 'user_id', 'last_item_id', etc.
+    # ---start---
     import pyspark.sql.functions as F
     columns = dataset_dict['train'].columns
     if 'friend_id' in columns: # pokec
@@ -42,7 +44,16 @@ if __name__ == '__main__':
             df = df.withColumnRenamed('movie_id', 'item_id')
             df = df.withColumnRenamed('last_movie', 'last_item_id')
             dataset_dict[key] = df
+    elif '205' in columns: # aliccp
+        for key in dataset_dict:
+            df = dataset_dict[key]
+            df = df.withColumn('label', F.lit('1'))
+            df = df.withColumnRenamed('101', 'user_id')
+            df = df.withColumnRenamed('205', 'item_id')
+            df = df.withColumn('last_item_id', F.col('item_id'))
+            dataset_dict[key] = df
     dataset_dict['train'].show()
+    # ---end---
     
     # 3. train, predict and evaluate
     i2IRetrievalModule = I2IRetrievalModule(spec['training'])
