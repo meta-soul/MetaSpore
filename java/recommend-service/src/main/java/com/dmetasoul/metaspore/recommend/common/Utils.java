@@ -21,6 +21,7 @@ import com.dmetasoul.metaspore.serving.ArrowTensor;
 import com.google.common.collect.Maps;
 import io.milvus.param.MetricType;
 import io.milvus.param.R;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.StringUtils;
 
@@ -135,10 +136,15 @@ public class Utils {
             field.setAccessible(true);
             String keyName = field.getName();
             Object value = field.get(obj);
-            if (value == null)
-                value = "";
             map.put(keyName, value);
         }
         return map;
+    }
+
+    public static <T> T get(List<T> list, int index, T value) {
+        if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {
+            return list.get(index);
+        }
+        return value;
     }
 }

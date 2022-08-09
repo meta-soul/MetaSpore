@@ -153,16 +153,6 @@ public class TaskFlowConfig {
                 }
             }
 
-            if (chainNum > 0) {
-                item.setColumnMap(item.getChains().get(chainNum-1).getColumns());
-            }
-            if (MapUtils.isNotEmpty(item.getOptions()) && item.getOptions().containsKey("cutField")) {
-                String cutField = (String) item.getOptions().get("cutField");
-                if (!item.getColumnMap().containsKey(cutField)) {
-                    log.error("Experiment: {} cutField must in output columns!", item.getName());
-                    throw new RuntimeException("Experiment check fail!");
-                }
-            }
             experiments.put(item.getName(), item);
         }
         for (RecommendConfig.Layer item: recommendConfig.getLayers()) {
@@ -177,7 +167,6 @@ public class TaskFlowConfig {
                 throw new RuntimeException("Layer check fail!");
             }
             RecommendConfig.Experiment experiment = experiments.get(item.getExperiments().get(0).getName());
-            item.setColumnMap(experiment.getColumns());
             layers.put(item.getName(), item);
         }
         for (RecommendConfig.Scene item: recommendConfig.getScenes()) {
@@ -276,7 +265,7 @@ public class TaskFlowConfig {
             Map<String, Map<String, String>> columnTypes = Maps.newHashMap();
             Map<String, List<String>> fromColumns = Maps.newHashMap();
             for (String rely : item.getFrom()) {
-                if (!sourceTables.containsKey(rely) && !features.containsKey(rely) && !chains.containsKey(rely) && !algoTransforms.containsKey(rely)) {
+                if (!sourceTables.containsKey(rely) && !features.containsKey(rely) && !services.containsKey(rely) && !algoTransforms.containsKey(rely)) {
                     log.error("Feature: {} rely {} is not config!", item.getName(), rely);
                     throw new RuntimeException("Feature check fail!");
                 }

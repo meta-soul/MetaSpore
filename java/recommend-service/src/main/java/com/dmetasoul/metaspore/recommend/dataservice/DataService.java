@@ -129,6 +129,14 @@ public abstract class DataService {
         }
         return result;
     }
+
+    public void setDataResultByName(String taskName, DataResult result, DataContext context) {
+        if (!checkResult(result)) {
+            log.warn("set: {}.{} result data is null!", name, taskName);
+            return;
+        }
+        context.setResult(name, taskName, result);
+    }
     /**
      *  根据DataService的依赖任务的名称集合names，获取相关的任务生成的结果集合, 获取不到结果的直接忽略
      */

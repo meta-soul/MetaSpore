@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.functions.FlatFunction;
 import com.dmetasoul.metaspore.recommend.functions.Function;
@@ -48,11 +49,12 @@ public class UserProfileTask extends AlgoTransformTask {
     public void addFunctions() {
         addFunction("splitRecentIds", new Function() {
             @Override
-            public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(values) && values.size() == 1, "input values size must eq 1");
-                Assert.isTrue(CollectionUtils.isNotEmpty(types) && types.get(0).equals(DataTypeEnum.STRING), "split input must string!");
+            public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
+                FieldData fieldData = fields.get(0);
+                Assert.isTrue(fieldData.isMatch(DataTypeEnum.STRING), "split input must string!");
                 String split = Utils.getField(options, "splitor", splitor);
-                List<Object> input = values.get(0);
+                List<Object> input = fieldData.getValue();
                 List<Object> res = Lists.newArrayList();
                 for (Object o : input) {
                     Assert.isTrue(o instanceof String, "value must string!");
@@ -64,10 +66,10 @@ public class UserProfileTask extends AlgoTransformTask {
         });
         addFunction("recentItemId", new FlatFunction() {
             @Override
-            public List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(values) && indexs != null, "input data is not null");
+            public List<Object> flat(List<Integer> indexs, List<FieldData> fields, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(fields) && indexs != null, "input data is not null");
                 List<Object> res = Lists.newArrayList();
-                List<Object> input = values.get(0);
+                List<Object> input = fields.get(0).getValue();
                 int num = 0;
                 for (int i = 0; i < input.size(); ++i) {
                     Object item = input.get(i);
@@ -84,10 +86,10 @@ public class UserProfileTask extends AlgoTransformTask {
         });
         addFunction("recentWeight", new FlatFunction() {
             @Override
-            public List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(values) && indexs != null, "input data is not null");
+            public List<Object> flat(List<Integer> indexs, List<FieldData> fields, Map<String, Object> options) {
+                Assert.isTrue(CollectionUtils.isNotEmpty(fields) && indexs != null, "input data is not null");
                 List<Object> res = Lists.newArrayList();
-                List<Object> input = values.get(0);
+                List<Object> input = fields.get(0).getValue();
                 int num = 0;
                 for (int i = 0; i < input.size(); ++i) {
                     Object item = input.get(i);

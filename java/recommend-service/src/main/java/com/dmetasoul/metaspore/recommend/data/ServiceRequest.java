@@ -40,6 +40,7 @@ import java.util.Set;
 @Data
 public class ServiceRequest implements java.io.Serializable {
     private Map<String, Object> data;
+    private Map<String, DataResult> intermediate;
     private int limit = 100;
 
     public ServiceRequest(DataContext context) {

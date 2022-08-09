@@ -15,24 +15,19 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.FeatureTable;
-import org.apache.arrow.vector.FieldVector;
 
 import java.util.List;
 import java.util.Map;
-@TransformFunction("logscale")
-public class LogScaleFunction extends Function {
 
-    @Override
-    public void init(Map<String, Object> params) {
-
-    }
+public abstract class ScatterFunction extends Function {
 
     @Override
     public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-        return null;
+        throw new IllegalCallerException("ScatterFunction only has aggregate function!");
     }
+
+    public abstract Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options);
+
+    public void init(Map<String, Object> params) {}
 }

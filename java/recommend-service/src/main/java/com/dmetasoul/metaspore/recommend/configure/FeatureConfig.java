@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.configure;
 
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
+import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
@@ -197,6 +198,10 @@ public class FeatureConfig {
                 fields.add(create(s));
             }
             return fields;
+        }
+
+        public String toString() {
+            return String.format("%s.%s", table, fieldName);
         }
 
         @Override
@@ -401,12 +406,12 @@ public class FeatureConfig {
 
     @Data
     public static class FieldAction {
-        private String name;
-        private String type;
-        private List<Field> fields;
-        private List<String> input;
-        private String func;
-        private Map<String, Object> options;
+        protected String name;
+        protected String type;
+        protected List<Field> fields;
+        protected List<String> input;
+        protected String func;
+        protected Map<String, Object> options;
 
         public void setFields(List<String> fields) {
             if (CollectionUtils.isEmpty(fields)) return;
@@ -443,10 +448,34 @@ public class FeatureConfig {
     }
 
     @Data
+    public static class ScatterFieldAction extends FieldAction {
+        private List<String> names;
+        private List<String> types;
+        @Override
+        public boolean checkAndDefault() {
+            if (StringUtils.isNotEmpty(func)) {
+                if (CollectionUtils.isEmpty(names) || CollectionUtils.isEmpty(types) || names.size() != types.size()) {
+                    throw new RuntimeException("AlgoTransform ScatterFieldAction config name and type must be equel!");
+                }
+                for (String type : types) {
+                    if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
+                        throw new RuntimeException("AlgoTransform ScatterFieldAction config type must be support! type:" + type);
+                    }
+                }
+            }
+            if (CollectionUtils.isEmpty(input) && CollectionUtils.isEmpty(fields)) {
+                throw new RuntimeException("ScatterFieldAction input and field must not be empty at the same time");
+            }
+            return true;
+        }
+    }
+
+    @Data
     public static class AlgoTransform {
         private String name;
         private List<String> feature;
         private Map<String, FieldAction> fieldActions;
+        private List<ScatterFieldAction> scatterFieldActions;
         private List<String> output;
         private Map<String, Object> options;
 
@@ -472,6 +501,11 @@ public class FeatureConfig {
             actionList = Lists.newArrayList();
             Stack<FieldAction> stack = new Stack<>();
             Set<String> actionSet = Sets.newHashSet();
+            for (ScatterFieldAction scatter : scatterFieldActions) {
+                for (String name : scatter.names) {
+                    fieldActions.put(name, scatter);
+                }
+            }
             for (String col : output) {
                 FieldAction action = fieldActions.get(col);
                 Assert.notNull(action, "output col must has Action colName:" + col);
@@ -496,9 +530,17 @@ public class FeatureConfig {
                     enableAction = false;
                 }
                 if (enableAction) {
-                    actionList.add(action);
+                    if (action instanceof ScatterFieldAction) {
+                        if (!actionSet.contains(action.getName())) {
+                            actionList.add(action);
+                            ScatterFieldAction scatterAction = (ScatterFieldAction) action;
+                            actionSet.addAll(scatterAction.names);
+                        }
+                    } else {
+                        actionList.add(action);
+                        actionSet.add(action.getName());
+                    }
                     stack.pop();
-                    actionSet.add(action.getName());
                 }
             }
             return true;

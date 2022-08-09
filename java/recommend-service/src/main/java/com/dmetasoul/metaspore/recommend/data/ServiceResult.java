@@ -16,6 +16,10 @@
 package com.dmetasoul.metaspore.recommend.data;
 
 import lombok.Data;
+
+import java.util.List;
+import java.util.Map;
+
 /**
  * 用于restfull api接口输出
  * Created by @author qinyy907 in 14:24 22/07/15.
@@ -24,7 +28,7 @@ import lombok.Data;
 public class ServiceResult {
     private ServiceStatus code;
     private String msg;
-    private DataResult data;
+    private List<Map<String, Object>> data;
     private String id;
 
     public enum ServiceStatus {
@@ -67,7 +71,7 @@ public class ServiceResult {
         }
     }
 
-    private ServiceResult(ServiceStatus code, String msg, DataResult data, String id) {
+    private ServiceResult(ServiceStatus code, String msg, List<Map<String, Object>> data, String id) {
         this.code = code;
         this.msg = msg;
         this.data = data;
@@ -78,21 +82,21 @@ public class ServiceResult {
         return ServiceResult.of(code, msg, null, null);
     }
 
-    public static ServiceResult of(DataResult data) {
+    public static ServiceResult of(List<Map<String, Object>> data) {
         return new ServiceResult(ServiceStatus.SUCCESS, "success!", data, null);
     }
 
-    public static ServiceResult of(DataResult data, String id) {
+    public static ServiceResult of(List<Map<String, Object>> data, String id) {
         ServiceResult instacnce = ServiceResult.of(data);
         instacnce.id = id;
         return instacnce;
     }
 
-    public static ServiceResult of(int code, String msg, DataResult data) {
+    public static ServiceResult of(int code, String msg, List<Map<String, Object>> data) {
         return new ServiceResult(ServiceStatus.of(code), msg, data, null);
     }
 
-    public static ServiceResult of(int code, String msg, DataResult data, String id) {
+    public static ServiceResult of(int code, String msg, List<Map<String, Object>> data, String id) {
         return new ServiceResult(ServiceStatus.of(code), msg, data, id);
     }
 }

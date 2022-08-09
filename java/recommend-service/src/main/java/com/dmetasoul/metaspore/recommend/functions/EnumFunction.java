@@ -16,6 +16,7 @@
 package com.dmetasoul.metaspore.recommend.functions;
 
 import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import org.apache.arrow.vector.FieldVector;
@@ -33,7 +34,7 @@ public class EnumFunction extends Function{
     }
 
     @Override
-    public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
         return null;
     }
 }

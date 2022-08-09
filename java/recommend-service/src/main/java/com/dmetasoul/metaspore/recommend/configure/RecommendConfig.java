@@ -48,82 +48,61 @@ public class RecommendConfig {
     private List<Scene> scenes;
     private List<Service> services;
 
+    /**
+     * Service 直接调用一个或多个algoTransform task获取结果 或者 接受一个或多个DataResult结果， 然后进行transform计算
+     * 接受到一个或多个DataResult结果时，
+     * 对于多个DataResult，要求 featureTable schema 相同或者包含相同的columnNames type， merge时根据option配置决定去重
+     * 接受到的DataResult merge后 缓存到context中， 参与后续的task计算
+     */
     @Data
     public static class Service {
         private String name;
-        private List<String> depend;
+        private List<String> tasks;
         private Map<String, Object> options;
-        private String serviceName;
-
         private List<String> columnNames;
         private Map<String, String> columnMap;
         private List<Map<String, String>> columns;
+        private List<Map<String, Map<String, Object>>> transforms;
 
-        public void setDepend(List<String> list) {
-            depend = list;
+        public void setTasks(List<String> tasks) {
+            if (CollectionUtils.isEmpty(tasks)) return;
+            this.tasks = tasks;
         }
 
-        public void setDepend(String str) {
-            depend = List.of(str);
+        public void setTasks(String task) {
+            if (StringUtils.isEmpty(task)) return;
+            this.tasks = List.of(task);
         }
-
-        public void setColumnMap(List<Map<String, String>> columnMap) {
-            if (CollectionUtils.isNotEmpty(columnMap)) {
+        public void setColumns(List<Map<String, String>> columns) {
+            if (CollectionUtils.isNotEmpty(columns)) {
                 this.columnNames = Lists.newArrayList();
                 this.columnMap = Maps.newHashMap();
-                columnMap.forEach(map -> map.forEach((x, y) -> {
+                columns.forEach(map -> map.forEach((x, y) -> {
                     columnNames.add(x);
                     this.columnMap.put(x, y);
                 }));
+                this.columns = columns;
             }
         }
-
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name)) {
                 log.error("Service config name must not be empty!");
                 return false;
             }
-            setColumnMap(columns);
-            if (CollectionUtils.isEmpty(columnNames)) {
-                log.error("Service config must be output columns!");
-                return false;
-            }
-            for (Map.Entry<String, String> entry : columnMap.entrySet()) {
-                if (!DataTypes.typeIsSupport(entry.getValue())) {
-                    log.error("Service Output columns config columns type:{} must be support!", entry.getValue());
-                    return false;
-                }
-            }
-            if (StringUtils.isEmpty(serviceName)) {
-                serviceName = name;
-            }
             return true;
         }
     }
-
+    /**
+     * Experiment 执行Dag任务，每个任务执行完毕后将结果传递给下游任务参与计算
+     * Dag执行过程与DataService不相同
+     * 不变更data schema
+     */
     @Data
     public static class Experiment {
         private String name;
         private List<Chain> chains;
         private Map<String, Object> options;
-        private List<String> columnNames;
-        private Map<String, String> columnMap;
 
-        private List<Map<String, String>> columns;
-
-        public void setColumnMap(List<Map<String, String>> columnMap) {
-            if (CollectionUtils.isNotEmpty(columnMap)) {
-                this.columnNames = Lists.newArrayList();
-                this.columnMap = Maps.newHashMap();
-                columnMap.forEach(map -> map.forEach((x, y) -> {
-                    columnNames.add(x);
-                    this.columnMap.put(x, y);
-                }));
-                if (CollectionUtils.isEmpty(columns)) {
-                    this.columns = columnMap;
-                }
-            }
-        }
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name)) {
                 log.error("Experiment config name must not be empty!");
@@ -133,16 +112,9 @@ public class RecommendConfig {
                 log.error("Experiment config chains must not be empty!");
                 return false;
             }
-            for (int index = 0; index < chains.size(); ++index) {
-                Chain chain = chains.get(index);
+            for (Chain chain : chains) {
                 if (!chain.checkAndDefault()) {
                     log.error("Experiment config chain must be right!");
-                    return false;
-                }
-            }
-            if (MapUtils.isNotEmpty(options)) {
-                if (options.containsKey("maxReservation") && !options.containsKey("cutField")) {
-                    log.error("Experiment config maxReservation must be config cutField!");
                     return false;
                 }
             }
@@ -150,6 +122,10 @@ public class RecommendConfig {
         }
     }
 
+    /**
+     *  执行bucketizer 分桶 然后计算
+     *  不改变data schema
+     */
     @Data
     public static class ExperimentItem {
         private String name;
@@ -162,25 +138,6 @@ public class RecommendConfig {
         private String bucketizer;
         private Map<String, Object> options;
         private double sumRatio = 0.0;
-
-        private List<String> columnNames;
-        private Map<String, String> columnMap;
-
-        private List<Map<String, String>> columns;
-
-        public void setColumnMap(List<Map<String, String>> columnMap) {
-            if (CollectionUtils.isNotEmpty(columnMap)) {
-                this.columnNames = Lists.newArrayList();
-                this.columnMap = Maps.newHashMap();
-                columnMap.forEach(map -> map.forEach((x, y) -> {
-                    columnNames.add(x);
-                    this.columnMap.put(x, y);
-                }));
-                if (CollectionUtils.isEmpty(columns)) {
-                    this.columns = columnMap;
-                }
-            }
-        }
 
         public void setExperiments(List<ExperimentItem> list) {
             list.forEach(x-> {
@@ -209,6 +166,9 @@ public class RecommendConfig {
         }
     }
 
+    /**
+     * 执行layer组成的任务Dag， 任务上下游依赖
+     */
     @Data
     public static class Scene {
         private String name;
@@ -217,34 +177,7 @@ public class RecommendConfig {
         private Map<String, Object> options;
         private List<String> columnNames;
         private Map<String, String> columnMap;
-
         private List<Map<String, String>> columns;
-
-        public void setColumnMap(List<Map<String, String>> columnMap) {
-            if (CollectionUtils.isNotEmpty(columnMap)) {
-                this.columnNames = Lists.newArrayList();
-                this.columnMap = Maps.newHashMap();
-                columnMap.forEach(map -> map.forEach((x, y) -> {
-                    columnNames.add(x);
-                    this.columnMap.put(x, y);
-                }));
-                if (CollectionUtils.isEmpty(columns)) {
-                    this.columns = columnMap;
-                }
-            }
-        }
-
-        private Map<String, Chain> chainMap = Maps.newHashMap();
-
-        public void setChains(List<Chain> data) {
-            if (CollectionUtils.isEmpty(data)) return;
-            data.forEach(chain -> {
-                if (StringUtils.isNotEmpty(chain.getName())) {
-                    chainMap.put(chain.getName(), chain);
-                }
-            });
-            chains = data;
-        }
 
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(chains)) {
@@ -258,6 +191,17 @@ public class RecommendConfig {
                 }
             }
             return true;
+        }
+        public void setColumns(List<Map<String, String>> columns) {
+            if (CollectionUtils.isNotEmpty(columns)) {
+                this.columnNames = Lists.newArrayList();
+                this.columnMap = Maps.newHashMap();
+                columns.forEach(map -> map.forEach((x, y) -> {
+                    columnNames.add(x);
+                    this.columnMap.put(x, y);
+                }));
+                this.columns = columns;
+            }
         }
     }
 }

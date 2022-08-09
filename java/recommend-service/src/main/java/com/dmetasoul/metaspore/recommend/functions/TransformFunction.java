@@ -15,24 +15,14 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.data.DataContext;
+import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.serving.FeatureTable;
-import org.apache.arrow.vector.FieldVector;
 
 import java.util.List;
 import java.util.Map;
-@TransformFunction("logscale")
-public class LogScaleFunction extends Function {
 
-    @Override
-    public void init(Map<String, Object> params) {
-
-    }
-
-    @Override
-    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-        return null;
-    }
+public abstract class TransformFunction {
+    public abstract boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options);
 }

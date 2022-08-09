@@ -15,6 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
+import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 
 import java.util.List;
@@ -23,11 +24,11 @@ import java.util.Map;
 public abstract class AggregateFunction extends Function {
 
     @Override
-    public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
         throw new IllegalCallerException("AggregateFunction only has aggregate function!");
     }
 
-    public abstract Object aggregate(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options);
+    public abstract Object aggregate(List<FieldData> fields, Map<String, Object> options);
 
     public void init(Map<String, Object> params) {}
 }

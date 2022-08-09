@@ -15,6 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
+import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import lombok.SneakyThrows;
 
@@ -24,11 +25,18 @@ import java.util.Map;
 public abstract class FlatFunction extends Function {
 
     @Override
-    public List<Object> process(List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options) {
+    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
         throw new IllegalCallerException("FlatFunction only has flat function!");
     }
-
-    public abstract List<Object> flat(List<Integer> indexs, List<List<Object>> values, List<DataTypeEnum> types, Map<String, Object> options);
+    /**
+     *
+     * @param indexs 用于设置flat之后新结果数据与原来字段数据的映射关系 list 下标与结果数据下标一致， Integer值表示对应输入数据的下标
+     * @param fields  用于flat函数的输入数据
+     * @param options  配置的函数参数
+     * @return  flat之后生成的结果数据
+     * 函数执行完毕。如果indexs为empty， 则清空之前函数计算的缓存结果，接下来的函数计算只使用当前flat函数结果进行计算
+     */
+    public abstract List<Object> flat(List<Integer> indexs, List<FieldData> fields, Map<String, Object> options);
 
     public void init(Map<String, Object> params) {}
 }

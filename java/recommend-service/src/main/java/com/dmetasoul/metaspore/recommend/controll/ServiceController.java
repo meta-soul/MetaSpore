@@ -23,6 +23,7 @@ import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.data.ServiceResult;
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
+import com.dmetasoul.metaspore.recommend.recommend.Scene;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -74,7 +76,7 @@ public class ServiceController {
         if (result == null) {
             return ServiceResult.of(-1, "taskService execute fail!");
         }
-        return ServiceResult.of(result);
+        return ServiceResult.of(result.output());
     }
     /**
      * 用于实现restfull接口 /service/recommend/{scene}/{id}
@@ -87,8 +89,8 @@ public class ServiceController {
      */
     @RequestMapping(value = "/recommend/{scene}/{id}", method = POST, produces = "application/json")
     public ServiceResult recommend(@PathVariable String scene, @PathVariable String id, @RequestBody Map<String, Object> req) {
-        DataService taskService = taskServiceRegister.getDataService(scene);
-        if (taskService == null) {
+        Scene sceneService = taskServiceRegister.getScene(scene);
+        if (sceneService == null) {
             return ServiceResult.of(-1, String.format("scene:%s is not support!", scene));
         }
         DataContext context = new DataContext(req);
@@ -96,19 +98,7 @@ public class ServiceController {
             return ServiceResult.of(-1, String.format("scene:%s recommend need id, eg:userId!", scene));
         }
         context.setId(id);
-        DataResult result = taskService.execute(context);
-        if (result == null) {
-            return ServiceResult.of(-1, "scene execute fail!");
-        }
-        if (!result.isVaild()) {
-            return ServiceResult.of(-1, "scene result is invalid!");
-        }
-        if (Utils.getField(req, "debug", false)) {
-            Map<String, Object> values = Maps.newHashMap();
-            values.putAll(context.getResults());
-            result = new DataResult();
-            result.setValues(values);
-        }
-        return ServiceResult.of(result, id);
+        List<Map<String, Object>> data = sceneService.output(context);
+        return ServiceResult.of(data, id);
     }
 }

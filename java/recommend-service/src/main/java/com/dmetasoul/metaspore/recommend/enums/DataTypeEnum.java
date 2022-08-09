@@ -15,15 +15,15 @@
 //
 package com.dmetasoul.metaspore.recommend.enums;
 
+import com.dmetasoul.metaspore.recommend.operator.ArrowOperator;
+import com.dmetasoul.metaspore.recommend.operator.ListOperator;
+import com.dmetasoul.metaspore.recommend.operator.MapOperator;
+import com.dmetasoul.metaspore.recommend.operator.StructOperator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.*;
-import org.apache.arrow.vector.complex.ListVector;
-import org.apache.arrow.vector.complex.MapVector;
-import org.apache.arrow.vector.complex.impl.UnionListWriter;
 import org.apache.arrow.vector.holders.NullableLargeVarBinaryHolder;
-import org.apache.arrow.vector.holders.VarCharHolder;
 import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
@@ -32,7 +32,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.Date;
 import java.sql.Time;
@@ -43,7 +42,7 @@ import java.util.Map;
 @SuppressWarnings("unchecked")
 @Slf4j
 public enum DataTypeEnum {
-    STRING(0, String.class, ArrowType.Utf8.INSTANCE, new Op() {
+    STRING(0, String.class, ArrowType.Utf8.INSTANCE, new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof String)) {
@@ -59,7 +58,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    LONG(1, Long.class, new ArrowType.Int(64, true), new Op() {
+    LONG(1, Long.class, new ArrowType.Int(64, true), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Long)) {
@@ -75,7 +74,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    INT(2,Integer.class, new ArrowType.Int(32, true), new Op() {
+    INT(2,Integer.class, new ArrowType.Int(32, true), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Integer)) {
@@ -91,7 +90,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    DOUBLE(3, Double.class, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE), new Op() {
+    DOUBLE(3, Double.class, new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Double)) {
@@ -107,7 +106,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    BYTE(4,Byte.class, ArrowType.Binary.INSTANCE, new Op() {
+    BYTE(4,Byte.class, ArrowType.Binary.INSTANCE, new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Byte)) {
@@ -123,7 +122,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    BOOL(5, Boolean.class, ArrowType.Bool.INSTANCE, new Op() {
+    BOOL(5, Boolean.class, ArrowType.Bool.INSTANCE, new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Boolean)) {
@@ -139,7 +138,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    BLOB(6, Blob.class, ArrowType.LargeBinary.INSTANCE, new Op() {
+    BLOB(6, Blob.class, ArrowType.LargeBinary.INSTANCE, new ArrowOperator() {
         @SneakyThrows
         @Override
         public boolean set(int index, String col, Object value) {
@@ -164,7 +163,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    DATE(7, Date.class, new ArrowType.Date(DateUnit.DAY), new Op() {
+    DATE(7, Date.class, new ArrowType.Date(DateUnit.DAY), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Date)) {
@@ -181,7 +180,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    TIMESTAMP(7, Timestamp.class, new ArrowType.Date(DateUnit.MILLISECOND), new Op() {
+    TIMESTAMP(7, Timestamp.class, new ArrowType.Date(DateUnit.MILLISECOND), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Timestamp)) {
@@ -197,7 +196,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    DECIMAL(8, BigDecimal.class, new ArrowType.Decimal(60, 4, 64), new Op() {
+    DECIMAL(8, BigDecimal.class, new ArrowType.Decimal(60, 4, 64), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof BigDecimal)) {
@@ -213,7 +212,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    FLOAT(9, Float.class, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE), new Op() {
+    FLOAT(9, Float.class, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Float)) {
@@ -229,7 +228,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    SHORT(10, Short.class, new ArrowType.Int(16, true), new Op() {
+    SHORT(10, Short.class, new ArrowType.Int(16, true), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Short)) {
@@ -245,7 +244,7 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    TIME(11, Time.class, new ArrowType.Time(TimeUnit.SECOND, 32), new Op() {
+    TIME(11, Time.class, new ArrowType.Time(TimeUnit.SECOND, 32), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof Time)) {
@@ -262,390 +261,21 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    LIST_INT(13, List.class, Integer.class, ArrowType.List.INSTANCE, new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof List)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            if (value == null) {
-                ((ListVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
-            } else {
-                featureTable.setIntList(index, (List<Integer>) value, featureTable.getVector(col));
-            }
-            return true;
-        }
-    }),
-    LIST_LONG(14, List.class, Long.class, ArrowType.List.INSTANCE, new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof List)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            if (value == null) {
-                ((ListVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
-            } else {
-                featureTable.setLongList(index, (List<Long>) value, featureTable.getVector(col));
-            }
-            return true;
-        }
-    }),
-    LIST_STR(15, List.class, String.class, ArrowType.List.INSTANCE, new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof List)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            if (value == null) {
-                ((ListVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
-            } else {
-                featureTable.setStringList(index, (List<String>) value, featureTable.getVector(col));
-            }
-            return true;
-        }
-    }),
-    LIST_FLOAT(16, List.class, Float.class, ArrowType.List.INSTANCE, new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof List)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            if (value == null) {
-                ((ListVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
-            } else {
-                featureTable.setFloatList(index, (List<Float>) value, featureTable.getVector(col));
-            }
-            return true;
-        }
-    }),
-    LIST_DOUBLE(17, List.class, Double.class, ArrowType.List.INSTANCE, new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof List)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            if (value == null) {
-                ((ListVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
-            } else {
-                featureTable.setDoubleList(index, (List<Double>) value, featureTable.getVector(col));
-            }
-            return true;
-        }
-    }),
-    MAP_STR_DOUBLE(19, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<String, Double> data = (Map<String, Double>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<String, Double> entry : data.entrySet()) {
-                    writer.startEntry();
-                    VarCharHolder vch = getVarCharHolder(entry.getKey(), mapVector);
-                    writer.key().varChar().write(vch);
-                    writer.value().float8().writeFloat8(entry.getValue());
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_STR_STR(20, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<String, String> data = (Map<String, String>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<String, String> entry : data.entrySet()) {
-                    writer.startEntry();
-                    VarCharHolder vchKey = getVarCharHolder(entry.getKey(), mapVector);
-                    writer.key().varChar().write(vchKey);
-                    VarCharHolder vchValue = getVarCharHolder(entry.getValue(), mapVector);
-                    writer.value().varChar().write(vchValue);
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_STR_INT(21, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<String, Integer> data = (Map<String, Integer>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<String, Integer> entry : data.entrySet()) {
-                    writer.startEntry();
-                    VarCharHolder vch = getVarCharHolder(entry.getKey(), mapVector);
-                    writer.key().varChar().write(vch);
-                    writer.value().integer().writeInt(entry.getValue());
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_STR_LONG(22, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<String, Long> data = (Map<String, Long>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<String, Long> entry : data.entrySet()) {
-                    writer.startEntry();
-                    VarCharHolder vch = getVarCharHolder(entry.getKey(), mapVector);
-                    writer.key().varChar().write(vch);
-                    writer.value().bigInt().writeBigInt(entry.getValue());
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_STR_FLOAT(23, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<String, Float> data = (Map<String, Float>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<String, Float> entry : data.entrySet()) {
-                    writer.startEntry();
-                    VarCharHolder vch = getVarCharHolder(entry.getKey(), mapVector);
-                    writer.key().varChar().write(vch);
-                    writer.value().float4().writeFloat4(entry.getValue());
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_STR_OBJECT(24, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<String, Object> data = (Map<String, Object>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<String, Object> entry : data.entrySet()) {
-                    Object obj = entry.getValue();
-                    if (obj == null) {
-                        log.error( "map value is not null! col:{}", col);
-                        continue;
-                    }
-                    writer.startEntry();
-                    VarCharHolder vch = getVarCharHolder(entry.getKey(), mapVector);
-                    writer.key().varChar().write(vch);
-                    if (obj instanceof String) {
-                        VarCharHolder vchValue = getVarCharHolder((String) obj, mapVector);
-                        writer.value().varChar().write(vchValue);
-                    } else if (obj instanceof Float) {
-                        writer.value().float4().writeFloat4((Float) obj);
-                    } else if (obj instanceof Double) {
-                        writer.value().float8().writeFloat8((Double) obj);
-                    } else if (obj instanceof Integer) {
-                        writer.value().integer().writeInt((Integer) obj);
-                    } else if (obj instanceof Long) {
-                        writer.value().bigInt().writeBigInt((Long) obj);
-                    } else {
-                        log.error("set featureTable fail! Map value type is not support!");
-                        return false;
-                    }
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_INT_OBJECT(25, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<Integer, Object> data = (Map<Integer, Object>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<Integer, Object> entry : data.entrySet()) {
-                    Object obj = entry.getValue();
-                    if (obj == null) {
-                        log.error( "map value is not null! col:{}", col);
-                        continue;
-                    }
-                    writer.startEntry();
-                    writer.key().integer().writeInt(entry.getKey());
-                    if (obj instanceof String) {
-                        VarCharHolder vchValue = getVarCharHolder((String) obj, mapVector);
-                        writer.value().varChar().write(vchValue);
-                    } else if (obj instanceof Float) {
-                        writer.value().float4().writeFloat4((Float) obj);
-                    } else if (obj instanceof Double) {
-                        writer.value().float8().writeFloat8((Double) obj);
-                    } else if (obj instanceof Integer) {
-                        writer.value().integer().writeInt((Integer) obj);
-                    } else if (obj instanceof Long) {
-                        writer.value().bigInt().writeBigInt((Long) obj);
-                    } else {
-                        log.error("set featureTable fail! Map value type is not support!");
-                        return false;
-                    }
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    MAP_LONG_OBJECT(26, Map.class, new ArrowType.Map(true), new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Map)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            MapVector mapVector = featureTable.getVector(col);
-            Assert.notNull(mapVector, "mapvector is not null at col:" + col);
-            if (value == null) {
-                mapVector.setNull(index);
-            } else {
-                @SuppressWarnings("unchecked") Map<Long, Object> data = (Map<Long, Object>) value;
-                UnionListWriter writer = mapVector.getWriter();
-                writer.setPosition(index);
-                writer.startMap();
-                for (Map.Entry<Long, Object> entry : data.entrySet()) {
-                    Object obj = entry.getValue();
-                    if (obj == null) {
-                        log.error( "map value is not null! col:{}", col);
-                        continue;
-                    }
-                    writer.startEntry();
-                    writer.key().bigInt().writeBigInt(entry.getKey());
-                    if (obj instanceof String) {
-                        VarCharHolder vchValue = getVarCharHolder((String) obj, mapVector);
-                        writer.value().varChar().write(vchValue);
-                    } else if (obj instanceof Float) {
-                        writer.value().float4().writeFloat4((Float) obj);
-                    } else if (obj instanceof Double) {
-                        writer.value().float8().writeFloat8((Double) obj);
-                    } else if (obj instanceof Integer) {
-                        writer.value().integer().writeInt((Integer) obj);
-                    } else if (obj instanceof Long) {
-                        writer.value().bigInt().writeBigInt((Long) obj);
-                    } else {
-                        log.error("set featureTable fail! Map value type is not support!");
-                        return false;
-                    }
-                    writer.endEntry();
-                }
-                writer.endMap();
-            }
-            featureTable.setRowCount(index+1);
-            return true;
-        }
-    }),
-    DEFAULT(99, String.class, ArrowType.Utf8.INSTANCE, new Op() {
-        @Override
-        public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof String)) {
-                log.error("set featureTable fail! value type is not match!");
-                return false;
-            }
-            if (value == null) {
-                ((VarCharVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
-            } else {
-                featureTable.setString(index, (String) value, featureTable.getVector(col));
-            }
-            return true;
-        }
-    });
+    LIST_INT(13, List.class, Integer.class, ArrowType.List.INSTANCE, new ListOperator<Integer>()),
+    LIST_LONG(14, List.class, Long.class, ArrowType.List.INSTANCE, new ListOperator<Long>()),
+    LIST_STR(15, List.class, String.class, ArrowType.List.INSTANCE, new ListOperator<String>()),
+    LIST_FLOAT(16, List.class, Float.class, ArrowType.List.INSTANCE, new ListOperator<Float>()),
+    LIST_DOUBLE(17, List.class, Double.class, ArrowType.List.INSTANCE, new ListOperator<Double>()),
+    LIST_OBJ(18, List.class, Object.class, ArrowType.List.INSTANCE, new ListOperator<>()),
+    MAP_STR_DOUBLE(19, Map.class, new ArrowType.Map(true), new MapOperator<String, Double>()),
+    MAP_STR_STR(20, Map.class, new ArrowType.Map(true), new MapOperator<String, String>()),
+    MAP_STR_INT(21, Map.class, new ArrowType.Map(true), new MapOperator<String, Integer>()),
+    MAP_STR_LONG(22, Map.class, new ArrowType.Map(true), new MapOperator<String, Long>()),
+    MAP_STR_FLOAT(23, Map.class, new ArrowType.Map(true), new MapOperator<String, Float>()),
+    MAP_STR_OBJ(24, Map.class, new ArrowType.Map(true), new MapOperator<String, Object>()),
+    MAP_INT_OBJ(25, Map.class, new ArrowType.Map(true), new MapOperator<Integer, Object>()),
+    MAP_LONG_OBJ(26, Map.class, new ArrowType.Map(true), new MapOperator<Long, Object>()),
+    STRUCT(99, Object.class, ArrowType.Struct.INSTANCE, new StructOperator());
 
     private final Integer id;
 
@@ -655,9 +285,9 @@ public enum DataTypeEnum {
 
     private final Class<?> subCls;
 
-    private final Op op;
+    private final ArrowOperator op;
 
-    DataTypeEnum(int id, Class<?> cls, ArrowType type, Op op){
+    DataTypeEnum(int id, Class<?> cls, ArrowType type, ArrowOperator op){
         this.id = id;
         this.cls = cls;
         this.type = type;
@@ -665,7 +295,7 @@ public enum DataTypeEnum {
         this.op = op;
     }
 
-    DataTypeEnum(int id, Class<?> cls, Class<?> subCls, ArrowType type, Op op){
+    DataTypeEnum(int id, Class<?> cls, Class<?> subCls, ArrowType type, ArrowOperator op){
         this.id = id;
         this.cls = cls;
         this.type = type;
@@ -679,7 +309,7 @@ public enum DataTypeEnum {
 
     public boolean set(FeatureTable featureTable, String col, List<Object> data) {
         op.init(featureTable);
-        if (op.featureTable == null) return false;
+        if (op.getFeatureTable() == null) return false;
         if (CollectionUtils.isNotEmpty(data)) {
             for (int i = 0; i < data.size(); ++i) {
                 Object value = data.get(i);
@@ -693,8 +323,8 @@ public enum DataTypeEnum {
 
     public boolean set(FeatureTable featureTable, String col, Object data) {
         op.init(featureTable);
-        if (op.featureTable == null) return false;
-        int index = op.featureTable.getRowCount();
+        if (op.getFeatureTable() == null) return false;
+        int index = op.getFeatureTable().getVector(col).getValueCount();
         return this.op.set(index, col, data);
     }
     public Class<?> getCls() {
@@ -711,7 +341,7 @@ public enum DataTypeEnum {
                 return e;
             }
         }
-        return DataTypeEnum.DEFAULT;
+        return DataTypeEnum.STRUCT;
     }
 
     public static DataTypeEnum getEnumByType(ArrowType type) {
@@ -720,7 +350,7 @@ public enum DataTypeEnum {
                 return e;
             }
         }
-        return DataTypeEnum.DEFAULT;
+        return DataTypeEnum.STRUCT;
     }
 
     public static DataTypeEnum getEnumById(int id) {
@@ -729,24 +359,6 @@ public enum DataTypeEnum {
                 return e;
             }
         }
-        return DataTypeEnum.DEFAULT;
-    }
-
-    public static abstract class Op {
-        protected FeatureTable featureTable;
-        public void init(FeatureTable featureTable) {
-            this.featureTable = featureTable;
-        }
-        public abstract boolean set(int index, String col, Object data);
-
-        public VarCharHolder getVarCharHolder(String str, ListVector vector) {
-            byte[] b = str.getBytes(StandardCharsets.UTF_8);
-            VarCharHolder vch = new VarCharHolder();
-            vch.start = 0;
-            vch.end = b.length;
-            vch.buffer = vector.getAllocator().buffer(b.length);
-            vch.buffer.setBytes(0, b);
-            return vch;
-        }
+        return DataTypeEnum.STRUCT;
     }
 }

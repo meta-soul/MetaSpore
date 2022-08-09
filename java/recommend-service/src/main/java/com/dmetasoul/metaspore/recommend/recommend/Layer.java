@@ -15,9 +15,11 @@
 //
 package com.dmetasoul.metaspore.recommend.recommend;
 
+import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
 import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -25,25 +27,36 @@ import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public class Layer {
-
-    private RecommendConfig.Layer layer;
-    private LayerBucketizer bucketizer;
-
-    public void init() {
+public class Layer implements BaseService{
+    protected String name;
+    protected RecommendConfig.Layer layer;
+    protected LayerBucketizer bucketizer;
+    protected TaskFlowConfig taskFlowConfig;
+    protected TaskServiceRegister serviceRegister;
+    public void init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {
+        if (StringUtils.isEmpty(name)) {
+            log.error("name is null, init fail!");
+        }
+        this.name = name;
+        this.taskFlowConfig = taskFlowConfig;
+        this.serviceRegister = serviceRegister;
+        layer = taskFlowConfig.getLayers().get(name);
         bucketizer = getLayerBucketizer(layer);
         if (bucketizer == null) {
             log.error("layer bucketizer：{} init fail！", layer.getBucketizer());
+            throw new RuntimeException("layer bucketizer init fail at:" + layer.getBucketizer());
         }
     }
-
     public LayerBucketizer getLayerBucketizer(RecommendConfig.Layer layer) {
         LayerBucketizer layerBucketizer = (LayerBucketizer) SpringBeanUtil.getBean(layer.getBucketizer());
         if (layerBucketizer == null || !layerBucketizer.getClass().isAnnotationPresent(BucketizerAnnotation.class)) {
@@ -60,5 +73,27 @@ public class Layer {
         String experiment = bucketizer.toBucket(context);
         result = new DataResult();
         return result;
+    }
+
+    @Override
+    public CompletableFuture<List<DataResult>> execute(DataResult data, DataContext context) {
+        return execute(List.of(data), context);
+    }
+
+    @Override
+    public CompletableFuture<List<DataResult>> execute(List<DataResult> data, DataContext context) {
+        String experiment = bucketizer.toBucket(context);
+        Experiment experimentFlow = serviceRegister.getExperiment(experiment);
+        Assert.notNull(experimentFlow, "experiment service is not exist! at " + experiment);
+        return experimentFlow.process(data, context);
+    }
+
+    @Override
+    public CompletableFuture<List<DataResult>> execute(DataContext context) {
+        return execute(List.of(), context);
+    }
+
+    @Override
+    public void close() {
     }
 }
