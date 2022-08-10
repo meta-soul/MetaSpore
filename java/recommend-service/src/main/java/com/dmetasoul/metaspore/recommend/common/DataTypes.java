@@ -96,7 +96,7 @@ public class DataTypes {
         dataTypes.put("map_str_obj", DataTypeEnum.MAP_STR_OBJ);
         dataTypes.put("map_int_obj", DataTypeEnum.MAP_INT_OBJ);
         dataTypes.put("map_long_obj", DataTypeEnum.MAP_LONG_OBJ);
-        dataTypes.put("list_map_str_obj", DataTypeEnum.LIST_MAP_STR_OBJ);
+        dataTypes.put("list_obj", DataTypeEnum.LIST_OBJ);
         dataTypes.put("obj", DataTypeEnum.STRUCT);
     }
 }

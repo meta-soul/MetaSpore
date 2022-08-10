@@ -52,7 +52,6 @@ public class TaskFlowConfig {
     private Map<String, FeatureConfig.SourceTable> sourceTables = Maps.newHashMap();
     private Map<String, FeatureConfig.Feature> features = Maps.newHashMap();
     private Map<String, FeatureConfig.AlgoTransform> algoTransforms = Maps.newHashMap();
-    private Map<String, Chain> chains = Maps.newHashMap();
     private Map<String, RecommendConfig.Service> services = Maps.newHashMap();
     private Map<String, RecommendConfig.Experiment> experiments = Maps.newHashMap();
     private Map<String, RecommendConfig.Layer> layers = Maps.newHashMap();
@@ -119,40 +118,6 @@ public class TaskFlowConfig {
                 log.error("Experiment item {} is check fail!", item.getName());
                 throw new RuntimeException("Experiment check fail!");
             }
-            int chainNum = item.getChains().size();
-            for (int index = 0; index < chainNum; ++index) {
-                Chain chain = item.getChains().get(index);
-                if (StringUtils.isNotEmpty(chain.getName())) {
-                    chains.put(chain.getName(), chain);
-                }
-                if (CollectionUtils.isNotEmpty(chain.getThen())) {
-                    for (int i = 0; i < chain.getThen().size(); ++i) {
-                        String rely = chain.getThen().get(i);
-                        if (!services.containsKey(rely) && !algoTransforms.containsKey(rely)) {
-                            log.error("Experiment: {} Service or algotransform {} is not config in then!", item.getName(), rely);
-                            throw new RuntimeException("Experiment check fail!");
-                        }
-                        if (CollectionUtils.isEmpty(chain.getColumnNames()) && i == chain.getThen().size() - 1) {
-                            RecommendConfig.Service service = services.get(rely);
-                            if (service != null) {
-                                chain.setColumnMap(service.getColumns());
-                            } else {
-                                FeatureConfig.AlgoTransform algoTransform = algoTransforms.get(rely);
-                                chain.setColumnMap(List.of(algoTransform.getColumnMap()));
-                            }
-                        }
-                    }
-                }
-                if (CollectionUtils.isNotEmpty(chain.getWhen())) {
-                    for (String rely : chain.getWhen()) {
-                        if (!services.containsKey(rely) && !algoTransforms.containsKey(rely)) {
-                            log.error("Experiment: {} Service {} is not config in when!", item.getName(), rely);
-                            throw new RuntimeException("Experiment check fail!");
-                        }
-                    }
-                }
-            }
-
             experiments.put(item.getName(), item);
         }
         for (RecommendConfig.Layer item: recommendConfig.getLayers()) {
@@ -166,43 +131,12 @@ public class TaskFlowConfig {
                 log.error("Feature item {} is check fail!", item.getName());
                 throw new RuntimeException("Layer check fail!");
             }
-            RecommendConfig.Experiment experiment = experiments.get(item.getExperiments().get(0).getName());
             layers.put(item.getName(), item);
         }
         for (RecommendConfig.Scene item: recommendConfig.getScenes()) {
             if (!item.checkAndDefault()) {
                 log.error("AlgoTransform item {} is check fail!", item.getName());
                 throw new RuntimeException("Scene check fail!");
-            }
-            for (Chain chain : item.getChains()) {
-                if (!chain.checkAndDefault()) {
-                    log.error("Scene {} chain {} is check fail!", item.getName(), chain.getName());
-                    throw new RuntimeException("Scene check fail!");
-                }
-                if (StringUtils.isNotEmpty(chain.getName())) {
-                    chains.put(chain.getName(), chain);
-                }
-                if (CollectionUtils.isNotEmpty(chain.getThen())) {
-                    for (int i = 0; i < chain.getThen().size(); ++i) {
-                        String rely = chain.getThen().get(i);
-                        RecommendConfig.Layer layer = layers.get(rely);
-                        if (layer == null) {
-                            log.error("Scene: {} Layer {} is not config in then!", item.getName(), rely);
-                            throw new RuntimeException("Scene check fail!");
-                        }
-                        if (CollectionUtils.isEmpty(chain.getColumnNames()) && i == chain.getThen().size() - 1) {
-                            item.setColumnMap(layer.getColumns());
-                        }
-                    }
-                }
-                if (CollectionUtils.isNotEmpty(chain.getWhen())) {
-                    for (String rely : chain.getWhen()) {
-                        if (!layers.containsKey(rely)) {
-                            log.error("Scene: {} Layer {} is not config in when!", item.getName(), rely);
-                            throw new RuntimeException("Scene check fail!");
-                        }
-                    }
-                }
             }
             scenes.put(item.getName(), item);
         }
@@ -282,9 +216,9 @@ public class TaskFlowConfig {
                     columnNames = sourceTables.get(rely).getColumnNames();
                     columnTypes.put(rely, sourceTables.get(rely).getColumnMap());
                 }
-                if (chains.containsKey(rely)) {
-                    columnNames = chains.get(rely).getColumnNames();
-                    columnTypes.put(rely, chains.get(rely).getColumnMap());
+                if (services.containsKey(rely)) {
+                    columnNames = services.get(rely).getColumnNames();
+                    columnTypes.put(rely, services.get(rely).getColumnMap());
                 }
                 if (algoTransforms.containsKey(rely)) {
                     columnNames = algoTransforms.get(rely).getColumnNames();

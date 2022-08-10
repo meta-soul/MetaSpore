@@ -473,6 +473,7 @@ public class FeatureConfig {
     @Data
     public static class AlgoTransform {
         private String name;
+        private String taskName;
         private List<String> feature;
         private Map<String, FieldAction> fieldActions;
         private List<ScatterFieldAction> scatterFieldActions;

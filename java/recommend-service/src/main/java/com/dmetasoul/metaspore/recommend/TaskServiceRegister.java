@@ -35,6 +35,7 @@ import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
@@ -189,7 +190,12 @@ public class TaskServiceRegister {
         taskFlowConfig.getAlgoTransforms().forEach((name, config) -> {
             AlgoTransformTask task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getName());
             if (task == null) {
-                task = SpringBeanUtil.getBean(AlgoTransformTask.class);
+                if (StringUtils.isNotEmpty(config.getTaskName())) {
+                    task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getName());
+                }
+                if (task == null) {
+                    task = SpringBeanUtil.getBean(AlgoTransformTask.class);
+                }
                 if (task == null) {
                     log.error("the AlgoTransformTask:{} load fail!", name);
                     throw new RuntimeException(String.format("the AlgoTransformTask:%s load fail!", name));

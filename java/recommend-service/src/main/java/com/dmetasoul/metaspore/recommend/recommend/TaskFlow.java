@@ -70,7 +70,7 @@ public class TaskFlow<Service extends BaseService> {
                     future = future.thenApplyAsync(dataResult -> {
                         try {
                             return service.execute(dataResult, context).get(timeout, timeUnit);
-                        } catch (InterruptedException | ExecutionException e) {
+                        } catch (InterruptedException | TimeoutException | ExecutionException e) {
                             throw new RuntimeException(e);
                         }
                     }, taskPool);
@@ -84,7 +84,7 @@ public class TaskFlow<Service extends BaseService> {
                     whenList.add(future.thenApplyAsync(dataResult -> {
                         try {
                             return service.execute(dataResult, context).get(timeout, timeUnit);
-                        } catch (InterruptedException | ExecutionException e) {
+                        } catch (InterruptedException | TimeoutException | ExecutionException e) {
                             throw new RuntimeException(e);
                         }
                     }, taskPool));
