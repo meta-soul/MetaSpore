@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.datasource;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -31,13 +31,13 @@ import java.util.Map;
  */
 @Data
 @Slf4j
-@DataSourceAnnotation("request")
+@ServiceAnnotation("Request")
 public class RequestSource extends DataSource {
 
     @Override
     public boolean initService() {
         FeatureConfig.Source source = taskFlowConfig.getSources().get(name);
-        if (!source.getKind().equals("request")) {
+        if (!source.getKind().equalsIgnoreCase("request")) {
             log.error("config request fail! is not kind:{} eq request!", source.getKind());
             return false;
         }

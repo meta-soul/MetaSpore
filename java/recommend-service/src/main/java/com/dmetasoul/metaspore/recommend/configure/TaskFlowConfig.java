@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
+import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import java.util.List;
@@ -83,11 +84,15 @@ public class TaskFlowConfig {
                 log.error("SourceTable item {} is check fail!", item.getName());
                 throw new RuntimeException("SourceTable check fail!");
             }
-            if (source.getKind().equals("redis") && item.getColumnNames().size() != 2) {
+            if (source.getKind().equalsIgnoreCase("redis") && item.getColumnNames().size() != 2) {
                 log.error("SourceTable: {} from redis column size only support 2!", item.getName());
                 throw new RuntimeException("SourceTable check fail!");
             }
             item.setKind(source.getKind());
+            if (item.getKind().equalsIgnoreCase("Redis") || item.getKind().equalsIgnoreCase("MongoDB")
+                || item.getKind().equalsIgnoreCase("JDBC")) {
+                item.setTaskName(item.getKind() + item.getTaskName());
+            }
             sourceTables.put(item.getName(), item);
         }
         for (FeatureConfig.Feature item : featureConfig.getFeature()) {
@@ -144,21 +149,41 @@ public class TaskFlowConfig {
 
     private void checkAlgoTransform() {
         for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
-            Map<String, FeatureConfig.Feature> features = Maps.newHashMap();
             Map<String, String> fieldMap = Maps.newHashMap();
-            for (String featureItem : item.getFeature()) {
-                FeatureConfig.Feature feature = features.get(featureItem);
-                if (feature == null) {
-                    log.error("AlgoInference: {} Feature {} is not config!", item.getName(), featureItem);
-                    throw new RuntimeException("AlgoInference check fail!");
-                }
-                features.put(featureItem, feature);
-                for (String col : feature.getColumnNames()) {
-                    if (fieldMap.containsKey(col)) {
-                        fieldMap.put(col, null);
-                    } else {
-                        fieldMap.put(col, featureItem);
+            Set<String> dependSet = Sets.newHashSet();
+            if (CollectionUtils.isNotEmpty(item.getFeature())) {
+                for (String featureItem : item.getFeature()) {
+                    FeatureConfig.Feature feature = features.get(featureItem);
+                    if (feature == null) {
+                        log.error("AlgoTransform: {} Feature {} is not config!", item.getName(), featureItem);
+                        throw new RuntimeException("AlgoTransform check fail!");
                     }
+                    for (String col : feature.getColumnNames()) {
+                        if (fieldMap.containsKey(col)) {
+                            fieldMap.put(col, null);
+                        } else {
+                            fieldMap.put(col, featureItem);
+                        }
+                    }
+                    dependSet.add(featureItem);
+                }
+            }
+            if (CollectionUtils.isNotEmpty(item.getAlgoTransform())) {
+                for (String algoTransformItem : item.getAlgoTransform()) {
+                    Assert.isTrue(!algoTransformItem.equals(item.getName()), "algotransform can not depend self! at " + algoTransformItem);
+                    FeatureConfig.AlgoTransform algoTransform = algoTransforms.get(algoTransformItem);
+                    if (algoTransform == null) {
+                        log.error("AlgoTransform: {} depend algoTransform {} is not config!", item.getName(), algoTransformItem);
+                        throw new RuntimeException("AlgoTransform check fail!");
+                    }
+                    for (String col : algoTransform.getColumnNames()) {
+                        if (fieldMap.containsKey(col)) {
+                            fieldMap.put(col, null);
+                        } else {
+                            fieldMap.put(col, algoTransformItem);
+                        }
+                    }
+                    dependSet.add(algoTransformItem);
                 }
             }
             for (FeatureConfig.FieldAction fieldAction : item.getActionList()) {
@@ -167,18 +192,25 @@ public class TaskFlowConfig {
                     for (FeatureConfig.Field field : fields) {
                         if (StringUtils.isEmpty(field.getTable())) {
                             if (!fieldMap.containsKey(field.getFieldName()) || fieldMap.get(field.getFieldName()) == null) {
-                                log.error("AlgoInference: {} fieldAction {} Field {} not exist!", item.getName(), fieldAction.getName(), field);
-                                throw new RuntimeException("AlgoInference check fail!");
+                                log.error("AlgoTransform: {} fieldAction {} Field {} not exist!", item.getName(), fieldAction.getName(), field);
+                                throw new RuntimeException("AlgoTransform check fail!");
                             }
                             field.setTable(fieldMap.get(field.getFieldName()));
-                        } else if (!features.containsKey(field.getTable())) {
-                            log.error("AlgoTransform {} fieldAction fields {} table must in feature!", item.getName(), field);
+                        } else if (!dependSet.contains(field.getTable())) {
+                            log.error("AlgoTransform {} fieldAction fields {} table must in depen!", item.getName(), field);
                             throw new RuntimeException("AlgoTransform check fail!");
                         }
                     }
                     if (StringUtils.isEmpty(fieldAction.getFunc())) {
                         FeatureConfig.Feature feature = features.get(fields.get(0).getTable());
-                        fieldAction.setType(feature.getColumnMap().get(fields.get(0).getFieldName()));
+                        if (feature != null) {
+                            fieldAction.setType(feature.getColumnMap().get(fields.get(0).getFieldName()));
+                        } else {
+                            FeatureConfig.AlgoTransform algoTransform = algoTransforms.get(fields.get(0).getTable());
+                            fieldAction.setType(algoTransform.getColumnMap().get(fields.get(0).getFieldName()));
+                        }
+                    } else if (!(fieldAction instanceof FeatureConfig.ScatterFieldAction)){
+                        Assert.notNull(fieldAction.getType(), "fieldAction type must set while has func! at " + fieldAction);
                     }
                 }
                 List<String> input = fieldAction.getInput();
@@ -204,7 +236,7 @@ public class TaskFlowConfig {
                     throw new RuntimeException("Feature check fail!");
                 }
                 // 默认feature， chain数据都是计算好的中间结果，可以直接获取到
-                if (!sourceTables.containsKey(rely) || sourceTables.get(rely).getKind().equals("request")) {
+                if (!sourceTables.containsKey(rely) || sourceTables.get(rely).getKind().equalsIgnoreCase("request")) {
                     immediateSet.add(rely);
                 }
                 List<String> columnNames = null;
@@ -218,6 +250,7 @@ public class TaskFlowConfig {
                 }
                 if (services.containsKey(rely)) {
                     columnNames = services.get(rely).getColumnNames();
+                    Assert.notNull(columnNames, "the columns info must configure in " + rely);
                     columnTypes.put(rely, services.get(rely).getColumnMap());
                 }
                 if (algoTransforms.containsKey(rely)) {

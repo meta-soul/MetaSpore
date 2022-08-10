@@ -27,7 +27,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 @Component
-public @interface TransformFunction {
+public @interface FunctionAnnotation {
     @AliasFor(
             annotation = Component.class
     )

@@ -142,10 +142,12 @@ public abstract class DataService {
      */
     public List<DataResult> getDataResultByNames(List<String> names, DataContext context) {
         List<DataResult> dataResults = Lists.newArrayList();
-        for (String taskName : names) {
-            DataResult result = getDataResultByName(taskName, context);
-            if (result != null) {
-                dataResults.add(result);
+        if (CollectionUtils.isNotEmpty(names)) {
+            for (String taskName : names) {
+                DataResult result = getDataResultByName(taskName, context);
+                if (result != null) {
+                    dataResults.add(result);
+                }
             }
         }
         return dataResults;
@@ -164,11 +166,13 @@ public abstract class DataService {
             DataTypeEnum dataType = dataTypes.get(i);
             Field field = resFields.get(i);
             String col = field.getName();
-            for (Map<String, Object> map : res) {
-                if (!dataType.set(featureTable, col, map.get(col))) {
+            for (int index = 0; index < res.size(); ++index) {
+                Map<String, Object> map = res.get(index);
+                if (!dataType.set(featureTable, col, index, map.get(col))) {
                     log.error("set featuraTable fail!");
                 }
             }
+            featureTable.finish();
         }
         return result;
     }

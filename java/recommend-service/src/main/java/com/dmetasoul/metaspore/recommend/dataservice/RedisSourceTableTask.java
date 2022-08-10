@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.datasource.RedisSource;
@@ -36,7 +36,7 @@ import java.util.Map;
  */
 
 @Slf4j
-@DataServiceAnnotation("RedisSourceTable")
+@ServiceAnnotation("RedisSourceTable")
 public class RedisSourceTableTask extends SourceTableTask {
 
     private RedisSource dataSource;
@@ -46,7 +46,7 @@ public class RedisSourceTableTask extends SourceTableTask {
 
     @Override
     public boolean initService() {
-        if (super.initService() && source.getKind().equals("redis")) {
+        if (super.initService() && source.getKind().equalsIgnoreCase("redis")) {
             dataSource = (RedisSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
         }
         if (StringUtils.isNotEmpty(sourceTable.getPrefix())) {

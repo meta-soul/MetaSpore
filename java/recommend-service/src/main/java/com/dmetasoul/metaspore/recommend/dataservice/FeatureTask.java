@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
@@ -33,6 +33,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
@@ -43,7 +44,7 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
 @Slf4j
-@DataServiceAnnotation
+@ServiceAnnotation
 public class FeatureTask extends DataService {
     /**
      * Feature相关的配置数据对象
@@ -84,7 +85,6 @@ public class FeatureTask extends DataService {
         feature = taskFlowConfig.getFeatures().get(name);
         rewritedField = Maps.newHashMap();
         immediateRewritedField = Maps.newHashMap();
-        immediateTables = Sets.newHashSet(feature.getImmediateFrom());
         fieldMap = Maps.newHashMap();
         executeNum = 5; // 由于每次执行都是部分构建rewritedField，所以需要多次入队执行，确保makeRequest构建正确
         for (FeatureConfig.Field field : feature.getFields()) {
@@ -93,9 +93,10 @@ public class FeatureTask extends DataService {
             dataTypes.add(dataType);
             fieldMap.computeIfAbsent(field.getTable(), k->Lists.newArrayList()).add(field);
         }
-        for (String table : immediateTables) {
+        for (String table : feature.getImmediateFrom()) {
             setRewritedField(table, immediateRewritedField);
         }
+        immediateTables = Sets.newHashSet();
         return true;
     }
 
@@ -104,15 +105,26 @@ public class FeatureTask extends DataService {
      */
     @Override
     protected void preCondition(ServiceRequest request, DataContext context) {
-        // 每次请求，都需要重新执行流程获取数据
-        taskFlow.offer(new Chain(null, feature.getImmediateFrom(), false));
-        List<String> allTables = Lists.newArrayList();
-        allTables.addAll(feature.getFrom());
-        immediateTables.forEach(allTables::remove);
-        taskFlow.offer(new Chain(null, allTables, false));
-        // rewritedField需要随执行流程的变化而变化
+        immediateTables.clear();
+        for (String table : feature.getImmediateFrom()) {
+            DataResult result = execute(table, request, context);
+            Assert.notNull(result, "immediateTables DataResult is not exist! at " + table);
+        }
+        immediateTables.addAll(feature.getImmediateFrom());
         rewritedField.clear();
         rewritedField.putAll(immediateRewritedField);
+        List<String> executeTables = Lists.newArrayList();
+        for (String table : feature.getFrom()) {
+            if (!immediateTables.contains(table)) {
+                if (getDataResultByName(table, context) == null) {
+                    executeTables.add(table);
+                } else {
+                    setRewritedField(table, rewritedField);
+                    immediateTables.add(table);
+                }
+            }
+        }
+        taskFlow.offer(new Chain(null, executeTables, false));
     }
 
     protected void setRewritedField(String depend, Map<FeatureConfig.Field, FeatureConfig.Field> rewritedField) {

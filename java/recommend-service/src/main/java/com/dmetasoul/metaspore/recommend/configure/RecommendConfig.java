@@ -28,6 +28,7 @@ import org.elasticsearch.common.util.set.Sets;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
@@ -62,6 +63,7 @@ public class RecommendConfig {
         private List<String> columnNames;
         private Map<String, String> columnMap;
         private List<Map<String, String>> columns;
+        private List<Map<String, Map<String, Object>>> preTransforms;
         private List<Map<String, Map<String, Object>>> transforms;
 
         public void setTasks(List<String> tasks) {
@@ -190,6 +192,7 @@ public class RecommendConfig {
                     return false;
                 }
             }
+            Assert.notNull(columnNames, "scene must configure output columns! at " + name);
             return true;
         }
         public void setColumns(List<Map<String, String>> columns) {

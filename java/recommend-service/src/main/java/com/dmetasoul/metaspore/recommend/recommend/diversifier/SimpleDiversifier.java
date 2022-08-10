@@ -16,11 +16,10 @@
 
 package com.dmetasoul.metaspore.recommend.recommend.diversifier;
 
-import com.dmetasoul.metaspore.recommend.annotation.RecommendAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.functions.TransformFunction;
 import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Lists;
@@ -30,7 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 
 @Slf4j
-@RecommendAnnotation("diversifyBaseService")
+@ServiceAnnotation("diversifyBaseService")
 public class SimpleDiversifier extends Service {
     protected boolean useDiversify = true;
     protected int window = 4;

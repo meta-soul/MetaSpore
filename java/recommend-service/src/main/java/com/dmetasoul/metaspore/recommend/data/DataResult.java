@@ -82,7 +82,8 @@ public class DataResult {
         }
         for (int i = 0; i < fieldVector.getValueCount(); ++i) {
             if (!set.contains(fieldVector.getObject(i))) {
-                DataTypes.getDataType(type).set(featureTable, field, fieldVector.getObject(i));
+                int index = featureTable.getRowCount();
+                DataTypes.getDataType(type).set(featureTable, field, index, fieldVector.getObject(i));
             }
         }
     }

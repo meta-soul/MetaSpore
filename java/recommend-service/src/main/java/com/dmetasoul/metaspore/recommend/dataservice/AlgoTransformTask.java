@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
@@ -40,19 +40,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation
+@ServiceAnnotation("AlgoTransform")
 public class AlgoTransformTask extends DataService {
     protected ExecutorService taskPool;
     protected FeatureConfig.AlgoTransform algoTransform;
-    protected List<FeatureConfig.Feature> features;
     protected Map<String, Function> functionMap;
     protected Map<String, Function> additionFunctions;
     protected Map<String, List<Object>> actionResult;
@@ -73,12 +72,14 @@ public class AlgoTransformTask extends DataService {
             resFields.add(Field.nullable(col, dataType.getType()));
             dataTypes.add(dataType);
         }
-        features = Lists.newArrayList();
-        for (String feature : algoTransform.getFeature()) {
-            features.add(taskFlowConfig.getFeatures().get(feature));
-        }
         depend = new Chain();
-        List<String> depends = algoTransform.getFeature();
+        List<String> depends = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(algoTransform.getFeature())) {
+            depends.addAll(algoTransform.getFeature());
+        }
+        if (CollectionUtils.isNotEmpty(algoTransform.getAlgoTransform())) {
+            depends.addAll(algoTransform.getAlgoTransform());
+        }
         depend.setWhen(depends);
         depend.setAny(false);
         additionFunctions = Maps.newHashMap();
@@ -99,6 +100,26 @@ public class AlgoTransformTask extends DataService {
         actionResult.clear();
         actionTypes.clear();
         actionIndex.clear();
+    }
+
+    public void initFunctions() {
+        addFunction("flatList", (FlatFunction) (indexs, fields, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && indexs != null, "input data is not null");
+            List<Object> res = Lists.newArrayList();
+            List<Object> input = fields.get(0).getValue();
+            int num = 0;
+            for (int i = 0; i < input.size(); ++i) {
+                Object item = input.get(i);
+                Assert.isInstanceOf(Collection.class, item);
+                Collection<?> list = (Collection<?>) item;
+                for (Object o : list) {
+                    num += 1;
+                    indexs.add(i);
+                    res.add(o);
+                }
+            }
+            return res;
+        });
     }
 
     public void addFunctions() {}
@@ -237,6 +258,7 @@ public class AlgoTransformTask extends DataService {
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
         List<DataResult> result = getDataResultByNames(algoTransform.getFeature(), context);
+        result.addAll(getDataResultByNames(algoTransform.getAlgoTransform(), context));
         FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
         Map<String, DataResult> dataResultMap = getDataResults(result);
         for (FeatureConfig.FieldAction fieldAction : algoTransform.getActionList()) {
@@ -247,9 +269,10 @@ public class AlgoTransformTask extends DataService {
                 for (FeatureConfig.Field field : fields) {
                     DataResult dataResult = dataResultMap.get(field.getTable());
                     List<Object> itemData = dataResult.get(field.getFieldName());
+                    alignActionResult(field.toString(), itemData);
                     FeatureConfig.Feature feature = taskFlowConfig.getFeatures().get(field.getTable());
                     fieldDatas.add(FieldData.of(field.toString(),
-                            DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName())), itemData));
+                            DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName())), actionResult.get(field.toString())));
                 }
             }
             if (CollectionUtils.isNotEmpty(input)) {

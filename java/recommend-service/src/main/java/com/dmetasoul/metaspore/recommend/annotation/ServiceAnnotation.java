@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 import java.lang.annotation.*;
 
 /**
- * 用于标记实现类为DataSource的注解
+ * 用于标记实现类为Service的注解
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
 @Target({ElementType.TYPE})
@@ -30,7 +30,7 @@ import java.lang.annotation.*;
 @Documented
 @Component
 @Scope("prototype")
-public @interface DataServiceAnnotation {
+public @interface ServiceAnnotation {
     @AliasFor(
             annotation = Component.class
     )

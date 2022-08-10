@@ -16,7 +16,7 @@
 package com.dmetasoul.metaspore.recommend.functions;
 
 
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.google.common.collect.Lists;
@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@TransformFunction("bucketize")
-public class BucketizeFunction extends Function {
+@FunctionAnnotation("bucketize")
+public class BucketizeFunction implements Function {
     private final static String NAMEBINS = "bins";
     private final static String NAMEMIN = "min";
     private final static String NAMEMAX = "max";

@@ -71,13 +71,13 @@ public class FeatureConfig {
             if (options == null) {
                 options = Maps.newHashMap();
             }
-            if (getKind().equals("mongodb")) {
+            if (getKind().equalsIgnoreCase("mongodb")) {
                 if (!options.containsKey("uri") || !String.valueOf(options.get("uri")).startsWith("mongodb://")) {
                     log.error("source mongodb config uri error!");
                     return false;
                 }
             }
-            if (getKind().equals("jdbc")) {
+            if (getKind().equalsIgnoreCase("jdbc")) {
                 if (!options.containsKey("uri")) {
                     log.error("source jdbc config uri must not be empty!");
                     return false;
@@ -95,21 +95,11 @@ public class FeatureConfig {
                     }
                 }
             }
-            if (getKind().equals("redis")) {
-                if (!options.containsKey("cluster")) options.put("cluster", false);
-                if ((boolean)options.get("cluster")) {
-                    if (!options.containsKey("nodes")) {
-                        log.error("source redis cluster config nodes must not be empty!");
-                        return false;
-                    }
-                } else {
-                    if (!options.containsKey("host")) options.put("host", "localhost");
-                    if (!options.containsKey("port")) options.put("port", 6379);
+            if (getKind().equalsIgnoreCase("redis")) {
+                if (!options.containsKey("standalone") && !options.containsKey("sentinel")
+                    && !options.containsKey("cluster")) {
+                    options.put("standalone", Map.of("host", "localhost", "port", 6379));
                 }
-            }
-            if (getKind().equals("milvus")) {
-                if (!options.containsKey("host")) options.put("host", "localhost");
-                if (!options.containsKey("port")) options.put("port", 9000);
             }
             return true;
         }
@@ -120,6 +110,7 @@ public class FeatureConfig {
         private String name;
         private String source;
         private String kind;
+        private String taskName;
         private String table;
 
         private String prefix;
@@ -167,6 +158,9 @@ public class FeatureConfig {
                     log.error("SourceTable config columns type:{} must be support!", entry.getValue());
                     return false;
                 }
+            }
+            if (StringUtils.isEmpty(taskName)) {
+                taskName = "SourceTable";
             }
             return true;
         }
@@ -434,11 +428,9 @@ public class FeatureConfig {
         }
 
         public boolean checkAndDefault() {
-            if (StringUtils.isNotEmpty(func)) {
-                if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
-                    log.error("AlgoTransform FieldAction config type:{} must be support!", type);
-                    return false;
-                }
+            if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
+                log.error("AlgoTransform FieldAction config type:{} must be support!", type);
+                return false;
             }
             if (CollectionUtils.isEmpty(input) && CollectionUtils.isEmpty(fields)) {
                 throw new RuntimeException("fieldaction input and field must not be empty at the same time");
@@ -453,14 +445,12 @@ public class FeatureConfig {
         private List<String> types;
         @Override
         public boolean checkAndDefault() {
-            if (StringUtils.isNotEmpty(func)) {
-                if (CollectionUtils.isEmpty(names) || CollectionUtils.isEmpty(types) || names.size() != types.size()) {
-                    throw new RuntimeException("AlgoTransform ScatterFieldAction config name and type must be equel!");
-                }
-                for (String type : types) {
-                    if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
-                        throw new RuntimeException("AlgoTransform ScatterFieldAction config type must be support! type:" + type);
-                    }
+            if (CollectionUtils.isEmpty(names) || CollectionUtils.isEmpty(types) || names.size() != types.size()) {
+                throw new RuntimeException("AlgoTransform ScatterFieldAction config name and type must be equel!");
+            }
+            for (String type : types) {
+                if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
+                    throw new RuntimeException("AlgoTransform ScatterFieldAction config type must be support! type:" + type);
                 }
             }
             if (CollectionUtils.isEmpty(input) && CollectionUtils.isEmpty(fields)) {
@@ -475,6 +465,7 @@ public class FeatureConfig {
         private String name;
         private String taskName;
         private List<String> feature;
+        private List<String> algoTransform;
         private Map<String, FieldAction> fieldActions;
         private List<ScatterFieldAction> scatterFieldActions;
         private List<String> output;
@@ -493,6 +484,14 @@ public class FeatureConfig {
             feature = List.of(str);
         }
 
+        public void setAlgoTransform(List<String> list) {
+            algoTransform = list;
+        }
+
+        public void setAlgoTransform(String str) {
+            algoTransform = List.of(str);
+        }
+
         public boolean checkAndDefault() {
             if (!check()) {
                 return false;
@@ -502,9 +501,13 @@ public class FeatureConfig {
             actionList = Lists.newArrayList();
             Stack<FieldAction> stack = new Stack<>();
             Set<String> actionSet = Sets.newHashSet();
-            for (ScatterFieldAction scatter : scatterFieldActions) {
-                for (String name : scatter.names) {
-                    fieldActions.put(name, scatter);
+            if (CollectionUtils.isNotEmpty(scatterFieldActions)) {
+                for (ScatterFieldAction scatter : scatterFieldActions) {
+                    for (int i = 0; i < scatter.names.size(); ++i) {
+                        String name = scatter.names.get(i);
+                        fieldActions.put(name, scatter);
+                        columnMap.put(name, scatter.types.get(i));
+                    }
                 }
             }
             for (String col : output) {
@@ -512,23 +515,27 @@ public class FeatureConfig {
                 Assert.notNull(action, "output col must has Action colName:" + col);
                 stack.push(action);
                 action.setName(col);
+                actionSet.add(col);
                 Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + col);
-                columnMap.put(col, action.getType());
+                columnMap.putIfAbsent(col, action.getType());
             }
             boolean enableAction;
             while (!stack.empty()) {
                 FieldAction action = stack.peek();
                 enableAction = true;
-                for (String item : action.getInput()) {
-                    if (actionSet.contains(item)) {
-                        continue;
+                if (CollectionUtils.isNotEmpty(action.getInput())) {
+                    for (String item : action.getInput()) {
+                        if (actionSet.contains(item)) {
+                            continue;
+                        }
+                        FieldAction fieldAction = fieldActions.get(item);
+                        Assert.notNull(fieldAction, "FieldAction.input item must has Action item:" + item);
+                        stack.push(fieldAction);
+                        action.setName(item);
+                        actionSet.add(item);
+                        Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + item);
+                        enableAction = false;
                     }
-                    FieldAction fieldAction = fieldActions.get(item);
-                    Assert.notNull(fieldAction, "FieldAction.input item must has Action item:" + item);
-                    stack.push(fieldAction);
-                    action.setName(item);
-                    Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + item);
-                    enableAction = false;
                 }
                 if (enableAction) {
                     if (action instanceof ScatterFieldAction) {
@@ -539,7 +546,6 @@ public class FeatureConfig {
                         }
                     } else {
                         actionList.add(action);
-                        actionSet.add(action.getName());
                     }
                     stack.pop();
                 }
@@ -548,8 +554,12 @@ public class FeatureConfig {
         }
 
         protected boolean check() {
-            if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(feature) || CollectionUtils.isEmpty(output)) {
-                log.error("AlgoInference config name, fieldActions and feature depend must not be empty!");
+            if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(output)) {
+                log.error("AlgoInference config name, fieldActions must not be empty!");
+                return false;
+            }
+            if (CollectionUtils.isEmpty(algoTransform) && CollectionUtils.isEmpty(feature)) {
+                log.error("AlgoInference config algoTransform and feature depend must not be empty!");
                 return false;
             }
             return true;

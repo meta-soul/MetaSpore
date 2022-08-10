@@ -26,8 +26,8 @@ public interface LayerBucketizer {
 
     public default double[] normalize(double[] prob) {
         double total = 0;
-        for (int i = 0; i < prob.length; i++) {
-            total += prob[i];
+        for (double v : prob) {
+            total += v;
         }
         if (total == 0) {
             throw new IllegalArgumentException("Sum of probability is zero...");

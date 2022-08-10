@@ -23,6 +23,6 @@ import com.dmetasoul.metaspore.serving.FeatureTable;
 import java.util.List;
 import java.util.Map;
 
-public abstract class TransformFunction {
-    public abstract boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options);
+public interface TransformFunction {
+    boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options);
 }

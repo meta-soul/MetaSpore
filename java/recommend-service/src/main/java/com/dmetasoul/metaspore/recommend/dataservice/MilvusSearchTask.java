@@ -15,14 +15,10 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.FlatFunction;
 import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -37,13 +33,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
-import java.security.InvalidParameterException;
 import java.util.*;
-import java.util.stream.Collectors;
 
-@SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation("MilvusSearch")
+@ServiceAnnotation("MilvusSearch")
 public class MilvusSearchTask extends AlgoInferenceTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
     public static final int DEFAULT_MAX_RESERVATION = 50;

@@ -26,9 +26,6 @@ public class Chain {
     private Long timeOut = 30000L;
 
     private TimeUnit timeOutUnit = TimeUnit.MILLISECONDS;
-    private List<String> columnNames;
-    private Map<String, String> columnMap;
-    private List<Map<String, String>> columns;
 
     public void setThen(List<String> list) {
         then = list;
@@ -92,20 +89,6 @@ public class Chain {
         return true;
     }
 
-    public void setColumnMap(List<Map<String, String>> columnMap) {
-        if (CollectionUtils.isNotEmpty(columnMap)) {
-            this.columnNames = Lists.newArrayList();
-            this.columnMap = Maps.newHashMap();
-            columnMap.forEach(map -> map.forEach((x, y) -> {
-                columnNames.add(x);
-                this.columnMap.put(x, y);
-            }));
-            if (CollectionUtils.isEmpty(columns)) {
-                this.columns = columnMap;
-            }
-        }
-    }
-
     public void setTimeOutUnit(String data) {
         switch (Strings.capitalize(data.toLowerCase())) {
             case "Nanos":
@@ -139,19 +122,6 @@ public class Chain {
         if (CollectionUtils.isEmpty(then) && CollectionUtils.isEmpty(when)) {
             log.error("the chain must has node in then or when!");
             return false;
-        }
-        setColumnMap(columns);
-        if (CollectionUtils.isNotEmpty(when) && CollectionUtils.isEmpty(columnNames)) {
-            log.error("the chain:{} must has columns while has when!", this);
-            return false;
-        }
-        if (CollectionUtils.isNotEmpty(when)) {
-            for (Map.Entry<String, String> entry : columnMap.entrySet()) {
-                if (!DataTypes.typeIsSupport(entry.getValue())) {
-                    log.error("Output columns config columns type:{} must be support!", entry.getValue());
-                    return false;
-                }
-            }
         }
         Set<String> taskSet = Sets.newHashSet();
         int taskNum = 0;

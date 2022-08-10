@@ -1,6 +1,7 @@
 package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
@@ -11,6 +12,8 @@ import com.dmetasoul.metaspore.recommend.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.functions.TransformFunction;
+import com.dmetasoul.metaspore.serving.ArrowAllocator;
+import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
@@ -18,6 +21,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
@@ -27,6 +31,7 @@ import java.util.concurrent.*;
 
 @Slf4j
 @Data
+@ServiceAnnotation
 public class Service implements BaseService {
     protected String name;
     protected ExecutorService taskPool;
@@ -52,13 +57,18 @@ public class Service implements BaseService {
         this.serviceRegister = serviceRegister;
         this.serviceConfig = taskFlowConfig.getServices().get(name);
         this.taskPool = serviceRegister.getTaskPool();
-        for (String col : serviceConfig.getColumnNames()) {
-            String type = serviceConfig.getColumnMap().get(col);
-            DataTypeEnum dataType = DataTypes.getDataType(type);
-            resFields.add(Field.nullable(col, dataType.getType()));
-            dataTypes.add(dataType);
+        if (CollectionUtils.isNotEmpty(serviceConfig.getColumnNames())) {
+            resFields = Lists.newArrayList();
+            dataTypes = Lists.newArrayList();
+            for (String col : serviceConfig.getColumnNames()) {
+                String type = serviceConfig.getColumnMap().get(col);
+                DataTypeEnum dataType = DataTypes.getDataType(type);
+                resFields.add(Field.nullable(col, dataType.getType()));
+                dataTypes.add(dataType);
+            }
         }
         this.transformFunctions = Maps.newHashMap();
+        initFunctions();
         return initService();
     }
 
@@ -80,7 +90,20 @@ public class Service implements BaseService {
         return serviceConfig.getColumnMap().get(key);
     }
 
-    public void addFunctions() {
+    public void addFunctions() {}
+
+    public void initFunctions() {
+        addFunction("summary", (data, context, option) -> {
+            Assert.notNull(resFields, "summary need configure columns info!");
+            FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+            DataResult result = new DataResult();
+            result.setFeatureTable(featureTable);
+            result.setName(name);
+            result.mergeDataResult(data, serviceConfig.getColumnMap(), Utils.getField(option, "dupOnMerge", isDup));
+            data.clear();
+            data.add(result);
+            return true;
+        });
     }
 
     public void addFunction(String name, TransformFunction function) {
@@ -118,10 +141,45 @@ public class Service implements BaseService {
                 }, taskPool);
     }
 
+    public CompletableFuture<List<DataResult>> executeTransform(CompletableFuture<List<DataResult>> future,
+                                                                List<Map<String, Map<String, Object>>> transforms,
+                                                                DataContext context) {
+        if (future == null || CollectionUtils.isEmpty(transforms)) return null;
+        for (Map<String, Map<String, Object>> functionConfig : transforms) {
+            for (Map.Entry<String, Map<String, Object>> item : functionConfig.entrySet()) {
+                TransformFunction function = transformFunctions.get(item.getKey());
+                if (function == null) {
+                    log.error("the service：{} function: {} is not exist!", name, item.getKey());
+                    continue;
+                }
+                Map<String, Object> option = Maps.newHashMap();
+                if (MapUtils.isNotEmpty(serviceConfig.getOptions())) {
+                    option.putAll(serviceConfig.getOptions());
+                }
+                if (MapUtils.isNotEmpty(item.getValue())) {
+                    option.putAll(item.getValue());
+                }
+                future = future.thenApplyAsync(dataResults -> {
+                    if (CollectionUtils.isEmpty(dataResults)) {
+                        throw new RuntimeException("feature result is empty!");
+                    }
+                    if (!function.transform(dataResults, context, option)) {
+                        log.error("the service：{} function: {} execute fail!", name, item.getKey());
+                    }
+                    return dataResults;
+                }, taskPool);
+            }
+        }
+        return future;
+    }
+
     @Override
     @SneakyThrows
     public CompletableFuture<List<DataResult>> execute(List<DataResult> data, DataContext context) {
-        CompletableFuture<List<DataResult>> future = CompletableFuture.supplyAsync(() -> data).thenApplyAsync(dataResults -> {
+        CompletableFuture<List<DataResult>> future = CompletableFuture.supplyAsync(() -> data);
+        future = executeTransform(future, serviceConfig.getPreTransforms(), context);
+        Assert.notNull(future, "Service execute pre-transform function fail at " + name);
+        future.thenApplyAsync(dataResults -> {
             if (dataResults == null) dataResults = Lists.newArrayList();
             try {
                 dataResults.addAll(executeTask(data, context).get(timeout, timeUnit));
@@ -130,24 +188,8 @@ public class Service implements BaseService {
             }
             return dataResults;
         });
-        for (Map<String, Map<String, Object>> functionConfig : serviceConfig.getTransforms()) {
-            for (Map.Entry<String, Map<String, Object>> item : functionConfig.entrySet()) {
-                TransformFunction function = transformFunctions.get(item.getKey());
-                if (function == null) {
-                    log.error("the service：{} function: {} is not exist!", name, item.getKey());
-                    continue;
-                }
-                future = future.thenApplyAsync(dataResult -> {
-                    if (CollectionUtils.isEmpty(dataResult)) {
-                        throw new RuntimeException("feature result is empty!");
-                    }
-                    if (!function.transform(dataResult, context, item.getValue())) {
-                        log.error("the service：{} function: {} execute fail!", name, item.getKey());
-                    }
-                    return dataResult;
-                }, taskPool);
-            }
-        }
+        future = executeTransform(future, serviceConfig.getTransforms(), context);
+        Assert.notNull(future, "Service execute transform function fail at " + name);
         return future;
     }
 

@@ -15,21 +15,13 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.FeatureTable;
-import org.apache.arrow.vector.FieldVector;
 
 import java.util.List;
 import java.util.Map;
-@TransformFunction("normalize")
-public class NormalizeFunction extends Function {
-
-    @Override
-    public void init(Map<String, Object> params) {
-
-    }
+@FunctionAnnotation("normalize")
+public class NormalizeFunction implements Function {
 
     @Override
     public List<Object> process(List<FieldData> fields, Map<String, Object> options) {

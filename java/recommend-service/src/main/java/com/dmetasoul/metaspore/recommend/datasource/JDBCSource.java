@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.datasource;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
@@ -30,7 +30,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
  */
 @Slf4j
 @Data
-@DataSourceAnnotation("jdbc")
+@ServiceAnnotation("JDBC")
 public class JDBCSource extends DataSource {
     private JdbcTemplate jdbcTemplate;
     private NamedParameterJdbcTemplate namedTemplate;

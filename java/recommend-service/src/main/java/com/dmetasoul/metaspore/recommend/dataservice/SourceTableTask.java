@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -38,7 +38,7 @@ import java.util.concurrent.*;
  */
 
 @Slf4j
-@DataServiceAnnotation("SourceTable")
+@ServiceAnnotation("SourceTable")
 public class SourceTableTask extends DataService {
 
     private DataSource dataSource;

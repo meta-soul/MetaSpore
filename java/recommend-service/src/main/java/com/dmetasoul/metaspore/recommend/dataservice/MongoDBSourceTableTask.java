@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -43,7 +43,7 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
  */
 @SuppressWarnings("rawtypes")
 @Slf4j
-@DataServiceAnnotation("MongoDBSourceTable")
+@ServiceAnnotation("MongoDBSourceTable")
 public class MongoDBSourceTableTask extends SourceTableTask {
 
     private MongoDBSource dataSource;
@@ -53,7 +53,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
 
     @Override
     public boolean initService() {
-        if (super.initService() && source.getKind().equals("mongodb")) {
+        if (super.initService() && source.getKind().equalsIgnoreCase("mongodb")) {
             dataSource = (MongoDBSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
         }
         FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);

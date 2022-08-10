@@ -16,6 +16,7 @@
 package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
@@ -29,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 
 @Data
 @Slf4j
+@ServiceAnnotation
 public class Experiment extends TaskFlow<Service> {
     private RecommendConfig.Experiment experiment;
 

@@ -15,24 +15,28 @@
 //
 package com.dmetasoul.metaspore.recommend.datasource;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.data.redis.connection.RedisClusterConfiguration;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.connection.RedisNode;
-import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.springframework.data.redis.connection.*;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.util.Assert;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 /**
@@ -43,11 +47,13 @@ import java.util.stream.Collectors;
 @SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataSourceAnnotation("redis")
+@ServiceAnnotation("Redis")
 public class RedisSource extends DataSource {
 
     private RedisTemplate<String, Object> redisTemplate;
     private LettuceConnectionFactory factory;
+
+    private FeatureConfig.Source source;
 
     private static RedisNode readHostAndPortFromString(String hostAndPort) {
         String[] args = StringUtils.split(hostAndPort, ":");
@@ -76,28 +82,87 @@ public class RedisSource extends DataSource {
         return redisTemplate;
     }
 
+    public GenericObjectPoolConfig genericObjectPoolConfig() {
+        Map<String, Object> lettucePoolInfo = Utils.getField(source.getOptions(), "lettuce-pool", Maps.newHashMap());
+        //连接池配置
+        GenericObjectPoolConfig genericObjectPoolConfig =
+                new GenericObjectPoolConfig();
+        genericObjectPoolConfig.setMaxIdle(Utils.getField(lettucePoolInfo, "max-idle", 10));
+        genericObjectPoolConfig.setMinIdle(Utils.getField(lettucePoolInfo, "min-idle", 1));
+        genericObjectPoolConfig.setMaxTotal(Utils.getField(lettucePoolInfo, "max-active", 10));
+        genericObjectPoolConfig.setMaxWaitMillis(Utils.getField(lettucePoolInfo, "max-wait", 10000));
+        return genericObjectPoolConfig;
+    }
+    public RedisStandaloneConfiguration getRedisStandaloneConfiguration(GenericObjectPoolConfig genericObjectPoolConfig, Map<String, Object> redisConfig) {
+        String host = Utils.getField(redisConfig,"host", "localhost");
+        int port = Utils.getField(redisConfig,"port", 6379);
+        String password = Utils.getField(redisConfig,"password", "");
+        RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host,port);
+        if (StringUtils.isNotEmpty(password)) {
+            redisStandaloneConfiguration.setPassword(password);
+        }
+        return redisStandaloneConfiguration;
+    }
+
+    public RedisClusterConfiguration getRedisClusterConfiguration(GenericObjectPoolConfig genericObjectPoolConfig, Map<String, Object> redisConfig) {
+        String nodes = Utils.getField(redisConfig,"nodes", "localhost:6379");
+        int maxRedirects = Utils.getField(redisConfig,"max-redirect", 1);
+        String password = Utils.getField(redisConfig,"password", "");
+        Set<RedisNode> clusterNodes = Arrays.stream(nodes.split(",")).map(RedisSource::readHostAndPortFromString).collect(Collectors.toSet());
+        RedisClusterConfiguration configuration = new RedisClusterConfiguration();
+        configuration.setClusterNodes(clusterNodes);
+        configuration.setMaxRedirects(maxRedirects);
+        if (StringUtils.isNotEmpty(password)) {
+            configuration.setPassword(password);
+        }
+        return configuration;
+    }
+
+    public RedisSentinelConfiguration getRedisSentinelConfiguration(GenericObjectPoolConfig genericObjectPoolConfig, Map<String, Object> redisConfig) {
+        String master = Utils.getField(redisConfig,"master", "myMaster");
+        String nodes = Utils.getField(redisConfig,"nodes", "localhost:6379");
+        String password = Utils.getField(redisConfig,"password", "");
+        Set<String> clusterNodes = Arrays.stream(nodes.split(",")).collect(Collectors.toSet());
+        RedisSentinelConfiguration redisSentinelConfiguration = new RedisSentinelConfiguration(master, clusterNodes);
+        if (StringUtils.isNotEmpty(password)) {
+            redisSentinelConfiguration.setPassword(password);
+        }
+        return redisSentinelConfiguration;
+    }
+
     @Override
     public boolean initService() {
-        FeatureConfig.Source source = taskFlowConfig.getSources().get(name);
-        if (!source.getKind().equals("redis")) {
+        source = taskFlowConfig.getSources().get(name);
+        if (!source.getKind().equalsIgnoreCase("redis")) {
             log.error("config redis fail! is not kind:{} eq redis!", source.getKind());
             return false;
         }
-        boolean isCluster = (Boolean) source.getOptions().getOrDefault("cluster", true);
-        if (isCluster) {
-            String nodes = (String) source.getOptions().getOrDefault("nodes", "localhost:6379");
-            Set<RedisNode> clusterNodes = Arrays.stream(nodes.split(",")).map(RedisSource::readHostAndPortFromString).collect(Collectors.toSet());
-            RedisClusterConfiguration configuration = new RedisClusterConfiguration();
-            configuration.setClusterNodes(clusterNodes);
-            factory = new LettuceConnectionFactory(configuration);
-        } else {
-            String host = (String) source.getOptions().getOrDefault("host", "localhost");
-            int port = (Integer) source.getOptions().getOrDefault("port", 6379);
-            RedisStandaloneConfiguration configuration = new RedisStandaloneConfiguration();
-            configuration.setHostName(host);
-            configuration.setPort(port);
-            factory = new LettuceConnectionFactory(configuration);
+        GenericObjectPoolConfig genericObjectPoolConfig = genericObjectPoolConfig();
+        LettuceClientConfiguration clientConfig = LettucePoolingClientConfiguration.builder()
+                .commandTimeout(Duration.ofMillis(Utils.getField(source.getOptions(), "timeout", 10000)))
+                .poolConfig(genericObjectPoolConfig)
+                .build();
+
+        Map<String, Object> redisConfig = Utils.getField(source.getOptions(), "standalone", Maps.newHashMap());
+        if (MapUtils.isNotEmpty(redisConfig)) {
+            RedisStandaloneConfiguration configuration = getRedisStandaloneConfiguration(genericObjectPoolConfig, redisConfig);
+            factory = new LettuceConnectionFactory(configuration, clientConfig);
         }
+        if (factory == null) {
+            redisConfig = Utils.getField(source.getOptions(), "sentinel", Maps.newHashMap());
+            if (MapUtils.isNotEmpty(redisConfig)) {
+                RedisSentinelConfiguration configuration = getRedisSentinelConfiguration(genericObjectPoolConfig, redisConfig);
+                factory = new LettuceConnectionFactory(configuration, clientConfig);
+            }
+        }
+        if (factory == null) {
+            redisConfig = Utils.getField(source.getOptions(), "cluster", Maps.newHashMap());
+            if (MapUtils.isNotEmpty(redisConfig)) {
+                RedisClusterConfiguration configuration = getRedisClusterConfiguration(genericObjectPoolConfig, redisConfig);
+                factory = new LettuceConnectionFactory(configuration, clientConfig);
+            }
+        }
+        Assert.notNull(factory, "redis LettuceConnectionFactory init fail");
         factory.afterPropertiesSet();
         redisTemplate = getRedisTemplate(factory);
         return true;

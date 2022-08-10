@@ -15,14 +15,12 @@
 //
 package com.dmetasoul.metaspore.recommend.recommend.diversifier;
 
-import com.dmetasoul.metaspore.recommend.annotation.RecommendAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.functions.TransformFunction;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.springframework.context.annotation.Primary;
 
 import java.util.*;
@@ -32,7 +30,7 @@ import java.util.*;
 
 @Slf4j
 @Primary
-@RecommendAnnotation("diversifyMMRService")
+@ServiceAnnotation("diversifyMMRService")
 public class MaximalMarginalRelevanceDiversifier extends SimpleDiversifier {
     public static final double DEFAULT_LAMBDA = 0.7;
     public static final String SEQUENCE_FEATURE_SPLITTER = "'\u0001'";

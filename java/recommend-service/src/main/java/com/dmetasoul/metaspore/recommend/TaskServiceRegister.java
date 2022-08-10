@@ -17,9 +17,8 @@
 package com.dmetasoul.metaspore.recommend;
 
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
-import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
-import com.dmetasoul.metaspore.recommend.annotation.RecommendAnnotation;
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
 import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
@@ -34,6 +33,7 @@ import com.dmetasoul.metaspore.recommend.recommend.Scene;
 import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Maps;
 import lombok.Data;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +103,7 @@ public class TaskServiceRegister {
     /**
      * 每次refresh配置，重新注册生成所有的服务任务bean实例
      */
+    @SneakyThrows
     @PostConstruct
     public void initServices() {
         initDataSources();
@@ -137,7 +138,7 @@ public class TaskServiceRegister {
             String name = entry.getKey();
             String kind = entry.getValue().getKind();
             DataSource bean = (DataSource) SpringBeanUtil.getBean(kind);
-            if (bean == null || !bean.getClass().isAnnotationPresent(DataSourceAnnotation.class)) {
+            if (bean == null || !bean.getClass().isAnnotationPresent(ServiceAnnotation.class)) {
                 log.error("the datasource kind:{} load fail!", kind);
                 throw new RuntimeException(String.format("the datasource kind:%s load fail!", kind));
             }
@@ -155,14 +156,8 @@ public class TaskServiceRegister {
     public void initDataService() {
         dataServices = Maps.newHashMap();
         taskFlowConfig.getSourceTables().forEach((name, config) -> {
-            SourceTableTask task;
-            if (config.getKind().equals("jdbc")) {
-                task = SpringBeanUtil.getBean(JDBCSourceTableTask.class);
-            } else if (config.getKind().equals("redis")) {
-                task = SpringBeanUtil.getBean(RedisSourceTableTask.class);
-            } else if (config.getKind().equals("mongodb")) {
-                task = SpringBeanUtil.getBean(MongoDBSourceTableTask.class);
-            } else {
+            SourceTableTask task = (SourceTableTask) SpringBeanUtil.getBean(config.getTaskName());
+            if (task == null) {
                 task = (SourceTableTask) SpringBeanUtil.getBean("SourceTable");
             }
             if (task == null) {
@@ -191,10 +186,7 @@ public class TaskServiceRegister {
             AlgoTransformTask task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getName());
             if (task == null) {
                 if (StringUtils.isNotEmpty(config.getTaskName())) {
-                    task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getName());
-                }
-                if (task == null) {
-                    task = SpringBeanUtil.getBean(AlgoTransformTask.class);
+                    task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getTaskName());
                 }
                 if (task == null) {
                     log.error("the AlgoTransformTask:{} load fail!", name);
@@ -213,7 +205,7 @@ public class TaskServiceRegister {
      */
     public void initFunctions() {
         functions = Maps.newHashMap();
-        Map<String, Object> beanMap = SpringBeanUtil.getBeanMapByAnnotation(TransformFunction.class);
+        Map<String, Object> beanMap = SpringBeanUtil.getBeanMapByAnnotation(FunctionAnnotation.class);
         for (Map.Entry<String, Object> entry : beanMap.entrySet()) {
             String name = entry.getKey();
             Object func = entry.getValue();
@@ -238,8 +230,8 @@ public class TaskServiceRegister {
                 recommendService = SpringBeanUtil.getBean(Service.class);
                 if (recommendService == null) {
                     log.error("the RecommendService:{} load fail!", service.getName());
+                    throw new RuntimeException(String.format("the RecommendService:%s load fail!", service.getName()));
                 }
-                throw new RuntimeException(String.format("the RecommendService:%s load fail!", service.getName()));
             }
             recommendService.init(name, taskFlowConfig, this);
             recommendServices.put(service.getName(), recommendService);

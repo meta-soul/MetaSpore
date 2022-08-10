@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.datasource.JDBCSource;
@@ -33,7 +33,7 @@ import java.util.*;
  * Created by @author qinyy907 in 14:24 22/08/01.
  */
 @Slf4j
-@DataServiceAnnotation("JDBCSourceTable")
+@ServiceAnnotation("JDBCSourceTable")
 public class JDBCSourceTableTask extends SourceTableTask {
 
     private JDBCSource dataSource;
@@ -46,7 +46,7 @@ public class JDBCSourceTableTask extends SourceTableTask {
 
     @Override
     public boolean initService() {
-        if (super.initService() && source.getKind().equals("jdbc")) {
+        if (super.initService() && source.getKind().equalsIgnoreCase("jdbc")) {
             dataSource = (JDBCSource) taskServiceRegister.getDataSources().get(sourceTable.getSource());
         }
         columns = sourceTable.getColumnMap().keySet();

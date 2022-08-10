@@ -22,10 +22,10 @@ import lombok.SneakyThrows;
 import java.util.List;
 import java.util.Map;
 
-public abstract class FlatFunction extends Function {
+public interface FlatFunction extends Function {
 
     @Override
-    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
+    default List<Object> process(List<FieldData> fields, Map<String, Object> options) {
         throw new IllegalCallerException("FlatFunction only has flat function!");
     }
     /**
@@ -36,7 +36,6 @@ public abstract class FlatFunction extends Function {
      * @return  flat之后生成的结果数据
      * 函数执行完毕。如果indexs为empty， 则清空之前函数计算的缓存结果，接下来的函数计算只使用当前flat函数结果进行计算
      */
-    public abstract List<Object> flat(List<Integer> indexs, List<FieldData> fields, Map<String, Object> options);
+    List<Object> flat(List<Integer> indexs, List<FieldData> fields, Map<String, Object> options);
 
-    public void init(Map<String, Object> params) {}
 }

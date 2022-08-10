@@ -15,15 +15,9 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.TensorResult;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
@@ -41,10 +35,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-@SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-@DataServiceAnnotation
+@ServiceAnnotation("AlgoInference")
 public class AlgoInferenceTask extends AlgoTransformTask {
     protected static final String DEFAULT_MODEL_NAME = "two_towers_simplex";
     protected static final String TARGET_KEY = "output";
@@ -78,50 +71,41 @@ public class AlgoInferenceTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("genEmbedding", new Function() {
-            @Override
-            public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
-                FeatureTable featureTable = convFeatureTable(String.format("embedding_%s", name), fields);
-                String targetName = Utils.getField(options, "targetKey", targetKey);
-                ArrowTensor arrowTensor = predict(featureTable, targetName);
-                List<Object> res = Lists.newArrayList();
-                res.addAll(getFromTensor(arrowTensor));
-                return res;
-            }
+        addFunction("genEmbedding", (fields, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
+            FeatureTable featureTable = convFeatureTable(String.format("embedding_%s", name), fields);
+            String targetName = Utils.getField(options, "targetKey", targetKey);
+            ArrowTensor arrowTensor = predict(featureTable, targetName);
+            List<Object> res = Lists.newArrayList();
+            res.addAll(getFromTensor(arrowTensor));
+            return res;
         });
-        addFunction("predictScore", new Function() {
-            @Override
-            public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
-                FeatureTable featureTable = convFeatureTable(String.format("predict_%s", name), fields);
-                String targetName = Utils.getField(options, "targetKey", targetKey);
-                int index = Utils.getField(options, "targetIndex", targetIndex);
-                ArrowTensor arrowTensor = predict(featureTable, targetName);
-                List<Object> res = Lists.newArrayList();
-                res.addAll(getFromTensor(arrowTensor, index));
-                return res;
-            }
+        addFunction("predictScore", (fields, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
+            FeatureTable featureTable = convFeatureTable(String.format("predict_%s", name), fields);
+            String targetName = Utils.getField(options, "targetKey", targetKey);
+            int index = Utils.getField(options, "targetIndex", targetIndex);
+            ArrowTensor arrowTensor = predict(featureTable, targetName);
+            List<Object> res = Lists.newArrayList();
+            res.addAll(getFromTensor(arrowTensor, index));
+            return res;
         });
-        addFunction("rankCollectItem", new ScatterFunction() {
-            @Override
-            public Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 2,
-                        "input fields must not empty");
-                Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_STR),
-                        "rankCollectItem input[0] is itemId list<string>");
-                Assert.isTrue(fields.get(1).isMatch(DataTypeEnum.LIST_DOUBLE),
-                        "rankCollectItem input[1] is score list<double>");
-                int limit = Utils.getField(options, "maxReservation", maxReservation);
-                List<String> itemIds = fields.get(0).getValue();
-                List<Double> scores = fields.get(1).getValue();
-                Map<String, List<Object>> res = Maps.newHashMap();
-                for (int i = 0; i < itemIds.size() && i < limit; ++i) {
-                    res.computeIfAbsent(names.get(0), k->Lists.newArrayList()).add(itemIds.get(i));
-                    res.computeIfAbsent(names.get(1), k->Lists.newArrayList()).add(Map.of(algoName, Utils.get(scores, i, 0.0)));
-                }
-                return res;
+        addFunction("rankCollectItem", (ScatterFunction) (fields, names, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 2,
+                    "input fields must not empty");
+            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_STR),
+                    "rankCollectItem input[0] is itemId list<string>");
+            Assert.isTrue(fields.get(1).isMatch(DataTypeEnum.LIST_DOUBLE),
+                    "rankCollectItem input[1] is score list<double>");
+            int limit = Utils.getField(options, "maxReservation", maxReservation);
+            List<String> itemIds = fields.get(0).getValue();
+            List<Double> scores = fields.get(1).getValue();
+            Map<String, List<Object>> res = Maps.newHashMap();
+            for (int i = 0; i < itemIds.size() && i < limit; ++i) {
+                res.computeIfAbsent(names.get(0), k->Lists.newArrayList()).add(itemIds.get(i));
+                res.computeIfAbsent(names.get(1), k->Lists.newArrayList()).add(Map.of(algoName, Utils.get(scores, i, 0.0)));
             }
+            return res;
         });
     }
     @Override

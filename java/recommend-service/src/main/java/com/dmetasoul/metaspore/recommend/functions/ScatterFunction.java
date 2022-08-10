@@ -20,14 +20,12 @@ import com.dmetasoul.metaspore.recommend.data.FieldData;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ScatterFunction extends Function {
+public interface ScatterFunction extends Function {
 
     @Override
-    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
+    default List<Object> process(List<FieldData> fields, Map<String, Object> options) {
         throw new IllegalCallerException("ScatterFunction only has aggregate function!");
     }
 
-    public abstract Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options);
-
-    public void init(Map<String, Object> params) {}
+    Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options);
 }

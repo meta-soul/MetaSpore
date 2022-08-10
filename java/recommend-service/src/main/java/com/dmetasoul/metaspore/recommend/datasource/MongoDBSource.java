@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.datasource;
 
-import com.dmetasoul.metaspore.recommend.annotation.DataSourceAnnotation;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
  */
 @Slf4j
 @Data
-@DataSourceAnnotation("mongodb")
+@ServiceAnnotation("MongoDB")
 public class MongoDBSource extends DataSource {
     private MongoTemplate mongoTemplate;
     private SimpleMongoClientDatabaseFactory simpleMongoClientDatabaseFactory;
@@ -36,7 +36,7 @@ public class MongoDBSource extends DataSource {
     @Override
     public boolean initService() {
         FeatureConfig.Source source = taskFlowConfig.getSources().get(name);
-        if (!source.getKind().equals("mongodb")) {
+        if (!source.getKind().equalsIgnoreCase("mongodb")) {
             log.error("config mongodb fail! is not kind:{} eq mongodb!", source.getKind());
             return false;
         }

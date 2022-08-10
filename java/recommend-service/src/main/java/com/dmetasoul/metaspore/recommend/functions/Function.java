@@ -20,8 +20,7 @@ import com.dmetasoul.metaspore.recommend.data.FieldData;
 import java.util.List;
 import java.util.Map;
 
-public abstract class Function {
+public interface Function {
 
-    public abstract List<Object> process(List<FieldData> fields, Map<String, Object> options);
-    public void init(Map<String, Object> params) {}
+    List<Object> process(List<FieldData> fields, Map<String, Object> options);
 }

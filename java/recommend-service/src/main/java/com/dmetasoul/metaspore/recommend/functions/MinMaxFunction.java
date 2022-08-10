@@ -15,28 +15,21 @@
 //
 package com.dmetasoul.metaspore.recommend.functions;
 
-import com.dmetasoul.metaspore.recommend.annotation.TransformFunction;
+import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.FeatureTable;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.vector.FieldVector;
 
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
-@TransformFunction("minmax")
-public class MinMaxFunction extends Function {
+@FunctionAnnotation("minmax")
+public class MinMaxFunction implements Function {
     private final static String NAMEMIN = "min";
     private final static String NAMEMAX = "max";
 
     private int min = 0;
     private int max = 120;
-
-    @Override
-    public void init(Map<String, Object> params) {
-    }
 
     @Override
     public List<Object> process(List<FieldData> fields, Map<String, Object> options) {

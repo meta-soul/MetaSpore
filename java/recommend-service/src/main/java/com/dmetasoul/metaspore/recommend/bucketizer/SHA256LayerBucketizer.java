@@ -29,6 +29,7 @@ import java.util.List;
 // References:
 // * https://mojito.mx/docs/example-hash-function-split-test-assignment
 // * https://engineering.depop.com/a-b-test-bucketing-using-hashing-475c4ce5d07
+@SuppressWarnings("UnstableApiUsage")
 @BucketizerAnnotation("sha256")
 public class SHA256LayerBucketizer implements LayerBucketizer {
     protected ArraySampler sampler;
@@ -56,10 +57,8 @@ public class SHA256LayerBucketizer implements LayerBucketizer {
     }
 
     protected HashCode sha256(String id) {
-        String combination = id;
         Hasher hasher = Hashing.sha256().newHasher();
-        hasher.putString(combination, Charsets.UTF_8);
-        HashCode sha256 = hasher.hash();
-        return sha256;
+        hasher.putString(id, Charsets.UTF_8);
+        return hasher.hash();
     }
 }

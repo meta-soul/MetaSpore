@@ -3,34 +3,38 @@ feature-service:
     - name: request
       format: json
     - name: mongodb
-      kind: mongodb  # kind in (request, mongodb, redis, jdbc, milvus)
+      kind: MongoDB  # kind in (request, mongodb, redis, jdbc, milvus)
       options:
         uri: mongodb://localhost:27017/metasoul  # uri need in mongodb
     - name: userInfo
-      kind: mongodb  # kind in (request, mongodb, redis, jdbc, milvus)
+      kind: MongoDB  # kind in (request, mongodb, redis, jdbc, milvus)
       options:
         uri: mongodb://localhost:27017/userData
     - name: mysql
-      kind: jdbc
+      kind: JDBC
       options:
         uri: jdbc:mysql://localhost:3306/recomend?profileSQL=true  # uri need in jdbc
         driver: com.mysql.cj.jdbc.Driver  # driver need in jdbc
         user: root   # if not set, default root
         password: test  # if not set, default test
     - name: recall
-      kind: redis
+      kind: Redis
       options:
-        cluster: false  # if true, is redis cluster, else is standalone redis
-        # redis cluster need nodes in options
-        # redis standalone need host and port in options
-        host: localhost # if not set, default localhost
-        port: 6379      # if not set, default 6379
+        standalone:
+          host: localhost # if not set, default localhost
+          port: 6379      # if not set, default 6379
+        lettuce-pool:
+          max-active: 10
+          max-wait: 10000
+          max-idle: 10
+          min-idle: 1
+        timeout: 10000
   SourceTable:
     - name: userProfile
       source: mysql
       table: user
       columns:
-        - user_id: str   # default first col is primary key
+        - user_id: str
         - gender: bool
         - age: float
         - name: str
@@ -42,7 +46,7 @@ feature-service:
       source: userInfo
       columns:
         - user_id: str
-        - recent_movie_ids: list_str  # format: list_type  type in (int, str, float, double)
+        - recent_movie_ids: str
         - last_movie: str
         - last_genre: str
         - user_greater_than_three_rate: double
@@ -76,11 +80,19 @@ feature-service:
       source: mongodb
       columns:
         - id: str
-        - item_id: str
+        - item_ids: list_str
+        - item_scores: list_double
+    - name: swingData
+      source: mongodb
+      columns:
+        - id: str
+        - item_ids: list_str
+        - item_scores: list_double
     - name: milvusItem
       source: mongodb
       columns:
         - id: str
+        - item_id: str
         - title: str
         - cfValues: str
     - name: usercf
@@ -91,90 +103,197 @@ feature-service:
         - user_key: str    # default col is key, other is value
         - item_ids: map_str_double
   Feature:
-    - name: feature_user
+    - name: feature_item_match_user
+      from: [ userAction, userReq]
+      select: [ userAction.user_id, userAction.recent_movie_ids ]
+      condition:
+        - userAction.user_id: userReq.user_id
+    - name: feature_twotower_user
       from: [ userAction, userProfile, userReq]
-      select: [ userProfile.user_id, userAction.recent_movie_ids, gender, age, name, userReq.language ]
+      select: [ userProfile.user_id, userAction.last_genre, gender, age, name, userReq.language ]
       condition:
         - userAction.user_id: userProfile.user_id
           type: right
-        - userAction.user_id: userReq.user_id
-    - name: lightGBM
-      from: [ userAction, itemInfo, Recall ]
+        - userProfi le.user_id: userReq.user_id
+    - name: feature_item_match_icf
+      from: [ algotransform_item_match_userprofile, itemcfData]
+      select: [ algotransform_item_match_userprofile.user_id, algotransform_item_match_userprofile.item_score, itemcfData.item_ids, itemcfData.item_scores  ]
+      condition:
+        - algotransform_item_match_userprofile.item_id: itemcfData.id
+          type: left
+    - name: feature_item_match_swing
+      from: [ algotransform_item_match_userprofile, swingData]
+      select: [ algotransform_item_match_userprofile.user_id, algotransform_item_match_userprofile.item_score, swingData.item_ids, swingData.item_scores  ]
+      condition:
+        - algotransform_item_match_userprofile.item_id: swingData.id
+          type: left
+    - name: feature_twotower_match
+      from: [ algotransform_twotower_milvus, milvusItem]
+      select: [ algotransform_twotower_milvus.user_id, milvusItem.item_id, algotransform_twotower_milvus.item_score ]
+      condition:
+        - algotransform_twotower_milvus.milvus_id: milvusItem.id
+    - name: feature_lightGBM
+      from: [ userAction, itemInfo, LightGBMRanker ]
       select: [ user_greater_than_three_rate, user_movie_avg_rating, watch_volume, movie_avg_rating, movie_greater_than_three_rate, genre_watch_volume, genre_movie_avg_rating, genre_greater_than_three_rate ]
       condition:
-        - userAction.user_id: Recall.user_id
-        - itemInfo.movie_id: Recall.item_id
-    - name: itemcf
-      from: [ userProfileData, itemcfData ]
-      select: [ userProfileData.item_id, userProfileData.score, itemcfData.cfValues ]
+        - userAction.user_id: LightGBMRanker.user_id
+        - itemInfo.movie_id: LightGBMRanker.item_id
+    - name: feature_wide_and_deep
+      from: [ userAction, itemInfo, WideAndDeepRanker ]
+      select: [ user_greater_than_three_rate, user_movie_avg_rating, watch_volume, movie_avg_rating, movie_greater_than_three_rate, genre_watch_volume, genre_movie_avg_rating, genre_greater_than_three_rate ]
       condition:
-        - itemcfData.id: userProfileData.item_id
-    - name: itemcf
-      from: [ userProfileData, itemcfData ]
-      select: [ userProfileData.item_id, userProfileData.score, itemcfData.cfValues ]
-      condition:
-        - itemcfData.id: userProfileData.item_id
-  AlgoInference:
-    - name: algoTwoTowerUser
-      depend: feature_user
-      fieldActions:
-        - name: user_id
-    - name: algoLightGBM
-      depend: lightGBM
-      fieldActions:
-        - name: watch_volume
-        - name: user_movie_avg_rating
+        - userAction.user_id: WideAndDeepRanker.user_id
+        - itemInfo.movie_id: WideAndDeepRanker.item_id
   AlgoTransform:
-    - name: userProfileData
-      service: UserProfile
-      depend:
-        then: [feature_user]
-      columns:
-        - item_id: str
-        - score: double
-    - name: ItemCfMatcher
-      service: ItemMatcher
-      options:
-        itemCfAlgoLevel: 3
-        itemCfMaxReservation: 200
-      depend:
-        then: [itemcf]
-      columns:
-        - item_id: str
-        - score: double
-        - scores: map
+    - name: algotransform_item_match_userprofile
+      taskName: UserProfile
+      feature: feature_item_match_user
+      fieldActions:
+        item_ids:
+          type: list_str
+          fields: recent_movie_ids
+          func: splitRecentIds
+          options:
+            splitor: ","
+        item_id:
+          type: str
+          input: item_ids
+          func: flatList
+        item_score:
+          type: double
+          input: item_ids
+          func: recentWeight
+        user_id:
+          type: str
+          fields: user_id
+      output:
+        - user_id
+        - item_id
+        - item_score
+    - name: algotransform_item_match_icf
+      taskName: ItemMatcher
+      feature: feature_item_match_icf
+      fieldActions:
+        itemScore:
+          type: list_obj
+          fields: [item_ids, item_scores, item_score]
+          func: toItemScore
+        user_id:
+          type: str
+          fields: user_id
+      scatterFieldActions:
+        - names: [item_id, score, origin_scores]
+          types: [str, double, map_str_double]
+          input: itemScore
+          func: recallCollectItem
+      output:
+        - user_id
+        - item_id
+        - score
+        - origin_scores
+    - name: algotransform_item_match_swing
+      taskName: ItemMatcher
+      feature: feature_item_match_swing
+      fieldActions:
+        itemScore:
+          type: list_obj
+          fields: [item_ids, item_scores, item_score]
+          func: toItemScore
+        user_id:
+          type: str
+          fields: user_id
+      scatterFieldActions:
+        - names: [item_id, score, origin_scores]
+          types: [str, double, map_str_double]
+          input: itemScore
+          func: recallCollectItem
+      output:
+        - user_id
+        - item_id
+        - score
+        - origin_scores
+    - name: algotransform_twotower_user_embedding
+      taskName: AlgoInference
+      feature: feature_twotower_user
+      fieldActions:
+        user_embedding:
+          type: list_float
+          fields: [ user_id, last_genre, gender, age, name, language ]
+          func: genEmbedding
+          options:
+            targetKey: "output"
+        user_id:
+          type: str
+          fields: user_id
+      output:
+        - user_id
+        - user_embedding
+    - name: algotransform_twotower_milvus
+      taskName: MilvusSearch
+      algoTransform: algotransform_twotower_user_embedding
+      fieldActions:
+        user_id:
+          type: str
+          fields: user_id
+        milvus_id:
+          type: str
+          input: milvus_ids
+          func: flatList
+        item_score:
+          type: double
+          input: scores
+          func: flatList
+      scatterFieldActions:
+        - names: [ milvus_ids, scores]
+          types: [ list_str, list_double]
+          fields: user_embedding
+          func: milvusIdScore
+      output:
+        - user_id
+        - milvus_id
+        - item_score
+    - name: algotransform_twotower_match
+      taskName: ItemMatcher
+      feature: feature_twotower_match
+      fieldActions:
+        itemScore:
+          type: list_obj
+          fields: [item_id, item_score]
+          func: toItemScore
+        user_id:
+          type: str
+          fields: user_id
+      scatterFieldActions:
+        - names: [item_id, score, origin_scores]
+          types: [str, double, map_str_double]
+          input: itemScore
+          func: recallCollectItem
+      output:
+        - user_id
+        - item_id
+        - score
+        - origin_scores
+recommend-service:
+  Services:
     - name: SwingMatcher
-      service: ItemMatcher
-      depend:
-        then: [itemcf]
+      tasks: algotransform_item_match_swing
       options:
         swingAlgoLevel: 3
         swingMaxReservation: 200
-      columns:
-        - item_id: str
-        - score: double
-        - scores: map
-    - name: TwoTowerEmbedding
-      service: ModelPredict
-      depend:
-        then: [algoTwoTowerUser]
+    - name: ItemCfMatcher
+      tasks: algotransform_item_match_icf
+      options:
+        swingAlgoLevel: 3
+        swingMaxReservation: 200
     - name: TwoTowersMatcher
-      service: MilvusSearch
-      depend:
-        then: [ TwoTowerEmbedding, twotowerRecall, milvusItem ]
+      tasks: algotransform_twotower_match
       options:
         milvusCollectionName: two_towers_simplex
         twoTowersSimpleXModelName: two_towers_simplex
         twoTowersSimpleXAlgoLevel: 3
         twoTowersSimpleXMaxReservation: 200
-      columns:
-        - item_id: str
-        - score: double
-        - scores: map
     - name: WideAndDeepRanker
-      service: ModelPredict
-      depend:
-        then: algoLightGBM
+      tasks: feature_wide_and_deep
       options:
         modelName: movie_lens_wdl
         ranker: WideAndDeepRanker
@@ -182,42 +301,60 @@ feature-service:
         sortStrategyType: USE_RANK_MULTIPLY_MATCH
         sortStrategyAlpha: 0.4
         sortStrategyBeta: 0.6
+      preTransforms:
+        - summary : {}
       columns:
+        - user_id: str
         - item_id: str
-        - score: double
+        - item_score: double
     - name: LightGBMRanker
-      service: ModelPredict
-      depend:
-        then: algoLightGBM
+      tasks: feature_lightGBM
       options:
         modelName: lightgbm_test_model
+      preTransforms:
+        - summary : {}
       columns:
+        - user_id: str
         - item_id: str
-        - score: double
-recommend-service:
-  Services:
+        - item_score: double
     - name: diversifyBaseService
       options:
         useDiversify: true
         window: 4
         tolerance: 4
-      columns:
-        - item_id: str
-        - score: double
     - name: diversifyMMRService
       options:
         useDiversify: true
         lambda: 0.7
         window: 5
         tolerance: 5
-      columns:
-        - item_id: str
-        - score: double
+  Experiments:
+    - name: match.base
+      options:
+        maxReservation: 200
+      chains:
+        - then: ItemCfMatcher
+    - name: match.multiple
+      options:
+        maxReservation: 300
+      chains:
+        - when: [ItemCfMatcher, SwingMatcher, TwoTowersMatcher]
+    - name: rank.base
+      chains:
+        - then: WideAndDeepRanker
+    - name: rank.wideDeep
+      chains:
+        - then: WideAndDeepRanker
+    - name: rank.lightGBM
+      chains:
+        - then: LightGBMRanker
+    - name: diversify.base
+      chains:
+        - then: diversifyBaseService
+    - name: diversify.MMR
+      chains:
+        - then: diversifyMMRService
   Layers:
-    - name: userModel
-      experiments:
-        - name: userModel.base
-          ratio: 1.0
     - name: match
       experiments:
         - name: match.base
@@ -238,48 +375,11 @@ recommend-service:
           ratio: 0.5
         - name: diversify.MMR
           ratio: 0.5
-  Experiments:
-    - name: userModel.base
-      chains:
-        - then: userProfileData
-    - name: match.base
-      options:
-        maxReservation: 200
-        cutField: score
-      chains:
-        - then: ItemCfMatcher
-    - name: match.multiple
-      options:
-        maxReservation: 300
-        cutField: score
-      chains:
-        - when: [ItemCfMatcher, SwingMatcher, TwoTowersMatcher]
-          columns:
-            - item_id: str
-            - score: double
-            - scores: map
-    - name: rank.base
-      chains:
-        - then: WideAndDeepRanker
-    - name: rank.wideDeep
-      chains:
-        - then: WideAndDeepRanker
-    - name: rank.lightGBM
-      chains:
-        - then: LightGBMRanker
-    - name: diversify.base
-      chains:
-        - then: diversifyBaseService
-    - name: diversify.MMR
-      chains:
-        - then: diversifyMMRService
   Scenes:
     - name: guess-you-like
-      chains:   # 串行执行chain  执行基于liteflow
-        - then: [userModel]
-        - name: Recall
-          then: [match]    # then 表示串行执行layer； when 表示并发执行layer
-          columns:
-            - user_id: str
-            - item_ids: list_str
+      chains:   # 串行执行chain
+        - then: [match]
         - then: [rank, diversify]
+      columns:
+        - user_id: str
+        - item_id: str

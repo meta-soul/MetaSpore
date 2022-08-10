@@ -39,6 +39,8 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
+import static com.dmetasoul.metaspore.recommend.common.ConvTools.parseTimestamp;
+
 @SuppressWarnings("unchecked")
 @Slf4j
 public enum DataTypeEnum {
@@ -183,14 +185,15 @@ public enum DataTypeEnum {
     TIMESTAMP(7, Timestamp.class, new ArrowType.Date(DateUnit.MILLISECOND), new ArrowOperator() {
         @Override
         public boolean set(int index, String col, Object value) {
-            if (value != null && !(value instanceof Timestamp)) {
-                log.error("set featureTable fail! value type is not match!");
+            Timestamp data = parseTimestamp(value);
+            if (value != null && data == null) {
+                log.error("set featureTable fail! value type is not match Timestamp!");
                 return false;
             }
             if (value == null) {
                 ((DateMilliVector)featureTable.getVector(col)).setNull(index);
             } else {
-                ((DateMilliVector)featureTable.getVector(col)).setSafe(index, ((Timestamp)value).getTime());
+                ((DateMilliVector)featureTable.getVector(col)).setSafe(index, data.getTime());
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -321,10 +324,9 @@ public enum DataTypeEnum {
         return true;
     }
 
-    public boolean set(FeatureTable featureTable, String col, Object data) {
+    public boolean set(FeatureTable featureTable, String col, int index, Object data) {
         op.init(featureTable);
         if (op.getFeatureTable() == null) return false;
-        int index = op.getFeatureTable().getVector(col).getValueCount();
         return this.op.set(index, col, data);
     }
     public Class<?> getCls() {

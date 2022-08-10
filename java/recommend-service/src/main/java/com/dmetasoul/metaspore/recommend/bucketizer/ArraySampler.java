@@ -19,7 +19,7 @@ package com.dmetasoul.metaspore.recommend.bucketizer;
 import com.google.common.hash.HashCode;
 
 public class ArraySampler {
-    private int[] searchArray;
+    private final int[] searchArray;
 
     public ArraySampler(double[] prob) {
         this(prob, 1000);

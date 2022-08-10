@@ -17,6 +17,7 @@
 package com.dmetasoul.metaspore.recommend.common;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -44,12 +45,20 @@ public class SpringBeanUtil implements ApplicationContextAware {
         return ctx;
     }
 
-    //通过name获取 Bean.
+    //通过name获取 Bean. 默认首字母大写
     public static Object getBean(String name) {
+        try {
+            return getApplicationContext().getBean(StringUtils.capitalize(name));
+        } catch (BeansException ex) {
+            // log.warn("spring get bean by name {} fail", name);
+            return null;
+        }
+    }
+    public static Object getBeanByName(String name) {
         try {
             return getApplicationContext().getBean(name);
         } catch (BeansException ex) {
-            log.warn("spring get bean by name {} fail", name);
+            // log.warn("spring get bean by name {} fail", name);
             return null;
         }
     }
