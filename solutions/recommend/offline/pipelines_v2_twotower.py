@@ -28,9 +28,11 @@ if __name__ == '__main__':
     dataset_dict = dataLoaderModule.run()
    
     # 3. train, predict and evaluate
+    user_id_column = dataset_dict.get('user_id_column')
+    item_id_column = dataset_dict.get('item_id_column')
     metric_dict = TwoTowersRetrievalModule(spec['training']).\
         run(dataset_dict['train'], dataset_dict['test'], dataset_dict['item'], worker_count, server_count,
-            user_id_column='user_id', item_id_column='friend_id')
+            user_id_column=user_id_column, item_id_column=item_id_column)
     
     # 4. stop spark session
     spark.stop()
