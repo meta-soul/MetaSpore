@@ -1,0 +1,95 @@
+apiVersion: metaspore/v1
+kind: TrainingJob
+metadata:
+  name: DSSM
+  category: Match/TwoTower/DSSM
+
+spec:
+  logging:
+    loglevel: debug
+
+  spark:
+    session_confs:
+      app_name: 'Two Towers Pipeline Demo'
+      local: False
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '6G'
+      server_memory: '6G'
+      coordinator_memory: '6G'
+
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    item_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/item_dataset.parquet
+    user_id_column: user_id
+    item_id_column: friend_id
+    label_column: label
+
+  training:
+    user_module_class: python.algos.twotower.dssm.UserModule
+    item_module_class: python.algos.twotower.dssm.ItemModule
+    similarity_module_class: python.algos.twotower.dssm.SimilarityModule
+    two_tower_retrieval_module_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingModule
+    two_tower_agent_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingAgent
+    two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
+
+    model_params: 
+      user_column_name: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
+      user_combine_schema: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/user_combine_schema.txt
+      item_column_name: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/column_name.txt
+      item_combine_schema: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_schema/item_combine_schema.txt
+      tau: 0.05
+      sparse_init_var: 0.0001
+      net_dropout: 0.0
+      batch_size: 256
+      vector_embedding_size: 32
+      item_embedding_size: 128
+      dnn_hidden_units: [512, 256, 128]
+      dnn_hidden_activations: 'ReLU'
+      adam_learning_rate: 0.00005
+      ftrl_alpha: 0.02
+      ftrl_beta: 1.0
+      ftrl_l1: 1.0
+      ftrl_l2: 1.0
+    
+    estimator_params:
+      model_in_path: null
+      model_out_path: s3://dmetasoul-bucket/demo/soc-pokec/model/dssm/model_out/
+      # model_export_path: s3://dmetasoul-bucket/demo/soc-pokec/model/dssm/model_export/
+      model_export_path: null
+      model_version: '0.1'
+      experiment_name: soc_pokec_two_towers_dssm
+      item_ids_column_indices: [2]
+      retrieval_item_count: 20
+      metric_update_interval: 500
+      input_label_column_index: 0
+      input_feature_column_num: 8
+      input_item_id_column_index: 2 
+      input_item_probability_column_index: -1
+      input_sample_weight_column_index: -1
+      training_epoches: 1
+      shuffle_training_dataset: True
+      use_remove_accidental_hits: True
+      use_sampling_probability_correction: False
+      use_sample_weight: False
+      milvus_description: 'ml_1m_dssm'
+      milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
+      milvus_port: '19530'
+      milvus_embedding_field: 'embedding_vector'
+      milvus_index_type: 'IVF_FLAT'
+      milvus_metric_type: 'IP'
+      milvus_nlist: 1024
+      milvus_nprobe: 128

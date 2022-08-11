@@ -78,10 +78,20 @@ class TwoTowersRetrievalModule():
         )
 
     def _init_net_with_params(self, module_type, module_class, model_params):
-        if module_type in ['user', 'item']:
-            print('model_params:', model_params)
+        if module_type in ['user']:
             return  module_class(column_name_path = model_params['user_column_name'], \
                                  combine_schema_path = model_params['user_combine_schema'], \
+                                 embedding_dim = model_params['vector_embedding_size'], \
+                                 sparse_init_var = model_params['sparse_init_var'], \
+                                 ftrl_l1 = model_params['ftrl_l1'], \
+                                 ftrl_l2 = model_params['ftrl_l2'], \
+                                 ftrl_alpha = model_params['ftrl_alpha'], \
+                                 ftrl_beta = model_params['ftrl_beta'], \
+                                 dnn_hidden_units = model_params['dnn_hidden_units'], \
+                                 dnn_hidden_activations = model_params['dnn_hidden_activations'])
+        elif module_type in ['item']:
+            return  module_class(column_name_path = model_params['item_column_name'], \
+                                 combine_schema_path = model_params['item_combine_schema'], \
                                  embedding_dim = model_params['vector_embedding_size'], \
                                  sparse_init_var = model_params['sparse_init_var'], \
                                  ftrl_l1 = model_params['ftrl_l1'], \
@@ -131,7 +141,6 @@ class TwoTowersRetrievalModule():
             server_count = server_count,
             **{**model_params_dict, **estimator_params_dict}
         )
-        print('estimator conifg:', {**model_params_dict, **estimator_params_dict})
 
         # model train
         two_tower_estimator.updater = ms.AdamTensorUpdater(model_params_dict['adam_learning_rate'])
@@ -139,10 +148,7 @@ class TwoTowersRetrievalModule():
         
         logger.info('DeepCTR - training: done')
     
-    def evaluate(self, test_result, user_id_column='user_id', item_id_column='item_id'):
-        logger.info('test sample:')
-        test_result.select(user_id_column, (F.posexplode('rec_info').alias('pos', 'rec_info'))).show(10)
-        
+    def evaluate(self, test_result, user_id_column='user_id', item_id_column='item_id'):        
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
                                                 [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
                                                 [getattr(x, item_id_column)]))
