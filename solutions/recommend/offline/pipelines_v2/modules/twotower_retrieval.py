@@ -79,14 +79,15 @@ class TwoTowersRetrievalModule():
 
     def _init_net_with_params(self, module_type, module_class, model_params):
         if module_type in ['user', 'item']:
+            print('model_params:', model_params)
             return  module_class(column_name_path = model_params['user_column_name'], \
                                  combine_schema_path = model_params['user_combine_schema'], \
                                  embedding_dim = model_params['vector_embedding_size'], \
                                  sparse_init_var = model_params['sparse_init_var'], \
-                                 ftrl_l1 = model_params['ftrl_l1_regularization'], \
-                                 ftrl_l2 = model_params['ftrl_l2_regularization'], \
-                                 ftrl_alpha = model_params['ftrl_learning_rate'], \
-                                 ftrl_beta = model_params['ftrl_smothing_rate'], \
+                                 ftrl_l1 = model_params['ftrl_l1'], \
+                                 ftrl_l2 = model_params['ftrl_l2'], \
+                                 ftrl_alpha = model_params['ftrl_alpha'], \
+                                 ftrl_beta = model_params['ftrl_beta'], \
                                  dnn_hidden_units = model_params['dnn_hidden_units'], \
                                  dnn_hidden_activations = model_params['dnn_hidden_activations'])
         elif module_type in ['sim']:
@@ -130,6 +131,7 @@ class TwoTowersRetrievalModule():
             server_count = server_count,
             **{**model_params_dict, **estimator_params_dict}
         )
+        print('estimator conifg:', {**model_params_dict, **estimator_params_dict})
 
         # model train
         two_tower_estimator.updater = ms.AdamTensorUpdater(model_params_dict['adam_learning_rate'])
@@ -175,3 +177,4 @@ class TwoTowersRetrievalModule():
         logger.info('TwoTowers evaluation metrics: {}'.format(metric_dict))
         
         return metric_dict
+

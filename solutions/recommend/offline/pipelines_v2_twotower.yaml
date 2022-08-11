@@ -27,7 +27,7 @@ spec:
       spark.kubernetes.executor.deleteOnTermination: 'true'
 
     pyzip:
-      cwd_path: '/home/spark/work/master/MetaSpore/'
+      cwd_path: '/home/spark/work/MetaSpore/'
       zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
 
   dataset:
@@ -60,10 +60,10 @@ spec:
       dnn_hidden_units: [512, 256, 128]
       dnn_hidden_activations: 'ReLU'
       adam_learning_rate: 0.00005
-      ftrl_learning_rate: 0.02
-      ftrl_smothing_rate: 1.0
-      ftrl_l1_regularization: 1.0
-      ftrl_l2_regularization: 1.0
+      ftrl_alpha: 0.02
+      ftrl_beta: 1.0
+      ftrl_l1: 1.0
+      ftrl_l2: 1.0
     
     estimator_params:
       model_in_path: null
