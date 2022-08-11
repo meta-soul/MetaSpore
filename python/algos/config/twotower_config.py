@@ -30,6 +30,7 @@ class TwoTowerEstimatorConfig:
     training_epoches = field(validator=[instance_of(int), gt(0)])
     shuffle_training_dataset = field(default=None, validator=optional(instance_of(bool)))
 
+    item_ids_column_indices = field(validator=instance_of((list, tuple)))
     input_label_column_index = field(validator=array_index_validator)
     input_label_column_index = field(default=None, validator=optional(instance_of(int)))
     input_feature_column_num = field(default=None, validator=optional(instance_of(int)))
@@ -55,8 +56,7 @@ class DSSMModelConfig:
     user_column_name = field(validator=instance_of(str))
     user_combine_schema = field(validator=instance_of(str))
     item_column_name = field(validator=instance_of(str))
-    deep_combine_schema_path = field(validator=instance_of(str))
-    item_combine_schema = field(validator=hidden_units_validator)
+    item_combine_schema = field(validator=instance_of(str))
 
     tau = field(validator=instance_of(float))
     sparse_init_var = field(validator=instance_of(float))
