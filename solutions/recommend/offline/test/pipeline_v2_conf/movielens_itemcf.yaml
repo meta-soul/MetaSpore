@@ -32,7 +32,7 @@ spec:
       zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
   
   dataset:
-    train_path: s3://dmetasoul-bucket/demo/movielens/1m/cf/train.parquet
+    train_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/num_negs_10/train.parquet
     test_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/num_negs_10/test.parquet
     # user_id_column: user_id
     # item_id_column: movie_id
@@ -43,7 +43,7 @@ spec:
   training:
     i2i_estimator_class: python.algos.item_cf_retrieval.ItemCFEstimator
     # i2i_estimator_class: metaspore.SwingEstimator
-    # model_out_path: s3://dmetasoul-bucket/demo/movielens/1m/model/cf/model_out/df.parquet
+    model_out_path: s3://dmetasoul-bucket/demo/movielens/1m/model/cf/model_out/df.parquet
     estimator_params:
       max_recommendation_count: 20
   

@@ -43,8 +43,6 @@ class DumpToMongoDBModule:
             raise ValueError("Type of df_to_mongodb must be DataFrame.")
         
         logger.info('Dump to MongoDB: start')
-        # We need drop out timestamp field if existed, otherwise the writing process will be faild
-        df_to_mongodb = df_to_mongodb.drop('timestamp')
         df_to_mongodb.write \
             .format("mongo") \
             .mode(self.conf.write_mode) \
