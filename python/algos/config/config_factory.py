@@ -17,7 +17,7 @@ from metaspore import SwingEstimator
 
 from .deepctr_config import *
 from .i2i_retrieval_config import *
-from .twotower_config import *
+from .twotower_retrieval_config import *
 
 from ..widedeep_net import WideDeep
 from ..deepfm_net import DeepFM
