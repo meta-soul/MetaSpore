@@ -1,0 +1,56 @@
+apiVersion: metaspore/v1
+kind: Trainingjob
+metadata:
+  name: Popular
+  category: Match/Popular
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: Pokec Popular Pipeline Demo
+      local: false
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+      
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+    
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/test/python.zip'
+            
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+    user_id_column: user_id
+    item_id_column: friend_id
+    label_column: label
+    label_value: '1'
+  
+  training: 
+    estimator_params:
+      recall_nums: 200
+      group_nums: 10
+
+  mongodb:
+    uri: mongodb://172.31.37.47:27017/
+    database: jpa
+    collection: saas_popular
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+    
+  spark_stop:
+  
