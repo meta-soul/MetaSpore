@@ -44,11 +44,6 @@ spec:
     train_path: s3://dmetasoul-bucket/demo/movielens/ml-1m/movies.parquet
 
   training:
-    cluster:
-      spark.es.net.http.auth.user: 'elastic'
-      spark.es.net.http.auth.pass: '59Jazz5tf0l8e935xHEt1K8D'
-      spark.es.port: '9200'
-      spark.es.nodes: elastic-demo-es-http.default.svc.cluster.local
     indexing:
       create_index: douban_movies
       create_mapping_id: movie_id
@@ -59,7 +54,6 @@ spec:
                       type: integer
                   title: 
                       type: text
-                      analyzer: smartcn
                   genre:
                       type: keyword
     evaluation:

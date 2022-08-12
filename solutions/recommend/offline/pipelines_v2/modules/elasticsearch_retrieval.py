@@ -32,7 +32,7 @@ class ElasticSearchRetrievalConfig:
 class ElasticSearchRetrievalModule:
     def __init__(self, conf: ElasticSearchRetrievalConfig):
         if isinstance(conf, dict):
-            self.conf = ElasticSearchRetrievalConfig.convert(conf)
+            self.conf = ElasticSearchRetrievalModule.convert(conf)
         elif isinstance(conf, ElasticSearchRetrievalConfig):
             self.conf = conf
         else:
@@ -41,7 +41,8 @@ class ElasticSearchRetrievalModule:
 
     @staticmethod
     def convert(conf: dict) -> ElasticSearchRetrievalConfig:
-        conf = cattrs.structure(conf, ElasticSearchRetrievalConfig)  
+        conf = cattrs.structure(conf, ElasticSearchRetrievalConfig)
+        return conf
 
     def train(self, train_dataset, extended_confs):
         es_uri = 'http://{}:{}'.format(extended_confs['spark.es.nodes'], extended_confs['spark.es.port'])
@@ -90,13 +91,13 @@ class ElasticSearchRetrievalModule:
         for query in searchqueries:
             if 'keywords' in query:
                 result = self.evaluate_keywords_queries(es_instance, index_name, query)
-                logger.info('Evaluation Search results: {}'.format(parse_es_search_result(result)))
+                logger.info('Evaluation search results: {}'.format(parse_es_search_result(result)))
             elif 'ids' in query:
                 result = self.evaluate_id_queries(es_instance, index_name, query)
-                logger.info('Search results: {}'.format(parse_es_search_result(result)))
+                logger.info('Evaluation search results: {}'.format(parse_es_search_result(result)))
         return {}
 
-    def run(self, train_dataset, test_dataset, extended_confs, label_column='label', label_value='1',
+    def run(self, train_dataset, test_dataset=None, extended_confs=None, label_column='label', label_value='1',
             user_id_column='user_id', item_id_column='item_id'):
         # 1. build elastic search index
         es_instance, index_name = self.train(train_dataset, extended_confs)

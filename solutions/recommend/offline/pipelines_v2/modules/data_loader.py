@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 @frozen(kw_only=True)
 class DataLoaderConfig:
     train_path = field(validator=instance_of(str))
-    test_path = field(defalut=None, validator=optional(instance_of(str)))
+    test_path = field(default=None, validator=optional(instance_of(str)))
     item_path = field(default=None, validator=optional(instance_of(str)))
     label_column = field(default=None, validator=optional(instance_of(str)))
     label_value = field(default=None, validator=optional(instance_of(str)))
