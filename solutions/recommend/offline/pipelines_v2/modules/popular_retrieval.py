@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class PopularsRetrievalConfig:
     recall_nums = attrs.field(validator=attrs.validators.instance_of(int))
     group_nums = attrs.field(validator=attrs.validators.instance_of(int))
-    model_out_path = attrs.field(validator=attrs.validators.instance_of(str))
+    model_out_path = attrs.field(default=None, validator=attrs.validators.instance_of(str))
 
 class PopularRetrievalModule():
     def __init__(self, conf: PopularsRetrievalConfig):
