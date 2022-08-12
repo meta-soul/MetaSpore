@@ -13,8 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import string
-from tokenize import group
 import metaspore as ms
 import attrs
 import cattrs
