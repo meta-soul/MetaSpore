@@ -26,18 +26,24 @@ spec:
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
       spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+      
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/test/python.zip'
             
   dataset:
-    train_path: s3://dmetasoul-bucket/demo/movielens/ml-1m/popular_ratings.parquet
+    train_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/prob/train.parquet
+    test_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/num_negs_10/test.parquet
     user_id_column: user_id
     item_id_column: movie_id
     label_column: label
     label_value: '1'
         
-  traning: 
-    recall_nums: 200
-    group_nums: 10
-    
+  training: 
+    estimator_params:
+      recall_nums: 200
+      group_nums: 10
+      model_out_path: 's3://dmetasoul-bucket/demo/movielens/1m/model/popular/model_out/df.parquet'
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/

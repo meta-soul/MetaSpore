@@ -29,6 +29,7 @@ class DataLoaderConfig:
     test_path = field(validator=instance_of(str))
     item_path = field(default=None, validator=optional(instance_of(str)))
     label_column = field(default=None, validator=optional(instance_of(str)))
+    label_value = field(default=None, validator=optional(instance_of(str)))
     user_id_column = field(default=None, validator=optional(instance_of(str)))
     item_id_column = field(default=None, validator=optional(instance_of(str)))
 
@@ -56,6 +57,7 @@ class DataLoaderModule:
             logger.info('Item dataset is loaded: {}'.format(self.conf.item_path))
         
         dataset_dict = self._add_key_value_pair(dataset_dict, 'label_column', self.conf.label_column)
+        dataset_dict = self._add_key_value_pair(dataset_dict, 'label_value', self.conf.label_value)
         dataset_dict = self._add_key_value_pair(dataset_dict, 'user_id_column', self.conf.user_id_column)
         dataset_dict = self._add_key_value_pair(dataset_dict, 'item_id_column', self.conf.item_id_column)
 

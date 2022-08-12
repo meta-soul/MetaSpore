@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class PopularsRetrievalConfig:
     recall_nums = attrs.field(validator=attrs.validators.instance_of(int))
     group_nums = attrs.field(validator=attrs.validators.instance_of(int))
-    model_out_path = attrs.field(validator=attrs.validators.instance_of(string))
+    model_out_path = attrs.field(validator=attrs.validators.instance_of(str))
 
 class PopularRetrievalModule():
     def __init__(self, conf: PopularsRetrievalConfig):
@@ -43,9 +43,10 @@ class PopularRetrievalModule():
         else:
             raise TypeError("Type of 'conf' must be dict or PopularsRetrievalConfig. Current type is {}".format(type(conf)))
 
-    def convert(self, conf: dict) -> PopularsRetrievalConfig:
-        model_params = cattrs.structure(conf['model_params'], PopularsRetrievalConfig)
-        return model_params
+    @staticmethod
+    def convert(conf: dict) -> PopularsRetrievalConfig:
+        conf = cattrs.structure(conf['estimator_params'], PopularsRetrievalConfig)
+        return conf
 
     def train(self, train_dataset, label_column, label_value, user_id_column, item_id_column, group_nums, recall_nums):
         recall_result = train_dataset.filter(F.col(label_column)==label_value) \
@@ -59,7 +60,7 @@ class PopularRetrievalModule():
         recall_result = recall_result.withColumn('rank', F.dense_rank().over(
                             Window.partitionBy('key').orderBy(F.col('count(' + user_id_column + ')'))))
         
-        ## calculate the score
+        ## compute the score
         recall_result = recall_result.withColumn('score', 1 / (1 + F.col('rank')))\
                             .drop(F.col('rank'))\
                             .drop(F.col('count(' + user_id_column + ')'))        
@@ -74,23 +75,20 @@ class PopularRetrievalModule():
         test_result = test_dataset.join(recall_result.select('value_list'), None, 'full') 
         str_schema = 'array<struct<name:string,_2:double>>'
         test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
+        return test_result
         
-    def evaluate(test_result):
-        logger.info("test result sample:")
-        test_result.show(20)
-
+    def evaluate(self, test_result, item_id_column):
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
-                                                [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
-                                                [getattr(x, ITEM_ID_COLUMN_NAME)]))
+            [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
+            [getattr(x, item_id_column)]))
         metrics = RankingMetrics(prediction_label_rdd)
         metric_dict = {}
         metric_dict['Precision@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.precisionAt(METRIC_RETRIEVAL_COUNT)
         metric_dict['Recall@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.recallAt(METRIC_RETRIEVAL_COUNT)
         metric_dict['MAP@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.meanAveragePrecisionAt(METRIC_RETRIEVAL_COUNT)
         metric_dict['NDCG@{}'.format(METRIC_RETRIEVAL_COUNT)] = metrics.ndcgAt(METRIC_RETRIEVAL_COUNT)
-        print('Debug -- metric_dict: ', metric_dict)
-        
-        logger.info('I2I - evaluation: done')
+        logger.info('Popular - evaluation: done')
+        return metric_dict
 
     def run(self, train_dataset, test_dataset,  label_column='label', label_value='1',
             user_id_column='user_id', item_id_column='item_id'):
@@ -108,7 +106,8 @@ class PopularRetrievalModule():
         if test_dataset:
             if not isinstance(test_dataset, DataFrame):
                 raise ValueError("Type of test_dataset must be DataFrame.") 
-            metric_dict = self.evaluate(test_dataset, item_id_column=item_id_column)
+            test_result = self.transform(popular_match, test_dataset)
+            metric_dict = self.evaluate(test_result, item_id_column)
             logger.info('Popular evaluation metrics: {}'.format(metric_dict))
 
         return popular_match, metric_dict
