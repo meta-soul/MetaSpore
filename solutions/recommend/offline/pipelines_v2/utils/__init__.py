@@ -15,5 +15,5 @@
 #
 
 from .class_utils import get_class
-# from .elasticsearch_utils import *
+from .elasticsearch_utils import *
 from .dict_utils import remove_none_value

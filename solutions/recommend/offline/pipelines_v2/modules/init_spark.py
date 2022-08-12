@@ -34,7 +34,7 @@ class InitSparkModule:
     def __init__(self, conf: InitSparkConfig):
         self.conf = conf
     
-    def run(self) -> SparkSession:
+    def run(self, return_conf=False) -> SparkSession:
         session_confs = self.conf.session_confs
 
         extended_confs = self.conf.extended_confs or {}
@@ -60,5 +60,8 @@ class InitSparkModule:
         logger.info('Spark init, version: {}, applicationId: {}, uiWebUrl: {}'\
               .format( sc.version, sc.applicationId, sc.uiWebUrl))
         
-        return spark, session_confs['worker_count'], session_confs['server_count']
+        if return_conf:
+            return spark, session_confs, extended_confs
+        else:
+            return spark, session_confs['worker_count'], session_confs['server_count']
     

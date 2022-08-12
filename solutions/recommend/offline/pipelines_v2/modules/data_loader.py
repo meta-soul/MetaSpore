@@ -49,8 +49,9 @@ class DataLoaderModule:
         dataset_dict['train'] = self.spark.read.parquet(self.conf.train_path)
         logger.info('Train dataset is loaded: {}'.format(self.conf.train_path))
         
-        dataset_dict['test'] = self.spark.read.parquet(self.conf.test_path)
-        logger.info('Test dataset is loaded: {}'.format(self.conf.test_path))
+        if self.conf.test_path:
+            dataset_dict['test'] = self.spark.read.parquet(self.conf.test_path)
+            logger.info('Test dataset is loaded: {}'.format(self.conf.test_path))
         
         if self.conf.item_path:
             dataset_dict['item'] = self.spark.read.parquet(self.conf.item_path)

@@ -1,0 +1,76 @@
+apiVersion: metaspore/v1
+kind: Searchjob
+metadata:
+  name: ElasticSearch
+  category: Match/ElasticSearch
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: MovieLens Elastic Search Pipeline Demo
+      local: false
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+      
+    extended_confs:
+      spark.executor.memory: '4G'
+      spark.executor.instances: '2'
+      spark.network.timeout: '500'
+      spark.executor.memoryOverhead: '2G'
+      spark.jars.packages: 'org.elasticsearch:elasticsearch-spark-30_2.12:8.2.3'
+      spark.jars.repositories: 'https://maven.aliyun.com/repository/central'
+      spark.es.net.http.auth.user: 'elastic'
+      spark.es.net.http.auth.pass: '59Jazz5tf0l8e935xHEt1K8D'
+      spark.es.port: '9200'
+      spark.es.nodes: elastic-demo-es-http.default.svc.cluster.local
+      spark.es.nodes.wan.only: 'true'
+      spark.es.index.auto.create: 'true'
+      spark.es.net.ssl: 'false'
+
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/python.zip'
+      
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/movielens/ml-1m/movies.parquet
+
+  training:
+    cluster:
+      spark.es.net.http.auth.user: 'elastic'
+      spark.es.net.http.auth.pass: '59Jazz5tf0l8e935xHEt1K8D'
+      spark.es.port: '9200'
+      spark.es.nodes: elastic-demo-es-http.default.svc.cluster.local
+    indexing:
+      create_index: douban_movies
+      create_mapping_id: movie_id
+      create_schema: 
+          mappings:
+              properties:
+                  movie_id: 
+                      type: integer
+                  title: 
+                      type: text
+                      analyzer: smartcn
+                  genre:
+                      type: keyword
+    evaluation:
+        search_queries: 
+          - keywords: 
+              values:
+                title: 'movie' 
+                genre: 'sci-fi'
+              sorter_rules: 
+                movie_id: 'desc'
+          - ids: 
+              values: ['1205', '671']
+              sorter_rules: 
+                movie_id: 'desc'
