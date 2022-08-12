@@ -192,9 +192,10 @@ public abstract class DataService {
             Field field = resFields.get(i);
             String col = field.getName();
             if (!dataType.set(featureTable, col, res.get(col))) {
-                log.error("set featuraTable fail!");
+                log.error("set featureTable fail!");
             }
         }
+        featureTable.finish();
         return result;
     }
 

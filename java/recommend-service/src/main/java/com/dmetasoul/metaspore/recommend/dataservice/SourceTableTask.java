@@ -52,7 +52,7 @@ public class SourceTableTask extends DataService {
         source = taskFlowConfig.getSources().get(sourceTable.getSource());
         for (String col: sourceTable.getColumnNames()) {
             DataTypeEnum dataType = DataTypes.getDataType(sourceTable.getColumnMap().get(col));
-            resFields.add(Field.nullable(col, dataType.getType()));
+            resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
             dataTypes.add(dataType);
         }
         return true;

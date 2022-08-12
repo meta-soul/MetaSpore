@@ -63,7 +63,7 @@ public class Service implements BaseService {
             for (String col : serviceConfig.getColumnNames()) {
                 String type = serviceConfig.getColumnMap().get(col);
                 DataTypeEnum dataType = DataTypes.getDataType(type);
-                resFields.add(Field.nullable(col, dataType.getType()));
+                resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
                 dataTypes.add(dataType);
             }
         }

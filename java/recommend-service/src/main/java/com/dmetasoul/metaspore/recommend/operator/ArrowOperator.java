@@ -28,6 +28,19 @@ public abstract class ArrowOperator {
     }
     public abstract boolean set(int index, String col, Object data);
 
+    public Object getValue(Object value) {
+        return value;
+    }
+    @SuppressWarnings("unchecked")
+    public <T> T get(String col, int index) {
+        if (featureTable == null || featureTable.getVector(col) == null) return null;
+        FieldVector vector = featureTable.getVector(col);
+        if (index < vector.getValueCount() && index >= 0) {
+            return (T) getValue(vector.getObject(index));
+        }
+        return null;
+    }
+
     public VarCharHolder getVarCharHolder(String str, BufferAllocator allocator) {
         byte[] b = str.getBytes(StandardCharsets.UTF_8);
         VarCharHolder vch = new VarCharHolder();

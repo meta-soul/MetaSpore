@@ -89,7 +89,7 @@ public class FeatureTask extends DataService {
         executeNum = 5; // 由于每次执行都是部分构建rewritedField，所以需要多次入队执行，确保makeRequest构建正确
         for (FeatureConfig.Field field : feature.getFields()) {
             DataTypeEnum dataType = DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName()));
-            resFields.add(Field.nullable(field.getFieldName(), dataType.getType()));
+            resFields.add(new Field(field.getFieldName(), dataType.getType(), dataType.getChildFields()));
             dataTypes.add(dataType);
             fieldMap.computeIfAbsent(field.getTable(), k->Lists.newArrayList()).add(field);
         }

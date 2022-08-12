@@ -69,7 +69,7 @@ public class AlgoTransformTask extends DataService {
         for (String col: algoTransform.getColumnNames()) {
             String type = algoTransform.getColumnMap().get(col);
             DataTypeEnum dataType = DataTypes.getDataType(type);
-            resFields.add(Field.nullable(col, dataType.getType()));
+            resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
             dataTypes.add(dataType);
         }
         depend = new Chain();
@@ -331,6 +331,7 @@ public class AlgoTransformTask extends DataService {
             Assert.notNull(itemData, "no found result at col: " + col);
             setFieldData(featureTable, col, dataType, itemData);
         }
+        featureTable.finish();
         return transform(featureTable, context);
     }
 
@@ -347,7 +348,7 @@ public class AlgoTransformTask extends DataService {
     }
 
     public FeatureTable convFeatureTable(String name, List<FieldData> fields) {
-        List<Field> inferenceFields = fields.stream().map(x->Field.nullable(x.getName(), x.getType().getType()))
+        List<Field> inferenceFields = fields.stream().map(x->new Field(x.getName(), x.getType().getType(), x.getType().getChildFields()))
                 .collect(Collectors.toList());
         FeatureTable featureTable = new FeatureTable(name, inferenceFields, ArrowAllocator.getAllocator());
         for (FieldData fieldData: fields) {
@@ -355,6 +356,7 @@ public class AlgoTransformTask extends DataService {
                 log.error("set featureTable fail!");
             }
         }
+        featureTable.finish();
         return featureTable;
     }
     public <T> List<List<T>> getFromTensor(ArrowTensor tensor) {

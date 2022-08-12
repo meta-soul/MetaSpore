@@ -147,4 +147,11 @@ public class Utils {
         }
         return value;
     }
+    @SuppressWarnings("unchecked")
+    public static <T> T getObject(List<Object> list, int index, T value) {
+        if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {
+            return (T) list.get(index);
+        }
+        return value;
+    }
 }
