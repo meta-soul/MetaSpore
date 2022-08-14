@@ -21,7 +21,7 @@
 #include <common/arrow/arrow_helpers.h>
 #include <common/features/feature_compute_exec.h>
 #include <common/features/schema_parser.h>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <common/utils.h>
 
 using namespace std;

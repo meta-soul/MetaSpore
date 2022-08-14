@@ -18,7 +18,7 @@
 #include <boost/process/system.hpp>
 #include <boost/process/search_path.hpp>
 #include <boost/asio/use_future.hpp>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <serving/py_preprocessing_model.h>
 
 using namespace metaspore;

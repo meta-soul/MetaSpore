@@ -15,7 +15,7 @@
 //
 
 #include <serving/ort_model.h>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <boost/asio/use_future.hpp>
 
 #include <fstream>

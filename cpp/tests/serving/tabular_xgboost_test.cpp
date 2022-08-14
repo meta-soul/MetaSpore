@@ -20,7 +20,7 @@
 #include <serving/feature_extraction_model_input.h>
 #include <serving/ort_model.h>
 #include <serving/tabular_model.h>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <common/types.h>
 
 #include <thread>

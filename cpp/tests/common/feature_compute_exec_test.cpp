@@ -16,7 +16,7 @@
 
 #include <common/arrow/arrow_helpers.h>
 #include <common/features/feature_compute_exec.h>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <common/types.h>
 #include <common/utils.h>
 
