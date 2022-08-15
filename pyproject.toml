@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metaspore"
-version = "1.0.2"
+version = "1.1.0"
 description = "Metaspore: A Unified End-to-end Machine Intelligence Platform"
 readme = "README.md"
 requires-python = ">=3.8"
