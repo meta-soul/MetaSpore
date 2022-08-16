@@ -26,6 +26,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.util.JsonStringHashMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
@@ -132,25 +133,24 @@ public class ItemMatcherTask extends AlgoTransformTask {
         addFunction("recallCollectItem", (ScatterFunction) (fields, names, options) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_OBJ),
+            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_PAIR_STR_DOUBLE),
                     "toItemScore input[0] is userprofileWeight list<entry<string, double>>");
             Assert.isTrue(CollectionUtils.isNotEmpty(names) && names.size() == 3,
                     "toItemScore names should = {itemId, score, originalScores}");
             int limit = Utils.getField(options, "maxReservation", maxReservation);
             int finalAlgoLevel = Utils.getField(options, "algoLevel", algoLevel);
-            List<Object> itemScores = fields.get(0).getValue();
+            List<JsonStringHashMap<String, Object>> itemScores = fields.get(0).getValue();
             Double maxScore = 0.0;
             if (itemScores.size() > 0) {
-                Map.Entry<String, Double> entry = (Map.Entry<String, Double>) itemScores.get(0);
-                maxScore = entry.getValue();
+                JsonStringHashMap<String, Object> entry = itemScores.get(0);
+                maxScore = (Double) entry.get("value");
             }
             Map<String, List<Object>> res = Maps.newHashMap();
             Double finalMaxScore = maxScore;
-            fields.stream().limit(maxReservation).forEach(x -> {
-                Map.Entry<String, Double> entry = (Map.Entry<String, Double>) x;
-                res.computeIfAbsent(names.get(0), k->Lists.newArrayList()).add(entry.getKey());
-                res.computeIfAbsent(names.get(1), k->Lists.newArrayList()).add(Utils.getFinalRetrievalScore(entry.getValue(), finalMaxScore, finalAlgoLevel));
-                res.computeIfAbsent(names.get(2), k->Lists.newArrayList()).add(Map.of(algoName, entry.getValue()));
+            itemScores.stream().limit(maxReservation).forEach(x -> {
+                res.computeIfAbsent(names.get(0), k->Lists.newArrayList()).add(x.get("key"));
+                res.computeIfAbsent(names.get(1), k->Lists.newArrayList()).add(Utils.getFinalRetrievalScore((Double) x.get("value"), finalMaxScore, finalAlgoLevel));
+                res.computeIfAbsent(names.get(2), k->Lists.newArrayList()).add(Map.of(algoName, (Double) x.get("value")));
             });
             return res;
         });

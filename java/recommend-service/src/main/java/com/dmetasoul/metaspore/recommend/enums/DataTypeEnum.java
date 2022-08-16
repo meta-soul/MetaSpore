@@ -44,8 +44,6 @@ import java.sql.Blob;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.List;
@@ -296,21 +294,40 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    LIST_INT(13, List.class, FieldType.nullable(ArrowType.List.INSTANCE), new ListOperator<Integer>()),
-    LIST_LONG(14, List.class, FieldType.nullable(ArrowType.List.INSTANCE), new ListOperator<Long>()),
-    LIST_STR(15, List.class, FieldType.nullable(ArrowType.List.INSTANCE), new ListOperator<String>()),
-    LIST_FLOAT(16, List.class, FieldType.nullable(ArrowType.List.INSTANCE), new ListOperator<Float>()),
-    LIST_DOUBLE(17, List.class, FieldType.nullable(ArrowType.List.INSTANCE), new ListOperator<Double>()),
-    LIST_OBJ(18, List.class, FieldType.nullable(ArrowType.List.INSTANCE), new ListOperator<>()),
-    MAP_STR_DOUBLE(19, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",ArrowType.Utf8.INSTANCE)), new MapOperator<String, Double>()),
-    MAP_STR_STR(20, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",ArrowType.Utf8.INSTANCE)), new MapOperator<String, String>()),
-    MAP_STR_INT(21, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",ArrowType.Utf8.INSTANCE)), new MapOperator<String, Integer>()),
-    MAP_STR_LONG(22, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",ArrowType.Utf8.INSTANCE)), new MapOperator<String, Long>()),
-    MAP_STR_FLOAT(23, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",ArrowType.Utf8.INSTANCE)), new MapOperator<String, Float>()),
-    MAP_STR_OBJ(24, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",ArrowType.Utf8.INSTANCE)), new MapOperator<String, Object>()),
-    MAP_INT_OBJ(25, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",new ArrowType.Int(32, true))), new MapOperator<Integer, Object>()),
-    MAP_LONG_OBJ(26, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(Field.notNullable("key",new ArrowType.Int(64, true))), new MapOperator<Long, Object>()),
-    STRUCT(99, Object.class, FieldType.nullable(ArrowType.Struct.INSTANCE), new StructOperator());
+    LIST_INT(13, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",new ArrowType.Int(32, true))), new ListOperator<Integer>()),
+    LIST_LONG(14, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",new ArrowType.Int(64, true))), new ListOperator<Long>()),
+    LIST_STR(15, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",ArrowType.Utf8.INSTANCE)), new ListOperator<String>()),
+    LIST_FLOAT(16, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE))), new ListOperator<Float>()),
+    LIST_DOUBLE(17, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE))), new ListOperator<Double>()),
+    LIST_PAIR_STR_DOUBLE(18, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(new Field("item", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+            Field.notNullable("key",ArrowType.Utf8.INSTANCE),
+            Field.notNullable("value",new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE))
+    ))), new ListOperator<>()),
+    MAP_STR_DOUBLE(19, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(
+            new Field("entry", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+            Field.notNullable("key",ArrowType.Utf8.INSTANCE),
+            Field.notNullable("value",new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE))
+    ))), new MapOperator<String, Double>()),
+    MAP_STR_STR(20, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(
+            new Field("entry", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+                Field.notNullable("key",ArrowType.Utf8.INSTANCE),
+                Field.notNullable("value",ArrowType.Utf8.INSTANCE)
+    ))), new MapOperator<String, String>()),
+    MAP_STR_INT(21, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(
+            new Field("entry", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+            Field.notNullable("key",ArrowType.Utf8.INSTANCE),
+            Field.notNullable("value",new ArrowType.Int(32, true))
+    ))), new MapOperator<String, Integer>()),
+    MAP_STR_LONG(22, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(
+            new Field("entry", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+            Field.notNullable("key",ArrowType.Utf8.INSTANCE),
+            Field.notNullable("value",new ArrowType.Int(64, true))
+    ))), new MapOperator<String, Long>()),
+    MAP_STR_FLOAT(23, Map.class, FieldType.nullable(new ArrowType.Map(true)), List.of(
+            new Field("entry", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+            Field.notNullable("key",ArrowType.Utf8.INSTANCE),
+            Field.notNullable("value",new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE))
+    ))), new MapOperator<String, Float>());
 
     private final Integer id;
 
@@ -384,7 +401,7 @@ public enum DataTypeEnum {
                 return e;
             }
         }
-        return DataTypeEnum.STRUCT;
+        return DataTypeEnum.STRING;
     }
 
     public static DataTypeEnum getEnumByType(ArrowType type) {
@@ -393,7 +410,7 @@ public enum DataTypeEnum {
                 return e;
             }
         }
-        return DataTypeEnum.STRUCT;
+        return DataTypeEnum.STRING;
     }
 
     public static DataTypeEnum getEnumById(int id) {
@@ -402,6 +419,6 @@ public enum DataTypeEnum {
                 return e;
             }
         }
-        return DataTypeEnum.STRUCT;
+        return DataTypeEnum.STRING;
     }
 }

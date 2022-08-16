@@ -25,7 +25,7 @@ public class MapOperator<K, V> extends ArrowOperator {
             @SuppressWarnings("unchecked") Map<K, V> data = (Map<K, V>) value;
             UnionListWriter writer = mapVector.getWriter();
             writer.setPosition(index);
-            writeMap(writer, data, mapVector.getAllocator());
+            writeMap(writer, data, mapVector.getField().getChildren(), mapVector.getAllocator());
         }
         featureTable.setRowCount(index+1);
         return true;

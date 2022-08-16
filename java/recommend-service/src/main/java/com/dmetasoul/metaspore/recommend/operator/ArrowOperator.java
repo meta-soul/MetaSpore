@@ -1,23 +1,27 @@
 package com.dmetasoul.metaspore.recommend.operator;
 
 import com.dmetasoul.metaspore.serving.FeatureTable;
+import com.google.common.collect.Maps;
+import com.google.common.primitives.Doubles;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.FieldVector;
-import org.apache.arrow.vector.complex.ListVector;
-import org.apache.arrow.vector.complex.StructVector;
 import org.apache.arrow.vector.complex.writer.BaseWriter;
 import org.apache.arrow.vector.holders.VarCharHolder;
+import org.apache.arrow.vector.types.Types;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.NumberUtils;
 
-import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+
+import static org.apache.arrow.util.Preconditions.checkArgument;
 
 @Slf4j
 @Data
@@ -51,43 +55,51 @@ public abstract class ArrowOperator {
         return vch;
     }
 
-    public <T> void writeField(BaseWriter.ListWriter writer, T item, BufferAllocator allocator) {
+    public <T> void writeField(BaseWriter.ListWriter writer, T item, Field field, BufferAllocator allocator) {
         Assert.notNull(writer, "writer must not null");
+        Types.MinorType minorType = Types.getMinorTypeForArrowType(field.getType());
         if (item == null) {
             writer.writeNull();
-        } else if (item instanceof String) {
-            VarCharHolder vch = getVarCharHolder((String) item, allocator);
+        } else if (minorType == Types.MinorType.VARCHAR) {
+            VarCharHolder vch = getVarCharHolder(String.valueOf(item), allocator);
             writer.varChar().write(vch);
-        } else if (item instanceof Integer) {
-            writer.integer().writeInt((Integer) item);
-        } else if (item instanceof Long) {
-            writer.bigInt().writeBigInt((Long) item);
-        } else if (item instanceof Float) {
-            writer.float4().writeFloat4((Float) item);
-        } else if (item instanceof Double) {
-            writer.float8().writeFloat8((Double) item);
-        } else if (item instanceof List) {
-            writeList(writer.list(), (List<?>)item, allocator);
-        } else if (item instanceof Map) {
-            writeMap(writer.map(), (Map<?, ?>)item, allocator);
-        } else {
-            writeStruct(writer.struct(), item, allocator);
+        } else if (minorType == Types.MinorType.INT) {
+            writer.integer().writeInt(Integer.parseInt(String.valueOf(item)));
+        } else if (minorType == Types.MinorType.BIGINT) {
+            writer.bigInt().writeBigInt(Long.parseLong(String.valueOf(item)));
+        } else if (minorType == Types.MinorType.FLOAT4) {
+            writer.float4().writeFloat4(Float.parseFloat(String.valueOf(item)));
+        } else if (minorType == Types.MinorType.FLOAT8) {
+            writer.float8().writeFloat8(Double.parseDouble(String.valueOf(item)));
+        } else if (minorType == Types.MinorType.LIST) {
+            writeList(writer.list(), (List<?>)item, field.getChildren(), allocator);
+        } else if (minorType == Types.MinorType.MAP) {
+            writeMap(writer.map(), (Map<?, ?>)item, field.getChildren(), allocator);
+        } else if (minorType == Types.MinorType.STRUCT){
+            writeStruct(writer.struct(), item, field.getChildren(), allocator);
         }
     }
 
-    public <T> void writeList(BaseWriter.ListWriter writer, List<T> data, BufferAllocator allocator) {
+    public <T> void writeList(BaseWriter.ListWriter writer, List<T> data, List<Field> fields, BufferAllocator allocator) {
         Assert.notNull(writer, "list writer must not null");
+        Assert.isTrue(fields != null && fields.size() == 1, "list need one child field");
         writer.startList();
         if (CollectionUtils.isNotEmpty(data)) {
             for (T item : data) {
-                writeField(writer, item, allocator);
+                writeField(writer, item, fields.get(0), allocator);
             }
         }
         writer.endList();
     }
 
-    public <K, V> void writeMap(BaseWriter.MapWriter writer, Map<K, V> data, BufferAllocator allocator) {
+    public <K, V> void writeMap(BaseWriter.MapWriter writer, Map<K, V> data, List<Field> fields, BufferAllocator allocator) {
         Assert.notNull(writer, "map writer must not null");
+        Assert.isTrue(fields != null && fields.size() == 1, "list need one child field");
+        Field structField = fields.get(0);
+        Types.MinorType minorType = Types.getMinorTypeForArrowType(structField.getType());
+        checkArgument(minorType == Types.MinorType.STRUCT && !structField.isNullable(),"Map data should be a non-nullable struct type");
+        checkArgument(structField.getChildren().size() == 2,
+                "Map data should be a struct with 2 children. Found: %s", fields);
         writer.startMap();
         if (MapUtils.isNotEmpty(data)) {
             for (Map.Entry<K, V> entry : data.entrySet()) {
@@ -95,8 +107,8 @@ public abstract class ArrowOperator {
                 V obj = entry.getValue();
                 writer.startEntry();
                 Assert.notNull(key, "map key must not null");
-                writeField(writer.key(), key, allocator);
-                writeField(writer.value(), obj, allocator);
+                writeField(writer.key(), key, structField.getChildren().get(0), allocator);
+                writeField(writer.value(), obj, structField.getChildren().get(1), allocator);
                 writer.endEntry();
             }
         }
@@ -104,75 +116,81 @@ public abstract class ArrowOperator {
     }
 
     @SneakyThrows
-    public <T> void writeStruct(BaseWriter.StructWriter writer, T data, BufferAllocator allocator) {
+    public <T> void writeStruct(BaseWriter.StructWriter writer, T data, List<Field> fields, BufferAllocator allocator) {
         Assert.notNull(writer, "list writer must not null");
         writer.start();
         if (data == null) {
             writer.writeNull();
         } else {
             Class<?> cla = data.getClass();
-            Field[] fields = cla.getDeclaredFields();
+            Map<String, Field> fieldMap = Maps.newHashMap();
             for (Field field : fields) {
+                fieldMap.put(field.getName(), field);
+            }
+            for (java.lang.reflect.Field field : cla.getDeclaredFields()) {
                 field.setAccessible(true);
                 String keyName = field.getName();
+                if (!fieldMap.containsKey(keyName)) {
+                    continue;
+                }
                 Object value = field.get(data);
-                Class<?> fieldCls = field.getClass();
-                writeField(writer, value, keyName, allocator, fieldCls);
+                writeField(writer, value, keyName, fieldMap.get(keyName), allocator);
             }
         }
         writer.end();
     }
 
-    public void writeField(BaseWriter.StructWriter writer, Object data, String name, BufferAllocator allocator, Class<?> clazz) {
+    public void writeField(BaseWriter.StructWriter writer, Object data, String name, Field field, BufferAllocator allocator) {
         Assert.notNull(writer, "writer must not null");
-        if (String.class.isAssignableFrom(clazz)) {
+        Types.MinorType minorType = Types.getMinorTypeForArrowType(field.getType());
+        if (minorType == Types.MinorType.VARCHAR) {
             if (data == null) {
                 writer.varChar(name).writeNull();
             } else {
-                VarCharHolder vch = getVarCharHolder((String) data, allocator);
+                VarCharHolder vch = getVarCharHolder(String.valueOf(data), allocator);
                 writer.varChar(name).write(vch);
             }
-        } else if (Integer.class.isAssignableFrom(clazz)) {
+        } else if (minorType == Types.MinorType.INT) {
             if (data == null) {
                 writer.integer(name).writeNull();
             } else {
-                writer.integer(name).writeInt((Integer) data);
+                writer.integer(name).writeInt(Integer.parseInt(String.valueOf(data)));
             }
-        } else if (Long.class.isAssignableFrom(clazz)) {
+        } else if (minorType == Types.MinorType.BIGINT) {
             if (data == null) {
                 writer.bigInt(name).writeNull();
             } else {
-                writer.bigInt(name).writeBigInt((Long) data);
+                writer.bigInt(name).writeBigInt(Long.parseLong(String.valueOf(data)));
             }
-        } else if (Float.class.isAssignableFrom(clazz)) {
+        } else if (minorType == Types.MinorType.FLOAT4) {
             if (data == null) {
                 writer.float4(name).writeNull();
             } else {
-                writer.float4(name).writeFloat4((Float) data);
+                writer.float4(name).writeFloat4(Float.parseFloat(String.valueOf(data)));
             }
-        } else if (Double.class.isAssignableFrom(clazz)) {
+        } else if (minorType == Types.MinorType.FLOAT8) {
             if (data == null) {
                 writer.float8(name).writeNull();
             } else {
-                writer.float8(name).writeFloat8((Double) data);
+                writer.float8(name).writeFloat8(Double.parseDouble(String.valueOf(data)));
             }
-        } else if (List.class.isAssignableFrom(clazz)) {
+        } else if (minorType == Types.MinorType.LIST) {
             if (data == null) {
                 writer.list(name).writeNull();
             } else {
-                writeList(writer.list(name), (List<?>) data, allocator);
+                writeList(writer.list(name), (List<?>) data, field.getChildren(), allocator);
             }
-        } else if (Map.class.isAssignableFrom(clazz)) {
+        } else if (minorType == Types.MinorType.MAP) {
             if (data == null) {
                 writer.map(name).writeNull();
             } else {
-                writeMap(writer.map(name), (Map<?, ?>) data, allocator);
+                writeMap(writer.map(name), (Map<?, ?>) data, field.getChildren(), allocator);
             }
         } else {
             if (data == null) {
                 writer.struct(name).writeNull();
             } else {
-                writeStruct(writer.struct(name), data, allocator);
+                writeStruct(writer.struct(name), data, field.getChildren(), allocator);
             }
         }
     }

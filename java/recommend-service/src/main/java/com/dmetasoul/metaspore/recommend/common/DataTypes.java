@@ -39,12 +39,12 @@ public class DataTypes {
     @SuppressWarnings("rawtypes")
     public static Class getDataClass(String name) {
         DataTypeEnum dataType = dataTypes.get(name);
-        return Objects.requireNonNullElse(dataType, DataTypeEnum.STRUCT).getCls();
+        return Objects.requireNonNullElse(dataType, DataTypeEnum.STRING).getCls();
     }
 
     static {
         // default
-        dataTypes.put("default", DataTypeEnum.STRUCT);
+        dataTypes.put("default", DataTypeEnum.STRING);
 
         // Java to Java
         dataTypes.put("string", DataTypeEnum.STRING);
@@ -93,10 +93,6 @@ public class DataTypes {
         dataTypes.put("map_str_double", DataTypeEnum.MAP_STR_DOUBLE);
         dataTypes.put("map_str_float", DataTypeEnum.MAP_STR_FLOAT);
         // value object only support string, int, long, float, double
-        dataTypes.put("map_str_obj", DataTypeEnum.MAP_STR_OBJ);
-        dataTypes.put("map_int_obj", DataTypeEnum.MAP_INT_OBJ);
-        dataTypes.put("map_long_obj", DataTypeEnum.MAP_LONG_OBJ);
-        dataTypes.put("list_obj", DataTypeEnum.LIST_OBJ);
-        dataTypes.put("obj", DataTypeEnum.STRUCT);
+        dataTypes.put("list_pair_str_double", DataTypeEnum.LIST_PAIR_STR_DOUBLE);
     }
 }
