@@ -22,7 +22,7 @@ import cattrs
 
 from pipelines_v2.modules import InitSparkModule, InitSparkConfig
 from pipelines_v2.modules import DataLoaderModule, DataLoaderConfig
-from pipelines_v2.modules import PopularRetrievalModule
+from pipelines_v2.modules import FriendsOfFriendsRetrievalModule
 from pipelines_v2.modules import DumpToMongoDBModule, DumpToMongoDBConfig
 from pipelines_v2 import setup_logging
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     item_id_column = dataset_dict.get('item_id_column')
     label_column = dataset_dict.get('label_column')
     label_value = dataset_dict.get('label_value')
-    df_to_mongodb, metric_dict = PopularRetrievalModule(spec['training']).\
+    df_to_mongodb, metric_dict = FriendsOfFriendsRetrievalModule(spec['training']).\
         run(dataset_dict['train'], dataset_dict['test'], label_column=label_column, label_value=label_value, 
             user_id_column=user_id_column, item_id_column=item_id_column)
     
