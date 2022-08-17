@@ -34,18 +34,20 @@ class FriendsOfFriendsRetrievalConfig:
     decay_max = attrs.field(validator=attrs.validators.instance_of(int))
     decay_factor = attrs.field(validator=attrs.validators.instance_of(float))
     walk_length = attrs.field(validator=attrs.validators.instance_of(int))
-    filer_u2f = attrs.field(validator=attrs.validators.instance_of(bool))
+    filter_u2f = attrs.field(validator=attrs.validators.instance_of(bool))
     model_out_path = attrs.field(default=None, 
         validator=attrs.validators.optional(attrs.validators.instance_of(str)))
 
 class FriendsOfFriendsRetrievalModule:
     def __init__(self, conf):
         if isinstance(conf, dict):
-            self.conf = FriendsOfFriendsRetrievalConfig.convert(conf)
+            self.conf = FriendsOfFriendsRetrievalModule.convert(conf)
         elif isinstance(conf, FriendsOfFriendsRetrievalConfig):
             self.conf = conf
         else:
             raise TypeError("Type of 'conf' must be dict or FriendsOfFriendsRetrievalConfig. Current type is {}".format(type(conf)))
+            
+        self.metric_position_k=20
 
     @staticmethod
     def convert(conf: dict) -> FriendsOfFriendsRetrievalConfig:
@@ -129,7 +131,7 @@ class FriendsOfFriendsRetrievalModule:
         if not isinstance(train_dataset, DataFrame):
             raise ValueError("Type of train_dataset must be DataFrame.")
         
-        fof_match_result = self.train(self, train_dataset, time_column, time_format, label_column, label_value, 
+        fof_match_result = self.train(train_dataset, time_column, time_format, label_column, label_value, 
             user_id_column, item_id_column, 
             self.conf.decay_max, self.conf.decay_factor, 
             self.conf.max_recommendation_count

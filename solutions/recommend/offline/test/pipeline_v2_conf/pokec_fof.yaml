@@ -24,6 +24,10 @@ spec:
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
       spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+    pyzip:
+      cwd_path: '/home/spark/work/MetaSpore/'
+      zip_file_path: '/home/spark/work/MetaSpore/solutions/recommend/offline/test/python.zip'
+
             
   dataset:
     train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/fof_train_dataset.parquet
