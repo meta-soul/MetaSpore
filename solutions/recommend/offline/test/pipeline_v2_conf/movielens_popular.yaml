@@ -41,7 +41,7 @@ spec:
         
   training: 
     estimator_params:
-      recall_nums: 200
+      max_recommendation_count: 200
       group_nums: 10
       model_out_path: 's3://dmetasoul-bucket/demo/movielens/1m/model/popular/model_out/df.parquet'
 
@@ -53,5 +53,4 @@ spec:
     index_fields: []
     index_unique: False
     
-  spark_stop:
   
