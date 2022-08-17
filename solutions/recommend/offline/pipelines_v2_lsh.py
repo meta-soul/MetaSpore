@@ -34,7 +34,7 @@ if __name__ == '__main__':
     label_column = dataset_dict.get('label_column')
     label_value = dataset_dict.get('label_value')
     df_to_mongodb, metric_dict = LSHRetrievalModule(spec['training']).\
-        run(dataset_dict['train'], dataset_dict['test'], label_column=label_column, label_value=label_value, 
+        run(dataset_dict['train'], dataset_dict.get('test'), label_column=label_column, label_value=label_value, 
             user_id_column=user_id_column, item_id_column=item_id_column)
 
     # 4. dump to mongo_db
