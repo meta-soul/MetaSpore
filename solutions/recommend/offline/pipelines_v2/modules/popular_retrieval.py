@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 @attrs.frozen
 class PopularsRetrievalConfig:
-    recall_nums = attrs.field(validator=attrs.validators.instance_of(int))
+    max_recommendation_count = attrs.field(validator=attrs.validators.instance_of(int))
     group_nums = attrs.field(validator=attrs.validators.instance_of(int))
     model_out_path = attrs.field(default=None, 
         validator=attrs.validators.optional(attrs.validators.instance_of(str)))
@@ -47,12 +47,12 @@ class PopularRetrievalModule():
         conf = cattrs.structure(conf['estimator_params'], PopularsRetrievalConfig)
         return conf
 
-    def train(self, train_dataset, label_column, label_value, user_id_column, item_id_column, group_nums, recall_nums):
+    def train(self, train_dataset, label_column, label_value, user_id_column, item_id_column, group_nums, max_recommendation_count):
         recall_result = train_dataset.filter(F.col(label_column)==label_value) \
                             .groupBy(item_id_column)\
                             .agg(F.countDistinct(user_id_column))\
                             .sort(F.col('count('+ user_id_column +')').desc())\
-                            .limit(group_nums * recall_nums) 
+                            .limit(group_nums * max_recommendation_count) 
         recall_result = recall_result.withColumn('key', F.floor(F.rand() * group_nums))
         
         ## sort according to count value in each group
@@ -95,7 +95,7 @@ class PopularRetrievalModule():
             raise ValueError("Type of train_dataset must be DataFrame.")
         
         popular_match = self.train(train_dataset, label_column, label_value, user_id_column, item_id_column, 
-                                   self.conf.group_nums, self.conf.recall_nums)
+                                   self.conf.group_nums, self.conf.max_recommendation_count)
         
         if self.conf.model_out_path:
             popular_match.write.parquet(self.conf.model_out_path, mode="overwrite")

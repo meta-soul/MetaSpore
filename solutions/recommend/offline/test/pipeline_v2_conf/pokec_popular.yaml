@@ -41,7 +41,7 @@ spec:
   
   training: 
     estimator_params:
-      recall_nums: 200
+      max_recommendation_count: 200
       group_nums: 10
 
   mongodb:
