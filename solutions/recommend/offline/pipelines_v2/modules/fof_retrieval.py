@@ -34,7 +34,7 @@ class FriendsOfFriendsRetrievalConfig:
     decay_max = attrs.field(validator=attrs.validators.instance_of(int))
     decay_factor = attrs.field(validator=attrs.validators.instance_of(float))
     walk_length = attrs.field(validator=attrs.validators.instance_of(int))
-    filer_u2f = attrs.field(validator=attrs.validator(bool))
+    filer_u2f = attrs.field(validator=attrs.validators.instance_of(bool))
     model_out_path = attrs.field(default=None, 
         validator=attrs.validators.optional(attrs.validators.instance_of(str)))
 
