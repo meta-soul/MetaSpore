@@ -22,6 +22,7 @@ from .twotower_retrieval import TwoTowersRetrievalConfig, TwoTowersRetrievalModu
 from .popular_retrieval import PopularsRetrievalConfig, PopularRetrievalModule
 from .elasticsearch_retrieval import ElasticSearchRetrievalConfig, ElasticSearchRetrievalModule
 from .fof_retrieval import FriendsOfFriendsRetrievalConfig, FriendsOfFriendsRetrievalModule
+from .lsh_retrieval import LSHRetrievalConfig, LSHRetrievalModule
 
 from .mongodb_dumper import DumpToMongoDBModule, DumpToMongoDBConfig
 

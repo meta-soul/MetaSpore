@@ -1,0 +1,50 @@
+apiVersion: metaspore/v1
+kind: Trainingjob
+metadata:
+  name: Jaccard
+  category: Match/LSH/Jaccard
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: MovieLens Jaccard Pipeline
+      local: false
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '4G'
+      
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+            
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/movielens/ml-1m/jaccard_traindataset.parquet
+    user_id_column: user_id
+    item_id_column: movie_id
+    label_column: label
+    label_value: '1'
+        
+  training: 
+    distance_metric: Jaccard
+    distance_threshold: 1
+    max_recommendation_count: 20
+
+  mongodb:
+    uri: mongodb://172.31.37.47:27017/
+    database: jpa
+    collection: saas_jaccard
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+
+  
