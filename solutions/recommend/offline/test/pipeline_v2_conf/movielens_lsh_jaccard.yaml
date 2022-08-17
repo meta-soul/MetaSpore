@@ -31,6 +31,7 @@ spec:
             
   dataset:
     train_path: s3://dmetasoul-bucket/demo/movielens/ml-1m/jaccard_traindataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/movielens/1m/negsample/num_negs_10/test.parquet
     user_id_column: user_id
     item_id_column: movie_id
     label_column: label
@@ -39,7 +40,7 @@ spec:
   training: 
     estimator_params:
       distance_metric: Jaccard
-      distance_threshold: 1
+      distance_threshold: 1.0
       max_recommendation_count: 20
 
   mongodb:

@@ -34,10 +34,10 @@ logger = logging.getLogger(__name__)
 @attrs.frozen(kw_only=True)
 class LSHRetrievalConfig:
     max_recommendation_count = attrs.field(validator=attrs.validators.instance_of(int))
-    distance_metric = attrs.field(validator=attrs.vailidators.instance_of(str))
+    distance_metric = attrs.field(validator=attrs.validators.instance_of(str))
     distance_threshold = attrs.field(validator=attrs.validators.instance_of(float))
-    lsh_bucket_length = attrs.fiedl(default=None, 
-        validator=attrs.validators.optional(attrs.validators.instatnce_of(int)))
+    lsh_bucket_length = attrs.field(default=None, 
+        validator=attrs.validators.optional(attrs.validators.instance_of(int)))
     model_out_path = attrs.field(default=None, 
         validator=attrs.validators.optional(attrs.validators.instance_of(str)))
 
@@ -126,7 +126,9 @@ class LSHRetrievalModule:
             .withColumnRenamed('friend_A', 'key')
         return recall_result
 
-    def test_transform(self, test_dataset, recall_result, item_id_column):
+    def transform(self, test_dataset, recall_result, item_id_column):
+        print(test_dataset)
+        print(recall_result)
         cond = test_dataset[item_id_column]==recall_result['key']
         test_result = test_dataset.join(recall_result, on=cond, how='left')
         str_schema = 'array<struct<name:string,_2:double>>'
@@ -168,7 +170,7 @@ class LSHRetrievalModule:
         if test_dataset:
             if not isinstance(test_dataset, DataFrame):
                 raise ValueError("Type of test_dataset must be DataFrame.") 
-            test_result = self.transform(lsh_match, test_dataset)
+            test_result = self.transform(test_dataset, lsh_match, item_id_column)
             metric_dict = self.evaluate(test_result, item_id_column)
             logger.info('LSH evaluation metrics: {}'.format(metric_dict))
 
