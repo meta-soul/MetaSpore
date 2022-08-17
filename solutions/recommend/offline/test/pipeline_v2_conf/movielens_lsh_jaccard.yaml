@@ -37,9 +37,10 @@ spec:
     label_value: '1'
         
   training: 
-    distance_metric: Jaccard
-    distance_threshold: 1
-    max_recommendation_count: 20
+    estimator_params:
+      distance_metric: Jaccard
+      distance_threshold: 1
+      max_recommendation_count: 20
 
   mongodb:
     uri: mongodb://172.31.37.47:27017/
