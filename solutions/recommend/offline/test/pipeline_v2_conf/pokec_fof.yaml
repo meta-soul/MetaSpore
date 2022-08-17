@@ -1,0 +1,54 @@
+apiVersion: metaspore/v1
+kind: Trainingjob
+metadata:
+  name: fof
+  category: Match/FriendsOfFriends
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: Pokec FriendsOfFriends Pipeline Demo
+      local: false
+      worker_count: 2
+      worker_cpu: 4
+      server_count: 2
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '10G'
+      server_memory: '10G'
+      coordinator_memory: '10G'
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+            
+  dataset:
+    train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/fof_train_dataset.parquet
+    test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/fof_test_dataset.parquet
+    user_id_column: user_id
+    item_id_column: friend_id
+    label_column: label
+    label_value: '1'
+    time_column: friend_last_act_time
+    time_format: yyyy-MM-dd HH:mm:ss.S
+
+  training:
+    estimator_params:
+      max_recommendation_count: 20
+      decay_max: 10000
+      decay_factor: -0.3
+      walk_length: 1
+      filter_u2f: True
+      
+  mongodb:
+    uri: mongodb://172.31.37.47:27017/
+    database: jpa
+    collection: saas_fof
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+
+  
