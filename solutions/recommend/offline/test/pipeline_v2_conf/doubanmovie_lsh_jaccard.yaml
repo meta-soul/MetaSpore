@@ -12,14 +12,14 @@ spec:
     session_confs:
       app_name: MovieLens Jaccard Pipeline
       local: false
-      worker_count: 2
+      worker_count: 4
       worker_cpu: 4
-      server_count: 2
+      server_count: 4
       server_cpu: 4
       batch_size: 128
-      worker_memory: '4G'
-      server_memory: '4G'
-      coordinator_memory: '4G'
+      worker_memory: '10G'
+      server_memory: '10G'
+      coordinator_memory: '10G'
     extended_confs:
       spark.network.timeout: '500'
       spark.ui.showConsoleProgress: 'true'
