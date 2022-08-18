@@ -127,8 +127,6 @@ class LSHRetrievalModule:
         return recall_result
 
     def transform(self, test_dataset, recall_result, item_id_column):
-        print(test_dataset)
-        print(recall_result)
         cond = test_dataset[item_id_column]==recall_result['key']
         test_result = test_dataset.join(recall_result, on=cond, how='left')
         str_schema = 'array<struct<name:string,_2:double>>'
