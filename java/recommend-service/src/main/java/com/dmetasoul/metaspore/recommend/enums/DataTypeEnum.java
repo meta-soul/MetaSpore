@@ -38,7 +38,6 @@ import org.springframework.util.Assert;
 
 import org.apache.arrow.vector.types.pojo.Field;
 
-import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.time.LocalDate;
@@ -57,14 +56,9 @@ import static java.time.ZoneOffset.UTC;
 public enum DataTypeEnum {
     STRING(0, String.class, FieldType.nullable(ArrowType.Utf8.INSTANCE), new ArrowOperator() {
         @Override
-        public Object getValue(Object value) {
-            if (value == null) return null;
-            return value.toString();
-        }
-        @Override
         public boolean set(int index, String col, Object value) {
             if (value != null && !(value instanceof String)) {
-                log.error("set featureTable fail! value type is not match!");
+                log.error("set featureTable fail! value type is not match String value:{}!", value);
                 return false;
             }
             if (value == null) {
@@ -271,12 +265,6 @@ public enum DataTypeEnum {
         }
     }),
     TIME(12, Time.class, FieldType.nullable(new ArrowType.Time(TimeUnit.MILLISECOND, 32)), new ArrowOperator() {
-        @Override
-        public Object getValue(Object value) {
-            if (value == null) return null;
-            LocalDateTime localDateTime = (LocalDateTime) value;
-            return localDateTime.toLocalTime();
-        }
         @Override
         public boolean set(int index, String col, Object value) {
             LocalTime data = parseLocalTime(value);

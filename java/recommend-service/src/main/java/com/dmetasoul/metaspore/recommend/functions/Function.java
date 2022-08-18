@@ -21,6 +21,5 @@ import java.util.List;
 import java.util.Map;
 
 public interface Function {
-
-    List<Object> process(List<FieldData> fields, Map<String, Object> options);
+    boolean process(List<FieldData> fields, List<FieldData> result, Map<String, Object> options);
 }

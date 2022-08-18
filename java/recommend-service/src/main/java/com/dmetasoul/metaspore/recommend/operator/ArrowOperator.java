@@ -2,7 +2,6 @@ package com.dmetasoul.metaspore.recommend.operator;
 
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Maps;
-import com.google.common.primitives.Doubles;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -15,12 +14,12 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.Assert;
-import org.springframework.util.NumberUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import static com.dmetasoul.metaspore.recommend.operator.ArrowConv.convValue;
 import static org.apache.arrow.util.Preconditions.checkArgument;
 
 @Slf4j
@@ -32,15 +31,12 @@ public abstract class ArrowOperator {
     }
     public abstract boolean set(int index, String col, Object data);
 
-    public Object getValue(Object value) {
-        return value;
-    }
     @SuppressWarnings("unchecked")
     public <T> T get(String col, int index) {
         if (featureTable == null || featureTable.getVector(col) == null) return null;
         FieldVector vector = featureTable.getVector(col);
         if (index < vector.getValueCount() && index >= 0) {
-            return (T) getValue(vector.getObject(index));
+            return (T) convValue(vector.getField(), vector.getObject(index));
         }
         return null;
     }

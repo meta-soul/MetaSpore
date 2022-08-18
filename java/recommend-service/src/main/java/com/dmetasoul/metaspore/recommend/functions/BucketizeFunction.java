@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.recommend.functions;
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,25 +45,28 @@ public class BucketizeFunction implements Function {
     private List<Number> ranges = Lists.newArrayList();
 
     @Override
-    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
+    public boolean process(List<FieldData> fields, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
+        Assert.isTrue(CollectionUtils.isNotEmpty(result), "result must not empty");
         bins = Utils.getField(options, NAMEBINS, bins);
         min = Utils.getField(options, NAMEMIN, min);
         max = Utils.getField(options, NAMEMAX, max);
         String rangeStr = Utils.getField(options, NAMERANGES, "[]");
         ranges = parseRanges(rangeStr);
         FieldData fieldData = fields.get(0);
-        List<Object> input = fieldData.getValue();
-        List<Object> res = Lists.newArrayList();
-        for (Object o : input) {
+        List<IndexData> input = fieldData.getIndexValue();
+        List<IndexData> res = Lists.newArrayList();
+        for (IndexData o : input) {
             Assert.isInstanceOf(Number.class, o, "value must be number!");
             if (CollectionUtils.isNotEmpty(ranges)) {
-                res.add(bucket((Number)o, ranges));
+                res.add(FieldData.create(o.getIndex(), bucket(o.getVal(), ranges)));
             } else {
-                res.add(bucket((Number)o, bins, max, min));
+                res.add(FieldData.create(o.getIndex(), bucket(o.getVal(), bins, max, min)));
             }
         }
-        return res;
+
+        result.get(0).setIndexValue(res);
+        return true;
     }
 
     private List<Number> parseRanges(String rangeStr) {

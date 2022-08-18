@@ -32,7 +32,7 @@ public class MinMaxFunction implements Function {
     private int max = 120;
 
     @Override
-    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-        return null;
+    public boolean process(List<FieldData> fields, List<FieldData> result, Map<String, Object> options) {
+        return true;
     }
 }

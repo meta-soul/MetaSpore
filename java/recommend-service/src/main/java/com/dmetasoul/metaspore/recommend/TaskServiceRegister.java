@@ -107,8 +107,8 @@ public class TaskServiceRegister {
     @PostConstruct
     public void initServices() {
         initDataSources();
-        initDataService();
         initFunctions();
+        initDataService();
         initRecommendServices();
         initExperimentMap();
         initLayerMap();

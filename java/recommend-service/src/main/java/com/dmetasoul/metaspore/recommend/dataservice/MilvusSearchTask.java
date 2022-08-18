@@ -18,8 +18,9 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
+import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.client.MilvusServiceClient;
@@ -34,6 +35,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @ServiceAnnotation("MilvusSearch")
@@ -65,37 +67,23 @@ public class MilvusSearchTask extends AlgoInferenceTask {
 
     @Override
     public void addFunctions() {
-        addFunction("milvusIdScore", new ScatterFunction() {
-
-            /**
-             *  使用embedding请求milvus获取对应的topk个id和分数
-             */
-            @Override
-            public Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fields),
-                        "input fields must not null");
-                Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
-                        "milvusSearch input[0] embedding is list float");
-                Assert.isTrue(CollectionUtils.isNotEmpty(names) && names.size() == 2, "names should = {id, score}");
-                List<List<Float>> embedding = fields.get(0).getValue();
-                return searchIdScore(embedding, names, options);
-            }
+        addFunction("milvusIdScore", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
+                    "input fields must not null");
+            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
+                    "milvusSearch input[0] embedding is list float");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+            List<IndexData> embedding = fields.get(0).getIndexValue();
+            return searchIdScore(embedding, result, options);
         });
-        addFunction("milvusField", new ScatterFunction() {
-
-            /**
-             *  使用embedding请求milvus获取对应的topk个向量对应的fields数据
-             */
-            @Override
-            public Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fields),
-                        "input fields must not null");
-                Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
-                        "milvusSearch input[0] embedding is list float");
-                Assert.isTrue(CollectionUtils.isNotEmpty(names) && names.size() == 2, "names should = {id, score}");
-                List<List<Float>> embedding = fields.get(0).getValue();
-                return searchField(embedding, names, options);
-            }
+        addFunction("milvusField", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
+                    "input fields must not null");
+            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
+                    "milvusSearch input[0] embedding is list float");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+            List<IndexData> embedding = fields.get(0).getIndexValue();
+            return searchField(embedding, result, options);
         });
     }
 
@@ -123,11 +111,9 @@ public class MilvusSearchTask extends AlgoInferenceTask {
         return new SearchResultsWrapper(response.getData().getResults());
     }
 
-    protected Map<String, List<Object>> searchIdScore(List<List<Float>> embedding, List<String> names, Map<String, Object> options) {
-        Assert.isTrue(CollectionUtils.isNotEmpty(names) && names.size() == 1, "names should = {id, score}");
-        SearchResultsWrapper wrapper = requestMilvus(embedding, Lists.newArrayList(), options);
-        List<Object> milvusIds = Lists.newArrayList();
-        List<Object> milvusScores = Lists.newArrayList();
+    protected boolean searchIdScore(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
+        Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()), List.of(), options);
         for (int i = 0; i < embedding.size(); ++i) {
             Map<String, Double> idScores = Maps.newHashMap();
             List<Object> itemIds = Lists.newArrayList();
@@ -138,23 +124,24 @@ public class MilvusSearchTask extends AlgoInferenceTask {
                 itemIds.add(String.valueOf(x.getLongID()));
                 itemScores.add(x.getScore());
             });
-            milvusIds.add(itemIds);
-            milvusScores.add(itemScores);
+            result.get(0).addIndexData(FieldData.create(embedding.get(i).getIndex(), itemIds));
+            result.get(1).addIndexData(FieldData.create(embedding.get(i).getIndex(), itemScores));
         }
-        return Map.of(names.get(0), milvusIds, names.get(1), milvusScores);
+        return true;
     }
 
     @SuppressWarnings("unchecked")
-    protected Map<String, List<Object>> searchField(List<List<Float>> embedding, List<String> names, Map<String, Object> options) {
-        Assert.isTrue(CollectionUtils.isNotEmpty(names), "names should not empty");
-        SearchResultsWrapper wrapper = requestMilvus(embedding, names, options);
+    protected boolean searchField(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
+        Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()),
+                result.stream().map(FieldData::getName).collect(Collectors.toList()), options);
         Map<String, List<Object>> res = Maps.newHashMap();
         for (int i = 0; i < embedding.size(); ++i) {
-            for (String field : names) {
-                List<Object> item = (List<Object>) wrapper.getFieldData(field, i);
-                res.put(field, item);
+            for (FieldData field : result) {
+                List<Object> item = (List<Object>) wrapper.getFieldData(field.getName(), i);
+                field.addIndexData(FieldData.create(embedding.get(i).getIndex(), item));
             }
         }
-        return res;
+        return true;
     }
 }

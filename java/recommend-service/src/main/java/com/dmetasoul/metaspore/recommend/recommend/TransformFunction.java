@@ -13,19 +13,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package com.dmetasoul.metaspore.recommend.functions;
+package com.dmetasoul.metaspore.recommend.recommend;
 
+import com.dmetasoul.metaspore.recommend.data.DataContext;
+import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.serving.FeatureTable;
 
 import java.util.List;
 import java.util.Map;
 
-public interface ScatterFunction extends Function {
-
-    @Override
-    default List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-        throw new IllegalCallerException("ScatterFunction only has aggregate function!");
-    }
-
-    Map<String, List<Object>> scatter(List<FieldData> fields, List<String> names, Map<String, Object> options);
+public interface TransformFunction {
+    boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options);
 }

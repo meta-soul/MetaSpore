@@ -26,7 +26,7 @@ public class EnumFunction implements Function{
 
 
     @Override
-    public List<Object> process(List<FieldData> fields, Map<String, Object> options) {
-        return null;
+    public boolean process(List<FieldData> fields, List<FieldData> result, Map<String, Object> options) {
+        return true;
     }
 }

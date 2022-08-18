@@ -18,7 +18,7 @@ package com.dmetasoul.metaspore.recommend.recommend.diversifier;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.functions.TransformFunction;
+import com.dmetasoul.metaspore.recommend.recommend.TransformFunction;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;

@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.dmetasoul.metaspore.recommend.operator.ArrowConv.convValue;
+
 /**
  * 用于保存服务结果
  * Created by @author qinyy907 in 14:24 22/07/15.
@@ -48,7 +50,7 @@ public class DataResult {
         FieldVector vector = featureTable.getVector(field);
         List<Object> values = Lists.newArrayList();
         for (int i = 0; i < vector.getValueCount(); ++i) {
-            values.add(vector.getObject(i));
+            values.add(convValue(vector.getField(), vector.getObject(i)));
         }
         return values;
     }
@@ -57,7 +59,7 @@ public class DataResult {
         if (featureTable == null || featureTable.getVector(field) == null) return null;
         FieldVector vector = featureTable.getVector(field);
         if (index < vector.getValueCount() && index >= 0) {
-            return vector.getObject(index);
+            return convValue(vector.getField(), vector.getObject(index));
         }
         return null;
     }
@@ -77,13 +79,13 @@ public class DataResult {
         Set<Object> set = Sets.newHashSet();
         if (doDup) {
             for (int i = 0; i < vector.getValueCount(); ++i) {
-                set.add(vector.getObject(i));
+                set.add(convValue(vector.getField(), vector.getObject(i)));
             }
         }
         for (int i = 0; i < fieldVector.getValueCount(); ++i) {
             if (!set.contains(fieldVector.getObject(i))) {
                 int index = featureTable.getRowCount();
-                DataTypes.getDataType(type).set(featureTable, field, index, fieldVector.getObject(i));
+                DataTypes.getDataType(type).set(featureTable, field, index, convValue(vector.getField(), fieldVector.getObject(i)));
             }
         }
     }

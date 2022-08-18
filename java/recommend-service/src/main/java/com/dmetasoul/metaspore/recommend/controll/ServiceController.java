@@ -68,11 +68,7 @@ public class ServiceController {
         }
         DataResult result;
         DataContext context = new DataContext(req);
-        if (taskFlowConfig.getSourceTables().containsKey(task) && !taskFlowConfig.getSourceTables().get(task).getKind().equals("request")) {
-            result = taskService.execute(new ServiceRequest(req), context);
-        } else {
-            result = taskService.execute(context);
-        }
+        result = taskService.execute(new ServiceRequest(req), context);
         if (result == null) {
             return ServiceResult.of(-1, "taskService execute fail!");
         }

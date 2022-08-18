@@ -106,11 +106,11 @@ public class FeatureTask extends DataService {
     @Override
     protected void preCondition(ServiceRequest request, DataContext context) {
         immediateTables.clear();
+        immediateTables.addAll(feature.getImmediateFrom());
         for (String table : feature.getImmediateFrom()) {
             DataResult result = execute(table, request, context);
             Assert.notNull(result, "immediateTables DataResult is not exist! at " + table);
         }
-        immediateTables.addAll(feature.getImmediateFrom());
         rewritedField.clear();
         rewritedField.putAll(immediateRewritedField);
         List<String> executeTables = Lists.newArrayList();
@@ -221,7 +221,7 @@ public class FeatureTask extends DataService {
     }
 
     private boolean matchCondition(Set<String> joinedTable, String table, FeatureConfig.Feature.Condition cond) {
-        if (cond == null || table == null || joinedTable == null) return false;
+        if (cond == null || table == null || joinedTable == null || joinedTable.contains(table)) return false;
         return (table.equals(cond.getLeft().getTable()) && joinedTable.contains(cond.getRight().getTable())) ||
                 (table.equals(cond.getRight().getTable()) && joinedTable.contains(cond.getLeft().getTable()));
     }
@@ -335,20 +335,25 @@ public class FeatureTask extends DataService {
         joinedTables.add(firstTable);
         Map<FeatureConfig.Field, List<Object>> joinTable = data.get(firstTable);
         while (!noJoinTables.isEmpty()) {
-            for (String table : noJoinTables) {
-                List<FeatureConfig.Feature.Condition> conditions = Lists.newArrayList();
-                feature.getCondition().forEach(cond -> {
-                    if (matchCondition(joinedTables, table, cond)) {
-                        if (table.equals(cond.getRight().getTable())) {
-                            conditions.add(FeatureConfig.Feature.Condition.reverse(cond));
-                        } else {
-                            conditions.add(cond);
+            boolean updateJoinedTable = true;
+            while (updateJoinedTable) {
+                updateJoinedTable = false;
+                for (String table : noJoinTables) {
+                    List<FeatureConfig.Feature.Condition> conditions = Lists.newArrayList();
+                    feature.getCondition().forEach(cond -> {
+                        if (matchCondition(joinedTables, table, cond)) {
+                            if (table.equals(cond.getRight().getTable())) {
+                                conditions.add(FeatureConfig.Feature.Condition.reverse(cond));
+                            } else {
+                                conditions.add(cond);
+                            }
                         }
+                    });
+                    if (!conditions.isEmpty()) {
+                        joinTable = JoinFeatureArray(conditions, data.get(table), joinTable);
+                        joinedTables.add(table);
+                        updateJoinedTable = true;
                     }
-                });
-                if (!conditions.isEmpty()) {
-                    joinTable = JoinFeatureArray(conditions, data.get(table), joinTable);
-                    joinedTables.add(table);
                 }
             }
             if (!joinedTables.isEmpty()) {
@@ -359,7 +364,7 @@ public class FeatureTask extends DataService {
             if (noJoinTables.iterator().hasNext()) {
                 String nextTable = noJoinTables.iterator().next();
                 joinedTables.add(nextTable);
-                joinTable = data.get(firstTable);
+                joinTable = data.get(nextTable);
             }
         }
         return setDataResult(featureArrays);

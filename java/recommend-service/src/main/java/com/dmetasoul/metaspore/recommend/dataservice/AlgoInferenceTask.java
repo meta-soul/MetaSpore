@@ -17,8 +17,9 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -71,41 +72,45 @@ public class AlgoInferenceTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("genEmbedding", (fields, options) -> {
+        addFunction("genEmbedding", (fields, result, options) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FeatureTable featureTable = convFeatureTable(String.format("embedding_%s", name), fields);
             String targetName = Utils.getField(options, "targetKey", targetKey);
             ArrowTensor arrowTensor = predict(featureTable, targetName);
             List<Object> res = Lists.newArrayList();
             res.addAll(getFromTensor(arrowTensor));
-            return res;
+            result.get(0).setValue(res, getFieldIndex(fields));
+            return true;
         });
-        addFunction("predictScore", (fields, options) -> {
+        addFunction("predictScore", (fields, result, options) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FeatureTable featureTable = convFeatureTable(String.format("predict_%s", name), fields);
             String targetName = Utils.getField(options, "targetKey", targetKey);
             int index = Utils.getField(options, "targetIndex", targetIndex);
             ArrowTensor arrowTensor = predict(featureTable, targetName);
             List<Object> res = Lists.newArrayList();
             res.addAll(getFromTensor(arrowTensor, index));
-            return res;
+            result.get(0).setValue(res, getFieldIndex(fields));
+            return true;
         });
-        addFunction("rankCollectItem", (ScatterFunction) (fields, names, options) -> {
+        addFunction("rankCollectItem", (fields, result, options) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 2,
                     "input fields must not empty");
             Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_STR),
                     "rankCollectItem input[0] is itemId list<string>");
             Assert.isTrue(fields.get(1).isMatch(DataTypeEnum.LIST_DOUBLE),
                     "rankCollectItem input[1] is score list<double>");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             int limit = Utils.getField(options, "maxReservation", maxReservation);
-            List<String> itemIds = fields.get(0).getValue();
+            List<IndexData> itemIds = fields.get(0).getIndexValue();
             List<Double> scores = fields.get(1).getValue();
-            Map<String, List<Object>> res = Maps.newHashMap();
             for (int i = 0; i < itemIds.size() && i < limit; ++i) {
-                res.computeIfAbsent(names.get(0), k->Lists.newArrayList()).add(itemIds.get(i));
-                res.computeIfAbsent(names.get(1), k->Lists.newArrayList()).add(Map.of(algoName, Utils.get(scores, i, 0.0)));
+                result.get(0).addIndexData(itemIds.get(i));
+                result.get(1).addIndexData(FieldData.create(itemIds.get(i).getIndex(), Map.of(algoName, Utils.get(scores, i, 0.0))));
             }
-            return res;
+            return true;
         });
     }
     @Override

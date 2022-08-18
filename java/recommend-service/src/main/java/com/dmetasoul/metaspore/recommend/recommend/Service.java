@@ -11,7 +11,6 @@ import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.TransformFunction;
 import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;

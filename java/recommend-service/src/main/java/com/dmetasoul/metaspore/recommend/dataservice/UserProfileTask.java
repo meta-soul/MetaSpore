@@ -18,8 +18,8 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.FlatFunction;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -45,36 +45,33 @@ public class UserProfileTask extends AlgoTransformTask {
     }
     @Override
     public void addFunctions() {
-        addFunction("splitRecentIds", (fields, options) -> {
+        addFunction("splitRecentIds", (fields, result, options) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FieldData fieldData = fields.get(0);
             Assert.isTrue(fieldData.isMatch(DataTypeEnum.STRING), "split input must string!");
             String split = Utils.getField(options, "splitor", splitor);
-            List<Object> input = fieldData.getValue();
-            List<Object> res = Lists.newArrayList();
-            for (Object o : input) {
-                Assert.isTrue(o instanceof String, "value must string!");
-                String value = (String) o;
-                res.add(List.of(value.split(split)));
+            List<IndexData> input = fieldData.getIndexValue();
+            for (IndexData o : input) {
+                Assert.isTrue(o.getVal() instanceof String, "value must string!");
+                String value = o.getVal();
+                result.get(0).addIndexData(FieldData.create(o.getIndex(), List.of(value.split(split))));
             }
-            return res;
+            return true;
         });
-        addFunction("recentWeight", (FlatFunction) (indexs, fields, options) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && indexs != null, "input data is not null");
-            List<Object> res = Lists.newArrayList();
-            List<Object> input = fields.get(0).getValue();
+        addFunction("recentWeight", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input data is not null");
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+            List<IndexData> input = fields.get(0).getIndexValue();
             int num = 0;
-            for (int i = 0; i < input.size(); ++i) {
-                Object item = input.get(i);
-                Assert.isInstanceOf(Collection.class, item);
-                Collection<?> list = (Collection<?>) item;
-                for (Object o : list) {
-                    num += 1;
-                    indexs.add(i);
-                    res.add(1 / (1 + Math.pow((list.size() - i - 1), alpha)));
+            for (IndexData item : input) {
+                List<String> list = item.getVal();
+                for (int k = 0; k < list.size(); ++k) {
+                    result.get(0).addIndexData(FieldData.create(item.getIndex(), list.get(k)));
+                    result.get(1).addIndexData(FieldData.create(item.getIndex(), 1 / (1 + Math.pow((list.size() - k - 1), alpha))));
                 }
             }
-            return res;
+            return true;
         });
     }
 }

@@ -114,7 +114,7 @@ feature-service:
       condition:
         - userAction.user_id: userProfile.user_id
           type: right
-        - userProfi le.user_id: userReq.user_id
+        - userProfile.user_id: userReq.user_id
     - name: feature_item_match_icf
       from: [ algotransform_item_match_userprofile, itemcfData]
       select: [ algotransform_item_match_userprofile.user_id, algotransform_item_match_userprofile.item_score, itemcfData.item_ids, itemcfData.item_scores  ]
@@ -149,21 +149,17 @@ feature-service:
       taskName: UserProfile
       feature: feature_item_match_user
       fieldActions:
-        item_ids:
+        - name: item_ids
           type: list_str
           fields: recent_movie_ids
           func: splitRecentIds
           options:
             splitor: ","
-        item_id:
-          type: str
-          input: item_ids
-          func: flatList
-        item_score:
-          type: double
+        - names: [item_id, item_score]
+          types: [str, double]
           input: item_ids
           func: recentWeight
-        user_id:
+        - name: user_id
           type: str
           fields: user_id
       output:
@@ -174,14 +170,13 @@ feature-service:
       taskName: ItemMatcher
       feature: feature_item_match_icf
       fieldActions:
-        itemScore:
-          type: list_obj
+        - name: itemScore
+          type: list_pair_str_double
           fields: [item_ids, item_scores, item_score]
           func: toItemScore
-        user_id:
+        - name: user_id
           type: str
           fields: user_id
-      scatterFieldActions:
         - names: [item_id, score, origin_scores]
           types: [str, double, map_str_double]
           input: itemScore
@@ -195,14 +190,13 @@ feature-service:
       taskName: ItemMatcher
       feature: feature_item_match_swing
       fieldActions:
-        itemScore:
-          type: list_obj
+        - name: itemScore
+          type: list_pair_str_double
           fields: [item_ids, item_scores, item_score]
           func: toItemScore
-        user_id:
+        - name: user_id
           type: str
           fields: user_id
-      scatterFieldActions:
         - names: [item_id, score, origin_scores]
           types: [str, double, map_str_double]
           input: itemScore
@@ -216,13 +210,13 @@ feature-service:
       taskName: AlgoInference
       feature: feature_twotower_user
       fieldActions:
-        user_embedding:
+        - name: user_embedding
           type: list_float
           fields: [ user_id, last_genre, gender, age, name, language ]
           func: genEmbedding
           options:
             targetKey: "output"
-        user_id:
+        - name: user_id
           type: str
           fields: user_id
       output:
@@ -232,18 +226,17 @@ feature-service:
       taskName: MilvusSearch
       algoTransform: algotransform_twotower_user_embedding
       fieldActions:
-        user_id:
+        - name: user_id
           type: str
           fields: user_id
-        milvus_id:
+        - name: milvus_id
           type: str
           input: milvus_ids
           func: flatList
-        item_score:
+        - name: item_score
           type: double
           input: scores
           func: flatList
-      scatterFieldActions:
         - names: [ milvus_ids, scores]
           types: [ list_str, list_double]
           fields: user_embedding
@@ -256,14 +249,13 @@ feature-service:
       taskName: ItemMatcher
       feature: feature_twotower_match
       fieldActions:
-        itemScore:
-          type: list_obj
+        - name: itemScore
+          type: list_pair_str_double
           fields: [item_id, item_score]
           func: toItemScore
-        user_id:
+        - name: user_id
           type: str
           fields: user_id
-      scatterFieldActions:
         - names: [item_id, score, origin_scores]
           types: [str, double, map_str_double]
           input: itemScore

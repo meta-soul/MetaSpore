@@ -17,10 +17,8 @@ package com.dmetasoul.metaspore.recommend.configure;
 
 import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -400,13 +398,32 @@ public class FeatureConfig {
 
     @Data
     public static class FieldAction {
-        protected String name;
-        protected String type;
+        private List<String> names;
+        private List<String> types;
         protected List<Field> fields;
         protected List<String> input;
         protected String func;
         protected Map<String, Object> options;
 
+        public void setNames(List<String> names) {
+            if (CollectionUtils.isEmpty(names)) return;
+            this.names = names;
+        }
+
+        public void setName(String name) {
+            if (StringUtils.isEmpty(name)) return;
+            this.names = List.of(name);
+        }
+
+        public void setTypes(List<String> types) {
+            if (CollectionUtils.isEmpty(types)) return;
+            this.types = types;
+        }
+
+        public void setType(String type) {
+            if (StringUtils.isEmpty(type)) return;
+            this.types = List.of(type);
+        }
         public void setFields(List<String> fields) {
             if (CollectionUtils.isEmpty(fields)) return;
             this.fields = Field.create(fields);
@@ -428,33 +445,13 @@ public class FeatureConfig {
         }
 
         public boolean checkAndDefault() {
-            if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
-                log.error("AlgoTransform FieldAction config type:{} must be support!", type);
-                return false;
-            }
-            if (CollectionUtils.isEmpty(input) && CollectionUtils.isEmpty(fields)) {
-                throw new RuntimeException("fieldaction input and field must not be empty at the same time");
-            }
-            return true;
-        }
-    }
-
-    @Data
-    public static class ScatterFieldAction extends FieldAction {
-        private List<String> names;
-        private List<String> types;
-        @Override
-        public boolean checkAndDefault() {
-            if (CollectionUtils.isEmpty(names) || CollectionUtils.isEmpty(types) || names.size() != types.size()) {
-                throw new RuntimeException("AlgoTransform ScatterFieldAction config name and type must be equel!");
-            }
+            Assert.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
+                "AlgoTransform ScatterFieldAction config name and type must be equel!");
+            Assert.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
+                "fieldaction input and field must not be empty at the same time");
             for (String type : types) {
-                if (StringUtils.isEmpty(type) || DataTypes.getDataType(type) == null) {
-                    throw new RuntimeException("AlgoTransform ScatterFieldAction config type must be support! type:" + type);
-                }
-            }
-            if (CollectionUtils.isEmpty(input) && CollectionUtils.isEmpty(fields)) {
-                throw new RuntimeException("ScatterFieldAction input and field must not be empty at the same time");
+                Assert.isTrue(StringUtils.isNotEmpty(type) && DataTypes.getDataType(type) != null,
+                    "AlgoTransform FieldAction config type must be support! type:" + type);
             }
             return true;
         }
@@ -466,8 +463,7 @@ public class FeatureConfig {
         private String taskName;
         private List<String> feature;
         private List<String> algoTransform;
-        private Map<String, FieldAction> fieldActions;
-        private List<ScatterFieldAction> scatterFieldActions;
+        private List<FieldAction> fieldActions;
         private List<String> output;
         private Map<String, Object> options;
 
@@ -475,6 +471,8 @@ public class FeatureConfig {
         protected Map<String, String> columnMap;
 
         private List<FieldAction> actionList;
+
+        protected Map<String, String> columnRel;
 
         public void setFeature(List<String> list) {
             feature = list;
@@ -498,55 +496,47 @@ public class FeatureConfig {
             }
             columnNames = output;
             columnMap = Maps.newHashMap();
+            columnRel = Maps.newHashMap();
             actionList = Lists.newArrayList();
+            Map<String, FieldAction> fieldActionMap = Maps.newHashMap();
             Stack<FieldAction> stack = new Stack<>();
             Set<String> actionSet = Sets.newHashSet();
-            if (CollectionUtils.isNotEmpty(scatterFieldActions)) {
-                for (ScatterFieldAction scatter : scatterFieldActions) {
-                    for (int i = 0; i < scatter.names.size(); ++i) {
-                        String name = scatter.names.get(i);
-                        fieldActions.put(name, scatter);
-                        columnMap.put(name, scatter.types.get(i));
+            if (CollectionUtils.isNotEmpty(fieldActions)) {
+                for (FieldAction action : fieldActions) {
+                    Assert.isTrue(action.checkAndDefault(), "field action check!");
+                    for (int i = 0; i < action.names.size(); ++i) {
+                        String name = action.names.get(i);
+                        fieldActionMap.put(name, action);
+                        columnMap.put(name, action.types.get(i));
+                        columnRel.put(name, action.names.get(0));
                     }
                 }
             }
             for (String col : output) {
-                FieldAction action = fieldActions.get(col);
+                if (actionSet.contains(col)) continue;
+                FieldAction action = fieldActionMap.get(col);
                 Assert.notNull(action, "output col must has Action colName:" + col);
                 stack.push(action);
-                action.setName(col);
-                actionSet.add(col);
-                Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + col);
-                columnMap.putIfAbsent(col, action.getType());
+                actionSet.addAll(action.names);
             }
-            boolean enableAction;
+            boolean flag;
             while (!stack.empty()) {
                 FieldAction action = stack.peek();
-                enableAction = true;
+                flag = true;
                 if (CollectionUtils.isNotEmpty(action.getInput())) {
                     for (String item : action.getInput()) {
                         if (actionSet.contains(item)) {
                             continue;
                         }
-                        FieldAction fieldAction = fieldActions.get(item);
+                        FieldAction fieldAction = fieldActionMap.get(item);
                         Assert.notNull(fieldAction, "FieldAction.input item must has Action item:" + item);
                         stack.push(fieldAction);
-                        action.setName(item);
-                        actionSet.add(item);
-                        Assert.isTrue(action.checkAndDefault(), "action type must ok, col:" + item);
-                        enableAction = false;
+                        actionSet.addAll(fieldAction.names);
+                        flag = false;
                     }
                 }
-                if (enableAction) {
-                    if (action instanceof ScatterFieldAction) {
-                        if (!actionSet.contains(action.getName())) {
-                            actionList.add(action);
-                            ScatterFieldAction scatterAction = (ScatterFieldAction) action;
-                            actionSet.addAll(scatterAction.names);
-                        }
-                    } else {
-                        actionList.add(action);
-                    }
+                if (flag) {
+                    actionList.add(action);
                     stack.pop();
                 }
             }

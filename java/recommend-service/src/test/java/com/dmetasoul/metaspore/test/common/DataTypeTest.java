@@ -11,17 +11,12 @@ import com.mysql.cj.jdbc.Blob;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.arrow.vector.util.JsonStringArrayList;
-import org.apache.arrow.vector.util.JsonStringHashMap;
-import org.apache.arrow.vector.util.Text;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
@@ -119,8 +114,8 @@ public class DataTypeTest {
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
             log.info("index:{}, data:{}", i, result.get(field, i));
         }
-        Assert.assertEquals(data, result.get(field, 0).toString());
-        Assert.assertEquals(data1, result.get(field, 1).toString());
+        Assert.assertEquals(data, result.get(field, 0));
+        Assert.assertEquals(data1, result.get(field, 1));
     }
 
     @Test
@@ -136,11 +131,11 @@ public class DataTypeTest {
         Assert.assertTrue(type.set(featureTable, field, 0, keys));
         featureTable.finish();
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
-            @SuppressWarnings("unchecked") List<Text> data = (List<Text>) result.get(field, i);
+            @SuppressWarnings("unchecked") List<String> data = (List<String>) result.get(field, i);
             log.info("index:{}, data:{}", i, data);
             Assert.assertEquals(keys.size(), data.size());
             for (int k = 0; k < data.size(); ++k) {
-                Assert.assertEquals(keys.get(k), data.get(k).toString());
+                Assert.assertEquals(keys.get(k), data.get(k));
             }
         }
     }
@@ -176,8 +171,8 @@ public class DataTypeTest {
             @SuppressWarnings("unchecked") List<Object> data = (List<Object>) result.get(field + type.getId(), 0);
             Assert.assertEquals(list.size(), data.size());
             for (int k = 0; k < data.size(); ++k) {
-                if (type.equals(DataTypeEnum.LIST_STR)) {
-                    Assert.assertEquals(list.get(k), data.get(k).toString());
+                if (type.equals(DataTypeEnum.LIST_DOUBLE)) {
+                    Assert.assertEquals(Double.parseDouble(String.valueOf(list.get(k))), data.get(k));
                 } else {
                     Assert.assertEquals(list.get(k), data.get(k));
                 }
@@ -203,10 +198,10 @@ public class DataTypeTest {
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
             log.info("index:{}, data:{}", i, result.get(field, i));
         }
-        List<JsonStringHashMap<String, Object>> data = type.get(featureTable, field, 0);
-        for (JsonStringHashMap<String, Object> entry : data) {
+        List<Map<String, Object>> data = type.get(featureTable, field, 0);
+        for (Map<String, Object> entry : data) {
             log.info("get entry key: {}, value: {}", entry.get("key"), entry.get("value"));
-            Assert.assertEquals(entry.get("value"), scores.get(entry.get("key").toString()));
+            Assert.assertEquals(entry.get("value"), scores.get(entry.get("key")));
         }
     }
 
@@ -226,11 +221,11 @@ public class DataTypeTest {
             log.info("map index:{}, data:{}", i, result.get(field, i));
         }
 
-        List<JsonStringHashMap<String, Object>> data = type.get(featureTable, field, 0);
+        Map<String, Object> data = type.get(featureTable, field, 0);
         Assert.assertEquals(data.size(), scores.size());
-        for (JsonStringHashMap<String, Object> entry : data) {
-            log.info("get entry key: {}, value: {}", entry.get("key"), entry.get("value"));
-            Assert.assertEquals(entry.get("value"), scores.get(entry.get("key").toString()));
+        for (Map.Entry<String, Object> entry : data.entrySet()) {
+            log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());
+            Assert.assertEquals(entry.getValue(), scores.get(entry.getKey()));
         }
     }
 
@@ -260,15 +255,11 @@ public class DataTypeTest {
         for (DataTypeEnum type : types) {
             log.info("index:{}, type:{}, data:{}", 0, type, result.get(field + type.getId(), 0));
             Map<String, Object> map = datas.getOrDefault(type.getId(), Map.of());
-            @SuppressWarnings("unchecked") List<JsonStringHashMap<String, Object>> data = (List<JsonStringHashMap<String, Object>>) result.get(field + type.getId(), 0);
+            Map<String, Object> data = (Map<String, Object>) result.get(field + type.getId(), 0);
             Assert.assertEquals(map.size(), data.size());
-            for (JsonStringHashMap<String, Object> entry : data) {
-                log.info("get entry key: {}, value: {}", entry.get("key"), entry.get("value"));
-                if (type.equals(DataTypeEnum.MAP_STR_STR)) {
-                    Assert.assertEquals(entry.get("value").toString(), map.get(entry.get("key").toString()));
-                } else {
-                    Assert.assertEquals(entry.get("value"), map.get(entry.get("key").toString()));
-                }
+            for (Map.Entry<String, Object> entry : data.entrySet()) {
+                log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());
+                Assert.assertEquals(entry.getValue(), map.get(entry.getKey()));
             }
         }
     }

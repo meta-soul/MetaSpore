@@ -20,29 +20,22 @@ import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
+import com.dmetasoul.metaspore.recommend.data.*;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.AggregateFunction;
-import com.dmetasoul.metaspore.recommend.functions.FlatFunction;
 import com.dmetasoul.metaspore.recommend.functions.Function;
-import com.dmetasoul.metaspore.recommend.functions.ScatterFunction;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
@@ -54,9 +47,8 @@ public class AlgoTransformTask extends DataService {
     protected FeatureConfig.AlgoTransform algoTransform;
     protected Map<String, Function> functionMap;
     protected Map<String, Function> additionFunctions;
-    protected Map<String, List<Object>> actionResult;
+    protected Map<String, FieldData> actionResult;
     protected Map<String, String> actionTypes;
-    private List<Integer> actionIndex;
     public <T> T getOptionOrDefault(String key, T value) {
         return Utils.getField(algoTransform.getOptions(), key, value);
     }
@@ -83,10 +75,10 @@ public class AlgoTransformTask extends DataService {
         depend.setWhen(depends);
         depend.setAny(false);
         additionFunctions = Maps.newHashMap();
+        initFunctions();
         addFunctions();
         actionResult = Maps.newHashMap();
         actionTypes = Maps.newHashMap();
-        actionIndex = Lists.newArrayList();
         return initTask();
     }
 
@@ -99,26 +91,22 @@ public class AlgoTransformTask extends DataService {
         super.preCondition(request, context);
         actionResult.clear();
         actionTypes.clear();
-        actionIndex.clear();
     }
 
     public void initFunctions() {
-        addFunction("flatList", (FlatFunction) (indexs, fields, options) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && indexs != null, "input data is not null");
-            List<Object> res = Lists.newArrayList();
-            List<Object> input = fields.get(0).getValue();
-            int num = 0;
-            for (int i = 0; i < input.size(); ++i) {
-                Object item = input.get(i);
-                Assert.isInstanceOf(Collection.class, item);
-                Collection<?> list = (Collection<?>) item;
+        addFunction("flatList", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(result), "input and result must not null");
+            List<IndexData> res = Lists.newArrayList();
+            List<IndexData> input = fields.get(0).getIndexValue();
+            for (IndexData item : input) {
+                Assert.isInstanceOf(Collection.class, item.getVal());
+                Collection<?> list = item.getVal();
                 for (Object o : list) {
-                    num += 1;
-                    indexs.add(i);
-                    res.add(o);
+                    res.add(FieldData.create(item.getIndex(), o));
                 }
             }
-            return res;
+            result.get(0).setIndexValue(res);
+            return true;
         });
     }
 
@@ -137,122 +125,142 @@ public class AlgoTransformTask extends DataService {
         return data;
     }
 
-    private void alignActionResult(List<Integer> indexs, String col, List<Object> res) {
-        if (CollectionUtils.isEmpty(indexs)) {
-            actionResult.clear();
-            actionIndex.clear();
-            for (int i = 0; i < res.size(); ++i) {
-                actionIndex.add(i);
+    private int getNextNum(Map<Integer, Integer> dataIndex, Map<Integer, IndexData> resItem) {
+        if (MapUtils.isEmpty(dataIndex) || MapUtils.isEmpty(resItem)) return 0;
+        int next = 0;
+        for (int id : resItem.keySet()) {
+            if (next < (dataIndex.get(id) + 1)) next = dataIndex.get(id) + 1;
+        }
+        return next;
+    }
+
+    private List<List<IndexData>> getIndexData(List<FieldData> fieldDatas, int index) {
+        if (CollectionUtils.isEmpty(fieldDatas)) return null;
+        List<List<IndexData>> res = Lists.newArrayList();
+        List<Map<Integer, List<IndexData>>> dataList = Lists.newArrayList();
+        Map<String, Integer> indexMap = Maps.newHashMap();
+        Map<Integer, Integer> maxIndexs = Maps.newHashMap();
+        Map<Integer, Integer> dataIndex = Maps.newHashMap();
+        for (int i = 0; i < fieldDatas.size(); ++i) {
+            FieldData itemData = fieldDatas.get(i);
+            String relField = algoTransform.getColumnRel().get(itemData.getName());
+            if (!indexMap.containsKey(relField)) {
+                indexMap.put(relField, indexMap.size());
+                dataList.add(Maps.newHashMap());
             }
-            actionResult.put(col, res);
-            return;
+            List<IndexData> data = itemData.getIndexData(index);
+            int fieldNum = indexMap.get(relField);
+            dataList.get(fieldNum).put(i, data);
+            dataIndex.put(i, fieldNum);
+            maxIndexs.put(fieldNum, Math.max(maxIndexs.getOrDefault(fieldNum, -1), data.size()));
         }
-        if (CollectionUtils.isEmpty(actionIndex)) {
-            actionIndex = indexs;
-            actionResult.put(col, res);
-            return;
+        Queue<Map<Integer, IndexData>> queue = new ArrayDeque<>();
+        for (int i = 0; i < maxIndexs.get(0); ++i) {
+            Map<Integer, IndexData> resItem = Maps.newHashMap();
+            for (Map.Entry<Integer, List<IndexData>> entry : dataList.get(0).entrySet()) {
+                resItem.put(entry.getKey(), Utils.get(entry.getValue(), i, null));
+            }
+            queue.add(resItem);
         }
-        List<Integer> newIndex = Lists.newArrayList();
-        List<Object> data = Lists.newArrayList();
-        Map<Integer, List<Integer>> inputIndex = Maps.newHashMap();
-        for (int i = 0; i < indexs.size(); ++i) {
-            inputIndex.computeIfAbsent(indexs.get(i), k->Lists.newArrayList()).add(i);
-        }
-        List<Integer> indexResult = Lists.newArrayList();
-        boolean needNewResult = false;
-        int maxIndex = 0;
-        for (int i = 0; i < actionIndex.size(); ++i) {
-            int index = actionIndex.get(i);
-            List<Integer> list = inputIndex.get(index);
-            if (CollectionUtils.isEmpty(list)) {
-                indexResult.add(i);
-                newIndex.add(index);
-                data.add(null);
+        while (!queue.isEmpty()) {
+            Map<Integer, IndexData> resItem = queue.poll();
+            if (MapUtils.isEmpty(resItem)) continue;
+            int nextNum = getNextNum(dataIndex, resItem);
+            if (nextNum >= dataList.size()) {
+                List<IndexData> item = Lists.newArrayList();
+                for (int i = 0; i < fieldDatas.size(); ++i) {
+                    item.add(resItem.get(i));
+                }
+                res.add(item);
             } else {
-                needNewResult = true;
-                for (int k : list) {
-                    indexResult.add(i);
-                    newIndex.add(index);
-                    data.add(res.get(k));
-                    if (k > maxIndex) maxIndex = k;
+                for (int i = 0; i < maxIndexs.get(nextNum); ++i) {
+                    Map<Integer, IndexData> newItem = Maps.newHashMap();
+                    newItem.putAll(resItem);
+                    for (Map.Entry<Integer, List<IndexData>> entry : dataList.get(nextNum).entrySet()) {
+                        newItem.put(entry.getKey(), Utils.get(entry.getValue(), i, null));
+                    }
+                    queue.add(newItem);
                 }
             }
         }
-        for (int i = maxIndex + 1; i < res.size(); ++i) {
-            data.add(res.get(i));
-            newIndex.add(i);
+        return res;
+    }
+    
+    private List<List<IndexData>> getIndexData(List<String> orderColumns, Map<String, FieldData> actionResult, int index) {
+        if (CollectionUtils.isEmpty(orderColumns)) return null;
+        List<FieldData> fieldDatas = Lists.newArrayList();
+        for (String col : orderColumns) {
+            FieldData itemData = actionResult.get(col);
+            Assert.notNull(itemData, "no found result at col: " + col);
+            fieldDatas.add(itemData);
         }
-        if (needNewResult) {
-            for (String key: actionResult.keySet()) {
-                List<Object> oldList = actionResult.get(key);
-                List<Object> newList = Lists.newArrayList();
-                for (int i : indexResult) {
-                    newList.add(get(oldList,i));
+        return getIndexData(fieldDatas, index);
+    }
+
+    public List<Integer> getFieldIndex(List<FieldData> fieldDatas) {
+        List<Integer> res = Lists.newArrayList();
+        if (CollectionUtils.isEmpty(fieldDatas)) return res;
+        int maxIndex = -1;
+        for (FieldData itemData : fieldDatas) {
+            if (maxIndex < itemData.getIndexValue().size()) maxIndex = itemData.getIndexValue().size();
+        }
+        for (int index = 0; index <= maxIndex; ++index) {
+            for (FieldData itemData : fieldDatas) {
+                IndexData item = Utils.get(itemData.getIndexValue(), index, null);
+                if (item == null) {
+                    continue;
                 }
-                actionResult.put(key, newList);
+                res.add(item.getIndex());
+                break;
             }
         }
-        actionIndex = newIndex;
-        actionResult.put(col, data);
+        return res;
+    }
+    
+    public List<FieldData> getFieldDataList(List<FieldData> fieldDatas) {
+        List<FieldData> res = Lists.newArrayList();
+        if (CollectionUtils.isEmpty(fieldDatas)) return res;
+        int maxIndex = -1;
+        for (FieldData itemData : fieldDatas) {
+            res.add(FieldData.of(itemData.getName(), itemData.getType()));
+            if (maxIndex < itemData.getMaxIndex()) maxIndex = itemData.getMaxIndex();
+        }
+        for (int index = 0; index <= maxIndex; ++index) {
+            List<List<IndexData>> data = getIndexData(fieldDatas, index);
+            if (CollectionUtils.isNotEmpty(data)) {
+                for (List<IndexData> list : data) {
+                    for (int i = 0; i < res.size(); ++i) {
+                        res.get(i).addIndexData(FieldData.create(index, list.get(i).getVal()));
+                    }
+                }
+            }
+        }
+        return res;
     }
 
-    private Object get(List<Object> list, int index) {
-        if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {
-            return list.get(index);
+    public void setTableData(List<String> orderColumns, Map<String, FieldData> actionResult, FeatureTable table) {
+        if (CollectionUtils.isEmpty(orderColumns)) return;
+        int maxIndex = -1;
+        for (String col : orderColumns) {
+            FieldData itemData = actionResult.get(col);
+            if (maxIndex < itemData.getMaxIndex()) maxIndex = itemData.getMaxIndex();
         }
-        return null;
-    }
-
-    private void alignActionResult(String col, List<Object> res) {
-        if (CollectionUtils.isEmpty(actionIndex)) {
-            for (int i = 0; i < res.size(); ++i) {
-                actionIndex.add(i);
+        int num = 0;
+        for (int index = 0; index <= maxIndex; ++index) {
+            List<List<IndexData>> data = getIndexData(orderColumns, actionResult, index);
+            if (CollectionUtils.isNotEmpty(data)) {
+                for (List<IndexData> list : data) {
+                    for (int i = 0; i < orderColumns.size(); ++i) {
+                        String col = orderColumns.get(i);
+                        FieldData itemData = actionResult.get(col);
+                        if (!itemData.getType().set(table, col, num, list.get(i).getVal())) {
+                            log.error("set featureTable fail at algo transform： {} col:{}", name, col);
+                        }
+                    }
+                    num += 1;
+                }
             }
         }
-        List<Object> data = Lists.newArrayList();
-        int maxIndex = 0;
-        for (int i : actionIndex) {
-            if (i > maxIndex) maxIndex = i;
-            data.add(get(res,i));
-        }
-        for (int i = maxIndex + 1; i < res.size(); ++i) {
-            data.add(res.get(i));
-            actionIndex.add(i);
-        }
-        actionResult.put(col, data);
-    }
-
-    private void alignActionResult(String col, Map<String, List<Object>> res, List<String> names) {
-        if (CollectionUtils.isEmpty(actionIndex)) {
-            for (int i = 0; i < res.size(); ++i) {
-                actionIndex.add(i);
-            }
-        }
-        int maxIndex = 0;
-        for (String key: names) {
-            List<Object> oldList = res.get(key);
-            List<Object> newList = Lists.newArrayList();
-            for (int i : actionIndex) {
-                if (i > maxIndex) maxIndex = i;
-                newList.add(get(oldList,i));
-            }
-            for (int i = maxIndex + 1; i < oldList.size(); ++i) {
-                newList.add(oldList.get(i));
-                actionIndex.add(i);
-            }
-            actionResult.put(key, newList);
-        }
-    }
-
-    private void alignActionResult(String col, Object res) {
-        if (CollectionUtils.isEmpty(actionIndex)) {
-            actionIndex.add(0);
-        }
-        List<Object> data = Lists.newArrayList();
-        for (int i : actionIndex) {
-            data.add(res);
-        }
-        actionResult.put(col, data);
     }
 
     @Override
@@ -269,21 +277,29 @@ public class AlgoTransformTask extends DataService {
                 for (FeatureConfig.Field field : fields) {
                     DataResult dataResult = dataResultMap.get(field.getTable());
                     List<Object> itemData = dataResult.get(field.getFieldName());
-                    alignActionResult(field.toString(), itemData);
                     FeatureConfig.Feature feature = taskFlowConfig.getFeatures().get(field.getTable());
                     fieldDatas.add(FieldData.of(field.toString(),
-                            DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName())), actionResult.get(field.toString())));
+                            DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName())), itemData));
                 }
             }
             if (CollectionUtils.isNotEmpty(input)) {
                 for (String item : input) {
-                    List<Object> itemData = actionResult.get(item);
+                    FieldData itemData = actionResult.get(item);
                     Assert.notNull(itemData, "use flat function result, no found result at input: " + item);
-                    fieldDatas.add(FieldData.of(item, DataTypes.getDataType(actionTypes.get(item)), itemData));
+                    fieldDatas.add(itemData);
                 }
             }
-            List<Object> res = fieldDatas.get(0).getValue();
-            if (StringUtils.isNotEmpty(fieldAction.getFunc())) {
+            List<FieldData> res = Lists.newArrayList();
+            for (int i = 0; i < fieldAction.getNames().size(); ++i) {
+                res.add(FieldData.of(fieldAction.getNames().get(i), DataTypes.getDataType(fieldAction.getTypes().get(i))));
+                actionResult.put(fieldAction.getNames().get(i), res.get(i));
+            }
+            if (StringUtils.isEmpty(fieldAction.getFunc())) {
+                Assert.isTrue(fieldDatas.size() >= res.size(), "no func need enough input field!");
+                for (int i = 0; i < res.size(); ++i) {
+                    res.get(i).setIndexValue(fieldDatas.get(i).getIndexValue());
+                }
+            } else {
                 Function function = additionFunctions.get(fieldAction.getFunc());
                 if (function == null) {
                     function = functionMap.get(fieldAction.getFunc());
@@ -291,46 +307,12 @@ public class AlgoTransformTask extends DataService {
                         throw new RuntimeException("function get fail at " + fieldAction.getFunc());
                     }
                 }
-                if (function instanceof FlatFunction) {
-                    FlatFunction flatFunction = (FlatFunction) function;
-                    List<Integer> indexs = Lists.newArrayList();
-                    res = flatFunction.flat(indexs, fieldDatas, fieldAction.getOptions());
-                    Assert.notNull(res, "process result is null at: " + fieldAction.getName());
-                    alignActionResult(indexs, fieldAction.getName(), res);
-                    actionTypes.put(fieldAction.getName(), fieldAction.getType());
-                } else if (function instanceof AggregateFunction) {
-                    AggregateFunction aggregateFunction = (AggregateFunction) function;
-                    Object obj = aggregateFunction.aggregate(fieldDatas, fieldAction.getOptions());
-                    Assert.notNull(res, "process result is null at: " + fieldAction.getName());
-                    alignActionResult(fieldAction.getName(), obj);
-                    actionTypes.put(fieldAction.getName(), fieldAction.getType());
-                } else if (function instanceof ScatterFunction) {
-                    ScatterFunction scatterFunction = (ScatterFunction) function;
-                    FeatureConfig.ScatterFieldAction scatterAction = (FeatureConfig.ScatterFieldAction) fieldAction;
-                    Map<String, List<Object>> scatterRes = scatterFunction.scatter(fieldDatas, scatterAction.getNames(), fieldAction.getOptions());
-                    Assert.notNull(scatterRes, "process result is null at: " + fieldAction.getName());
-                    alignActionResult(fieldAction.getName(), scatterRes, scatterAction.getNames());
-                    for (int i = 0; i < scatterAction.getNames().size(); ++i) {
-                        actionTypes.put(scatterAction.getNames().get(i), scatterAction.getTypes().get(i));
-                    }
-                } else {
-                    res = function.process(fieldDatas, fieldAction.getOptions());
-                    Assert.notNull(res, "process result is null at: " + fieldAction.getName());
-                    alignActionResult(fieldAction.getName(), res);
-                    actionTypes.put(fieldAction.getName(), fieldAction.getType());
+                if (!function.process(getFieldDataList(fieldDatas), res, fieldAction.getOptions())) {
+                    throw new RuntimeException("the function process fail. func:" + fieldAction.getFunc());
                 }
-            } else {
-                alignActionResult(fieldAction.getName(), res);
-                actionTypes.put(fieldAction.getName(), fieldAction.getType());
             }
         }
-        for (int i = 0; i < algoTransform.getColumnNames().size(); ++i) {
-            String col = algoTransform.getColumnNames().get(i);
-            DataTypeEnum dataType = dataTypes.get(i);
-            List<Object> itemData = actionResult.get(col);
-            Assert.notNull(itemData, "no found result at col: " + col);
-            setFieldData(featureTable, col, dataType, itemData);
-        }
+        setTableData(algoTransform.getColumnNames(), actionResult, featureTable);
         featureTable.finish();
         return transform(featureTable, context);
     }
@@ -353,7 +335,7 @@ public class AlgoTransformTask extends DataService {
         FeatureTable featureTable = new FeatureTable(name, inferenceFields, ArrowAllocator.getAllocator());
         for (FieldData fieldData: fields) {
             if (!fieldData.getType().set(featureTable, fieldData.getName(), fieldData.getValue())) {
-                log.error("set featureTable fail!");
+                log.error("set featureTable fail! convFeatureTable at {}", name);
             }
         }
         featureTable.finish();

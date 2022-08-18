@@ -192,7 +192,7 @@ public class TaskFlowConfig {
                     for (FeatureConfig.Field field : fields) {
                         if (StringUtils.isEmpty(field.getTable())) {
                             if (!fieldMap.containsKey(field.getFieldName()) || fieldMap.get(field.getFieldName()) == null) {
-                                log.error("AlgoTransform: {} fieldAction {} Field {} not exist!", item.getName(), fieldAction.getName(), field);
+                                log.error("AlgoTransform: {} Field {} not exist!", item.getName(), field);
                                 throw new RuntimeException("AlgoTransform check fail!");
                             }
                             field.setTable(fieldMap.get(field.getFieldName()));
@@ -200,24 +200,6 @@ public class TaskFlowConfig {
                             log.error("AlgoTransform {} fieldAction fields {} table must in depen!", item.getName(), field);
                             throw new RuntimeException("AlgoTransform check fail!");
                         }
-                    }
-                    if (StringUtils.isEmpty(fieldAction.getFunc())) {
-                        FeatureConfig.Feature feature = features.get(fields.get(0).getTable());
-                        if (feature != null) {
-                            fieldAction.setType(feature.getColumnMap().get(fields.get(0).getFieldName()));
-                        } else {
-                            FeatureConfig.AlgoTransform algoTransform = algoTransforms.get(fields.get(0).getTable());
-                            fieldAction.setType(algoTransform.getColumnMap().get(fields.get(0).getFieldName()));
-                        }
-                    } else if (!(fieldAction instanceof FeatureConfig.ScatterFieldAction)){
-                        Assert.notNull(fieldAction.getType(), "fieldAction type must set while has func! at " + fieldAction);
-                    }
-                }
-                List<String> input = fieldAction.getInput();
-                if (CollectionUtils.isNotEmpty(input) && CollectionUtils.isEmpty(fields)) {
-                    if (StringUtils.isEmpty(fieldAction.getFunc())) {
-                        FeatureConfig.FieldAction action = item.getFieldActions().get(input.get(0));
-                        fieldAction.setType(action.getType());
                     }
                 }
             }

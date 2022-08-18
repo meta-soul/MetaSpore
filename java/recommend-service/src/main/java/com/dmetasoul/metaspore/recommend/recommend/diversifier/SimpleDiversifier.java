@@ -20,7 +20,7 @@ import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.functions.TransformFunction;
+import com.dmetasoul.metaspore.recommend.recommend.TransformFunction;
 import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

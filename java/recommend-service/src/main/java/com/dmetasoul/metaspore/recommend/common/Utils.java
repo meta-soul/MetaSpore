@@ -17,7 +17,10 @@
 package com.dmetasoul.metaspore.recommend.common;
 
 
+import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.serving.ArrowTensor;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.param.MetricType;
 import io.milvus.param.R;
