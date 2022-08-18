@@ -237,45 +237,32 @@ public class FeatureTask extends DataService {
             List<Object> joinedData = joinTable.getOrDefault(fieldJoined, Lists.newArrayList());
             List<Object> tableData = data.getOrDefault(fieldTable, Lists.newArrayList());
             List<Pair<Integer, Integer>> indexList = Lists.newArrayList();
-            if (cond.getType() == JoinTypeEnum.LEFT) {
-                for (int j = 0; j < tableData.size(); ++j) {
-                    for (int i = 0; i < joinedData.size(); ++i) {
-                        if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
-                            indexList.add(Pair.of(i, j));
-                        } else {
-                            indexList.add(Pair.of(null, j));
-                        }
-                    }
-                    if (joinedData.isEmpty()) {
-                        indexList.add(Pair.of(null, j));
-                    }
-                }
-            } else {
+            for (int j = 0; j < tableData.size(); ++j) {
+                boolean noHit = true;
                 for (int i = 0; i < joinedData.size(); ++i) {
-                    for (int j = 0; j < tableData.size(); ++j) {
-                        if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
+                    if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
+                        if (cond.getType() == JoinTypeEnum.LEFT) {
                             indexList.add(Pair.of(i, j));
-                        } else {
-                            if (cond.getType() == JoinTypeEnum.RIGHT) {
-                                indexList.add(Pair.of(i, null));
-                            } else if (cond.getType() == JoinTypeEnum.FULL) {
-                                indexList.add(Pair.of(i, null));
-                                indexList.add(Pair.of(null, j));
-                            }
                         }
+                        noHit = false;
                     }
                 }
-                if (cond.getType() == JoinTypeEnum.FULL) {
-                    if (joinedData.isEmpty()) {
-                        for (int j = 0; j < tableData.size(); ++j) {
-                            indexList.add(Pair.of(null, j));
+                if (noHit && (cond.getType() == JoinTypeEnum.LEFT || cond.getType() == JoinTypeEnum.FULL)) {
+                    indexList.add(Pair.of(null, j));
+                }
+            }
+            for (int i = 0; i < joinedData.size(); ++i) {
+                boolean noHit = true;
+                for (int j = 0; j < tableData.size(); ++j) {
+                    if (joinedData.get(i) != null && joinedData.get(i).equals(tableData.get(j))) {
+                        if (cond.getType() != JoinTypeEnum.LEFT) {
+                            indexList.add(Pair.of(i, j));
                         }
+                        noHit = false;
                     }
-                    if (tableData.isEmpty()) {
-                        for (int i = 0; i < joinedData.size(); ++i) {
-                            indexList.add(Pair.of(i, null));
-                        }
-                    }
+                }
+                if (noHit && (cond.getType() == JoinTypeEnum.RIGHT || cond.getType() == JoinTypeEnum.FULL)) {
+                    indexList.add(Pair.of(i, null));
                 }
             }
             indexResult.clear();

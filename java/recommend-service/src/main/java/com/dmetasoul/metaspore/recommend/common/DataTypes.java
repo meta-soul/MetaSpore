@@ -93,6 +93,6 @@ public class DataTypes {
         dataTypes.put("map_str_double", DataTypeEnum.MAP_STR_DOUBLE);
         dataTypes.put("map_str_float", DataTypeEnum.MAP_STR_FLOAT);
         // value object only support string, int, long, float, double
-        dataTypes.put("list_pair_str_double", DataTypeEnum.LIST_PAIR_STR_DOUBLE);
+        dataTypes.put("list_pair_str_double", DataTypeEnum.LIST_ENTRY_STR_DOUBLE);
     }
 }

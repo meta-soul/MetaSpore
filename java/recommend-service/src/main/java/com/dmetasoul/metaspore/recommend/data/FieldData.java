@@ -1,6 +1,7 @@
 package com.dmetasoul.metaspore.recommend.data;
 
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.recommend.operator.ArrowConv;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -46,6 +47,7 @@ public class FieldData {
         if (CollectionUtils.isNotEmpty(value)) {
             value.forEach(indexData -> {
                 if (maxIndex < indexData.getIndex()) maxIndex = indexData.getIndex();
+                indexData.setType(type);
             });
         }
         this.indexValue = value;
@@ -56,6 +58,7 @@ public class FieldData {
         List<IndexData> data = Lists.newArrayList();
         for (int i = 0; i < value.size(); ++i) {
             data.add(new IndexData(i, value.get(i)));
+            data.get(i).setType(type);
         }
         maxIndex = value.size() - 1;
         this.indexValue = data;
@@ -67,6 +70,7 @@ public class FieldData {
         Assert.isTrue(index != null && value.size() == index.size(), "index and value must has same size");
         for (int i = 0; i < value.size(); ++i) {
             data.add(new IndexData(index.get(i), value.get(i)));
+            data.get(i).setType(type);
             if (maxIndex < index.get(i)) maxIndex = index.get(i);
         }
         this.indexValue = data;
@@ -81,8 +85,7 @@ public class FieldData {
         List<IndexData> res = Lists.newArrayList();
         if (CollectionUtils.isEmpty(indexValue)) return res;
         for (int i = from; i < indexValue.size(); ++i) {
-            IndexData data
-                    = indexValue.get(i);
+            IndexData data = indexValue.get(i);
             if (data.getIndex() == index || data.isAggregate()) {
                 res.add(data);
             }
@@ -98,6 +101,7 @@ public class FieldData {
         if (item == null) return;
         if (indexValue == null) indexValue = Lists.newArrayList();
         if (maxIndex < item.getIndex()) maxIndex = item.getIndex();
+        item.setType(type);
         indexValue.add(item);
     }
 

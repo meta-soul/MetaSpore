@@ -182,7 +182,7 @@ public class DataTypeTest {
 
     @Test
     public void TestListPairInArrow(){
-        DataTypeEnum type = DataTypeEnum.LIST_PAIR_STR_DOUBLE;
+        DataTypeEnum type = DataTypeEnum.LIST_ENTRY_STR_DOUBLE;
         Map<String, Double> scores = Map.of("aaa1123", 12.9, "bbb1234", 129.12, "ccc1234", 120.04);
 
         String field = "field";
@@ -192,16 +192,16 @@ public class DataTypeTest {
         result.setFeatureTable(featureTable);
         List<Map.Entry<String, Double>> list = Lists.newArrayList();
         list.addAll(scores.entrySet());
-        list.sort(Map.Entry.comparingByValue());
+        list.sort(Map.Entry.comparingByValue(Comparator.reverseOrder()));
         Assert.assertTrue(type.set(featureTable, field, 0, list));
         featureTable.finish();
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
             log.info("index:{}, data:{}", i, result.get(field, i));
         }
-        List<Map<String, Object>> data = type.get(featureTable, field, 0);
-        for (Map<String, Object> entry : data) {
-            log.info("get entry key: {}, value: {}", entry.get("key"), entry.get("value"));
-            Assert.assertEquals(entry.get("value"), scores.get(entry.get("key")));
+        List<Map.Entry<String, Object>> data = type.get(featureTable, field, 0);
+        for (Map.Entry<String, Object> entry : data) {
+            log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());
+            Assert.assertEquals(entry.getValue(), scores.get(entry.getKey()));
         }
     }
 

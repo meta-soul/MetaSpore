@@ -15,10 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.enums;
 
-import com.dmetasoul.metaspore.recommend.operator.ArrowOperator;
-import com.dmetasoul.metaspore.recommend.operator.ListOperator;
-import com.dmetasoul.metaspore.recommend.operator.MapOperator;
-import com.dmetasoul.metaspore.recommend.operator.StructOperator;
+import com.dmetasoul.metaspore.recommend.operator.*;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
@@ -287,7 +284,7 @@ public enum DataTypeEnum {
     LIST_STR(15, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",ArrowType.Utf8.INSTANCE)), new ListOperator<String>()),
     LIST_FLOAT(16, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE))), new ListOperator<Float>()),
     LIST_DOUBLE(17, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.notNullable("item",new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE))), new ListOperator<Double>()),
-    LIST_PAIR_STR_DOUBLE(18, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(new Field("item", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
+    LIST_ENTRY_STR_DOUBLE(18, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(new Field("item", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
             Field.notNullable("key",ArrowType.Utf8.INSTANCE),
             Field.notNullable("value",new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE))
     ))), new ListOperator<>()),
@@ -363,7 +360,7 @@ public enum DataTypeEnum {
 
     public <T> T get(FeatureTable featureTable, String col, int index) {
         op.init(featureTable);
-        return this.op.get(col, index);
+        return (T) ArrowConv.convValue(this, this.op.get(col, index));
     }
 
     public boolean set(FeatureTable featureTable, String col, int index, Object data) {

@@ -446,7 +446,7 @@ public class FeatureConfig {
 
         public boolean checkAndDefault() {
             Assert.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
-                "AlgoTransform ScatterFieldAction config name and type must be equel!");
+                "AlgoTransform FieldAction config name and type must be equel!");
             Assert.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
                 "fieldaction input and field must not be empty at the same time");
             for (String type : types) {

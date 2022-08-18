@@ -169,17 +169,16 @@ feature-service:
     - name: algotransform_item_match_icf
       taskName: ItemMatcher
       feature: feature_item_match_icf
+      options:
+        algo-name: "itemCF"
       fieldActions:
-        - name: itemScore
-          type: list_pair_str_double
-          fields: [item_ids, item_scores, item_score]
+        - names: [unique_user_id, itemScore]
+          types: [str, map_str_double]
+          fields: [user_id, item_ids, item_scores, item_score]
           func: toItemScore
-        - name: user_id
-          type: str
-          fields: user_id
-        - names: [item_id, score, origin_scores]
-          types: [str, double, map_str_double]
-          input: itemScore
+        - names: [user_id, item_id, score, origin_scores]
+          types: [str, str, double, map_str_double]
+          input: [unique_user_id, itemScore]
           func: recallCollectItem
       output:
         - user_id
@@ -189,17 +188,16 @@ feature-service:
     - name: algotransform_item_match_swing
       taskName: ItemMatcher
       feature: feature_item_match_swing
+      options:
+        algo-name: "swing"
       fieldActions:
-        - name: itemScore
-          type: list_pair_str_double
-          fields: [item_ids, item_scores, item_score]
+        - names: [unique_user_id, itemScore]
+          types: [str, map_str_double]
+          fields: [user_id, item_ids, item_scores, item_score]
           func: toItemScore
-        - name: user_id
-          type: str
-          fields: user_id
-        - names: [item_id, score, origin_scores]
-          types: [str, double, map_str_double]
-          input: itemScore
+        - names: [user_id, item_id, score, origin_scores]
+          types: [str, str, double, map_str_double]
+          input: [unique_user_id, itemScore]
           func: recallCollectItem
       output:
         - user_id
@@ -248,17 +246,16 @@ feature-service:
     - name: algotransform_twotower_match
       taskName: ItemMatcher
       feature: feature_twotower_match
+      options:
+        algo-name: "twotower"
       fieldActions:
-        - name: itemScore
-          type: list_pair_str_double
-          fields: [item_id, item_score]
-          func: toItemScore
-        - name: user_id
-          type: str
-          fields: user_id
-        - names: [item_id, score, origin_scores]
-          types: [str, double, map_str_double]
-          input: itemScore
+        - names: [unique_user_id, itemScore]
+          types: [str, map_str_double]
+          fields: [user_id, item_id, item_score]
+          func: toItemScore2
+        - names: [user_id, item_id, score, origin_scores]
+          types: [str, str, double, map_str_double]
+          input: [unique_user_id, itemScore]
           func: recallCollectItem
       output:
         - user_id
@@ -270,13 +267,13 @@ recommend-service:
     - name: SwingMatcher
       tasks: algotransform_item_match_swing
       options:
-        swingAlgoLevel: 3
-        swingMaxReservation: 200
+        algoLevel: 3
+        maxReservation: 200
     - name: ItemCfMatcher
       tasks: algotransform_item_match_icf
       options:
-        swingAlgoLevel: 3
-        swingMaxReservation: 200
+        algoLevel: 3
+        maxReservation: 200
     - name: TwoTowersMatcher
       tasks: algotransform_twotower_match
       options:
