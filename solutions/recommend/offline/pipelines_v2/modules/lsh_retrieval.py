@@ -55,7 +55,7 @@ class LSHRetrievalModule:
         conf = cattrs.structure(conf['estimator_params'], LSHRetrievalConfig)
         return conf
 
-    def train_euclidean(self, train_dataset, user_id_column, item_id_column, label_column, label_value, \
+    def train_euclidean(self, train_dataset, label_column, label_value, user_id_column, item_id_column, \
                         bucket_length, distance_threshold, max_recommendation_count):
         train_dataset = train_dataset.filter(F.col(label_column)==label_value)\
             .groupBy(item_id_column)\
