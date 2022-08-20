@@ -45,7 +45,7 @@ ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
     apt-get install -y tini libpam-modules krb5-user libnss3 procps && \

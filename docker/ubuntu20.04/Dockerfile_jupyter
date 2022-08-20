@@ -112,7 +112,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
 
 # switch to NB_UID for installs
 USER ${NB_UID}
@@ -126,7 +126,7 @@ RUN python3 -m pip install --upgrade setuptools --no-cache-dir && \
  python3 -m pip install --upgrade jupyterlab notebook ipykernel --no-cache-dir && \
  python3 -m pip install --upgrade jupyterlab-git ipython-sql ipywidgets --no-cache-dir && \
  python3 -m pip install --upgrade widgetsnbextension plotly ipympl --no-cache-dir && \
- python3 -m pip install --upgrade elyra[all] --no-cache-dir && \
+ python3 -m pip install --upgrade 'elyra[all]' --no-cache-dir && \
  python3 -m pip install --upgrade jupyterlab-sparkmonitor --no-cache-dir && \
  python3 -m pip install jupyterlab-language-pack-zh-CN --no-cache-dir && \
  python3 -m pip install git+https://github.com/cliffwoolley/jupyter_tensorboard.git --no-cache-dir && \

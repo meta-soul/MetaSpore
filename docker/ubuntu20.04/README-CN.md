@@ -13,7 +13,7 @@ export REPOSITORY=...
 
 1. Dev 镜像，打包了基础环境、在离线 C++、Python 编译构建环境：`Dockerfile_dev`
     ```bash
-    DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_dev -t $REPOSITORY/metaspore-dev:v1.0.0 .
+    DOCKER_BUILDKIT=1 docker build --network=host --build-arg HTTP_PROXY=${http_proxy} --build-arg HTTPS_PROXY=${https_proxy} -f docker/ubuntu20.04/Dockerfile_dev -t $REPOSITORY/metaspore-dev:v1.0.0 .
     ```
     可以通过 `--build-arg RUNTIME=gpu` 构建 GPU 支持的 dev 镜像。默认为 CPU 环境。
 

@@ -13,7 +13,7 @@ export REPOSITORY=...
 
 1. Dev image, package the basic environment, build the environment for C++ and Python compilation: `Dockerfile_dev`
     ```bash
-    DOCKER_BUILDKIT=1 docker build --network=host -f docker/ubuntu20.04/Dockerfile_dev -t $REPOSITORY/metaspore-dev:v1.0.0 .
+    DOCKER_BUILDKIT=1 docker build --network=host --build-arg HTTP_PROXY=${http_proxy} --build-arg HTTPS_PROXY=${https_proxy} -f docker/ubuntu20.04/Dockerfile_dev -t $REPOSITORY/metaspore-dev:v1.0.0 .
     ````
     Use `--build-arg RUNTIME=gpu` to enable GPU dev image. Default is CPU only.
 

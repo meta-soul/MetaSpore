@@ -19,6 +19,12 @@ FROM nvidia/cuda:11.6.2-cudnn8-devel-ubuntu20.04 as dev_gpu_base
 FROM ubuntu:20.04 as dev_cpu_base
 
 FROM dev_${RUNTIME}_base
+ARG HTTP_PROXY=
+ARG HTTPS_PROXY=
+ENV http_proxy=${HTTP_PROXY}
+ENV https_proxy=${HTTPS_PROXY}
+RUN echo "export http_proxy=${HTTP_PROXY}" >/etc/profile.d/02-http-proxy.sh
+RUN echo "export https_proxy=${HTTPS_PROXY}" >>/etc/profile.d/02-http-proxy.sh
 ENV DEBIAN_FRONTEND=noninteractive
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal main restricted" >/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal-updates main restricted" >>/etc/apt/sources.list
@@ -43,7 +49,8 @@ RUN apt-get install --fix-missing -y build-essential curl python3 python3-dev py
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+RUN python -m pip install 'grpcio[protobuf]==1.37.1' pyarrow==7.0.0 numpy --no-cache-dir
 
 # install gcc11 and latest cmake
 RUN apt-get -y install manpages-dev software-properties-common zip unzip tar pkg-config bison flex && apt-get clean
@@ -59,5 +66,7 @@ RUN git clone https://github.com/Microsoft/vcpkg.git /opt/vcpkg
 RUN /opt/vcpkg/bootstrap-vcpkg.sh
 COPY vcpkg.json /opt/vcpkg.json
 COPY vcpkg-configuration.json /opt/vcpkg-configuration.json
+RUN echo "set(VCPKG_C_FLAGS \"-D_GLIBCXX_USE_CXX11_ABI=0\")" >> /opt/vcpkg/triplets/x64-linux.cmake
+RUN echo "set(VCPKG_CXX_FLAGS \"-D_GLIBCXX_USE_CXX11_ABI=0\")" >> /opt/vcpkg/triplets/x64-linux.cmake
 RUN echo "set(VCPKG_BUILD_TYPE release)" >> /opt/vcpkg/triplets/x64-linux.cmake
 RUN --mount=type=cache,target=/opt/vcpkg_installed /opt/vcpkg/vcpkg install --x-install-root=/opt/vcpkg_installed --x-manifest-root=/opt --clean-after-build
