@@ -102,6 +102,15 @@ class SessionBuilder(object):
         builder.config('spark.scheduler.minRegisteredResourcesRatio', '1.0')
         builder.config('spark.scheduler.maxRegisteredResourcesWaitingTime', '1800s')
 
+    def _add_s3_configs(self, builder):
+        from .s3_utils import get_aws_endpoint
+        aws_endpoint = get_aws_endpoint()
+        if aws_endpoint is not None:
+            builder.config('spark.hadoop.fs.s3a.endpoint', aws_endpoint)
+        builder.config('spark.hadoop.fs.s3a.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
+        builder.config('spark.hadoop.fs.s3.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
+        builder.config('spark.hadoop.fs.oss.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
+
     def _add_user_spark_configs(self, builder):
         for k, v in self.spark_confs.items():
             builder.config(k, v)
@@ -114,6 +123,7 @@ class SessionBuilder(object):
         self._config_batch_size(builder)
         self._config_resources(builder)
         self._add_extra_configs(builder)
+        self._add_s3_configs(builder)
         self._add_user_spark_configs(builder)
         spark_session = builder.getOrCreate()
         spark_context = spark_session.sparkContext
