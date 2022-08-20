@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+# Import pyarrow first, otherwise importing _metaspore may fail due to
+# wrong RUNPATH set in _metaspore.so.
+import pyarrow
+
 from ._metaspore import NodeRole
 from ._metaspore import ActorConfig
 from ._metaspore import PSRunner
