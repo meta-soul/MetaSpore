@@ -114,8 +114,8 @@ add_library(metaspore_shared SHARED
 set_target_properties(metaspore_shared PROPERTIES PREFIX "")
 set_target_properties(metaspore_shared PROPERTIES OUTPUT_NAME _metaspore)
 set_target_properties(metaspore_shared PROPERTIES
-        BUILD_WITH_INSTALL_RPATH FALSE
-        LINK_FLAGS "-Wl,-rpath,$ORIGIN/")
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "\$ORIGIN/.libs:\$ORIGIN:\$ORIGIN/../pyarrow")
 target_compile_definitions(metaspore_shared PRIVATE DMLC_USE_S3=1)
 target_compile_definitions(metaspore_shared PRIVATE _METASPORE_VERSION="${project_version}")
 target_compile_definitions(metaspore_shared PRIVATE DBG_MACRO_NO_WARNING)
