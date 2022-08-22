@@ -1,5 +1,6 @@
 package com.dmetasoul.metaspore.recommend.operator;
 
+import com.dmetasoul.metaspore.serving.FeatureTable;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.complex.ListVector;
@@ -12,7 +13,7 @@ import java.util.List;
 @Data
 public class ListOperator<T> extends ArrowOperator {
     @Override
-    public boolean set(int index, String col, Object value) {
+    public boolean set(FeatureTable featureTable, int index, String col, Object value) {
         if (value != null && !(value instanceof List)) {
             log.error("set featureTable fail! value type is not match!");
             return false;

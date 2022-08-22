@@ -18,9 +18,6 @@ package com.dmetasoul.metaspore.recommend.recommend.diversifier;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.recommend.TransformFunction;
 import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -67,12 +64,7 @@ public class SimpleDiversifier extends Service {
 
     @Override
     public void addFunctions() {
-        addFunction("diversifyBase", new TransformFunction() {
-            @Override
-            public boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options) {
-                return false;
-            }
-        });
+        addFunction("diversifyBase", (data, resultList, context, options) -> false);
     }
 
 }

@@ -58,13 +58,14 @@ public class RecommendConfig {
     @Data
     public static class Service {
         private String name;
+        private String taskName;
         private List<String> tasks;
         private Map<String, Object> options;
         private List<String> columnNames;
         private Map<String, String> columnMap;
         private List<Map<String, String>> columns;
-        private List<Map<String, Map<String, Object>>> preTransforms;
-        private List<Map<String, Map<String, Object>>> transforms;
+        private List<TransformConfig> preTransforms;
+        private List<TransformConfig> transforms;
 
         public void setTasks(List<String> tasks) {
             if (CollectionUtils.isEmpty(tasks)) return;
@@ -91,6 +92,9 @@ public class RecommendConfig {
                 log.error("Service config name must not be empty!");
                 return false;
             }
+            if (StringUtils.isEmpty(taskName)) {
+                taskName = "Service";
+            }
             return true;
         }
     }
@@ -102,6 +106,7 @@ public class RecommendConfig {
     @Data
     public static class Experiment {
         private String name;
+        private String taskName;
         private List<Chain> chains;
         private Map<String, Object> options;
 
@@ -120,6 +125,9 @@ public class RecommendConfig {
                     return false;
                 }
             }
+            if (StringUtils.isEmpty(taskName)) {
+                taskName = "Experiment";
+            }
             return true;
         }
     }
@@ -136,6 +144,7 @@ public class RecommendConfig {
     @Data
     public static class Layer {
         private String name;
+        private String taskName;
         private List<ExperimentItem> experiments;
         private String bucketizer;
         private Map<String, Object> options;
@@ -164,6 +173,9 @@ public class RecommendConfig {
                 log.error("Layer experiments ratio sum must not be 0.0!");
                 return false;
             }
+            if (StringUtils.isEmpty(taskName)) {
+                taskName = "Layer";
+            }
             return true;
         }
     }
@@ -174,6 +186,7 @@ public class RecommendConfig {
     @Data
     public static class Scene {
         private String name;
+        private String taskName;
         private List<Chain> chains;
 
         private Map<String, Object> options;
@@ -191,6 +204,9 @@ public class RecommendConfig {
                     log.error("Scene config chain must be right!");
                     return false;
                 }
+            }
+            if (StringUtils.isEmpty(taskName)) {
+                taskName = "Scene";
             }
             Assert.notNull(columnNames, "scene must configure output columns! at " + name);
             return true;

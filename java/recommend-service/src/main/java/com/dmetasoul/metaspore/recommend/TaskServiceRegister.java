@@ -147,6 +147,10 @@ public class TaskServiceRegister {
         }
     }
 
+    public DataSource getDataSource(String name) {
+        return dataSources.get(name);
+    }
+
     public DataService getDataService(String name) {
         return dataServices.get(name);
     }
@@ -227,7 +231,7 @@ public class TaskServiceRegister {
         taskFlowConfig.getServices().forEach((name, service) -> {
             Service recommendService = (Service) SpringBeanUtil.getBean(service.getName());
             if (recommendService == null) {
-                recommendService = SpringBeanUtil.getBean(Service.class);
+                recommendService = (Service) SpringBeanUtil.getBean(service.getTaskName());
                 if (recommendService == null) {
                     log.error("the RecommendService:{} load fail!", service.getName());
                     throw new RuntimeException(String.format("the RecommendService:%s load fail!", service.getName()));
@@ -247,7 +251,7 @@ public class TaskServiceRegister {
         taskFlowConfig.getExperiments().forEach((name, experiment) -> {
             Experiment experimentService = (Experiment) SpringBeanUtil.getBean(experiment.getName());
             if (experimentService == null) {
-                experimentService = SpringBeanUtil.getBean(Experiment.class);
+                experimentService = (Experiment) SpringBeanUtil.getBean(experiment.getTaskName());
                 if (experimentService == null) {
                     log.error("the RecommendService:{} load fail!", experiment.getName());
                     throw new RuntimeException(String.format("the RecommendService:%s load fail!", experiment.getName()));
@@ -265,7 +269,7 @@ public class TaskServiceRegister {
         taskFlowConfig.getLayers().forEach((name, layer) -> {
             Layer layerService = (Layer) SpringBeanUtil.getBean(layer.getName());
             if (layerService == null) {
-                layerService = SpringBeanUtil.getBean(Layer.class);
+                layerService = (Layer) SpringBeanUtil.getBean(layer.getTaskName());
                 if (layerService == null) {
                     log.error("the RecommendService:{} load fail!", layer.getName());
                     throw new RuntimeException(String.format("the RecommendService:%s load fail!", layer.getName()));
@@ -283,7 +287,7 @@ public class TaskServiceRegister {
         taskFlowConfig.getScenes().forEach((name, scene) -> {
             Scene sceneService = (Scene) SpringBeanUtil.getBean(scene.getName());
             if (sceneService == null) {
-                sceneService = SpringBeanUtil.getBean(Scene.class);
+                sceneService = (Scene) SpringBeanUtil.getBean(scene.getTaskName());
                 if (sceneService == null) {
                     log.error("the RecommendService:{} load fail!", scene.getName());
                     throw new RuntimeException(String.format("the RecommendService:%s load fail!", scene.getName()));

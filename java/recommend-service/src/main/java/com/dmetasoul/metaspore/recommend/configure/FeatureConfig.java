@@ -130,7 +130,7 @@ public class FeatureConfig {
             this.source = source;
         }
 
-        public void setColumnData() {
+        public void setColumns(List<Map<String, String>> columns) {
             if (CollectionUtils.isNotEmpty(columns)) {
                 this.columnNames = Lists.newArrayList();
                 this.columnMap = Maps.newHashMap();
@@ -138,6 +138,7 @@ public class FeatureConfig {
                     columnNames.add(x);
                     this.columnMap.put(x, y);
                 }));
+                this.columns = columns;
             }
         }
 
@@ -146,7 +147,6 @@ public class FeatureConfig {
                 log.error("SourceTable config name and source must not be empty!");
                 return false;
             }
-            setColumnData();
             if (CollectionUtils.isEmpty(columnNames) || MapUtils.isEmpty(columnMap)) {
                 log.error("SourceTable config columns must not be empty!");
                 return false;

@@ -29,6 +29,8 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -49,6 +51,7 @@ public class AlgoTransformTask extends DataService {
     protected Map<String, Function> additionFunctions;
     protected Map<String, FieldData> actionResult;
     protected Map<String, String> actionTypes;
+
     public <T> T getOptionOrDefault(String key, T value) {
         return Utils.getField(algoTransform.getOptions(), key, value);
     }
@@ -58,7 +61,7 @@ public class AlgoTransformTask extends DataService {
         algoTransform = taskFlowConfig.getAlgoTransforms().get(name);
         this.taskPool = taskServiceRegister.getTaskPool();
         functionMap = taskServiceRegister.getFunctions();
-        for (String col: algoTransform.getColumnNames()) {
+        for (String col : algoTransform.getColumnNames()) {
             String type = algoTransform.getColumnMap().get(col);
             DataTypeEnum dataType = DataTypes.getDataType(type);
             resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
@@ -110,11 +113,13 @@ public class AlgoTransformTask extends DataService {
         });
     }
 
-    public void addFunctions() {}
+    public void addFunctions() {
+    }
 
     public void addFunction(String name, Function function) {
         additionFunctions.put(name, function);
     }
+
     protected Map<String, DataResult> getDataResults(List<DataResult> result) {
         Map<String, DataResult> data = Maps.newHashMap();
         if (CollectionUtils.isNotEmpty(result)) {
@@ -185,7 +190,7 @@ public class AlgoTransformTask extends DataService {
         }
         return res;
     }
-    
+
     private List<List<IndexData>> getIndexData(List<String> orderColumns, Map<String, FieldData> actionResult, int index) {
         if (CollectionUtils.isEmpty(orderColumns)) return null;
         List<FieldData> fieldDatas = Lists.newArrayList();
@@ -216,7 +221,7 @@ public class AlgoTransformTask extends DataService {
         }
         return res;
     }
-    
+
     public List<FieldData> getFieldDataList(List<FieldData> fieldDatas) {
         List<FieldData> res = Lists.newArrayList();
         if (CollectionUtils.isEmpty(fieldDatas)) return res;
@@ -320,6 +325,7 @@ public class AlgoTransformTask extends DataService {
     protected DataResult transform(FeatureTable featureTable, DataContext context) {
         DataResult dataResult = new DataResult();
         dataResult.setFeatureTable(featureTable);
+        dataResult.setDataTypes(dataTypes);
         return dataResult;
     }
 
@@ -330,10 +336,10 @@ public class AlgoTransformTask extends DataService {
     }
 
     public FeatureTable convFeatureTable(String name, List<FieldData> fields) {
-        List<Field> inferenceFields = fields.stream().map(x->new Field(x.getName(), x.getType().getType(), x.getType().getChildFields()))
+        List<Field> inferenceFields = fields.stream().map(x -> new Field(x.getName(), x.getType().getType(), x.getType().getChildFields()))
                 .collect(Collectors.toList());
         FeatureTable featureTable = new FeatureTable(name, inferenceFields, ArrowAllocator.getAllocator());
-        for (FieldData fieldData: fields) {
+        for (FieldData fieldData : fields) {
             if (!fieldData.getType().set(featureTable, fieldData.getName(), fieldData.getValue())) {
                 log.error("set featureTable fail! convFeatureTable at {}", name);
             }
@@ -341,6 +347,7 @@ public class AlgoTransformTask extends DataService {
         featureTable.finish();
         return featureTable;
     }
+
     public <T> List<List<T>> getFromTensor(ArrowTensor tensor) {
         if (tensor == null) {
             throw new IllegalArgumentException("tensor or shape is null");

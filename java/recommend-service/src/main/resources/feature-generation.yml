@@ -291,7 +291,7 @@ recommend-service:
         sortStrategyAlpha: 0.4
         sortStrategyBeta: 0.6
       preTransforms:
-        - summary : {}
+        - name: summary
       columns:
         - user_id: str
         - item_id: str
@@ -301,7 +301,7 @@ recommend-service:
       options:
         modelName: lightgbm_test_model
       preTransforms:
-        - summary : {}
+        - name: summary
       columns:
         - user_id: str
         - item_id: str
@@ -320,14 +320,21 @@ recommend-service:
   Experiments:
     - name: match.base
       options:
-        maxReservation: 200
+        maxReservation: 5
       chains:
         - then: ItemCfMatcher
+          transforms:
+            - name: cutOff
     - name: match.multiple
       options:
-        maxReservation: 300
+        maxReservation: 10
       chains:
-        - when: [ItemCfMatcher, SwingMatcher, TwoTowersMatcher]
+        - when: [ItemCfMatcher, SwingMatcher]
+          transforms:
+            - name: summaryBySchema
+              option: {dupFields: [ user_id, item_id ], mergeOperator: {score: maxScore, origin_scores: mergeScoreInfo}}
+            - name: orderAndLimit
+              option: {orderFields: [score]}
     - name: rank.base
       chains:
         - then: WideAndDeepRanker
@@ -347,9 +354,9 @@ recommend-service:
     - name: match
       experiments:
         - name: match.base
-          ratio: 0.0
+          ratio: 0.5
         - name: match.multiple
-          ratio: 1.0
+          ratio: 0.5
     - name: rank
       experiments:
         - name: rank.base
@@ -368,7 +375,6 @@ recommend-service:
     - name: guess-you-like
       chains:   # 串行执行chain
         - then: [match]
-        - then: [rank, diversify]
       columns:
         - user_id: str
         - item_id: str

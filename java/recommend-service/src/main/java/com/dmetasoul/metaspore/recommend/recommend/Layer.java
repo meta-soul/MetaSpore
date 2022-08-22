@@ -23,8 +23,8 @@ import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
+import com.dmetasoul.metaspore.recommend.recommend.interfaces.BaseService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -35,8 +35,8 @@ import java.util.concurrent.CompletableFuture;
 
 @Data
 @Slf4j
-@ServiceAnnotation
-public class Layer implements BaseService{
+@ServiceAnnotation("Layer")
+public class Layer implements BaseService {
     protected String name;
     protected RecommendConfig.Layer layer;
     protected LayerBucketizer bucketizer;
@@ -64,14 +64,6 @@ public class Layer implements BaseService{
         }
         layerBucketizer.init(layer);
         return layerBucketizer;
-    }
-
-
-    public DataResult process(ServiceRequest request, DataContext context) {
-        DataResult result = null;
-        String experiment = bucketizer.toBucket(context);
-        result = new DataResult();
-        return result;
     }
 
     @Override

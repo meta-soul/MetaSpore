@@ -21,16 +21,16 @@ import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
+import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.ArrowAllocator;
-import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -38,12 +38,10 @@ import java.util.concurrent.CompletableFuture;
 
 @Data
 @Slf4j
-@ServiceAnnotation
+@ServiceAnnotation("Scene")
 public class Scene extends TaskFlow<Layer> {
     private RecommendConfig.Scene scene;
-    protected List<Field> resFields;
-    protected List<DataTypeEnum> dataTypes;
-    protected boolean isDup = true;
+
     public void init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {
         super.init(name, taskFlowConfig, serviceRegister);
         scene = taskFlowConfig.getScenes().get(name);
@@ -51,23 +49,23 @@ public class Scene extends TaskFlow<Layer> {
         timeout = Utils.getField(scene.getOptions(), "timeout", timeout);
         resFields = Lists.newArrayList();
         dataTypes = Lists.newArrayList();
-        for (String col: scene.getColumnNames()) {
+        for (String col : scene.getColumnNames()) {
             String type = scene.getColumnMap().get(col);
             DataTypeEnum dataType = DataTypes.getDataType(type);
             resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
             dataTypes.add(dataType);
         }
-        isDup = Utils.getField(scene.getOptions(), "dupOnMerge", true);
     }
 
     @SneakyThrows
     public DataResult process(DataContext context) {
-        CompletableFuture<DataResult> future = execute(List.of(), serviceRegister.getLayerMap(), context).thenApplyAsync(dataResults -> {
-            DataResult result = new DataResult();
-            FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
-            result.setFeatureTable(featureTable);
-            result.mergeDataResult(dataResults, scene.getColumnMap(), isDup);
-            return result;
+        TransformConfig transformConfig = new TransformConfig();
+        transformConfig.setName("summary");
+        CompletableFuture<DataResult> future = execute(List.of(),
+                serviceRegister.getLayerMap(), List.of(transformConfig), scene.getOptions(),
+                context).thenApplyAsync(dataResults -> {
+            if (CollectionUtils.isEmpty(dataResults)) return null;
+            return dataResults.get(0);
         }, taskPool);
         return future.get(timeout, timeUnit);
     }
@@ -76,5 +74,10 @@ public class Scene extends TaskFlow<Layer> {
         DataResult result = process(context);
         if (result == null || result.isNull()) return Lists.newArrayList();
         return result.output(scene.getColumnNames());
+    }
+
+    @Override
+    public void initFunctions() {
+
     }
 }

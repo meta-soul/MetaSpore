@@ -3,13 +3,15 @@ package com.dmetasoul.metaspore.test.common;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.ArrowAllocator;
+import com.dmetasoul.metaspore.recommend.operator.ArrowConv;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.cj.jdbc.Blob;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,9 +29,11 @@ import static java.time.ZoneOffset.UTC;
 @Slf4j
 @SpringBootTest
 public class DataTypeTest {
+    private BufferAllocator allocator = new RootAllocator();
+
     @SneakyThrows
     @Test
-    public void TestPrimaryInArrow(){
+    public void TestPrimaryInArrow() {
         List<DataTypeEnum> types = List.of(
                 DataTypeEnum.STRING,
                 DataTypeEnum.LONG,
@@ -56,21 +60,24 @@ public class DataTypeTest {
                 new Blob(new byte[]{(byte) 0xE3, 0x41, (byte) 0xE2, (byte) 0xf8, (byte) 0xa1, (byte) 0x87}, null),
                 new Blob(new byte[]{0x53, 0x03, (byte) 0xA0, (byte) 0xf9}, null)));
         datas.put(DataTypeEnum.DATE.getId(), List.of(LocalDateTime.of(2022, 8, 12, 17, 28, 5), LocalDateTime.of(2021, 8, 15, 0, 0, 0), LocalDateTime.of(2021, Calendar.SEPTEMBER, 15, 17, 15)));
-        datas.put(DataTypeEnum.TIMESTAMP.getId(), List.of(LocalDateTime.of(2021, 8,15,17,15,20).atZone(UTC).toInstant().toEpochMilli(), 1L, System.currentTimeMillis()));
+        datas.put(DataTypeEnum.TIMESTAMP.getId(), List.of(LocalDateTime.of(2021, 8, 15, 17, 15, 20).atZone(UTC).toInstant().toEpochMilli(), 1L, System.currentTimeMillis()));
         datas.put(DataTypeEnum.DECIMAL.getId(), List.of(new BigDecimal(BigInteger.valueOf(43858324658534L), 4), new BigDecimal(new BigInteger("2172467235734527343456214551342342"), 4), new BigDecimal(BigInteger.valueOf(-31467325736457637L), 4))
-                .stream().map(x->{x.setScale(4); return x;}).collect(Collectors.toList()));
+                .stream().map(x -> {
+                    x.setScale(4);
+                    return x;
+                }).collect(Collectors.toList()));
         datas.put(DataTypeEnum.FLOAT.getId(), List.of(0.123f, -0.446f, 99999.2423432f));
-        datas.put(DataTypeEnum.SHORT.getId(), List.of((short)2, (short)-3, (short)15));
-        datas.put(DataTypeEnum.TIME.getId(), List.of(LocalTime.of(17, 15,20), LocalTime.of(0, 0, 0), LocalTime.of(23, 59,59)));
+        datas.put(DataTypeEnum.SHORT.getId(), List.of((short) 2, (short) -3, (short) 15));
+        datas.put(DataTypeEnum.TIME.getId(), List.of(LocalTime.of(17, 15, 20), LocalTime.of(0, 0, 0), LocalTime.of(23, 59, 59)));
 
         String field = "field";
-        List<Field> inferenceFields = types.stream().map(type->new Field(field+type.getId(), type.getType(), type.getChildFields())).collect(Collectors.toList());
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        List<Field> inferenceFields = types.stream().map(type -> new Field(field + type.getId(), type.getType(), type.getChildFields())).collect(Collectors.toList());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         for (DataTypeEnum type : types) {
             List<Object> list = datas.getOrDefault(type.getId(), List.of());
-            Assert.assertTrue(type.set(featureTable, field+type.getId(), list));
+            Assert.assertTrue(type.set(featureTable, field + type.getId(), list));
         }
         featureTable.finish();
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
@@ -78,34 +85,34 @@ public class DataTypeTest {
                 log.info("index:{}, type:{}, data:{}", i, type, result.get(field + type.getId(), i));
                 List<Object> list = datas.getOrDefault(type.getId(), List.of());
                 if (type.equals(DataTypeEnum.BYTE)) {
-                    byte[] res = type.get(featureTable, field + type.getId(), i);
+                    byte[] res = result.get(field + type.getId(), i);
                     byte[] input = (byte[]) Utils.get(list, i, new byte[]{});
                     for (int k = 9; k < res.length; ++k) {
                         Assert.assertEquals(res[k], input[k]);
                     }
                 } else if (type.equals(DataTypeEnum.BLOB)) {
-                    byte[] res = type.get(featureTable, field + type.getId(), i);
-                    java.sql.Blob blob = (Blob)Utils.get(list, i, new Blob(new byte[]{}, null));
+                    byte[] res = result.get(field + type.getId(), i);
+                    java.sql.Blob blob = (Blob) Utils.get(list, i, new Blob(new byte[]{}, null));
                     byte[] input = blob.getBytes(1L, (int) blob.length());
                     for (int k = 9; k < res.length; ++k) {
                         Assert.assertEquals(res[k], input[k]);
                     }
                 } else {
-                    Assert.assertEquals("type: " + type, Utils.get(list, i, null), type.get(featureTable, field + type.getId(), i));
+                    Assert.assertEquals("type: " + type, Utils.get(list, i, null), result.get(field + type.getId(), i));
                 }
             }
         }
     }
 
     @Test
-    public void TestStringInArrow(){
+    public void TestStringInArrow() {
         DataTypeEnum type = DataTypeEnum.STRING;
         String data = "12abCD_/? ？中国~“《》 .QWW,,.。 ";
         String data1 = "12abCD_/? ？中国~“《》 .QWW,,.。 1";
 
         String field = "field";
         List<Field> inferenceFields = List.of(new Field("field", type.getType(), type.getChildFields()));
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         Assert.assertTrue(type.set(featureTable, field, 0, data));
@@ -119,19 +126,19 @@ public class DataTypeTest {
     }
 
     @Test
-    public void TestListSTRInArrow(){
+    public void TestListSTRInArrow() {
         DataTypeEnum type = DataTypeEnum.LIST_STR;
         List<String> keys = List.of("aaa1123", "bbb1234", "ccc1234");
 
         String field = "field";
         List<Field> inferenceFields = List.of(new Field("field", type.getType(), type.getChildFields()));
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         Assert.assertTrue(type.set(featureTable, field, 0, keys));
         featureTable.finish();
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
-            @SuppressWarnings("unchecked") List<String> data = (List<String>) result.get(field, i);
+            List<String> data = result.get(field, i);
             log.info("index:{}, data:{}", i, data);
             Assert.assertEquals(keys.size(), data.size());
             for (int k = 0; k < data.size(); ++k) {
@@ -141,7 +148,7 @@ public class DataTypeTest {
     }
 
     @Test
-    public void TestListsInArrow(){
+    public void TestListsInArrow() {
         List<DataTypeEnum> types = List.of(
                 DataTypeEnum.LIST_STR,
                 DataTypeEnum.LIST_LONG,
@@ -156,19 +163,19 @@ public class DataTypeTest {
         datas.put(DataTypeEnum.LIST_FLOAT.getId(), List.of(123.56F, -123.67F, 0.00045F));
 
         String field = "field";
-        List<Field> inferenceFields = types.stream().map(type->new Field(field+type.getId(), type.getType(), type.getChildFields())).collect(Collectors.toList());
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        List<Field> inferenceFields = types.stream().map(type -> new Field(field + type.getId(), type.getType(), type.getChildFields())).collect(Collectors.toList());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         for (DataTypeEnum type : types) {
             List<Object> list = datas.getOrDefault(type.getId(), List.of());
-            Assert.assertTrue(type.set(featureTable, field+type.getId(), 0, list));
+            Assert.assertTrue(type.set(featureTable, field + type.getId(), 0, list));
         }
         featureTable.finish();
         for (DataTypeEnum type : types) {
             log.info("index:{}, type:{}, data:{}", 0, type, result.get(field + type.getId(), 0));
             List<Object> list = datas.getOrDefault(type.getId(), List.of());
-            @SuppressWarnings("unchecked") List<Object> data = (List<Object>) result.get(field + type.getId(), 0);
+            List<Object> data = result.get(field + type.getId(), 0);
             Assert.assertEquals(list.size(), data.size());
             for (int k = 0; k < data.size(); ++k) {
                 if (type.equals(DataTypeEnum.LIST_DOUBLE)) {
@@ -181,13 +188,13 @@ public class DataTypeTest {
     }
 
     @Test
-    public void TestListPairInArrow(){
+    public void TestListPairInArrow() {
         DataTypeEnum type = DataTypeEnum.LIST_ENTRY_STR_DOUBLE;
         Map<String, Double> scores = Map.of("aaa1123", 12.9, "bbb1234", 129.12, "ccc1234", 120.04);
 
         String field = "field";
         List<Field> inferenceFields = List.of(new Field("field", type.getType(), type.getChildFields()));
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         List<Map.Entry<String, Double>> list = Lists.newArrayList();
@@ -198,21 +205,22 @@ public class DataTypeTest {
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
             log.info("index:{}, data:{}", i, result.get(field, i));
         }
-        List<Map.Entry<String, Object>> data = type.get(featureTable, field, 0);
-        for (Map.Entry<String, Object> entry : data) {
+        List<Object> res = ArrowConv.convValue(type, result.get(field, 0));
+        for (Object item : res) {
+            @SuppressWarnings("unchecked") Map.Entry<String, Object> entry = (Map.Entry<String, Object>) item;
             log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());
             Assert.assertEquals(entry.getValue(), scores.get(entry.getKey()));
         }
     }
 
     @Test
-    public void TestMapStrDoubleInArrow(){
+    public void TestMapStrDoubleInArrow() {
         DataTypeEnum type = DataTypeEnum.MAP_STR_DOUBLE;
         Map<String, Double> scores = Map.of("aaa1123", 123.9, "bbb1234", 121.12, "ccc1234", 120.04);
 
         String field = "field";
         List<Field> inferenceFields = List.of(new Field("field", type.getType(), type.getChildFields()));
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         Assert.assertTrue(type.set(featureTable, field, 0, scores));
@@ -221,7 +229,7 @@ public class DataTypeTest {
             log.info("map index:{}, data:{}", i, result.get(field, i));
         }
 
-        Map<String, Object> data = type.get(featureTable, field, 0);
+        Map<String, Object> data = result.get(field, 0);
         Assert.assertEquals(data.size(), scores.size());
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());
@@ -230,32 +238,32 @@ public class DataTypeTest {
     }
 
     @Test
-    public void TestMapsInArrow(){
+    public void TestMapsInArrow() {
         List<DataTypeEnum> types = List.of(
                 DataTypeEnum.MAP_STR_STR,
                 DataTypeEnum.MAP_STR_INT,
                 DataTypeEnum.MAP_STR_LONG,
                 DataTypeEnum.MAP_STR_FLOAT);
         Map<Integer, Map<String, Object>> datas = Maps.newHashMap();
-        datas.put(DataTypeEnum.MAP_STR_STR.getId(), Map.of("key111", "aaa1123", "key112","bbb1234", "key113","ccc1234"));
+        datas.put(DataTypeEnum.MAP_STR_STR.getId(), Map.of("key111", "aaa1123", "key112", "bbb1234", "key113", "ccc1234"));
         datas.put(DataTypeEnum.MAP_STR_LONG.getId(), Map.of("longkey111", 12345L, "longkey112", -123L, "longkey113", 0x4573a28ed5L));
-        datas.put(DataTypeEnum.MAP_STR_INT.getId(), Map.of("intkey111", 123, "intkey112",-234, "intkey113",4645235));
-        datas.put(DataTypeEnum.MAP_STR_FLOAT.getId(), Map.of("floatkey111",123.56F, "floatkey112",-123.67F, "floatkey113",0.00045F));
+        datas.put(DataTypeEnum.MAP_STR_INT.getId(), Map.of("intkey111", 123, "intkey112", -234, "intkey113", 4645235));
+        datas.put(DataTypeEnum.MAP_STR_FLOAT.getId(), Map.of("floatkey111", 123.56F, "floatkey112", -123.67F, "floatkey113", 0.00045F));
 
         String field = "field";
-        List<Field> inferenceFields = types.stream().map(type->new Field(field+type.getId(), type.getType(), type.getChildFields())).collect(Collectors.toList());
-        FeatureTable featureTable = new FeatureTable("table", inferenceFields, ArrowAllocator.getAllocator());
+        List<Field> inferenceFields = types.stream().map(type -> new Field(field + type.getId(), type.getType(), type.getChildFields())).collect(Collectors.toList());
+        FeatureTable featureTable = new FeatureTable("table", inferenceFields, allocator);
         DataResult result = new DataResult();
         result.setFeatureTable(featureTable);
         for (DataTypeEnum type : types) {
             Map<String, Object> map = datas.getOrDefault(type.getId(), Map.of());
-            Assert.assertTrue(type.set(featureTable, field+type.getId(), 0, map));
+            Assert.assertTrue(type.set(featureTable, field + type.getId(), 0, map));
         }
         featureTable.finish();
         for (DataTypeEnum type : types) {
             log.info("index:{}, type:{}, data:{}", 0, type, result.get(field + type.getId(), 0));
             Map<String, Object> map = datas.getOrDefault(type.getId(), Map.of());
-            Map<String, Object> data = (Map<String, Object>) result.get(field + type.getId(), 0);
+            Map<String, Object> data = result.get(field + type.getId(), 0);
             Assert.assertEquals(map.size(), data.size());
             for (Map.Entry<String, Object> entry : data.entrySet()) {
                 log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());

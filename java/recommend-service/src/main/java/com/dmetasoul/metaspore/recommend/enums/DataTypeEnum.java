@@ -21,10 +21,7 @@ import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.*;
-import org.apache.arrow.vector.holders.LargeVarBinaryHolder;
-import org.apache.arrow.vector.holders.NullableLargeVarBinaryHolder;
-import org.apache.arrow.vector.holders.NullableVarBinaryHolder;
-import org.apache.arrow.vector.holders.VarBinaryHolder;
+import org.apache.arrow.vector.holders.*;
 import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.TimeUnit;
@@ -36,6 +33,7 @@ import org.springframework.util.Assert;
 import org.apache.arrow.vector.types.pojo.Field;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -53,23 +51,31 @@ import static java.time.ZoneOffset.UTC;
 public enum DataTypeEnum {
     STRING(0, String.class, FieldType.nullable(ArrowType.Utf8.INSTANCE), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof String)) {
                 log.error("set featureTable fail! value type is not match String value:{}!", value);
                 return false;
             }
+            VarCharVector vector = featureTable.getVector(col);
             if (value == null) {
-                ((VarCharVector)featureTable.getVector(col)).setNull(index);
-                featureTable.setRowCount(index+1);
+                vector.setNull(index);
             } else {
-                featureTable.setString(index, (String) value, featureTable.getVector(col));
+                String data = (String) value;
+                byte[] b = data.getBytes(StandardCharsets.UTF_8);
+                VarCharHolder vch = new VarCharHolder();
+                vch.start = 0;
+                vch.end = b.length;
+                vch.buffer = vector.getAllocator().buffer(b.length);
+                vch.buffer.setBytes(0, b);
+                vector.setSafe(index, vch);
             }
+            featureTable.setRowCount(index+1);
             return true;
         }
     }),
     LONG(1, Long.class, FieldType.nullable(new ArrowType.Int(64, true)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Long)) {
                 log.error("set featureTable fail! value type is not match Long value：{}!", value);
                 return false;
@@ -85,7 +91,7 @@ public enum DataTypeEnum {
     }),
     INT(2,Integer.class, FieldType.nullable(new ArrowType.Int(32, true)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Integer)) {
                 log.error("set featureTable fail! value type is not match Integer value:{}!", value);
                 return false;
@@ -101,7 +107,7 @@ public enum DataTypeEnum {
     }),
     DOUBLE(3, Double.class, FieldType.nullable(new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Double)) {
                 log.error("set featureTable fail! value type is not match Double value: {}! ", value);
                 return false;
@@ -117,7 +123,7 @@ public enum DataTypeEnum {
     }),
     BYTE(4,Byte.class, FieldType.nullable(ArrowType.Binary.INSTANCE), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof byte[])) {
                 log.error("set featureTable fail! value type is not match Byte value:{}!", value);
                 return false;
@@ -140,7 +146,7 @@ public enum DataTypeEnum {
     }),
     BOOL(5, Boolean.class, FieldType.nullable(ArrowType.Bool.INSTANCE), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Boolean)) {
                 log.error("set featureTable fail! value type is not match Boolean value: {}!", value);
                 return false;
@@ -157,7 +163,7 @@ public enum DataTypeEnum {
     BLOB(6, Blob.class, FieldType.nullable(ArrowType.LargeBinary.INSTANCE), new ArrowOperator() {
         @SneakyThrows
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Blob)) {
                 log.error("set featureTable fail! value type is not match Blob value: {}!", value);
                 return false;
@@ -181,7 +187,7 @@ public enum DataTypeEnum {
     }),
     DATE(7, LocalDateTime.class, FieldType.nullable(new ArrowType.Date(DateUnit.MILLISECOND)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             LocalDateTime data = parseLocalDateTime(value);
             if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Date value: {}, cls: {}, index: {}!", value, value.getClass(), index);
@@ -198,7 +204,7 @@ public enum DataTypeEnum {
     }),
     TIMESTAMP(8, Timestamp.class, FieldType.nullable(new ArrowType.Timestamp(TimeUnit.SECOND, "Asia/Shanghai")), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             Timestamp data = parseTimestamp(value);
             if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Timestamp value: {}!", value);
@@ -215,7 +221,7 @@ public enum DataTypeEnum {
     }),
     DECIMAL(9, BigDecimal.class, FieldType.nullable(new ArrowType.Decimal(60, 4, 64)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof BigDecimal)) {
                 log.error("set featureTable fail! value type is not match BigDecimal value: {}!", value);
                 return false;
@@ -231,7 +237,7 @@ public enum DataTypeEnum {
     }),
     FLOAT(10, Float.class, FieldType.nullable(new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Float)) {
                 log.error("set featureTable fail! value type is not match Float value: {}!", value);
                 return false;
@@ -247,7 +253,7 @@ public enum DataTypeEnum {
     }),
     SHORT(11, Short.class, FieldType.nullable(new ArrowType.Int(16, true)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             if (value != null && !(value instanceof Short)) {
                 log.error("set featureTable fail! value type is not match Short value: {}!", value);
                 return false;
@@ -263,7 +269,7 @@ public enum DataTypeEnum {
     }),
     TIME(12, Time.class, FieldType.nullable(new ArrowType.Time(TimeUnit.MILLISECOND, 32)), new ArrowOperator() {
         @Override
-        public boolean set(int index, String col, Object value) {
+        public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             LocalTime data = parseLocalTime(value);
             if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Time value : {}!", value);
@@ -345,12 +351,10 @@ public enum DataTypeEnum {
     }
 
     public boolean set(FeatureTable featureTable, String col, List<Object> data) {
-        op.init(featureTable);
-        if (op.getFeatureTable() == null) return false;
         if (CollectionUtils.isNotEmpty(data)) {
             for (int i = 0; i < data.size(); ++i) {
                 Object value = data.get(i);
-                if (!this.op.set(i, col, value)) {
+                if (!this.op.set(featureTable, i, col, value)) {
                     return false;
                 }
             }
@@ -358,15 +362,8 @@ public enum DataTypeEnum {
         return true;
     }
 
-    public <T> T get(FeatureTable featureTable, String col, int index) {
-        op.init(featureTable);
-        return (T) ArrowConv.convValue(this, this.op.get(col, index));
-    }
-
     public boolean set(FeatureTable featureTable, String col, int index, Object data) {
-        op.init(featureTable);
-        if (op.getFeatureTable() == null) return false;
-        return this.op.set(index, col, data);
+        return this.op.set(featureTable, index, col, data);
     }
     public Class<?> getCls() {
         return cls;

@@ -16,9 +16,6 @@
 package com.dmetasoul.metaspore.recommend.recommend.diversifier;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.recommend.TransformFunction;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
@@ -37,12 +34,7 @@ public class MaximalMarginalRelevanceDiversifier extends SimpleDiversifier {
 
     @Override
     public void addFunctions() {
-        addFunction("diversifyMMR", new TransformFunction() {
-            @Override
-            public boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options) {
-                return false;
-            }
-        });
+        addFunction("diversifyMMR", (data, resultList, context, options) -> false);
     }
 
 

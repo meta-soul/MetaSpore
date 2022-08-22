@@ -76,7 +76,8 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 List<String> recallItem = recallItemData.get(i);
                 if (CollectionUtils.isEmpty(recallItem)) continue;
                 List<Double> recallWeight = recallWeights.get(i);
-                double userProfileWeight = Utils.get(userProfileWeights, i, 1.0);
+                Double userProfileWeight = Utils.get(userProfileWeights, i, 1.0);
+                if (userProfileWeight == null) userProfileWeight = 1.0;
                 for (int j = 0; j < recallItem.size(); ++j) {
                     String itemId = recallItem.get(j);
                     Double itemScore = Utils.get(recallWeight, j, 1.0) * userProfileWeight;

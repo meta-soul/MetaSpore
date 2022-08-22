@@ -25,6 +25,8 @@ import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Field;
 
 import java.util.List;

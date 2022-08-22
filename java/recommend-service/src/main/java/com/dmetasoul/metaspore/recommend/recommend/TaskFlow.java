@@ -16,18 +16,19 @@
 package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
-import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
+import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
+import com.dmetasoul.metaspore.recommend.recommend.interfaces.BaseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
@@ -35,10 +36,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
-@SuppressWarnings("rawtypes")
 @Data
 @Slf4j
-public class TaskFlow<Service extends BaseService> {
+public abstract class TaskFlow<Service extends BaseService> extends Transform {
     protected String name;
     protected ExecutorService taskPool;
     protected TaskServiceRegister serviceRegister;
@@ -55,12 +55,17 @@ public class TaskFlow<Service extends BaseService> {
         this.taskFlowConfig = taskFlowConfig;
         this.serviceRegister = serviceRegister;
         this.taskPool = serviceRegister.getTaskPool();
+        super.initTransform(name, taskPool);
     }
 
     public void close() {}
 
     @SneakyThrows
-    public CompletableFuture<List<DataResult>> execute(List<DataResult> data, Map<String, Service> serviceMap, DataContext context) {
+    public CompletableFuture<List<DataResult>> execute(List<DataResult> data,
+                                                       Map<String, Service> serviceMap,
+                                                       List<TransformConfig> transforms,
+                                                       Map<String, Object> option,
+                                                       DataContext context) {
         CompletableFuture<List<DataResult>> future = CompletableFuture.supplyAsync(() -> data);
         for (Chain chain : chains) {
             if (CollectionUtils.isNotEmpty(chain.getThen())) {
@@ -111,6 +116,18 @@ public class TaskFlow<Service extends BaseService> {
                     return result;
                 }, taskPool);
             }
+            if (CollectionUtils.isNotEmpty(chain.getTransforms())) {
+                Map<String, Object> chainOption = Maps.newHashMap();
+                if (MapUtils.isNotEmpty(option)) {
+                    chainOption.putAll(option);
+                }
+                future = executeTransform(future, chain.getTransforms(), chainOption, context);
+                Assert.notNull(future, "TaskFlow execute chain transform function fail at " + chain);
+            }
+        }
+        if (CollectionUtils.isNotEmpty(transforms)) {
+            future = executeTransform(future, transforms, option, context);
+            Assert.notNull(future, "TaskFlow execute transform function fail at " + name);
         }
         return future;
     }

@@ -1,6 +1,5 @@
 package com.dmetasoul.metaspore.recommend.configure;
 
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
@@ -26,6 +25,9 @@ public class Chain {
     private Long timeOut = 30000L;
 
     private TimeUnit timeOutUnit = TimeUnit.MILLISECONDS;
+
+    private Map<String, Object> options;
+    private List<TransformConfig> transforms;
 
     public void setThen(List<String> list) {
         then = list;

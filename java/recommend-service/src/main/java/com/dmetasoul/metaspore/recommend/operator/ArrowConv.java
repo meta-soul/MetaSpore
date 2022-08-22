@@ -68,10 +68,7 @@ public class ArrowConv {
 
     public static List<Object> convValue(DataTypeEnum type, List<Object> value) {
         if (CollectionUtils.isEmpty(value) || type == null) return value;
-        if (StructDataCovers.containsKey(type.getId())) {
-            return value.stream().map(v -> convValue(type, v)).collect(Collectors.toList());
-        }
-        return value;
+        return value.stream().map(v -> convValue(type, v)).collect(Collectors.toList());
     }
 
     static {

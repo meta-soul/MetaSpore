@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-package com.dmetasoul.metaspore.recommend.recommend;
+package com.dmetasoul.metaspore.recommend.recommend.interfaces;
 
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
@@ -24,5 +24,5 @@ import java.util.List;
 import java.util.Map;
 
 public interface TransformFunction {
-    boolean transform(List<DataResult> data, DataContext context, Map<String, Object> options);
+    boolean transform(List<DataResult> data, List<DataResult> result, DataContext context, Map<String, Object> options);
 }

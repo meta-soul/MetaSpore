@@ -19,27 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import static com.dmetasoul.metaspore.recommend.operator.ArrowConv.convValue;
 import static org.apache.arrow.util.Preconditions.checkArgument;
 
 @Slf4j
 @Data
 public abstract class ArrowOperator {
-    protected FeatureTable featureTable;
-    public void init(FeatureTable featureTable) {
-        this.featureTable = featureTable;
-    }
-    public abstract boolean set(int index, String col, Object data);
-
-    @SuppressWarnings("unchecked")
-    public <T> T get(String col, int index) {
-        if (featureTable == null || featureTable.getVector(col) == null) return null;
-        FieldVector vector = featureTable.getVector(col);
-        if (index < vector.getValueCount() && index >= 0) {
-            return (T) convValue(vector.getField(), vector.getObject(index));
-        }
-        return null;
-    }
+    public abstract boolean set(FeatureTable featureTable, int index, String col, Object data);
 
     public VarCharHolder getVarCharHolder(String str, BufferAllocator allocator) {
         byte[] b = str.getBytes(StandardCharsets.UTF_8);

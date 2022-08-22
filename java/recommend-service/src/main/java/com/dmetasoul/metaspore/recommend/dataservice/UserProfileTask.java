@@ -53,7 +53,7 @@ public class UserProfileTask extends AlgoTransformTask {
             String split = Utils.getField(options, "splitor", splitor);
             List<IndexData> input = fieldData.getIndexValue();
             for (IndexData o : input) {
-                Assert.isTrue(o.getVal() instanceof String, "value must string!");
+                Assert.isTrue(o.getVal() instanceof String, "value must string! value:" + o.getVal());
                 String value = o.getVal();
                 result.get(0).addIndexData(FieldData.create(o.getIndex(), List.of(value.split(split))));
             }

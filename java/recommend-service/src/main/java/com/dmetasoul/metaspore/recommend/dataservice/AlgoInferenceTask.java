@@ -27,6 +27,8 @@ import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
@@ -113,16 +115,18 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             return true;
         });
     }
+
     @Override
     public void close() {
         try {
-            while(!channel.isTerminated() && channel.awaitTermination(10, TimeUnit.MILLISECONDS)) {
+            while (!channel.isTerminated() && channel.awaitTermination(10, TimeUnit.MILLISECONDS)) {
                 Thread.yield();
             }
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
+
     protected ArrowTensor predict(FeatureTable featureTable, String targetKey) {
         Map<String, ArrowTensor> npsResultMap;
         try {

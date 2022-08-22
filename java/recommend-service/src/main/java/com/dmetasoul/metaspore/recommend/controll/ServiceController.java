@@ -15,7 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.controll;
 
-import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
@@ -23,9 +22,14 @@ import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.data.ServiceResult;
 import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
+import com.dmetasoul.metaspore.recommend.recommend.Experiment;
+import com.dmetasoul.metaspore.recommend.recommend.Layer;
 import com.dmetasoul.metaspore.recommend.recommend.Scene;
-import com.google.common.collect.Maps;
+import com.dmetasoul.metaspore.recommend.recommend.Service;
+import com.google.common.collect.Lists;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -73,6 +77,37 @@ public class ServiceController {
             return ServiceResult.of(-1, "taskService execute fail!");
         }
         return ServiceResult.of(result.output());
+    }
+
+    @SneakyThrows
+    @RequestMapping(value = "/recommend/{task}", method = POST, produces = "application/json")
+    public ServiceResult getRecommendResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
+        DataContext context = new DataContext(req);
+        List<DataResult> result;
+        if (taskServiceRegister.getRecommendServices().containsKey(task)) {
+            Service taskService = taskServiceRegister.getRecommendService(task);
+            result = taskService.execute(context).get();
+        } else if (taskServiceRegister.getExperimentMap().containsKey(task)) {
+            Experiment taskService = taskServiceRegister.getExperiment(task);
+            result = taskService.process(null, context).get();
+        } else if (taskServiceRegister.getLayerMap().containsKey(task)) {
+            Layer taskService = taskServiceRegister.getLayer(task);
+            result = taskService.execute(context).get();
+        } else if (taskServiceRegister.getSceneMap().containsKey(task)) {
+            Scene taskService = taskServiceRegister.getScene(task);
+            result = List.of(taskService.process(context));
+        } else {
+            return ServiceResult.of(-1, "recommend component is not exist! at:" + task);
+        }
+        log.info("recommend result : {}", result);
+        if (CollectionUtils.isEmpty(result)) {
+            return ServiceResult.of(-1, "taskService execute fail!");
+        }
+        List<Map<String, Object>> output = Lists.newArrayList();
+        for (DataResult item : result) {
+            output.addAll(item.output());
+        }
+        return ServiceResult.of(output);
     }
     /**
      * 用于实现restfull接口 /service/recommend/{scene}/{id}
