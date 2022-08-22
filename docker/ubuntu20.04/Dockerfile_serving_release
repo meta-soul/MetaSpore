@@ -51,6 +51,7 @@ FROM ${BUILD_IMAGE} as build_stage
 
 FROM serving_base as serving_release
 COPY --from=build_stage /opt/metaspore-serving/ /opt/metaspore-serving
+COPY --from=build_stage /opt/metaspore-build-release/libarrow.so* /opt/metaspore-serving/bin/
 COPY --from=build_stage /opt/metaspore-build-release/libonnxruntime* /opt/metaspore-serving/bin/
 COPY --from=build_stage /opt/metaspore-build-release/libstdc++.so* /opt/metaspore-serving/bin/
 COPY --from=build_stage /opt/metaspore-build-release/libgcc_s.so* /opt/metaspore-serving/bin/
