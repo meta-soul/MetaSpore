@@ -1,6 +1,13 @@
 FROM quay.io/pypa/manylinux2014_x86_64
 
-RUN yum update -y && yum install -y curl zip unzip tar perl-IPC-Cmd flex && yum clean packages
+RUN yum update -y && yum install -y devtoolset-11-gcc-c++ curl zip unzip tar perl-IPC-Cmd flex && yum clean packages
+ENV DEVTOOLSET_ROOTPATH=/opt/rh/devtoolset-11/root
+ENV PATH /opt/rh/devtoolset-11/root/usr/bin:${PATH}
+ENV MANPATH /opt/rh/devtoolset-11/root/usr/share/man:${MANPATH}
+ENV INFOPATH /opt/rh/devtoolset-11/root/usr/share/info:${INFOPATH}
+ENV PCP_DIR /opt/rh/devtoolset-11/root
+ENV LD_LIBRARY_PATH /opt/rh/devtoolset-11/root/usr/lib64:/opt/rh/devtoolset-11/root/usr/lib:/opt/rh/devtoolset-11/root/usr/lib64/dyninst:/opt/rh/devtoolset-11/root/usr/lib/dyninst:${LD_LIBRARY_PATH}
+ENV PKG_CONFIG_PATH /opt/rh/devtoolset-11/root/usr/lib64/pkgconfig:${PKG_CONFIG_PATH}
 RUN git clone https://github.com/Microsoft/vcpkg.git /opt/vcpkg
 RUN /opt/vcpkg/bootstrap-vcpkg.sh
 COPY vcpkg-wheel.json /opt/vcpkg.json
