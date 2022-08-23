@@ -70,6 +70,10 @@ set_target_properties(libarrow_python PROPERTIES
     IMPORTED_LOCATION "${pyarrow_libarrow_python_path}"
     INTERFACE_LINK_LIBRARIES "libarrow")
 
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/.libs)
+file(COPY "${pyarrow_libarrow_path}" DESTINATION ${PROJECT_BINARY_DIR}/.libs)
+file(COPY "${pyarrow_libarrow_python_path}" DESTINATION ${PROJECT_BINARY_DIR}/.libs)
+
 unset(pyarrow_include_dir)
 unset(pyarrow_libarrow_path)
 unset(pyarrow_libarrow_python_path)
