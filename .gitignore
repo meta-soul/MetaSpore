@@ -14,3 +14,5 @@
 __pycache__
 /metaspore.egg-info/
 /wheelhouse/
+*.iml
+/java/recommend-service/.idea/

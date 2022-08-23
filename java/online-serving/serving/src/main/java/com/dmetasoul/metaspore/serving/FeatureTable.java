@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.serving;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.*;
 import org.apache.arrow.vector.complex.ListVector;
+import org.apache.arrow.vector.complex.MapVector;
 import org.apache.arrow.vector.complex.impl.UnionListWriter;
 import org.apache.arrow.vector.holders.VarCharHolder;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -60,29 +61,39 @@ public class FeatureTable {
         return (T) root.getVector(i);
     }
 
+    public void setRowCount(int rowCount) {
+        if (this.rowCount < rowCount) {
+            this.rowCount = rowCount;
+        }
+    }
+
+    public int getRowCount() {
+        return this.rowCount;
+    }
+
     public void setInt(int index, int value, IntVector v) {
         v.setSafe(index, value);
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setLong(int index, long value, BigIntVector v) {
         v.setSafe(index, value);
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setFloat(int index, float value, Float4Vector v) {
         v.setSafe(index, value);
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setDouble(int index, double value, Float8Vector v) {
         v.setSafe(index, value);
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setString(int index, String value, VarCharVector v) {
         v.setSafe(index, new Text(value));
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setStringList(int index, Iterable<String> values, ListVector v) {
@@ -99,7 +110,7 @@ public class FeatureTable {
             writer.write(vch);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setLongList(int index, Iterable<Long> values, ListVector v) {
@@ -110,7 +121,7 @@ public class FeatureTable {
             writer.writeBigInt(l);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setLongList(int index, long[] values, ListVector v) {
@@ -121,7 +132,7 @@ public class FeatureTable {
             writer.writeBigInt(l);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setIntList(int index, Iterable<Integer> values, ListVector v) {
@@ -132,7 +143,7 @@ public class FeatureTable {
             writer.writeInt(i);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setIntList(int index, int[] values, ListVector v) {
@@ -143,7 +154,7 @@ public class FeatureTable {
             writer.writeInt(i);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setFloatList(int index, Iterable<Float> values, ListVector v) {
@@ -154,7 +165,7 @@ public class FeatureTable {
             writer.writeFloat4(f);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setFloatList(int index, float[] values, ListVector v) {
@@ -165,7 +176,7 @@ public class FeatureTable {
             writer.writeFloat4(f);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setDoubleList(int index, Iterable<Double> values, ListVector v) {
@@ -176,7 +187,7 @@ public class FeatureTable {
             writer.writeFloat8(d);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void setDoubleList(int index, double[] values, ListVector v) {
@@ -187,7 +198,7 @@ public class FeatureTable {
             writer.writeFloat8(d);
         }
         writer.endList();
-        rowCount = index + 1;
+        setRowCount(index + 1);
     }
 
     public void finish() {
