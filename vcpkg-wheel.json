@@ -1,12 +1,22 @@
 {
     "name": "metaspore",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "dependencies": [
+        "range-v3",
+        "boost-asio",
         "boost-filesystem",
         "boost-system",
+        "boost-spirit",
+        {
+            "name": "asio-grpc",
+            "features": [
+                "boost-container"
+            ]
+        },
         "fmt",
         "spdlog",
         "gflags",
+        "xtensor",
         "cppzmq",
         "python3",
         "pybind11",
