@@ -34,20 +34,22 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
-    'numpy>=1.20.1',
-    'pandas>=1.2.3',
-    'nest_asyncio>=1.5.1',
-    'cloudpickle>=1.6.0',
+    'numpy~=1.23.2',
+    'pandas~=1.4.3',
+    'findspark~=2.0.1',
+    'cloudpickle~=2.1.0',
+    'nest-asyncio~=1.5.5',
+    'attrs~=22.1.0',
+    'cattrs~=22.1.0',
+    'PyYAML~=5.4.1',
+    'tabulate~=0.8.10',
     'pyarrow==7.0.0',
-    'PyYAML>=5.3.1',
-    'boto3>=1.24.56',
-    'awscli>=1.25.57',
-    'awscli-plugin-endpoint>=0.4',
-    'python-consul>=1.1.0',
-    'findspark>=1.4.2',
-    'attrs>=21.4.0',
-    'cattrs>=22.1.0',
-    'tabulate>=0.8.9',
+    'botocore==1.24.21',
+    'boto3==1.21.21',
+    'awscli==1.22.76',
+    'awscli-plugin-endpoint~=0.4',
+    'fsspec[s3]~=2022.7.1',
+    'python-consul~=1.1.0',
 ]
 
 [project.urls]

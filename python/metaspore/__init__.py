@@ -106,6 +106,7 @@ from . import nn
 from . import input
 from . import output
 from . import spark
+from . import s3_utils
 from . import feature_group
 from . import patching_pickle
 from . import demo
