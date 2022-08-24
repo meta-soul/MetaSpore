@@ -29,8 +29,8 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
 @Slf4j
-@SpringBootApplication(exclude = {MongoAutoConfiguration.class, CassandraAutoConfiguration.class,
-                                  RedisAutoConfiguration.class, ElasticsearchRestClientAutoConfiguration.class,
+@SpringBootApplication(exclude = {MongoAutoConfiguration.class,
+                                  RedisAutoConfiguration.class,
                                   DataSourceAutoConfiguration.class})
 public class RecommendApplication {
     public static void main(String[] args) {
