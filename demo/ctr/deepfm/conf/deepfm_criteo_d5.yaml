@@ -1,6 +1,6 @@
 ## spark session
 app_name: 'CTR Demo DeepFM'
-local: False
+local: True
 worker_count: 4
 server_count: 4
 batch_size: 50
@@ -14,9 +14,11 @@ test_path: s3://dmetasoul-bucket/demo/criteo_x1/test_1.parquet
 
 ## model configurations
 wide_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
-wide_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+#wide_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+wide_combine_schema_path: s3://dmetasoul-bucket/codingfun2022/demo/schema/combine_schema_demo.txt
 deep_column_name_path: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt
-deep_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+#deep_combine_schema_path: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt
+deep_combine_schema_path: s3://dmetasoul-bucket/codingfun2022/demo/schema/combine_schema_demo.txt
 
 model_in_path: null
 model_out_path: s3://dmetasoul-bucket/demo/movielens/model/deepfm/model_out/criteo_d5/
