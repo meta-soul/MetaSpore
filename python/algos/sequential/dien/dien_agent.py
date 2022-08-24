@@ -15,7 +15,35 @@
 #
 
 import metaspore as ms
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 class DIENAgent(ms.PyTorchAgent):
-    pass
+    def __init__(self, 
+                 target_loss_weight=1.0,
+                 auxilary_loss_weight=1.0,
+                 **kwargs):
+        super().__init__()
+        self.target_loss = nn.BCELoss()
+        self.target_loss_weight = target_loss_weight
+        self.auxilary_loss_weight = auxilary_loss_weight
 
+    def train_minibatch(self, minibatch):
+        self.model.train()
+        ndarrays, labels = self.preprocess_minibatch(minibatch)
+        predictions, auxilary_loss = self.model(ndarrays)
+        labels = torch.from_numpy(labels).reshape(-1, 1)
+        target_loss = self.target_loss(predictions, labels)
+        loss = auxilary_loss * self.target_loss_weight \
+               + target_loss * self.auxilary_loss_weight
+        self.trainer.train(loss)
+        self.update_progress(predictions, labels)
+
+    def validate_minibatch(self, minibatch):
+        self.model.eval()
+        ndarrays, labels = self.preprocess_minibatch(minibatch)
+        predictions, _ = self.model(ndarrays)
+        labels = torch.from_numpy(labels).reshape(-1, 1)
+        self.update_progress(predictions, labels)
+        return predictions.detach().reshape(-1)
