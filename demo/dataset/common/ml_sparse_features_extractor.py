@@ -22,7 +22,7 @@ def get_recent_items(kv_pairs, max_len, sep):
     ''' generte user behaviour sequence features
 
     Args 
-      - kv_pairs: [movie_id, timestamp, genre]
+      - kv_pairs: [movie_id, timestamp, genre, year]
       - max_len: maximum user behavior sequence length
       - seq: squence splitter
     '''
@@ -32,13 +32,20 @@ def get_recent_items(kv_pairs, max_len, sep):
     # get recent list
     recent_items = []
     for i in range(0, len(kv_pairs)):
-        current, hist_time, genre = kv_pairs[i]
+        current, hist_time, genre, year = kv_pairs[i]
         # get last max_len items
         hist_list = [0] if i == 0 else reduce(lambda x, y:x+y, map(lambda x:[x[0]], kv_pairs[max(0, i-max_len):i]))
         last_movie = str(hist_list[-1])
         hist_list = str.join(sep, map(str, hist_list))
         last_genre = 'None' if i == 0 else kv_pairs[i-1][2]
-        recent_items.append((hist_time, current, hist_list, last_movie, last_genre))
+        # history item's genre
+        hist_genre_list = ['None'] if i == 0 else reduce(lambda x, y:x+y, map(lambda x:[x[2]], kv_pairs[max(0, i-max_len):i]))
+        #hist_genre_list = str.join(sep, map(lambda x:x.split('|')[0], hist_genre_list))  # just keep the first genre
+        hist_genre_list = str.join(sep, hist_genre_list)
+        # history item's year
+        hist_year_list = ['None'] if i == 0 else reduce(lambda x, y:x+y, map(lambda x:[x[3]], kv_pairs[max(0, i-max_len):i]))
+        hist_year_list = str.join(sep, hist_year_list)
+        recent_items.append((hist_time, current, hist_list, hist_genre_list, hist_year_list, last_movie, last_genre))
     return recent_items
 
 def generate_sparse_features_1m(dataset, max_len=10, sep=u'\u0001', verbose=True):
@@ -56,13 +63,13 @@ def generate_sparse_features_1m(dataset, max_len=10, sep=u'\u0001', verbose=True
     dataset = dataset.withColumn('label',  F.when(F.col('rating')> 0, 1).otherwise(0))
     
     # generate user recent behaviors features
-    hist_item_list_df = dataset.filter(dataset['rating']>0).select('user_id','movie_id','timestamp', 'genre').distinct().rdd\
-                               .map(lambda x: (x['user_id'], [(x['movie_id'], x['timestamp'], x['genre'])]))\
+    hist_item_list_df = dataset.filter(dataset['rating']>0).select('user_id','movie_id','timestamp', 'genre', 'year').distinct().rdd\
+                               .map(lambda x: (x['user_id'], [(x['movie_id'], x['timestamp'], x['genre'], x['year'])]))\
                                .reduceByKey(lambda x, y: x + y)\
                                .map(lambda x: (x[0], get_recent_items(x[1], max_len, sep)))\
                                .flatMapValues(lambda x: x)\
-                               .map(lambda x: (x[0], x[1][0], x[1][1], x[1][2], x[1][3], x[1][4]))\
-                               .toDF(['user_id', 'timestamp', 'movie_id', 'recent_movie_ids', 'last_movie', 'last_genre'])
+                               .map(lambda x: (x[0], x[1][0], x[1][1], x[1][2], x[1][3], x[1][4], x[1][5], x[1][6]))\
+                               .toDF(['user_id', 'timestamp', 'movie_id', 'recent_movie_ids', 'recent_movie_genres', 'recent_movie_years', 'last_movie', 'last_genre'])
     
     # merge features
     fg_result = dataset.alias('t1')\
@@ -70,7 +77,7 @@ def generate_sparse_features_1m(dataset, max_len=10, sep=u'\u0001', verbose=True
                              (F.col('t1.user_id')==F.col('t2.user_id')) & (F.col('t1.timestamp')==F.col('t2.timestamp')) & (F.col('t1.movie_id')==F.col('t2.movie_id')),
                              how='leftouter')\
                        .select('t1.label', 't1.user_id', 't1.gender', 't1.age', 't1.occupation', 't1.zip', 't1.movie_id', \
-                               't2.recent_movie_ids', 't1.genre', 't1.rating','t2.last_movie', 't2.last_genre', 't1.timestamp')
+                               't2.recent_movie_ids', 't2.recent_movie_genres', 't2.recent_movie_years', 't1.year', 't1.genre', 't1.rating','t2.last_movie', 't2.last_genre', 't1.timestamp')
     
     # replace sep in genre column
     fg_result = fg_result.withColumn('genre', F.regexp_replace('genre', '\|', sep))
@@ -98,13 +105,13 @@ def generate_sparse_features_25m(dataset, max_len=10, sep=u'\u0001', verbose=Tru
     dataset = dataset.withColumn('label',  F.when(F.col('rating')> 0, 1).otherwise(0))
     
     # generate user recent behaviors features
-    hist_item_list_df = dataset.filter(dataset['rating']>0).select('user_id','movie_id','timestamp', 'genre').distinct().rdd\
-                               .map(lambda x: (x['user_id'], [(x['movie_id'], x['timestamp'], x['genre'])]))\
+    hist_item_list_df = dataset.filter(dataset['rating']>0).select('user_id','movie_id','timestamp', 'genre', 'year').distinct().rdd\
+                               .map(lambda x: (x['user_id'], [(x['movie_id'], x['timestamp'], x['genre'], x['year'])]))\
                                .reduceByKey(lambda x, y: x + y)\
                                .map(lambda x: (x[0], get_recent_items(x[1], max_len, sep)))\
                                .flatMapValues(lambda x: x)\
-                               .map(lambda x: (x[0], x[1][0], x[1][1], x[1][2], x[1][3], x[1][4]))\
-                               .toDF(['user_id', 'timestamp', 'movie_id', 'recent_movie_ids', 'last_movie', 'last_genre'])
+                               .map(lambda x: (x[0], x[1][0], x[1][1], x[1][2], x[1][3], x[1][4], x[1][5], x[1][6]))\
+                               .toDF(['user_id', 'timestamp', 'movie_id', 'recent_movie_ids', 'recent_movie_genres', 'recent_movie_years', 'last_movie', 'last_genre'])
     
     # merge features
     fg_result = dataset.alias('t1')\
@@ -112,7 +119,7 @@ def generate_sparse_features_25m(dataset, max_len=10, sep=u'\u0001', verbose=Tru
                              (F.col('t1.user_id')==F.col('t2.user_id')) & (F.col('t1.timestamp')==F.col('t2.timestamp')) & (F.col('t1.movie_id')==F.col('t2.movie_id')),
                              how='leftouter')\
                        .select('t1.label', 't1.user_id', 't1.movie_id', \
-                               't2.recent_movie_ids', 't1.genre', 't1.rating','t2.last_movie', 't2.last_genre', 't1.timestamp')
+                               't2.recent_movie_ids', 't2.recent_movie_genres', 't2.recent_movie_years', 't1.year', 't1.genre', 't1.rating','t2.last_movie', 't2.last_genre', 't1.timestamp')
     
     # replace sep in genre column
     fg_result = fg_result.withColumn('genre', F.regexp_replace('genre', '\|', sep))
