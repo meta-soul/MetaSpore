@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-from din.din_net import DIN
+from .din.din_net import DIN
 
-from dien.dien_net import DIEN
-from dien.dien_agent import DIENAgent
+from .dien.dien_net import DIEN
+from .dien.dien_agent import DIENAgent
