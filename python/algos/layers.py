@@ -16,6 +16,7 @@
 
 import torch
 import metaspore as ms
+import math
 
 
 # Logistic regression layer
@@ -31,6 +32,26 @@ class LRLayer(torch.nn.Module):
         out = torch.sum(inputs, dim=1, keepdim=True)
         return out
 
+class Dice(torch.nn.Module):
+    r"""Dice activation function
+    .. math::
+        f(s)=p(s) \cdot s+(1-p(s)) \cdot \alpha s
+    .. math::
+        p(s)=\frac{1} {1 + e^{-\frac{s-E[s]} {\sqrt {Var[s] + \epsilon}}}}
+    """
+
+    def __init__(self, hidden_size):
+        super(Dice, self).__init__()
+
+        self.sigmoid = torch.nn.Sigmoid()
+        self.alpha = torch.zeros((hidden_size,))
+
+    def forward(self, score):
+        self.alpha = self.alpha.to(score.device)
+        score_p = self.sigmoid(score)
+
+        return self.alpha * (1 - score_p) * score + score_p * score
+    
 
 # Fully connected layers
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/layers/deep.py
@@ -51,7 +72,7 @@ class MLPLayer(torch.nn.Module):
             dropout_rates = [dropout_rates] * len(hidden_units)
         if not isinstance(hidden_activations, list):
             hidden_activations = [hidden_activations] * len(hidden_units)        
-        hidden_activations = [self.set_activation(x) for x in hidden_activations]
+        hidden_activations = [self.set_activation(x, hidden_size) for x, hidden_size in zip(hidden_activations, hidden_units)]
         hidden_units = [input_dim] + hidden_units
         
         if input_norm:
@@ -73,7 +94,7 @@ class MLPLayer(torch.nn.Module):
             dense_layers.append(torch.nn.Linear(hidden_units[-1], output_dim, bias=use_bias))
         ## final activation
         if final_activation is not None:
-            dense_layers.append(self.set_activation(final_activation))
+            dense_layers.append(self.set_activation(final_activation, None))
         ## all in one
         self.dnn = torch.nn.Sequential(*dense_layers)
 
@@ -81,7 +102,7 @@ class MLPLayer(torch.nn.Module):
         return self.dnn(inputs)
     
     @staticmethod
-    def set_activation(activation):
+    def set_activation(activation, hidden_size):
         if isinstance(activation, str):
             if activation.lower() == "relu":
                 return torch.nn.ReLU()
@@ -89,12 +110,67 @@ class MLPLayer(torch.nn.Module):
                 return torch.nn.Sigmoid()
             elif activation.lower() == "tanh":
                 return torch.nn.Tanh()
+            elif activation.lower() == "dice":
+                return Dice(hidden_size)
             else:
                 return torch.nn.ReLU() ## defalut relu
         else:
             return torch.nn.ReLU() ## defalut relu
 
 
+    
+class Attention(torch.nn.Module):
+    def __init__(
+            self,
+            input_dim,
+            hidden_units=[16, 8],
+            hidden_activations="dice",
+            dropout_rates=0.15,
+            batch_norm=True,
+            return_scores=False):
+                
+        super().__init__()
+        self.return_scores = return_scores
+        self.mlp = MLPLayer(
+            input_dim=input_dim * 4,
+            hidden_units=hidden_units,
+            hidden_activations=hidden_activations,
+            dropout_rates=dropout_rates,
+            batch_norm=batch_norm)
+        self.fc = torch.nn.Linear(hidden_units[-1], 1)
+ 
+    def forward(self, query, keys, keys_length):
+        """
+        Parameters
+        ----------
+        query: 2D tensor, [Batch, Hidden]
+        keys: 3D tensor, [Batch, Time, Hidden]
+        keys_length: 1D tensor, [Batch]
+        Returns
+        -------
+        outputs: 2D tensor, [Batch, Hidden]
+        """
+        batch_size, max_length, dim = keys.size()
+        query = query.unsqueeze(1).expand(-1, max_length, -1)
+        din_all = torch.cat(
+            [query, keys, query - keys, query * keys], dim=-1)
+        din_all = din_all.view(batch_size * max_length, -1) # [B*T 4*H]
+        outputs = self.mlp(din_all)
+        outputs = self.fc(outputs).view(batch_size, max_length)  # [B, T]
+        # Scale
+        outputs = outputs / (dim ** 0.5)
+        # Mask
+        mask = (torch.arange(max_length, device=keys_length.device).repeat(
+            batch_size, 1) < keys_length.view(-1, 1))
+        outputs[~mask] = -math.inf
+        # Activation
+        outputs = torch.sigmoid(outputs)  # [B, T]
+        if not self.return_scores:
+            # Weighted sum
+            outputs = torch.matmul(
+                outputs.unsqueeze(1), keys).squeeze()  # [B, H]
+        return outputs
+    
 # Factorization machine layer
 class FMLayer(torch.nn.Module):
     def __init__(self,
