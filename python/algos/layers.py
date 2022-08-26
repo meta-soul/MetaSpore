@@ -125,7 +125,7 @@ class FFMLayer(torch.nn.Module):
         self._embedding_module_list = embedding_module_list
 
     def forward(self, inputs):
-         # [B, F x E] = > [[B, F x E]] => [[B, F, E]]
+        # [B, F x E] = > [[B, F x E]] => [[B, F, E]]
         field_aware_embedding_list = [
             each_layer(inputs).reshape(-1, self._feature_count, self._embedding_dim) 
             for each_layer in self._embedding_module_list
