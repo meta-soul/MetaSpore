@@ -174,6 +174,9 @@
                     <target>11</target>
                 </configuration>
             </plugin>
+            <!-- mvn docker:start 仅用于linux下测试使用。
+            Host主机网络驱动程序仅适用于Linux主机，并且不支持Docker for Mac，Docker for Windows或Docker EE for Windows Server
+            -->
             <plugin>
                 <groupId>io.fabric8</groupId>
                 <artifactId>docker-maven-plugin</artifactId>
@@ -191,10 +194,8 @@
                                 <cmd>java -jar /maven/${project.artifactId}-${project.version}.jar</cmd>
                             </build>
                             <run>
-                                <restartPolicy>
-                                    <name>on-failure</name>
-                                    <retry>10</retry>
-                                </restartPolicy>
+                                <restartPolicy><name>on-failure</name></restartPolicy>
+                                <net>host</net>
                                 <ports>
                                     <port>8080:8080</port>
                                 </ports>
@@ -207,10 +208,8 @@
                             <alias>consul</alias>
                             <name>consul:1.13.1</name>
                             <run>
-                                <restartPolicy>
-                                    <name>on-failure</name>
-                                    <retry>10</retry>
-                                </restartPolicy>
+                                <net>host</net>
+                                <restartPolicy><name>on-failure</name></restartPolicy>
                                 <env>
                                     <CONSUL_LOCAL_CONFIG>{"skip_leave_on_interrupt": true}</CONSUL_LOCAL_CONFIG>
                                 </env>
@@ -224,10 +223,8 @@
                             <alias>serving</alias>
                             <name>swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1</name>
                             <run>
-                                <restartPolicy>
-                                    <name>on-failure</name>
-                                    <retry>10</retry>
-                                </restartPolicy>
+                                <net>host</net>
+                                <restartPolicy><name>on-failure</name></restartPolicy>
                                 <ports>
                                     <port>50000:50000</port>
                                 </ports>
@@ -243,7 +240,8 @@
                             <alias>mongo</alias>
                             <name>mongo:6.0.1</name>
                             <run>
-                                <restartPolicy>always</restartPolicy>
+                                <net>host</net>
+                                <restartPolicy><name>always</name></restartPolicy>
                                 <ports>
                                     <port>27017:27017</port>
                                 </ports>
@@ -257,7 +255,8 @@
                             <alias>redis</alias>
                             <name>redis:7.0.4</name>
                             <run>
-                                <restartPolicy>always</restartPolicy>
+                                <net>host</net>
+                                <restartPolicy><name>always</name></restartPolicy>
                                 <ports>
                                     <port>6379:6379</port>
                                 </ports>
@@ -267,7 +266,8 @@
                             <alias>mysql</alias>
                             <name>mysql:8.0.30</name>
                             <run>
-                                <restartPolicy>always</restartPolicy>
+                                <net>host</net>
+                                <restartPolicy><name>always</name></restartPolicy>
                                 <ports>
                                     <port>3306:3306</port>
                                 </ports>

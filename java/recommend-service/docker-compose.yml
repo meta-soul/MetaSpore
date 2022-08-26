@@ -4,7 +4,11 @@ services:
   server:
     container_name: recommend-service
     restart: on-failure
-    image: dmetasoul/recommend-service-tomcat-11:1.0-SNAPSHOT
+    # 也可以直接使用mvn package docker:build 之后生成的image
+    build:
+      context: .
+      dockerfile: DockerFile  # need mvn package first
+    image: dmetasoul/recommend-service-11:1.0
     ports:
       - "8080:8080"
     depends_on:
