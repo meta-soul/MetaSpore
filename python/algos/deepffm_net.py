@@ -62,16 +62,30 @@ class DeepFFM(torch.nn.Module):
         self.dnn_sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha = ftrl_alpha, beta=ftrl_beta)
         self.dnn_sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
         if self.use_dnn:
-            self.dnn = MLPLayer(input_dim = self.dnn_sparse.feature_count * deep_embedding_dim,
-                                output_dim = 1,
-                                hidden_units = dnn_hidden_units,
-                                hidden_activations = dnn_hidden_activations,
-                                final_activation = None, 
-                                dropout_rates = net_dropout, 
-                                batch_norm = batch_norm, 
-                                use_bias = use_bias)
+            self.dnn = MLPLayer(
+                input_dim = self.dnn_sparse.feature_count * deep_embedding_dim,
+                output_dim = 1,
+                hidden_units = dnn_hidden_units,
+                hidden_activations = dnn_hidden_activations,
+                final_activation = None, 
+                dropout_rates = net_dropout, 
+                batch_norm = batch_norm, 
+                use_bias = use_bias)
+        
         # ffm layer
-        self.ffm = FFMLayer(self.dnn_sparse.feature_count, self.deep_embedding_dim)
+        embedding_list = []
+        for i in range(self.dnn_sparse.feature_count - 1):
+            ffm_sparse = ms.EmbeddingSumConcat(deep_embedding_dim, deep_column_name_path, deep_combine_schema_path)
+            ffm_sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha = ftrl_alpha, beta=ftrl_beta)
+            ffm_sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
+            embedding_list.append(ffm_sparse)
+        self.embedding_module_list = torch.nn.ModuleList(embedding_list)
+        self.ffm = FFMLayer(
+            self.dnn_sparse.feature_count, 
+            self.deep_embedding_dim,
+            self.embedding_module_list)
+        
+        # activation
         self.final_activation = torch.nn.Sigmoid()
 
     def forward(self, x):
