@@ -207,7 +207,7 @@ feature-service:
     - name: algotransform_twotower_user_embedding
       taskName: AlgoInference
       options:
-        host: 192.168.221.128
+        host: localhost
         port: 50000
       feature: feature_twotower_user
       fieldActions:
