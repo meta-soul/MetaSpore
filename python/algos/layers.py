@@ -371,3 +371,21 @@ class CompressedInteractionNet(torch.nn.Module):
         concate_vec = torch.cat(pooling_outputs, dim=-1)
         output = self.fc(concate_vec)
         return output
+    
+# Field-weighted factorization machine layer
+# This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/models/FwFM.py
+class FwFMLayer(torch.nn.Module):
+    def __init__(self,
+                feature_count,
+                embedding_dim):
+        super().__init__()
+        self.linear_weight_layer = torch.nn.Linear(feature_count * embedding_dim, 1, bias=False)
+        self.inner_product_layer = InnerProductLayer(feature_count, embedding_dim)
+        interact_dim = int(feature_count * (feature_count - 1) / 2)
+        self.interaction_weight_layer = torch.nn.Linear(interact_dim, 1)
+    
+    def forward(self, inputs):
+        linear_part = self.linear_weight_layer(inputs)
+        inner_product_vec = self.inner_product_layer(inputs)
+        poly2_part = self.interaction_weight_layer(inner_product_vec)
+        return linear_part + poly2_part
