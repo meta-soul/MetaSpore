@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @ServiceAnnotation("MilvusSearch")
-public class MilvusSearchTask extends AlgoInferenceTask {
+public class MilvusSearchTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
     public static final int DEFAULT_MAX_RESERVATION = 50;
     private MilvusServiceClient milvusTemplate;
@@ -50,7 +50,7 @@ public class MilvusSearchTask extends AlgoInferenceTask {
     public boolean initTask() {
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         String host = getOptionOrDefault("host", "localhost");
-        int port = getOptionOrDefault("port", 9000);
+        int port = getOptionOrDefault("port", 19530);
         ConnectParam connectParam = ConnectParam.newBuilder()
                 .withHost(host)
                 .withPort(port)

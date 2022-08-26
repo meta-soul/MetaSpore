@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.functions;
 
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -32,7 +33,7 @@ public class MinMaxFunction implements Function {
     private int max = 120;
 
     @Override
-    public boolean process(List<FieldData> fields, List<FieldData> result, Map<String, Object> options) {
+    public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, Map<String, Object> options) {
         return true;
     }
 }
