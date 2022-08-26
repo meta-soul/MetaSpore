@@ -55,4 +55,3 @@ ftrl_l1: 1.0
 ftrl_l2: 120.0
 ftrl_alpha: 0.5
 ftrl_beta: 1.0
-adam_learning_rate: 0.0001
