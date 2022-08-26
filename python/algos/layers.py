@@ -15,9 +15,10 @@
 #
 
 import torch
+import torch.nn.functional as F
 import metaspore as ms
 import math
-
+from torch.nn.utils.rnn import pack_sequence,pack_padded_sequence, pad_packed_sequence
 
 # Logistic regression layer
 class LRLayer(torch.nn.Module):
@@ -33,18 +34,12 @@ class LRLayer(torch.nn.Module):
         return out
 
 class Dice(torch.nn.Module):
-    r"""Dice activation function
-    .. math::
-        f(s)=p(s) \cdot s+(1-p(s)) \cdot \alpha s
-    .. math::
-        p(s)=\frac{1} {1 + e^{-\frac{s-E[s]} {\sqrt {Var[s] + \epsilon}}}}
-    """
 
     def __init__(self, hidden_size):
         super(Dice, self).__init__()
 
         self.sigmoid = torch.nn.Sigmoid()
-        self.alpha = torch.zeros((hidden_size,))
+        self.alpha = torch.nn.Parameter(torch.zeros((hidden_size,)))
 
     def forward(self, score):
         self.alpha = self.alpha.to(score.device)
@@ -62,7 +57,7 @@ class MLPLayer(torch.nn.Module):
                  hidden_units=[], 
                  hidden_activations="ReLU",
                  final_activation=None, 
-                 dropout_rates=[], 
+                 dropout_rates=0, 
                  batch_norm=False, 
                  use_bias=True,
                  input_norm=False):
@@ -447,3 +442,104 @@ class CompressedInteractionNet(torch.nn.Module):
         concate_vec = torch.cat(pooling_outputs, dim=-1)
         output = self.fc(concate_vec)
         return output
+    
+class SequenceAttLayer(torch.nn.Module):
+    def __init__(self,att_hidden_size,mlp_activation,mlp_dropout,mlp_bn):
+        super(SequenceAttLayer, self).__init__()
+        self.att_mlp_layers = MLPLayer(input_dim=att_hidden_size[0],hidden_units=att_hidden_size[1:],hidden_activations=mlp_activation,dropout_rates=mlp_dropout,batch_norm = mlp_bn)
+        self.dense = torch.nn.Linear(att_hidden_size[-1],1)
+        self.mask_mat = torch.arange(10).view(1, -1)   # 10 is 超参数，
+        
+        
+    def forward(self,target_item,rnn_outputs,rnn_length):
+        # rnn_outputs is after padding
+        # print(rnn_length)
+        target_item = target_item.repeat(1,rnn_outputs.shape[1])
+        target_item = target_item.view(-1,rnn_outputs.shape[1],rnn_outputs.shape[2])
+        
+        input_tensor = torch.cat([target_item,rnn_outputs,target_item-rnn_outputs,target_item*rnn_outputs],dim=-1)
+        # print("input_tensor",input_tensor)
+        output = self.att_mlp_layers(input_tensor)
+        output = torch.transpose(self.dense(output),-1,-2)
+        
+        # mask not necessary?
+        output = output.squeeze(1)
+        # print(output,type(output),output.shape[1])
+        mask = self.mask_mat.repeat(output.shape[0],1)
+        mask = (mask >= rnn_length.unsqueeze(1))
+        mask_value = 0.0
+        output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
+        # print(output.shape)
+        output = output.unsqueeze(1)
+        output = output / (rnn_outputs.shape[-1] ** 0.5)
+        # print(output.shape)
+        
+        output = torch.matmul(output, rnn_outputs) 
+        return output
+        
+        
+class InterestEvolvingLayer(torch.nn.Module):
+    def __init__(
+        self,
+        embedding_size,
+        gru_hidden_size,
+        gru_num_layers,
+        att_hidden_size,
+        att_mlp_activation,
+        att_mlp_dropout,
+        att_mlp_bn
+    ):
+        super(InterestEvolvingLayer, self).__init__()
+        self.attention_layer = SequenceAttLayer(att_hidden_size,att_mlp_activation,att_mlp_dropout,att_mlp_bn)
+        self.dynamic_rnn = torch.nn.GRU(
+            input_size=embedding_size,
+            hidden_size=gru_hidden_size,
+            num_layers=gru_num_layers,
+            bias=False,
+            batch_first=True,
+        )
+        
+    def forward(self,target_item,interest):
+        packed_rnn_outputs,_= self.dynamic_rnn(interest)
+        rnn_outputs,rnn_length = pad_packed_sequence(packed_rnn_outputs,batch_first=True)
+        # print(final_outputs.shape)
+        att_outputs = self.attention_layer(target_item,rnn_outputs,rnn_length)
+        outputs = att_outputs.squeeze(1)
+        return outputs
+    
+class InterestExtractorNetwork(torch.nn.Module):
+    def __init__(self, embedding_size,mlp_size,gru_hidden_size,gru_num_layers,mlp_activation,mlp_dropout,mlp_bn):
+        super(InterestExtractorNetwork, self).__init__()
+        # self.mlp_layer = [embedding_size+gru_hidden_size]+mlp_size+[1]
+        self.gru_layers = torch.nn.GRU(
+            input_size=embedding_size,
+            hidden_size=gru_hidden_size,
+            num_layers=gru_num_layers,
+            bias=False,
+            batch_first=True,
+        )
+        self.auxiliary_net = MLPLayer(input_dim=embedding_size+gru_hidden_size,output_dim=1,hidden_units=mlp_size,hidden_activations=mlp_activation,final_activation=mlp_activation,dropout_rates=mlp_dropout,batch_norm = mlp_bn)
+        
+    def forward(self,item_seq_pack,neg_item_seq_pack=None):
+        packed_rnn_outputs,_=self.gru_layers(item_seq_pack)
+        rnn_outputs,_ = pad_packed_sequence(packed_rnn_outputs,batch_first=True)
+        item_seq,_ = pad_packed_sequence(item_seq_pack,batch_first=True)
+        neg_item_seq,_ = pad_packed_sequence(neg_item_seq_pack,batch_first=True)
+        aux_loss = self.auxiliary_loss(rnn_outputs[:,:-1,:],item_seq[:,1:,:],neg_item_seq[:,1:,:])
+        # print((final_outputs.squeeze(0)).shape)
+        return packed_rnn_outputs, aux_loss
+    
+    def auxiliary_loss(self,h_states,click_seq,noclick_seq):
+        click_input = torch.cat([h_states,click_seq],dim=-1)
+        noclick_input = torch.cat([h_states,noclick_seq],dim=-1)
+        click_prop = self.auxiliary_net(click_input.view(h_states.shape[0]*h_states.shape[1],-1)).view(-1,1)
+        click_target = torch.ones(click_prop.shape,device=click_input.device)
+        noclick_prop = self.auxiliary_net(noclick_input.view(h_states.shape[0]*h_states.shape[1],-1)).view(-1,1)
+        noclick_target = torch.zeros(noclick_prop.shape,device=noclick_input.device)
+        
+        loss = F.binary_cross_entropy(
+            torch.cat([click_prop, noclick_prop],dim=0),torch.cat([click_target,noclick_target],dim=0)
+        )
+        
+        return loss
+

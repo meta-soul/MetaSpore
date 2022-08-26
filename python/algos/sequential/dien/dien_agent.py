@@ -32,18 +32,20 @@ class DIENAgent(ms.PyTorchAgent):
     def train_minibatch(self, minibatch):
         self.model.train()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
-        predictions, auxilary_loss = self.model(ndarrays)
+        predictions,auxilary_loss = self.model(ndarrays)
         labels = torch.from_numpy(labels).reshape(-1, 1)
         target_loss = self.target_loss(predictions, labels)
-        loss = auxilary_loss * self.target_loss_weight \
-               + target_loss * self.auxilary_loss_weight
+        loss = auxilary_loss * self.auxilary_loss_weight \
+               + target_loss * self.target_loss_weight
         self.trainer.train(loss)
+        
         self.update_progress(predictions, labels)
 
     def validate_minibatch(self, minibatch):
         self.model.eval()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
-        predictions, _ = self.model(ndarrays)
+        predictions,_ = self.model(ndarrays)
         labels = torch.from_numpy(labels).reshape(-1, 1)
         self.update_progress(predictions, labels)
         return predictions.detach().reshape(-1)
+    

@@ -1,0 +1,52 @@
+## spark session
+app_name: 'CTR Demo DIEN'
+local: True
+worker_count: 1
+server_count: 1
+worker_cpu: 1
+server_cpu: 1
+batch_size: 1000
+worker_memory: '5G'
+server_memory: '5G'
+coordinator_memory: '5G'
+
+## datasets
+train_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/train.parquet
+test_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/test.parquet
+
+## model configurations
+column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIEN.txt
+combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_DIEN.txt
+
+model_in_path: null
+model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dien/model_out/ml_1m/
+## model_export_path: s3://dmetasoul-bucket/demo/movielens/model/din/model_export/ml_1m/
+model_version: '0.1'
+experiment_name: movie_lens_din_1m
+metric_update_interval: 100
+
+## model hyper params
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.5
+ftrl_beta: 1.0
+sparse_init_var: 0.01
+adam_learning_rate: 0.0001
+embedding_size: 30
+aux_mlp_layer: [32,16]
+gru_num_layer: 1
+att_hidden_size: [40]
+dnn_hidden_mlp_list: [64,16]
+feature_slice: {"user":[0],"item_seq":[2],"neg_item_seq":[2],"target_item":[3]}
+target_loss_weight: 1.0
+auxilary_loss_weight: 1.0
+input_label_column_index: 0
+aux_mlp_bn: False
+aux_mlp_dropout: 0
+aux_mlp_activation: 'Sigmoid'
+att_hidden_bn: False
+att_hidden_dropout: 0
+att_hidden_activation: 'Sigmoid'
+dnn_hidden_mlp_bn: True
+dnn_hidden_mlp_dropout: 0.1
+dnn_hidden_mlp_activation: 'Dice'
