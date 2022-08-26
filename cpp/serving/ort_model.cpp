@@ -17,7 +17,7 @@
 #include <common/logger.h>
 #include <serving/gpu_utils.h>
 #include <serving/ort_model.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 #include <filesystem>
 

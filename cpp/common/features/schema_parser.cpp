@@ -22,13 +22,13 @@
 #include <range/v3/view/transform.hpp>
 
 #include <common/logger.h>
-#include <serving/feature_compute_exec.h>
-#include <serving/feature_compute_funcs.h>
-#include <serving/schema_parse.h>
+#include <common/features/feature_compute_exec.h>
+#include <common/features/feature_compute_funcs.h>
+#include <common/features/schema_parser.h>
 
 #include <filesystem>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 using boost::spirit::x3::_attr;
 using boost::spirit::x3::char_;
@@ -48,7 +48,8 @@ status FeatureSchemaParser::parse(const std::string &file, FeatureComputeExec &e
     if (!status.ok()) {
         CALL_AND_RETURN_IF_STATUS_NOT_OK(parse_table_name_from_path(file, exec));
         std::ifstream ifs(file); // we need to open this file again
-        CALL_AND_RETURN_IF_STATUS_NOT_OK(parse_hash_and_combine(ifs, exec));
+        int feature_count = 0;
+        CALL_AND_RETURN_IF_STATUS_NOT_OK(parse_hash_and_combine(ifs, exec, feature_count));
     }
     return absl::OkStatus();
 }
@@ -78,6 +79,7 @@ status FeatureSchemaParser::parse_table_name_from_path(const std::string &file,
 
 status FeatureSchemaParser::parse_new_format(std::istream &is, FeatureComputeExec &exec) {
     std::string line;
+    int feature_count = 0;
     while (std::getline(is, line)) {
         boost::trim_if(line, boost::is_any_of(" \t\n\r"));
         if (line.empty())
@@ -94,7 +96,7 @@ status FeatureSchemaParser::parse_new_format(std::istream &is, FeatureComputeExe
         if (line == "join") {
             CALL_AND_RETURN_IF_STATUS_NOT_OK(parse_table_join(is, exec));
         } else if (line == "combine") {
-            CALL_AND_RETURN_IF_STATUS_NOT_OK(parse_hash_and_combine(is, exec));
+            CALL_AND_RETURN_IF_STATUS_NOT_OK(parse_hash_and_combine(is, exec, feature_count));
         } else if (boost::starts_with(line, "table:")) {
             auto table_name = parse_table_name_from_config(line);
             CALL_AND_RETURN_IF_STATUS_NOT_OK(exec.add_source(table_name));
@@ -152,7 +154,7 @@ status FeatureSchemaParser::parse_table_join(std::istream &is, FeatureComputeExe
     return absl::OkStatus();
 }
 
-status FeatureSchemaParser::parse_hash_and_combine(std::istream &is, FeatureComputeExec &exec) {
+status FeatureSchemaParser::parse_hash_and_combine(std::istream &is, FeatureComputeExec &exec, int &feature_count) {
     // parse combine directives in form column1#column2#columnN
     std::string line;
     // combine rule is # seperated identifier list
@@ -189,6 +191,7 @@ status FeatureSchemaParser::parse_hash_and_combine(std::istream &is, FeatureComp
                                                BKDRHashCombineFunctionOption::Make()));
                 spdlog::info("add expr {}", expressions.back().ToString());
             }
+            feature_count++;
         } else {
             auto m = fmt::format("Parsing combine rule failed {}", line);
             spdlog::error(m);
@@ -197,4 +200,4 @@ status FeatureSchemaParser::parse_hash_and_combine(std::istream &is, FeatureComp
     }
     return exec.add_projection(std::move(expressions));
 }
-} // namespace metaspore::serving
+} // namespace metaspore

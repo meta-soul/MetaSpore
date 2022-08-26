@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <serving/types.h>
+#include <common/types.h>
 
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -25,7 +25,7 @@
 #include <filesystem>
 #include <regex>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 template <typename T, size_t N> struct VectorAssign {
     inline static void assign(const T *from, T *to) {
@@ -86,4 +86,4 @@ template <typename Func> struct Defer {
     Func f;
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

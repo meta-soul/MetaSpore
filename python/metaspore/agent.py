@@ -15,7 +15,6 @@
 #
 
 import asyncio
-from datetime import datetime
 import threading
 import concurrent.futures
 import traceback
@@ -26,7 +25,7 @@ from ._metaspore import NodeRole
 from ._metaspore import Message
 from ._metaspore import PSRunner
 from ._metaspore import PSDefaultAgent
-from .metric import ModelMetric
+from .metric import BinaryClassificationModelMetric
 from .network_utils import get_available_endpoint
 from .url_utils import use_s3a
 
@@ -367,63 +366,32 @@ class Agent(object):
     def feed_training_dataset(self, dataset_path, nepoches=1):
         for epoch in range(nepoches):
             df = self.load_dataset(dataset_path)
-            df = df.select(self.feed_training_minibatch()(*df.columns).alias('train'))
+            func = self.feed_training_minibatch()
+            df = df.mapInPandas(func, df.schema)
             df.write.format('noop').mode('overwrite').save()
 
     def feed_validation_dataset(self, dataset_path, nepoches=1):
         for epoch in range(nepoches):
             df = self.load_dataset(dataset_path)
-            df = df.select(self.feed_validation_minibatch()(*df.columns).alias('validate'))
+            func = self.feed_validation_minibatch()
+            df = df.mapInPandas(func, df.schema)
             df.write.format('noop').mode('overwrite').save()
 
     def feed_training_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_training_minibatch(minibatch):
+        def _feed_training_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.train_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                result = self.train_minibatch(minibatch)
+                yield  result
         return _feed_training_minibatch
 
     def feed_validation_minibatch(self):
-        from pyspark.sql.types import FloatType
-        from pyspark.sql.functions import pandas_udf
-        @pandas_udf(returnType=FloatType())
-        def _feed_validation_minibatch(minibatch):
+        def _feed_validation_minibatch(iterator):
             self = __class__.get_instance()
-            result = self.validate_minibatch(minibatch)
-            result = self.process_minibatch_result(minibatch, result)
-            return result
+            for minibatch in iterator:
+                result = self.validate_minibatch(minibatch)
+                yield result
         return _feed_validation_minibatch
-
-    def preprocess_minibatch(self, minibatch):
-        import numpy as np
-        import pandas as pd
-        columns = minibatch.apply(pd.Series)
-        ndarrays = list(columns.values.T)
-        labels = columns[1].values.astype(np.float32)
-        return ndarrays, labels
-
-    def process_minibatch_result(self, minibatch, result):
-        import pandas as pd
-        if result is None:
-            result = pd.Series([0.0] * len(minibatch))
-        if len(result) != len(minibatch):
-            message = "result length (%d) and " % len(result)
-            message += "minibatch size (%d) mismatch" % len(minibatch)
-            raise RuntimeError(message)
-        if not isinstance(result, pd.Series):
-            if len(result.reshape(-1)) == len(minibatch):
-                result = result.reshape(-1)
-            else:
-                message = "result can not be converted to pandas series; "
-                message += "result.shape: {}, ".format(result.shape)
-                message += "minibatch_size: {}".format(len(minibatch))
-                raise RuntimeError(message)
-            result = pd.Series(result)
-        return result
 
     def train_minibatch(self, minibatch):
         message = "Agent.train_minibatch method is not implemented"
@@ -433,8 +401,12 @@ class Agent(object):
         message = "Agent.validate_minibatch method is not implemented"
         raise NotImplementedError(message)
 
+    def _get_metric_class(self):
+        return BinaryClassificationModelMetric
+
     def _create_metric(self):
-        metric = ModelMetric()
+        metric_class = self._get_metric_class()
+        metric = metric_class()
         return metric
 
     @property
@@ -445,8 +417,8 @@ class Agent(object):
             self.__metric = metric
         return metric
 
-    def update_metric(self, predictions, labels):
-        self._metric.accumulate(predictions.data.numpy(), labels.data.numpy())
+    def update_metric(self, **kwargs):
+        self._metric.accumulate(**kwargs)
 
     def push_metric(self):
         body = dict(command='PushMetric')
@@ -471,19 +443,10 @@ class Agent(object):
             for i in range(req.slice_count):
                 states += req.get_slice(i),
             accum = self._metric
-            delta = ModelMetric.from_states(states)
+            delta = self._create_metric()
+            delta.from_states(states)
             accum.merge(delta)
-            string = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
-            string += f' -- auc: {accum.compute_auc()}'
-            string += f', \u0394auc: {delta.compute_auc()}'
-            string += f', pcoc: {accum.compute_pcoc()}'
-            string += f', \u0394pcoc: {delta.compute_pcoc()}'
-            string += f', #instance: {accum.instance_count}'
-            if accum.threshold > 0.0:
-                string += f', accuracy: {accum.compute_accuracy()}'
-                string += f', precision: {accum.compute_precision()}'
-                string += f', recall: {accum.compute_recall()}'
-                string += f', F{accum.beta:g}_score: {accum.compute_f_score()}'
+            string = accum.format(delta)
             print(string)
             res = Message()
             self.send_response(req, res)

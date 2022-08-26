@@ -18,8 +18,8 @@
 #include <common/hashmap/memory_mapped_array_hash_map_loader.h>
 #include <common/hashmap/multi_memory_mapped_map_search_helper.h>
 #include <serving/inmem_sparse_lookup.h>
-#include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/threadpool.h>
+#include <common/utils.h>
 
 #include <fmt/format.h>
 #include <range/v3/algorithm/any_of.hpp>
@@ -85,7 +85,7 @@ template <size_t N> struct AssignFromSearch {
 
     void operator()(KeyType key, const ValueType *p, size_t count) {
         ValueType *target = values + count * N;
-        if (p == nullptr) [[unlikely]] {
+        if (p == nullptr || key == 0) [[unlikely]] {
             static std::array<ValueType, N> v{ValueType()};
             VectorAssign<ValueType, N>::assign(v.data(), target);
         } else [[likely]] {
@@ -102,7 +102,7 @@ template <> struct AssignFromSearch<0> {
 
     void operator()(KeyType key, const ValueType *p, size_t count) {
         ValueType *target = values + count * vector_size;
-        if (p == nullptr) [[unlikely]] {
+        if (p == nullptr || key == 0) [[unlikely]] {
             memset(target, 0, vector_size * sizeof(ValueType));
         } else [[likely]] {
             VectorAssign<ValueType, 0>::assign(p, target, vector_size);

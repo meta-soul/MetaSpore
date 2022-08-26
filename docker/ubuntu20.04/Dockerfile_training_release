@@ -45,7 +45,7 @@ ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
     apt-get install -y tini libpam-modules krb5-user libnss3 procps && \
@@ -62,17 +62,21 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     python -m pip cache purge && \
     echo OK: python
 
+FROM ${METASPORE_BUILD_IMAGE} as metaspore_build
 FROM env as metaspore_http_install
 ARG METASPORE_WHEEL="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B48beee4-cp38-cp38-linux_x86_64.whl"
+COPY --from=metaspore_build /lib/x86_64-linux-gnu/libstdc++.so.6.0.29 /lib/x86_64-linux-gnu
+RUN ln -svf libstdc++.so.6.0.29 /lib/x86_64-linux-gnu/libstdc++.so.6
 RUN python -m pip install ${METASPORE_WHEEL} && pip cache purge
 
-FROM ${METASPORE_BUILD_IMAGE} as metaspore_build_install
 FROM env as metaspore_build_install
 COPY --from=metaspore_build /opt/metaspore-build-release/metaspore-*.whl .
+COPY --from=metaspore_build /lib/x86_64-linux-gnu/libstdc++.so.6.0.29 /lib/x86_64-linux-gnu
+RUN ln -svf libstdc++.so.6.0.29 /lib/x86_64-linux-gnu/libstdc++.so.6
 RUN python -m pip install metaspore-*.whl && pip cache purge && rm -f metaspore-*.whl
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-tarball-install
-ARG SPARK_FILE="https://dlcdn.apache.org/spark/spark-3.2.1/spark-3.2.1-bin-hadoop3.2.tgz"
+ARG SPARK_FILE="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/spark-3.1.2-bin-free-265f9ad4ee.tgz"
 ARG SYNAPSEML_VERSION="0.9.5-92-76c32ccf-SNAPSHOT"
 RUN mkdir -p /opt/spark && wget ${SPARK_FILE} && tar xf `basename ${SPARK_FILE}` -C /opt/spark --strip-components 1 && rm -f `basename ${SPARK_FILE}`
 ENV SPARK_HOME /opt/spark
@@ -86,7 +90,7 @@ RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy
 ENV MAVEN_OPTS=
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
-ARG SPARK_FILE="pyspark"
+ARG SPARK_FILE="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl"
 ARG SYNAPSEML_VERSION="0.9.5-92-76c32ccf-SNAPSHOT"
 RUN python -m pip install ${SPARK_FILE}
 ENV SPARK_HOME /usr/local/lib/python3.8/dist-packages/pyspark

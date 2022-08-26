@@ -23,8 +23,8 @@
 #include <boost/core/demangle.hpp>
 #include <fmt/format.h>
 
-#include <serving/threadpool.h>
-#include <serving/types.h>
+#include <common/threadpool.h>
+#include <common/types.h>
 
 namespace metaspore::serving {
 

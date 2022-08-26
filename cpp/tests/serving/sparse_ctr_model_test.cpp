@@ -15,16 +15,17 @@
 //
 
 #include <fmt/ranges.h>
-#include <serving/arrow_helpers.h>
+#include <common/arrow/arrow_helpers.h>
 #include <serving/feature_extraction_model_input.h>
 #include <serving/ort_model.h>
 #include <serving/tabular_model.h>
-#include <serving/test_utils.h>
-#include <serving/threadpool.h>
-#include <serving/types.h>
+#include <common/test_utils.h>
+#include <common/threadpool.h>
+#include <common/types.h>
 
 #include <boost/asio/use_future.hpp>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::string_literals;
 

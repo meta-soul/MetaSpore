@@ -14,15 +14,16 @@
 // limitations under the License.
 //
 
-#include <serving/arrow_helpers.h>
-#include <serving/feature_compute_exec.h>
-#include <serving/test_utils.h>
-#include <serving/types.h>
-#include <serving/utils.h>
+#include <common/arrow/arrow_helpers.h>
+#include <common/features/feature_compute_exec.h>
+#include <common/test_utils.h>
+#include <common/types.h>
+#include <common/utils.h>
 
 #include <arrow/compute/api.h>
 #include <boost/asio/use_future.hpp>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::string_literals;
 namespace cp = arrow::compute;

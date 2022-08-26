@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-#include <serving/arrow_record_batch_serde.h>
+#include <common/arrow/arrow_record_batch_serde.h>
 
 #include <arrow/api.h>
 #include <arrow/io/api.h>
@@ -22,10 +22,10 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 result<std::shared_ptr<arrow::RecordBatch>>
-ArrowRecordBatchSerde::deserialize_from(const std::string &name, const PredictRequest &request) {
+ArrowRecordBatchSerde::deserialize_from(const std::string &name, const metaspore::serving::PredictRequest &request) {
     auto find = request.payload().find(name);
     if (find == request.payload().end()) {
         return absl::NotFoundError(fmt::format("Cannot find input {} from request", name));
@@ -52,4 +52,4 @@ ArrowRecordBatchSerde::deserialize_from(const std::string &name, const PredictRe
     return *result;
 }
 
-} // namespace metaspore::serving
+} // namespace metaspore

@@ -15,11 +15,11 @@
 //
 
 #include <common/logger.h>
-#include <serving/feature_compute_exec.h>
-#include <serving/schema_parse.h>
+#include <common/features/feature_compute_exec.h>
+#include <common/features/schema_parser.h>
 #include <serving/sparse_feature_extraction_model.h>
-#include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/threadpool.h>
+#include <common/utils.h>
 
 #include <boost/core/demangle.hpp>
 #include <fmt/format.h>

@@ -17,10 +17,10 @@
 #pragma once
 
 #include <arrow/api.h>
-#include <serving/types.h>
-#include <serving/utils.h>
+#include <common/types.h>
+#include <common/utils.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class ArrowHelpers {
   public:
@@ -173,4 +173,35 @@ struct HashListAccessor {
     }
 };
 
-} // namespace metaspore::serving
+template<template<typename> typename Container>
+result<int64_t>
+flatten_arrow_batch(std::shared_ptr<arrow::RecordBatch> batch,
+                    std::vector<uint64_t> &indices,
+                    std::vector<uint64_t> &offsets) {
+    const int64_t rows = batch->num_rows();
+    const int64_t cols = batch->num_columns();
+    indices.clear();
+    offsets.clear();
+    indices.reserve(rows * cols);
+    offsets.reserve(rows * cols + 1);
+    ASSIGN_RESULT_OR_RETURN_NOT_OK(
+        auto accessor_make_result,
+        HashListAccessor::create_accessor_makers<Container>(batch->columns()));
+    for (int64_t i = 0; i < rows; ++i) {
+        for (int64_t j = 0; j < cols; ++j) {
+            auto accessor = accessor_make_result[j](i);
+            offsets.push_back(indices.size());
+            if (accessor.empty()) {
+                // handle null fields
+                indices.push_back(0UL);
+            } else {
+                for (auto h : accessor) {
+                    indices.push_back(h);
+                }
+            }
+        }
+    }
+    return rows;
+}
+
+} // namespace metaspore

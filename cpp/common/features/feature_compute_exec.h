@@ -23,9 +23,9 @@
 #include <arrow/compute/exec/options.h>
 #include <arrow/record_batch.h>
 
-#include <serving/types.h>
+#include <common/types.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class FeatureComputeContext;
 class FeatureComputeExecContext;
@@ -69,4 +69,4 @@ class FeatureComputeExec {
     std::unique_ptr<FeatureComputeContext> context_;
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore
