@@ -19,8 +19,13 @@ import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.Document;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
+
+import java.util.Map;
+
 /**
  * source.kind=mongodb的DataSource实现类
  * 配置中的source.kind需要与注解DataSourceAnnotation中value保持一致
@@ -55,5 +60,11 @@ public class MongoDBSource extends DataSource {
                 log.error("mongodb simpleMongoClientDatabaseFactory destroy fail! {}", ex.getMessage());
             }
         }
+    }
+    @Override
+    public void doHealthCheck(Status status, Map<String, Object> details, Throwable exception) throws Exception {
+        super.doHealthCheck(status, details, exception);
+        Document result = this.mongoTemplate.executeCommand("{ buildInfo: 1 }");
+        details.put("version", result.getString("version"));
     }
 }

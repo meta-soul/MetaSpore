@@ -27,11 +27,11 @@
 #include <range/v3/view/transform.hpp>
 #include <spdlog/spdlog.h>
 
-#include <serving/arrow_helpers.h>
-#include <serving/threadpool.h>
-#include <serving/utils.h>
+#include <common/arrow/arrow_helpers.h>
+#include <common/threadpool.h>
+#include <common/utils.h>
 
-using namespace metaspore::serving;
+using namespace metaspore;
 using namespace std::string_literals;
 
 using channel_type = boost::asio::experimental::concurrent_channel<void(boost::system::error_code,

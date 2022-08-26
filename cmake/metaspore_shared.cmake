@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development)
-message("Found Python at " ${Python_EXECUTABLE})
 find_package(PkgConfig REQUIRED)
 find_package(pybind11 REQUIRED CONFIG)
 find_package(AWSSDK REQUIRED CONFIG COMPONENTS s3)
@@ -105,8 +103,7 @@ add_library(metaspore_shared SHARED
     cpp/metaspore/sparse_tensor.cpp
     cpp/metaspore/ps_default_agent.cpp
     cpp/metaspore/ps_helper.cpp
-    cpp/metaspore/combine_schema.cpp
-    cpp/metaspore/index_batch.cpp
+    cpp/metaspore/sparse_feature_extractor.cpp
     cpp/metaspore/model_metric_buffer.cpp
     cpp/metaspore/tensor_utils.cpp
     cpp/metaspore/pybind_utils.cpp
@@ -117,8 +114,8 @@ add_library(metaspore_shared SHARED
 set_target_properties(metaspore_shared PROPERTIES PREFIX "")
 set_target_properties(metaspore_shared PROPERTIES OUTPUT_NAME _metaspore)
 set_target_properties(metaspore_shared PROPERTIES
-        BUILD_WITH_INSTALL_RPATH FALSE
-        LINK_FLAGS "-Wl,-rpath,$ORIGIN/")
+    BUILD_WITH_INSTALL_RPATH TRUE
+    INSTALL_RPATH "\$ORIGIN/.libs:\$ORIGIN:\$ORIGIN/../pyarrow")
 target_compile_definitions(metaspore_shared PRIVATE DMLC_USE_S3=1)
 target_compile_definitions(metaspore_shared PRIVATE _METASPORE_VERSION="${project_version}")
 target_compile_definitions(metaspore_shared PRIVATE DBG_MACRO_NO_WARNING)
@@ -127,8 +124,10 @@ target_compile_options(metaspore_shared PRIVATE
     -funroll-loops
     -march=core-avx2
 )
-target_include_directories(metaspore_shared PRIVATE ${PROJECT_SOURCE_DIR}/cpp)
-target_include_directories(metaspore_shared PRIVATE ${PROJECT_BINARY_DIR}/gen/thrift/cpp)
+target_include_directories(metaspore_shared PRIVATE
+    ${PROJECT_SOURCE_DIR}/cpp
+    ${PROJECT_BINARY_DIR}/gen/thrift/cpp
+)
 target_link_libraries(metaspore_shared PRIVATE
     metaspore-common
     ${JSON11_LIBRARIES}
@@ -140,4 +139,5 @@ target_link_libraries(metaspore_shared PRIVATE
     Boost::headers
     thrift::thrift
     zmq::libzmq
+    libarrow_python
 )

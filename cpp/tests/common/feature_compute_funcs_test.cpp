@@ -15,8 +15,8 @@
 //
 
 #include <common/hash_utils.h>
-#include <serving/test_utils.h>
-#include <serving/utils.h>
+#include <common/test_utils.h>
+#include <common/utils.h>
 
 #include <arrow/api.h>
 #include <arrow/compute/api.h>

@@ -15,15 +15,15 @@
 //
 
 #include <common/hash_utils.h>
-#include <serving/arrow_helpers.h>
-#include <serving/feature_compute_funcs.h>
-#include <serving/utils.h>
+#include <common/arrow/arrow_helpers.h>
+#include <common/features/feature_compute_funcs.h>
+#include <common/utils.h>
 
 #include <fmt/format.h>
 
 namespace cp = arrow::compute;
 
-namespace metaspore::serving {
+namespace metaspore {
 
 // bkdr hash needs a state to store hash value of "feature_name="
 struct StringBKDRHashState : public cp::KernelState {
@@ -226,10 +226,10 @@ BKDRHashCombineFunctionOption::BKDRHashCombineFunctionOption()
     : arrow::compute::FunctionOptions(
           MetaSporeBKDRHashFuncOptType<BKDRHashCombineFunctionOption>::get()) {}
 
-arrow::Status RegisterAllFunctions() {
+arrow::Status RegisterCustomArrowFunctions() {
     ARROW_RETURN_NOT_OK(AddStringBKDRHashFunction());
     ARROW_RETURN_NOT_OK(AddBKDRHashCombineFunction());
     return arrow::Status::OK();
 }
 
-} // namespace metaspore::serving
+} // namespace metaspore

@@ -33,6 +33,7 @@ set(python_files
     python/metaspore/agent.py
     python/metaspore/metric.py
     python/metaspore/loss_utils.py
+    python/metaspore/feature_group.py
     python/metaspore/embedding.py
     python/metaspore/cast.py
     python/metaspore/input.py
@@ -46,6 +47,7 @@ set(python_files
     python/metaspore/stack_trace_utils.py
     python/metaspore/ps_launcher.py
     python/metaspore/job_utils.py
+    python/metaspore/schema_utils.py
     python/metaspore/estimator.py
     python/metaspore/two_tower_ranking.py
     python/metaspore/two_tower_retrieval.py

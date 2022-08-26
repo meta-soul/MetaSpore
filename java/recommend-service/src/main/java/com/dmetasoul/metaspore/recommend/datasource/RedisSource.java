@@ -27,10 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.redis.connection.*;
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
+import org.springframework.data.redis.core.RedisConnectionUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -176,6 +178,26 @@ public class RedisSource extends DataSource {
             } catch (Exception ex) {
                 log.error("redis factory destroy fail! {}", ex.getMessage());
             }
+        }
+    }
+    @Override
+    public void doHealthCheck(Status status, Map<String, Object> details, Throwable exception) throws Exception {
+        super.doHealthCheck(status, details, exception);
+        RedisConnection connection = RedisConnectionUtils.getConnection(factory);
+        try {
+            if (connection instanceof RedisClusterConnection) {
+                ClusterInfo clusterInfo = ((RedisClusterConnection)connection).clusterGetClusterInfo();
+                details.put("cluster_size", clusterInfo.getClusterSize());
+                details.put("slots_up", clusterInfo.getSlotsOk());
+                details.put("slots_fail", clusterInfo.getSlotsFail());
+                if ("fail".equalsIgnoreCase(clusterInfo.getState())) {
+                    status = Status.DOWN;
+                }
+            } else {
+                details.put("version", Objects.requireNonNull(connection.info("server")).getProperty("redis_version"));
+            }
+        } finally {
+            RedisConnectionUtils.releaseConnection(connection, factory);
         }
     }
 }

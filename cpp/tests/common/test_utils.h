@@ -17,10 +17,10 @@
 #include <gflags/gflags.h>
 #include <gtest/gtest.h>
 
-#include <serving/feature_compute_funcs.h>
+#include <common/features/feature_compute_funcs.h>
 #include <common/logger.h>
-#include <serving/print_utils.h>
-#include <serving/threadpool.h>
+#include <common/print_utils.h>
+#include <common/threadpool.h>
 
 namespace metaspore::serving {
 
@@ -45,15 +45,15 @@ namespace metaspore::serving {
 int run_all_tests(int argc, char **argv) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
     SpdlogDefault::Init();
-    auto status = RegisterAllFunctions();
+    auto status = RegisterCustomArrowFunctions();
     if (!status.ok()) {
         fmt::print(stderr, "register arrow functions failed {}\n", status);
         return 1;
     }
     testing::InitGoogleTest(&argc, argv);
     auto r = RUN_ALL_TESTS();
-    auto &tp = metaspore::serving::Threadpools::get_compute_threadpool();
-    auto &btp = metaspore::serving::Threadpools::get_background_threadpool();
+    auto &tp = metaspore::Threadpools::get_compute_threadpool();
+    auto &btp = metaspore::Threadpools::get_background_threadpool();
     tp.join();
     btp.join();
     tp.stop();

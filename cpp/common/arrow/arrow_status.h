@@ -19,7 +19,7 @@
 #include <absl/status/status.h>
 #include <arrow/status.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class ArrowStatusToAbsl {
   public:
@@ -51,4 +51,4 @@ class ArrowStatusToAbsl {
     }
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

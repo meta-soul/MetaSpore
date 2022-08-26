@@ -18,8 +18,9 @@
 
 #include <fstream>
 #include <string>
+#include <common/types.h>
 
-namespace metaspore::serving {
+namespace metaspore {
 
 class FeatureComputeExec;
 
@@ -30,7 +31,7 @@ class FeatureSchemaParser {
     static status parse_table_name_from_path(const std::string &file, FeatureComputeExec &exec);
     static std::string parse_table_name_from_config(const std::string &line);
     static status parse_table_join(std::istream &is, FeatureComputeExec &exec);
-    static status parse_hash_and_combine(std::istream &is, FeatureComputeExec &exec);
+    static status parse_hash_and_combine(std::istream &is, FeatureComputeExec &exec, int &feature_count);
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore

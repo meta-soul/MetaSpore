@@ -25,10 +25,10 @@
 #include <grpcpp/create_channel.h>
 #include <fmt/format.h>
 #include <common/logger.h>
-#include <serving/threadpool.h>
-#include <serving/utils.h>
-#include <serving/metaspore.pb.h>
-#include <serving/metaspore.grpc.pb.h>
+#include <common/threadpool.h>
+#include <common/utils.h>
+#include <common/metaspore.pb.h>
+#include <common/metaspore.grpc.pb.h>
 #include <serving/grpc_client_context_pool.h>
 #include <serving/py_preprocessing_process.h>
 #include <serving/py_preprocessing_model.h>

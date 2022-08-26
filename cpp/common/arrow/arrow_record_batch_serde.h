@@ -16,27 +16,18 @@
 
 #pragma once
 
-#include <boost/asio/thread_pool.hpp>
-#include <gflags/gflags.h>
+#include <common/metaspore.pb.h>
+#include <common/types.h>
 
-namespace metaspore::serving {
+#include <arrow/record_batch.h>
+#include <fmt/format.h>
 
-DECLARE_uint64(compute_thread_num);
-DECLARE_uint64(background_thread_num);
+namespace metaspore {
 
-using threadpool = boost::asio::thread_pool;
-
-class Threadpools {
+class ArrowRecordBatchSerde {
   public:
-    static threadpool &get_compute_threadpool() {
-        static threadpool tp(FLAGS_compute_thread_num);
-        return tp;
-    }
-
-    static threadpool &get_background_threadpool() {
-        static threadpool tp(FLAGS_background_thread_num);
-        return tp;
-    }
+    static result<std::shared_ptr<arrow::RecordBatch>>
+    deserialize_from(const std::string &name, const metaspore::serving::PredictRequest &request);
 };
 
-} // namespace metaspore::serving
+} // namespace metaspore
