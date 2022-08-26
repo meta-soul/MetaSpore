@@ -111,8 +111,6 @@ class MLPLayer(torch.nn.Module):
                 return torch.nn.ReLU() ## defalut relu
         else:
             return torch.nn.ReLU() ## defalut relu
-
-
     
 class Attention(torch.nn.Module):
     def __init__(
@@ -128,11 +126,12 @@ class Attention(torch.nn.Module):
         self.return_scores = return_scores
         self.mlp = MLPLayer(
             input_dim=input_dim * 4,
+            output_dim=1,
             hidden_units=hidden_units,
             hidden_activations=hidden_activations,
+            final_activation=None,
             dropout_rates=dropout_rates,
             batch_norm=batch_norm)
-        self.fc = torch.nn.Linear(hidden_units[-1], 1)
  
     def forward(self, query, keys, keys_length):
         """
@@ -150,16 +149,14 @@ class Attention(torch.nn.Module):
         din_all = torch.cat(
             [query, keys, query - keys, query * keys], dim=-1)
         din_all = din_all.view(batch_size * max_length, -1) # [B*T 4*H]
-        outputs = self.mlp(din_all)
-        outputs = self.fc(outputs).view(batch_size, max_length)  # [B, T]
+        outputs = self.mlp(din_all).view(batch_size, max_length)  # [B, T]
         # Scale
         outputs = outputs / (dim ** 0.5)
         # Mask
         mask = (torch.arange(max_length, device=keys_length.device).repeat(
             batch_size, 1) < keys_length.view(-1, 1))
         outputs[~mask] = -math.inf
-        # Activation
-        outputs = torch.sigmoid(outputs)  # [B, T]
+        outputs = torch.nn.functional.softmax(outputs, dim=1)
         if not self.return_scores:
             # Weighted sum
             outputs = torch.matmul(
