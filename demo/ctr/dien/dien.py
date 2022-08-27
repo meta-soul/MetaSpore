@@ -24,7 +24,7 @@ import sys
 from operator import itemgetter
 
 sys.path.append('../../../')
-from python.algos.sequential import DIEN,DIENAgent
+from python.algos.sequential import DIEN, DIENAgent
 
 def load_config(path):
     params=dict()
@@ -75,23 +75,23 @@ def read_dataset(spark):
 def train(spark, trian_dataset, **model_params):
     ## init wide and deep model
     module = DIEN(embedding_size=embedding_size,
-                aux_mlp_layer=aux_mlp_layer,
+                aux_hidden_units=aux_hidden_units,
                 gru_num_layer = gru_num_layer,
-                att_hidden_size = att_hidden_size,
-                dnn_hidden_mlp_list=dnn_hidden_mlp_list,
+                att_hidden_units = att_hidden_units,
+                dnn_hidden_units=dnn_hidden_units,
                 column_name_path=column_name_path,
                 combine_schema_path=combine_schema_path,
                 sparse_init_var=sparse_init_var,
                 feature_slice = feature_slice,
-                aux_mlp_bn= aux_mlp_bn,
-                aux_mlp_dropout = aux_mlp_dropout,
-                aux_mlp_activation= aux_mlp_activation,
-                att_hidden_bn= att_hidden_bn,
-                att_hidden_dropout=att_hidden_dropout,
-                att_hidden_activation= att_hidden_activation,
-                dnn_hidden_mlp_bn= dnn_hidden_mlp_bn,
-                dnn_hidden_mlp_dropout= dnn_hidden_mlp_dropout,
-                dnn_hidden_mlp_activation= dnn_hidden_mlp_activation,
+                use_aux_bn= use_aux_bn,
+                aux_dropout = aux_dropout,
+                aux_activation= aux_activation,
+                use_att_bn= use_att_bn,
+                att_dropout=att_dropout,
+                att_activation= att_activation,
+                use_dnn_bn= use_dnn_bn,
+                dnn_dropout= dnn_dropout,
+                dnn_activation= dnn_activation,
                 ) #None
     
     
