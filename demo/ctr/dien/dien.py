@@ -92,6 +92,14 @@ def train(spark, trian_dataset, **model_params):
                 use_dnn_bn= use_dnn_bn,
                 dnn_dropout= dnn_dropout,
                 dnn_activation= dnn_activation,
+                use_wide=use_wide,
+                use_deep=use_deep,
+                wide_deep_combine_schema_path=wide_deep_combine_schema_path,
+                deep_hidden_units=deep_hidden_units,
+                deep_dropout =deep_dropout,
+                deep_activation =deep_activation,
+                use_deep_bn=use_deep_bn,
+                use_deep_bias=use_deep_bias,
                 ) #None
     
     

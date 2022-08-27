@@ -17,6 +17,7 @@ test_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/test.parquet
 ## model configurations
 column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIEN.txt
 combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_DIEN.txt
+wide_deep_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_WIDEDEEP.txt
 
 model_in_path: null
 model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dien/model_out/ml_1m/
@@ -50,3 +51,10 @@ att_activation: 'Sigmoid'
 use_dnn_bn: True
 dnn_dropout: 0.1
 dnn_activation: 'Dice'
+use_wide: True
+use_deep: True
+deep_hidden_units: [64,16]
+deep_dropout: 0.1
+deep_activation: 'relu'
+use_deep_bn: True
+use_deep_bias: True
