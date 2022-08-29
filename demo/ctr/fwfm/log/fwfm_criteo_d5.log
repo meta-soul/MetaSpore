@@ -1,0 +1,852 @@
+Debug -- CTR Demo FwFM
+Debug--load config: {'app_name': 'CTR Demo FwFM', 'local': False, 'worker_count': 4, 'server_count': 4, 'batch_size': 50, 'worker_memory': '10G', 'server_memory': '10G', 'coordinator_memory': '10G', 'train_path': 's3://dmetasoul-bucket/demo/criteo_x1/train_5.parquet', 'test_path': 's3://dmetasoul-bucket/demo/criteo_x1/test_1.parquet', 'wide_column_name_path': 's3://dmetasoul-bucket/demo/schema/column_name_demo.txt', 'wide_combine_schema_path': 's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt', 'deep_column_name_path': 's3://dmetasoul-bucket/demo/schema/column_name_demo.txt', 'deep_combine_schema_path': 's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt', 'model_in_path': None, 'model_out_path': 's3://dmetasoul-bucket/demo/movielens/model/fwfm/model_out/criteo_d5/', 'model_export_path': 's3://dmetasoul-bucket/demo/movielens/model/fwfm/model_export/criteo_d5/', 'model_version': '0.1', 'experiment_name': 'criteo_fwfm_d5', 'input_label_column_index': 0, 'metric_update_interval': 100, 'use_wide': True, 'use_dnn': True, 'use_fm': True, 'wide_embedding_dim': 10, 'deep_embedding_dim': 10, 'adam_learning_rate': 0.0001, 'ftrl_l1': 1.0, 'ftrl_l2': 120.0, 'ftrl_alpha': 0.5, 'ftrl_beta': 1.0, 'dnn_hidden_units': [1024, 1024, 1024], 'sparse_init_var': 0.01, 'dnn_hidden_activations': 'ReLU', 'use_bias': True, 'batch_norm': True, 'net_dropout': 0, 'net_regularizer': None}
+updating: python/ (stored 0%)
+updating: python/algos/ (stored 0%)
+updating: python/algos/xdeepfm_net.py (deflated 71%)
+updating: python/algos/widedeep_net.py (deflated 68%)
+updating: python/algos/tuner/ (stored 0%)
+updating: python/algos/tuner/base_tuner.py (deflated 70%)
+updating: python/algos/multitask/ (stored 0%)
+updating: python/algos/multitask/mmoe/ (stored 0%)
+updating: python/algos/multitask/mmoe/mmoe_net.py (deflated 75%)
+updating: python/algos/multitask/mmoe/mmoe_agent.py (deflated 70%)
+updating: python/algos/multitask/mmoe/__pycache__/ (stored 0%)
+updating: python/algos/multitask/mmoe/__pycache__/mmoe_net.cpython-38.pyc (deflated 43%)
+updating: python/algos/multitask/mmoe/__pycache__/mmoe_agent.cpython-38.pyc (deflated 52%)
+updating: python/algos/multitask/mmoe/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/multitask/mmoe/.ipynb_checkpoints/mmoe_net-checkpoint.py (deflated 75%)
+updating: python/algos/multitask/mmoe/.ipynb_checkpoints/mmoe_agent-checkpoint.py (deflated 70%)
+updating: python/algos/multitask/esmm/ (stored 0%)
+updating: python/algos/multitask/esmm/esmm_net.py (deflated 69%)
+updating: python/algos/multitask/esmm/esmm_agent.py (deflated 74%)
+updating: python/algos/multitask/esmm/__pycache__/ (stored 0%)
+updating: python/algos/multitask/esmm/__pycache__/esmm_agent.cpython-38.pyc (deflated 54%)
+updating: python/algos/multitask/esmm/__pycache__/esmm_net.cpython-38.pyc (deflated 41%)
+updating: python/algos/multitask/esmm/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/multitask/esmm/.ipynb_checkpoints/esmm_agent-checkpoint.py (deflated 74%)
+updating: python/algos/multitask/esmm/.ipynb_checkpoints/esmm_net-checkpoint.py (deflated 69%)
+updating: python/algos/multitask/__init__.py (deflated 43%)
+updating: python/algos/multitask/__pycache__/ (stored 0%)
+updating: python/algos/multitask/__pycache__/__init__.cpython-38.pyc (deflated 32%)
+updating: python/algos/multitask/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/multitask/.ipynb_checkpoints/__init__-checkpoint.py (deflated 43%)
+updating: python/algos/item_cf_retrieval.py (deflated 77%)
+updating: python/algos/pnn_net.py (deflated 70%)
+updating: python/algos/feature/ (stored 0%)
+updating: python/algos/feature/woe_encoder.py (deflated 64%)
+updating: python/algos/feature/__init__.py (deflated 37%)
+updating: python/algos/feature/__pycache__/ (stored 0%)
+updating: python/algos/feature/__pycache__/__init__.cpython-38.pyc (deflated 18%)
+updating: python/algos/feature/__pycache__/woe_encoder.cpython-38.pyc (deflated 43%)
+updating: python/algos/feature/__pycache__/quantile_bucketizer.cpython-38.pyc (deflated 37%)
+updating: python/algos/feature/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/feature/.ipynb_checkpoints/woe_encoder-checkpoint.py (deflated 64%)
+updating: python/algos/feature/.ipynb_checkpoints/__init__-checkpoint.py (deflated 37%)
+updating: python/algos/fwfm_net.py (deflated 69%)
+updating: python/algos/__init__.py (deflated 38%)
+updating: python/algos/twotower/ (stored 0%)
+updating: python/algos/twotower/two_tower_retrieval.py (deflated 81%)
+updating: python/algos/twotower/__init__.py (deflated 40%)
+updating: python/algos/twotower/simplex/ (stored 0%)
+updating: python/algos/twotower/simplex/simplex_net.py (deflated 71%)
+updating: python/algos/twotower/simplex/__init__.py (deflated 39%)
+updating: python/algos/twotower/simplex/simplex_agent.py (deflated 64%)
+updating: python/algos/twotower/simplex/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/twotower/simplex/.ipynb_checkpoints/simplex_net-checkpoint.py (deflated 71%)
+updating: python/algos/twotower/retrieval_metric.py (deflated 68%)
+updating: python/algos/twotower/dssm/ (stored 0%)
+updating: python/algos/twotower/dssm/dssm_agent.py (deflated 72%)
+updating: python/algos/twotower/dssm/__init__.py (deflated 41%)
+updating: python/algos/twotower/dssm/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/twotower/dssm/.ipynb_checkpoints/dssm_net-checkpoint.py (deflated 78%)
+updating: python/algos/twotower/dssm/dssm_net.py (deflated 78%)
+updating: python/algos/config/ (stored 0%)
+updating: python/algos/config/__pycache__/ (stored 0%)
+updating: python/algos/config/__pycache__/__init__.cpython-38.pyc (deflated 31%)
+updating: python/algos/config/__pycache__/deep_ctr_estimator_config.cpython-38.pyc (deflated 46%)
+updating: python/algos/config/__pycache__/deepfm_config.cpython-38.pyc (deflated 51%)
+updating: python/algos/config/__pycache__/common_validators.cpython-38.pyc (deflated 53%)
+updating: python/algos/config/__pycache__/config_factory.cpython-38.pyc (deflated 42%)
+updating: python/algos/config/__pycache__/deepctr_config.cpython-38.pyc (deflated 58%)
+updating: python/algos/config/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/config/.ipynb_checkpoints/config_factory-checkpoint.py (deflated 56%)
+updating: python/algos/config/.ipynb_checkpoints/widedeep_config-checkpoint.py (deflated 69%)
+updating: python/algos/config/.ipynb_checkpoints/deep_ctr_estimator_config-checkpoint.py (deflated 61%)
+updating: python/algos/config/.ipynb_checkpoints/deepfm_config-checkpoint.py (deflated 71%)
+updating: python/algos/config/.ipynb_checkpoints/deepctr_config-checkpoint.py (deflated 81%)
+updating: python/algos/config/.ipynb_checkpoints/i2i_retrieval_config-checkpoint.py (deflated 79%)
+updating: python/algos/config/.ipynb_checkpoints/__init__-checkpoint.py (deflated 46%)
+updating: python/algos/config/.ipynb_checkpoints/common_validators-checkpoint.py (deflated 66%)
+updating: python/algos/dcn_v2_net.py (deflated 75%)
+updating: python/algos/__pycache__/ (stored 0%)
+updating: python/algos/__pycache__/widedeep_net.cpython-38.pyc (deflated 41%)
+updating: python/algos/__pycache__/__init__.cpython-38.pyc (deflated 22%)
+updating: python/algos/__pycache__/layers.cpython-38.pyc (deflated 59%)
+updating: python/algos/__pycache__/fwfm_net.cpython-38.pyc (deflated 42%)
+updating: python/algos/__pycache__/item_cf_retrieval.cpython-38.pyc (deflated 54%)
+updating: python/algos/__pycache__/deepfm_net.cpython-38.pyc (deflated 42%)
+updating: python/algos/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/.ipynb_checkpoints/autoint_net-checkpoint.py (deflated 70%)
+updating: python/algos/.ipynb_checkpoints/item_cf_retrieval-checkpoint.py (deflated 77%)
+updating: python/algos/.ipynb_checkpoints/pnn_net-checkpoint.py (deflated 70%)
+updating: python/algos/.ipynb_checkpoints/layers-checkpoint.py (deflated 78%)
+updating: python/algos/.ipynb_checkpoints/dcn_net-checkpoint.py (deflated 69%)
+updating: python/algos/.ipynb_checkpoints/xdeepfm_net-checkpoint.py (deflated 71%)
+updating: python/algos/.ipynb_checkpoints/deepfm_net-checkpoint.py (deflated 69%)
+updating: python/algos/.ipynb_checkpoints/dcn_v2_net-checkpoint.py (deflated 75%)
+updating: python/algos/.ipynb_checkpoints/node2vec_retrieval-checkpoint.py (deflated 78%)
+updating: python/algos/.ipynb_checkpoints/widedeep_net-checkpoint.py (deflated 68%)
+updating: python/algos/.ipynb_checkpoints/fwfm_net-checkpoint.py (deflated 69%)
+updating: python/algos/dcn_net.py (deflated 69%)
+updating: python/algos/autoint_net.py (deflated 70%)
+updating: python/algos/simplex/ (stored 0%)
+updating: python/algos/simplex/.ipynb_checkpoints/ (stored 0%)
+updating: python/algos/simplex/.ipynb_checkpoints/simplex_net-checkpoint.py (deflated 71%)
+updating: python/algos/deepfm_net.py (deflated 69%)
+updating: python/algos/layers.py (deflated 78%)
+updating: python/tests/ (stored 0%)
+updating: python/tests/sparse_wdl_export_test.py (deflated 66%)
+updating: python/tests/sparse_wdl_grpc_test.py (deflated 52%)
+updating: python/tests/mnist_mlp_eval.py (deflated 57%)
+updating: python/tests/verify_java_tensor_serde.py (deflated 42%)
+updating: python/tests/mnist_mlp.py (deflated 59%)
+updating: python/tests/sparse_two_tower_export_demo.py (deflated 73%)
+updating: python/tests/dense_xgboost_grpc_test.py (deflated 44%)
+updating: python/tests/dense_xgboost.py (deflated 49%)
+updating: python/tests/requirements.txt (deflated 24%)
+updating: python/tests/two_tower_retrieval_milvus.py (deflated 81%)
+updating: python/tests/sparse_mlp_export_demo.py (deflated 64%)
+updating: python/tests/embedding_bag_export.py (deflated 61%)
+updating: python/tests/sparse_wdl_export_demo.py (deflated 64%)
+updating: python/metaspore/ (stored 0%)
+updating: python/metaspore/two_tower_retrieval.py (deflated 83%)
+updating: python/metaspore/distributed_tensor.py (deflated 80%)
+updating: python/metaspore/output.py (deflated 56%)
+updating: python/metaspore/distributed_trainer.py (deflated 76%)
+updating: python/metaspore/model.py (deflated 81%)
+updating: python/metaspore/shell_utils.py (deflated 65%)
+updating: python/metaspore/embedding.py (deflated 81%)
+updating: python/metaspore/demo.py (deflated 54%)
+updating: python/metaspore/experiment.py (deflated 76%)
+updating: python/metaspore/agent.py (deflated 77%)
+updating: python/metaspore/updater.py (deflated 81%)
+updating: python/metaspore/schema_utils.py (deflated 70%)
+updating: python/metaspore/spark.py (deflated 71%)
+updating: python/metaspore/input.py (deflated 59%)
+updating: python/metaspore/initializer.py (deflated 76%)
+updating: python/metaspore/url_utils.py (deflated 51%)
+updating: python/metaspore/compat/ (stored 0%)
+updating: python/metaspore/compat/__init__.py (deflated 52%)
+updating: python/metaspore/compat/ps/ (stored 0%)
+updating: python/metaspore/compat/ps/__init__.py (deflated 66%)
+updating: python/metaspore/__init__.py (deflated 68%)
+updating: python/metaspore/metric.py (deflated 78%)
+updating: python/metaspore/network_utils.py (deflated 52%)
+updating: python/metaspore/loss_utils.py (deflated 40%)
+updating: python/metaspore/feature_group.py (deflated 58%)
+updating: python/metaspore/.ipynb_checkpoints/ (stored 0%)
+updating: python/metaspore/.ipynb_checkpoints/swing_retrieval-checkpoint.py (deflated 79%)
+updating: python/metaspore/s3_utils.py (deflated 73%)
+updating: python/metaspore/file_utils.py (deflated 69%)
+updating: python/metaspore/patching_pickle.py (deflated 72%)
+updating: python/metaspore/job_utils.py (deflated 47%)
+updating: python/metaspore/estimator.py (deflated 85%)
+updating: python/metaspore/name_utils.py (deflated 37%)
+updating: python/metaspore/swing_retrieval.py (deflated 79%)
+updating: python/metaspore/two_tower_ranking.py (deflated 80%)
+updating: python/metaspore/stack_trace_utils.py (deflated 43%)
+updating: python/metaspore/ps_launcher.py (deflated 68%)
+updating: python/metaspore/nn/ (stored 0%)
+updating: python/metaspore/nn/__init__.py (deflated 41%)
+updating: python/metaspore/nn/wide_and_deep.py (deflated 75%)
+updating: python/metaspore/nn/normalization.py (deflated 61%)
+updating: python/metaspore/nn/deep_fm.py (deflated 70%)
+updating: python/metaspore/nn/fm.py (deflated 47%)
+updating: python/metaspore/cast.py (deflated 60%)
+updating: python/ps/ (stored 0%)
+updating: python/ps/job.py (deflated 81%)
+updating: python/ps/__init__.py (deflated 42%)
+updating: python/scripts/ (stored 0%)
+updating: python/scripts/preprocessing/ (stored 0%)
+updating: python/scripts/preprocessing/preprocessor_service.py (deflated 69%)
+updating: python/scripts/preprocessing/example_preprocessor.py (deflated 54%)
+updating: python/scripts/preprocessing/example_requirements.txt (stored 0%)
+updating: python/scripts/preprocessing/test_example_preprocessor.py (deflated 51%)
+updating: python/scripts/consul/ (stored 0%)
+updating: python/scripts/consul/consul_watch_load.py (deflated 72%)
+updating: python/scripts/consul/build.sh (deflated 30%)
+updating: python/scripts/consul/Dockerfile (deflated 44%)
+updating: python/scripts/consul/create_consul_watch.sh (deflated 17%)
+WARNING: An illegal reflective access operation has occurred
+WARNING: Illegal reflective access by org.apache.spark.unsafe.Platform (file:/opt/spark/jars/spark-unsafe_2.12-3.1.2.jar) to constructor java.nio.DirectByteBuffer(long,int)
+WARNING: Please consider reporting this to the maintainers of org.apache.spark.unsafe.Platform
+WARNING: Use --illegal-access=warn to enable warnings of further illegal reflective access operations
+WARNING: All illegal access operations will be denied in a future release
+22/08/29 03:32:25 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+Debug -- spark init
+Debug -- version: 3.1.2
+Debug -- applicaitonId: spark-application-1661743947080
+Debug -- uiWebUrl: http://10.0.1.85:4040
+[Stage 0:>                                                                                                    (0 + 1) / 1]                                                                                                                          [Stage 1:>                                                                                                    (0 + 1) / 1]                                                                                                                          Debug -- match train dataset sample:
+22/08/29 03:37:12 WARN package: Truncated the string representation of a plan since it was too large. This behavior can be adjusted by setting 'spark.sql.debug.maxToStringFields'.
+[Stage 2:>                                                                                                    (0 + 1) / 1]                                                                                                                          +-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|label| I1| I2| I3| I4| I5| I6| I7| I8| I9|I10|I11|I12|I13|      C1|      C2|      C3|      C4|      C5|      C6|      C7|      C8|      C9|     C10|     C11|     C12|     C13|     C14|     C15|     C16|     C17|     C18|     C19|     C20|     C21|     C22|     C23|     C24|     C25|     C26|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|    1| -1|  6| -1|  4|  3| -1|  0| -1|  0| -1|  1| 81| -1|a5ba1c3d|ebaec6a9|417e6103|6faef306|e94c429f|6fcd6dcb|4628641f|bb8f153d|2e4e821f|ac062eaf|750506a2|d5b16f99|a77a4a56|    None|807d0495|    None|    None|7232d217|9512c20b|080347b3|8e01df1e|607fc1a8|    None|7cc1f2ce|30436bfc|b757e957|
+|    0|  6|  7| 11| 18|  1|  1|  0|  1| 14|  1|  1| 47| 11|265366bf|5b6b66b5|a74d1bfe|f2463ffb|e2f069f8|6fcd6dcb|62e218de|ab96c6b2|2e4e821f|e63d98b4|c939136f|482646e9|00c5ffb7|    None|dd7f4897|    None|    None|b8170bba|108a0699|47849e55|73b3f46d|d994ba60|    None|bc3b414b|30436bfc|2ba8d787|
+|    0|  1| 27|  1| 28|  2|  0|  0| 30|  3|  0|  2| 98|  1|8a2b1e43|2dcf8c7b|98d05706|67ecc871|8b20d33c|6fcd6dcb|89105e99|06d3d3ad|2e4e821f|31184e3d|fa478aa9|6d137d63|bf78d0d4|    None|eb20d45d|    None|    None|b8170bba|9512c20b|8024f45f|0683bc6f|fa7eca6c|    None|db3d0bce|30436bfc|b757e957|
+|    0| 13| 60|  0| -1| -1|  0|  0| 51|  0|  0| -1| 97|  2|ad98e872|cea68cd3|417e6103|b0c5e548|729e35ab|6fcd6dcb|4628641f|c0375b13|1df5e154|62da11e3|14874876|195135b4|f4fc3c5e|be4ee537|fdc9e405|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|7cc1f2ce|30436bfc|e1be5ef2|
+|    0|  2| -1|  7| -1| -1|  0|  0|  0|  6|  0| -1|110|  7|788a5d5b|0f636fe1|9fd46023|386c49ee|3389d680|6fcd6dcb|d6135635|cd5745bc|2e4e821f|16ec16d6|fa478aa9|beaaae41|00c5ffb7|    None|1748f7cb|    None|    None|a1eb1511|9512c20b|ef426d46|0683bc6f|6e86ac23|    None|03d140a9|30436bfc|b757e957|
+|    1|  1| 11|  1| -1| -1|  0|  0| 53|  6|  0| -1| 93|  1|ad98e872|95ec7994|d3fc2ea9|f2463ffb|27d2607e|6fcd6dcb|e7222fbe|47b90fcf|2e4e821f|62da11e3|14874876|dec6ef9e|405ca118|be4ee537|8526f472|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|165fbf32|30436bfc|e1be5ef2|
+|    0| -1| 33| -1| -1| -1|  0|  0|  1|  1|  0| -1|144| -1|788a5d5b|0f636fe1|40617e73|f2463ffb|c6fc10d3|919c68e4|80fd8626|cd5745bc|e0d906cb|16ec16d6|fa478aa9|12716184|00c5ffb7|    None|1748f7cb|    None|    None|b8170bba|9512c20b|ef426d46|0683bc6f|6e86ac23|    None|a1b026f8|57e36578|b757e957|
+|    0|  1| 42|  1| 19|  1|  0|  2| 12|  1|  0|  2| 75|  1|c364de43|efd6941b|926b4fb3|f671d866|1315f676|6fcd6dcb|812a1d5d|775cf4c3|2e4e821f|34ede241|38a9b7e4|12d71fa6|d49eb1df|    None|b26ead5a|    None|    None|b8170bba|9512c20b|66281ff5|48c051b2|02fd8626|    None|f94c9004|30436bfc|b757e957|
+|    0| -1| 22| -1| 19|  1| -1|  0| 52|  0| -1|  1|107| -1|b258b156|f8f73cc3|9e7b0171|f7f54f97|c6fc10d3|6fcd6dcb|a94b9e37|ab58f00e|1df5e154|1ff038f8|45d1e659|922577f0|a77a4a56|    None|0d1b25dd|    None|    None|a1eb1511|9512c20b|72a30573|89957d13|fda47bef|    None|b7e5da34|30436bfc|2ccea557|
+|    0|  7| 10|  1| -1| -1|  0|  0|  0|  3|  0| -1|153|  1|90aff04f|5879ea73|01406fef|f2463ffb|4dc31926|919c68e4|1d52e8a9|8f551379|2e4e821f|aa62325e|6c8ec5e9|519fe012|a77a4a56|6d42b4ff|eea7f013|2514f91d|1f7fc70b|9c96b059|9512c20b|8166fdd6|7a9d5592|a2e08c67|6b9b3338|9f4102b0|ff654802|b757e957|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+only showing top 10 rows
+
+Debug--match train test dataset sample:
+[Stage 3:>                                                                                                    (0 + 1) / 1]                                                                                                                          +-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|label| I1| I2| I3| I4| I5| I6| I7| I8| I9|I10|I11|I12|I13|      C1|      C2|      C3|      C4|      C5|      C6|      C7|      C8|      C9|     C10|     C11|     C12|     C13|     C14|     C15|     C16|     C17|     C18|     C19|     C20|     C21|     C22|     C23|     C24|     C25|     C26|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+|    0|  5| 30|  1| -1| 15|  0|  0|  7|  8|  0|  3| 52|  1|ad98e872|efc01d31|7ad6521e|f2463ffb|729e35ab|6fcd6dcb|3fd1c581|4aa7575b|2e4e821f|62da11e3|14874876|b79cff9b|a77a4a56|be4ee537|814ee703|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|bff3f545|30436bfc|e1be5ef2|
+|    0| 13| 17|  5| 18| -1|  0|  0| 46|  5|  0| -1| 53|  5|9c5e7eea|b60a35fd|c807feb8|6521d620|c6fc10d3|6fcd6dcb|a8e30f6f|8f551379|25dd8f9a|29e73dfa|e218472a|b8bad512|a77a4a56|52e56658|c7b99eb2|2514f91d|1f7fc70b|a1eb1511|9512c20b|11e42bd8|7f07d42f|6f2d7eee|c9d9a16d|5aa3f86f|321935cd|b757e957|
+|    0|  2| 38|  7| 29|  8|  0|  0|  0|  7|  0|  2| 74|  7|9a60beb5|d5e25e67|97159060|6521d620|729e35ab|6fcd6dcb|909cb59d|73dc0131|e25a4c11|7663c354|879196ec|6af001bb|a77a4a56|    None|c750d256|    None|    None|b8170bba|139221a3|5df32efd|39d760ec|90475999|    None|4b823a1a|cdc3217e|962813c6|
+|    0| 28| 19| 10| 27| -1|  0|  0|  0| 10|  0| -1| 13|  8|c657f27d|21f155a8|5469d547|f2463ffb|b27acb78|6fcd6dcb|24416b63|2ee1739a|e25a4c11|e2ae989e|7a517368|586fb9ab|a77a4a56|be4ee537|4ad20746|4cdc3efa|d20856aa|b8170bba|9512c20b|e2a1b32a|9565032f|beab1f0d|b97a8a6a|9d6a65e7|cdc3217e|b757e957|
+|    0|  1| 28| -1| 10|  6|  0|  0|  1|  2|  0|  3| 75| -1|238d4da6|f079ac66|b2eeed40|f2463ffb|729e35ab|6fcd6dcb|e2d8d8d0|5624f044|2e4e821f|d707c918|573186f5|52dab28d|26bb0b02|521d9fcb|bbcd081a|83f41762|1f7fc70b|b8170bba|1889c49d|89111db8|108c7285|21b603cb|75260276|8a1b8c9e|ff654802|2ccea557|
+|    0| -1| 68| 11| 40| 13|  1|  0|  6| 13|  0|  6| 17| 11|17d454c9|3a15ee08|17f8a1e6|14841cc2|513057af|6fcd6dcb|2d72123e|038e402d|2e4e821f|b11cffb3|a80c992e|42f81f59|26bb0b02|    None|2b8e321d|    None|    None|b8170bba|139221a3|f31b6bcb|179c710e|30f4b981|    None|59c61d47|ff654802|2ccea557|
+|    0|  7| 45|  8| 12| 13|  1|  0| 26| 11|  1|  3| 47|  8|349b3fec|a52ef97d|21d9a494|9a05483b|27d2607e|6fcd6dcb|7cc76e13|28c74e94|46dedfa6|96c47d68|95f8ca79|63d8765b|a77a4a56|    None|7ee363e3|    None|    None|b8170bba|9512c20b|9fd919ec|6266f3f2|d6d5f3fd|    None|4777f484|ff654802|2ccea557|
+|    0| -1| 23| -1|  0| 24|  2|  1| -1|  2|  2|  7| 48| -1|f2c6ac96|929c447a|fe54dcfd|a80a77f7|6ca919cf|6fcd6dcb|d935d694|8f551379|25dd8f9a|de9037c8|c9e2bb98|3b14273f|26bb0b02|44c9f75a|eea7f013|2514f91d|1f7fc70b|b8170bba|9512c20b|2190ed1e|9f4ff207|7010f9d9|c7ffaa64|118885ac|0b3c06d0|2f33557c|
+|    0|  6| -1|  7|  7| -1|  1|  0|  4|  6|  1| -1|  3|  7|dce6779f|40fdd8a3|02ed7d62|f2463ffb|fcd95698|6fcd6dcb|d0b71593|6f78d5bb|2e4e821f|9c28f20c|f02982f0|5a48b525|bf78d0d4|    None|c5f96f4e|    None|    None|b8170bba|139221a3|e4446fa0|b1e61f83|25df6868|    None|3c0f1a65|30436bfc|b757e957|
+|    0|  2| 29|  2| 14|  2|  0|  0|  1|  2|  0|  2| 63|  2|3460f301|920243e1|96a6bc10|f2463ffb|c1624652|6fcd6dcb|8d3106da|038e402d|2e4e821f|50b67172|818c7aba|a064d0ab|bf78d0d4|    None|13a9a701|    None|    None|b7771e51|9512c20b|a0d5e918|7b1edd0b|1d913ef6|    None|500e2dea|30436bfc|962813c6|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+
+only showing top 10 rows
+
+[Stage 4:>                                                                                                    (0 + 7) / 7][Stage 4:==============>                                                                                      (1 + 6) / 7][Stage 4:============================>                                                                        (2 + 5) / 7][Stage 4:=========================================================>                                           (4 + 3) / 7][Stage 4:========================================================================>                            (5 + 2) / 7][Stage 4:======================================================================================>              (6 + 1) / 7]                                                                                                                          Debug -- train dataset positive count: 30290
+[Stage 6:==============>                                                                                      (1 + 6) / 7][Stage 6:=========================================================>                                           (4 + 3) / 7][Stage 6:======================================================================================>              (6 + 1) / 7]                                                                                                                          Debug -- train dataset negative count: 896498
+[Stage 8:===========================================================================>                         (3 + 1) / 4]                                                                                                                          Debug -- test dataset count: 195974
+Get aws endpoint from env: ks3-cn-beijing-internal.ksyuncs.com
+[WARN] 2022-08-29 03:37:25.893 STSAssumeRoleWithWebIdentityCredentialsProvider [140538931439424] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-08-29 03:37:25.893] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt, read_only: true
+
+[2022-08-29 03:37:25.924] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with total length: 943
+
+[2022-08-29 03:37:25.929] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with size 943 at position 0 larger than total size: 943, change size to 943
+
+[2022-08-29 03:37:25.968] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+
+[2022-08-29 03:37:25.968] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+
+[WARN] 2022-08-29 03:37:25.969 STSAssumeRoleWithWebIdentityCredentialsProvider [140538931439424] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-08-29 03:37:25.969] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt, read_only: true
+
+[2022-08-29 03:37:25.992] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with total length: 930
+
+[2022-08-29 03:37:25.997] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with size 930 at position 0 larger than total size: 930, change size to 930
+
+[2022-08-29 03:37:26.179] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+
+[2022-08-29 03:37:26.180] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+
+[32mloaded combine schema from[m [32mcolumn name file [m's3://dmetasoul-bucket/demo/schema/column_name_demo.txt' [32mand combine schema file [m's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt'
+[WARN] 2022-08-29 03:37:26.251 STSAssumeRoleWithWebIdentityCredentialsProvider [140538931439424] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-08-29 03:37:26.251] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt, read_only: true
+
+[2022-08-29 03:37:26.289] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with total length: 943
+
+[2022-08-29 03:37:26.290] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt with size 943 at position 0 larger than total size: 943, change size to 943
+
+[2022-08-29 03:37:26.323] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+
+[2022-08-29 03:37:26.323] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/column_name_demo.txt reached end 943
+
+[WARN] 2022-08-29 03:37:26.323 STSAssumeRoleWithWebIdentityCredentialsProvider [140538931439424] Token file must be specified to use STS AssumeRole web identity creds provider.
+[2022-08-29 03:37:26.323] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:411 -- Try to open S3 stream: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt, read_only: true
+
+[2022-08-29 03:37:26.351] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:437 -- Opened read-only stream for object: s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with total length: 930
+
+[2022-08-29 03:37:26.351] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:479 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt with size 930 at position 0 larger than total size: 930, change size to 930
+
+[2022-08-29 03:37:26.386] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+
+[2022-08-29 03:37:26.387] [info] ../cpp/metaspore/s3_sdk_filesys.cpp:472 -- Read S3 object s3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt reached end 930
+
+[32mloaded combine schema from[m [32mcolumn name file [m's3://dmetasoul-bucket/demo/schema/column_name_demo.txt' [32mand combine schema file [m's3://dmetasoul-bucket/demo/schema/combine_schema_demo.txt'
+[2022-08-29 03:37:26.562] [info] PS job with coordinator address 10.0.1.85:51285 started.
+[2022-08-29 03:37:26.562] [info] PSRunner::RunPS: pid: 2812, tid: 3083, thread: 0x7fd175ffb700
+[2022-08-29 03:37:26.562] [info] PSRunner::RunPSCoordinator: pid: 2812, tid: 3083, thread: 0x7fd175ffb700
+[2022-08-29 03:37:26.564] [info] ActorProcess::Receiving: Coordinator pid: 2812, tid: 3087, thread: 0x7fd167fff700
+[Stage 10:>                                      (0 + 4) / 4][Stage 11:>                                      (0 + 4) / 4][2022-08-29 03:37:27.598] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+PS Coordinator node [32mC[0]:9[m is ready.
+                                                                                                                          [Stage 11:>                                                                                                   (0 + 4) / 4][Stage 11:>                                      (0 + 4) / 4][Stage 15:>                                      (0 + 4) / 7]2022-08-29 03:37:38.070 -- auc: 0.6229816311311998, Δauc: 0.6229816311311998, pcoc: 2.0426685150537716, Δpcoc: 2.0426685150537716, #instance: 5000
+2022-08-29 03:37:38.124 -- auc: 0.5916509370802144, Δauc: 0.5575115838200264, pcoc: 2.046721610273202, Δpcoc: 2.0511297211322908, #instance: 10000
+2022-08-29 03:37:38.191 -- auc: 0.5945438565240171, Δauc: 0.6025177301655922, pcoc: 1.7225666307218879, Δpcoc: 1.2613311871812118, #instance: 15000
+2022-08-29 03:37:38.336 -- auc: 0.5903184616028543, Δauc: 0.5780564695559525, pcoc: 1.6092968286312201, Δpcoc: 1.2749792915514924, #instance: 20000
+2022-08-29 03:37:46.008 -- auc: 0.5962573516262044, Δauc: 0.6245486288590885, pcoc: 1.4808821430486954, Δpcoc: 0.9672234007185954, #instance: 25000
+2022-08-29 03:37:46.088 -- auc: 0.6057954328123336, Δauc: 0.6611679338540479, pcoc: 1.4184722690197098, Δpcoc: 1.0816242734328012, #instance: 30000
+2022-08-29 03:37:46.339 -- auc: 0.6118493237443825, Δauc: 0.6524954617509467, pcoc: 1.3458454838184772, Δpcoc: 0.9355678551378306, #instance: 35000
+2022-08-29 03:37:46.410 -- auc: 0.6172567123327672, Δauc: 0.6583114699692296, pcoc: 1.311755216054283, Δpcoc: 1.0550622726907792, #instance: 40000
+2022-08-29 03:37:53.884 -- auc: 0.6241574446977993, Δauc: 0.684274655558754, pcoc: 1.2935268242714857, Δpcoc: 1.132717450187631, #instance: 45000
+2022-08-29 03:37:53.951 -- auc: 0.631678112612073, Δauc: 0.6966758856749263, pcoc: 1.2554377541396926, Δpcoc: 0.9468517283261833, #instance: 50000
+2022-08-29 03:37:54.279 -- auc: 0.6373180212358428, Δauc: 0.6959998668397749, pcoc: 1.2384143025305288, Δpcoc: 1.0614802345152825, #instance: 55000
+2022-08-29 03:37:54.375 -- auc: 0.6402947091648263, Δauc: 0.6755198061003196, pcoc: 1.2120539736705858, Δpcoc: 0.9429652987187997, #instance: 60000
+2022-08-29 03:38:01.751 -- auc: 0.6453840865913305, Δauc: 0.7070015495867769, pcoc: 1.1932764885749219, Δpcoc: 0.9657168410718441, #instance: 65000
+2022-08-29 03:38:01.828 -- auc: 0.6486682546624573, Δauc: 0.6923149104537425, pcoc: 1.1874709457316683, Δpcoc: 1.1040063263618782, #instance: 70000
+2022-08-29 03:38:02.239 -- auc: 0.6512437921088026, Δauc: 0.6877951047026192, pcoc: 1.1760979057039471, Δpcoc: 1.0124281950486012, #instance: 75000
+2022-08-29 03:38:02.321 -- auc: 0.6547769081792223, Δauc: 0.7078261676574698, pcoc: 1.164769632789849, Δpcoc: 0.9926229032534587, #instance: 80000
+2022-08-29 03:38:09.835 -- auc: 0.6573281595576627, Δauc: 0.69802456806152, pcoc: 1.1576601199732988, Δpcoc: 1.040284356763286, #instance: 85000
+2022-08-29 03:38:09.892 -- auc: 0.6612136151366487, Δauc: 0.7272378879890229, pcoc: 1.1535689756449576, Δpcoc: 1.0814691983260118, #instance: 90000
+2022-08-29 03:38:10.401 -- auc: 0.6637344070767568, Δauc: 0.7079414621917207, pcoc: 1.1461983292507596, Δpcoc: 1.0180830937443357, #instance: 95000
+2022-08-29 03:38:10.484 -- auc: 0.6666812325355989, Δauc: 0.7204855857491577, pcoc: 1.1398014107484267, Δpcoc: 1.0214974240558903, #instance: 100000
+2022-08-29 03:38:17.911 -- auc: 0.6682079905243496, Δauc: 0.6993432488733753, pcoc: 1.1282433818418671, Δpcoc: 0.9206533907504564, #instance: 105000
+2022-08-29 03:38:17.982 -- auc: 0.6698402920292221, Δauc: 0.7033330004327707, pcoc: 1.1235506556416326, Δpcoc: 1.0213703270881407, #instance: 110000
+2022-08-29 03:38:18.563 -- auc: 0.6723287437261917, Δauc: 0.7256652769868257, pcoc: 1.1170298512076826, Δpcoc: 0.9758124300307291, #instance: 115000
+2022-08-29 03:38:18.640 -- auc: 0.67321381053897, Δauc: 0.6925543373122311, pcoc: 1.1127551181962068, Δpcoc: 1.0128399978710125, #instance: 120000
+2022-08-29 03:38:26.029 -- auc: 0.6754436340731433, Δauc: 0.7328772642410055, pcoc: 1.1144590352688437, Δpcoc: 1.1579145627305998, #instance: 125000
+2022-08-29 03:38:26.096 -- auc: 0.677358504786197, Δauc: 0.7218777202072539, pcoc: 1.1100311313735967, Δpcoc: 1.0087712948662895, #instance: 130000
+2022-08-29 03:38:26.765 -- auc: 0.6795646025018967, Δauc: 0.733422098488975, pcoc: 1.1097324424138153, Δpcoc: 1.1021249803101145, #instance: 135000
+2022-08-29 03:38:26.839 -- auc: 0.6821645592253771, Δauc: 0.7421977910080422, pcoc: 1.1004606237289443, Δpcoc: 0.8908305981506904, #instance: 140000
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:>                                      (0 + 4) / 7]2022-08-29 03:38:34.175 -- auc: 0.6832437387887975, Δauc: 0.7094914300558927, pcoc: 1.0955809568800665, Δpcoc: 0.9747092091972059, #instance: 145000
+2022-08-29 03:38:34.186 -- auc: 0.6833795550721676, Δauc: 0.6873947969838381, pcoc: 1.0902864048234653, Δpcoc: 0.9530935064776913, #instance: 150000
+2022-08-29 03:38:34.862 -- auc: 0.6831362104864995, Δauc: 0.6750589701910268, pcoc: 1.0859675074906447, Δpcoc: 0.9728447313614708, #instance: 155000
+2022-08-29 03:38:34.938 -- auc: 0.6839078576108575, Δauc: 0.7033591065196643, pcoc: 1.0811637366096571, Δpcoc: 0.9505371327068717, #instance: 160000
+2022-08-29 03:38:42.281 -- auc: 0.6842265132152068, Δauc: 0.6934969172192992, pcoc: 1.0776504562463645, Δpcoc: 0.973594197396482, #instance: 165000
+2022-08-29 03:38:42.537 -- auc: 0.6850105980035308, Δauc: 0.712672056099092, pcoc: 1.0777561950851802, Δpcoc: 1.081313458489783, #instance: 170000
+2022-08-29 03:38:43.036 -- auc: 0.6856948522777334, Δauc: 0.7099324064981481, pcoc: 1.0766163101669965, Δpcoc: 1.0380799598004444, #instance: 175000
+2022-08-29 03:38:43.115 -- auc: 0.685455592604244, Δauc: 0.6775239093507585, pcoc: 1.0747595037437845, Δpcoc: 1.0105162252209143, #instance: 180000
+2022-08-29 03:38:50.401 -- auc: 0.686103199439753, Δauc: 0.7081527419016929, pcoc: 1.0724391931344488, Δpcoc: 0.9917710845233404, #instance: 185000
+2022-08-29 03:38:50.651 -- auc: 0.6871827442514987, Δauc: 0.7265371250176522, pcoc: 1.071418062681451, Δpcoc: 1.0333373684708664, #instance: 190000
+2022-08-29 03:38:51.231 -- auc: 0.6883177041757745, Δauc: 0.7325611394993319, pcoc: 1.071385974482632, Δpcoc: 1.0701343354231083, #instance: 195000
+2022-08-29 03:38:51.314 -- auc: 0.688764014248757, Δauc: 0.7062902435840785, pcoc: 1.0685211357998257, Δpcoc: 0.9618597140891014, #instance: 200000
+2022-08-29 03:38:58.388 -- auc: 0.6890747005083954, Δauc: 0.7025312714776633, pcoc: 1.0699062520951486, Δpcoc: 1.13098064661026, #instance: 205000
+2022-08-29 03:38:58.624 -- auc: 0.6895064029108657, Δauc: 0.7064104015336892, pcoc: 1.0674490151223819, Δpcoc: 0.9708167425421781, #instance: 210000
+2022-08-29 03:38:59.202 -- auc: 0.6893502981740789, Δauc: 0.6841012868410128, pcoc: 1.0640496698292676, Δpcoc: 0.9345009942631145, #instance: 215000
+2022-08-29 03:38:59.366 -- auc: 0.6903586828149582, Δauc: 0.7305865323006181, pcoc: 1.0614143646392928, Δpcoc: 0.9548342376947403, #instance: 220000
+2022-08-29 03:39:06.469 -- auc: 0.6904170932778602, Δauc: 0.6926993122175333, pcoc: 1.0638966102677019, Δpcoc: 1.1905084956776013, #instance: 225000
+2022-08-29 03:39:06.805 -- auc: 0.690940883403151, Δauc: 0.7143430188905724, pcoc: 1.0624542173584461, Δpcoc: 0.9989803944819072, #instance: 230000
+2022-08-29 03:39:07.387 -- auc: 0.6916484575124102, Δauc: 0.7216430382664822, pcoc: 1.059688487529875, Δpcoc: 0.9428210371070438, #instance: 235000
+2022-08-29 03:39:07.553 -- auc: 0.6916576464016351, Δauc: 0.6922042687038785, pcoc: 1.0580463564116063, Δpcoc: 0.983711281488108, #instance: 240000
+2022-08-29 03:39:14.609 -- auc: 0.6921269913305748, Δauc: 0.7152676855820536, pcoc: 1.0577211519658511, Δpcoc: 1.0412372221612627, #instance: 245000
+2022-08-29 03:39:14.940 -- auc: 0.6915883997164138, Δauc: 0.6644337551652892, pcoc: 1.056938502690178, Δpcoc: 1.0172435097396373, #instance: 250000
+2022-08-29 03:39:15.515 -- auc: 0.6916221018884664, Δauc: 0.6949682276557536, pcoc: 1.0544952333442172, Δpcoc: 0.9382995216325781, #instance: 255000
+2022-08-29 03:39:15.745 -- auc: 0.6922369979772305, Δauc: 0.7245963581259254, pcoc: 1.0529955899746126, Δpcoc: 0.9766673560602119, #instance: 260000
+2022-08-29 03:39:22.918 -- auc: 0.69257273999736, Δauc: 0.7082048741513794, pcoc: 1.0505564697639318, Δpcoc: 0.9363552707692852, #instance: 265000
+2022-08-29 03:39:22.988 -- auc: 0.6926813148548083, Δauc: 0.6983222866611434, pcoc: 1.0493126851112553, Δpcoc: 0.9856844225595164, #instance: 270000
+2022-08-29 03:39:23.655 -- auc: 0.693147856233084, Δauc: 0.7182233277337733, pcoc: 1.0492422441335567, Δpcoc: 1.045435460935156, #instance: 275000
+2022-08-29 03:39:23.870 -- auc: 0.6934643095651629, Δauc: 0.7118157011581867, pcoc: 1.049810630321963, Δpcoc: 1.083101300857006, #instance: 280000
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:>                                      (0 + 4) / 7]2022-08-29 03:39:30.844 -- auc: 0.6939417423631811, Δauc: 0.7195050432554286, pcoc: 1.0484566921247214, Δpcoc: 0.9753046708051548, #instance: 285000
+2022-08-29 03:39:31.009 -- auc: 0.6941142487104429, Δauc: 0.7039936743249373, pcoc: 1.0472218519191392, Δpcoc: 0.976813643811697, #instance: 290000
+2022-08-29 03:39:31.624 -- auc: 0.69434105646171, Δauc: 0.7069282142925956, pcoc: 1.0456681439243953, Δpcoc: 0.9586695294047511, #instance: 295000
+2022-08-29 03:39:32.023 -- auc: 0.6948407550595591, Δauc: 0.7265160339841685, pcoc: 1.046573634191636, Δpcoc: 1.1069581314009063, #instance: 300000
+2022-08-29 03:39:38.832 -- auc: 0.6947673180395728, Δauc: 0.6901158899711909, pcoc: 1.045746178138665, Δpcoc: 0.9936373950559881, #instance: 305000
+2022-08-29 03:39:39.075 -- auc: 0.6950619142799903, Δauc: 0.7144307960150885, pcoc: 1.045703418852025, Δpcoc: 1.042763208856388, #instance: 310000
+2022-08-29 03:39:39.639 -- auc: 0.6949112742041283, Δauc: 0.6876505269647983, pcoc: 1.0435328862082398, Δpcoc: 0.9141211870104767, #instance: 315000
+2022-08-29 03:39:40.126 -- auc: 0.6951016793260942, Δauc: 0.706903026066114, pcoc: 1.0432432016841482, Δpcoc: 1.0237558434086462, #instance: 320000
+2022-08-29 03:39:47.118 -- auc: 0.6950965738429703, Δauc: 0.6938507883725666, pcoc: 1.0432395869948432, Δpcoc: 1.042989582797281, #instance: 325000
+2022-08-29 03:39:47.133 -- auc: 0.6952264182782503, Δauc: 0.7038591167355372, pcoc: 1.043103087212875, Δpcoc: 1.0339448049664497, #instance: 330000
+2022-08-29 03:39:47.790 -- auc: 0.6955393301967856, Δauc: 0.7165015763964049, pcoc: 1.043040053113772, Δpcoc: 1.0386934929256197, #instance: 335000
+2022-08-29 03:39:48.276 -- auc: 0.6958766932022047, Δauc: 0.7182743391231582, pcoc: 1.0413782843596058, Δpcoc: 0.9339658279865108, #instance: 340000
+2022-08-29 03:39:55.193 -- auc: 0.6963809410366444, Δauc: 0.7281337158902457, pcoc: 1.040062767002372, Δpcoc: 0.9561686373569749, #instance: 345000
+2022-08-29 03:39:55.206 -- auc: 0.6968983804046385, Δauc: 0.7321976747829901, pcoc: 1.039678265949187, Δpcoc: 1.0131127386382133, #instance: 350000
+2022-08-29 03:39:55.839 -- auc: 0.6974953308338809, Δauc: 0.737857618097139, pcoc: 1.0387469790398025, Δpcoc: 0.9742539664228519, #instance: 355000
+2022-08-29 03:39:56.387 -- auc: 0.6981712781444631, Δauc: 0.7445990834962095, pcoc: 1.038372000335814, Δpcoc: 1.0113827355800231, #instance: 360000
+2022-08-29 03:40:03.255 -- auc: 0.6980677112420215, Δauc: 0.6916136689996791, pcoc: 1.0376927712851929, Δpcoc: 0.989312953577784, #instance: 365000
+2022-08-29 03:40:03.267 -- auc: 0.698494878251354, Δauc: 0.7286258770892463, pcoc: 1.0368831261948288, Δpcoc: 0.9787525364330837, #instance: 370000
+2022-08-29 03:40:03.943 -- auc: 0.6985796365124359, Δauc: 0.7042450208208424, pcoc: 1.0376995490222578, Δpcoc: 1.1038243912703154, #instance: 375000
+2022-08-29 03:40:04.466 -- auc: 0.6986944547816551, Δauc: 0.7075231350661735, pcoc: 1.0375251887676618, Δpcoc: 1.0239481176220395, #instance: 380000
+2022-08-29 03:40:11.286 -- auc: 0.6990659997257453, Δauc: 0.7266095974568517, pcoc: 1.036747581984981, Δpcoc: 0.975031195562097, #instance: 385000
+2022-08-29 03:40:11.424 -- auc: 0.6989540909350159, Δauc: 0.6908126922252519, pcoc: 1.0355419355937783, Δpcoc: 0.943317249596837, #instance: 390000
+2022-08-29 03:40:11.898 -- auc: 0.698862146607123, Δauc: 0.687532725429469, pcoc: 1.0353809824115185, Δpcoc: 1.021391105812949, #instance: 395000
+2022-08-29 03:40:12.432 -- auc: 0.6988849498559693, Δauc: 0.6941979975622228, pcoc: 1.0364135347030414, Δpcoc: 1.1374328611488629, #instance: 400000
+2022-08-29 03:40:19.326 -- auc: 0.6988659636863066, Δauc: 0.695015412960156, pcoc: 1.0358450618898185, Δpcoc: 0.9897180549156519, #instance: 405000
+2022-08-29 03:40:19.378 -- auc: 0.6991773246623243, Δauc: 0.7242819434708444, pcoc: 1.0358760371350197, Δpcoc: 1.0385014357840179, #instance: 410000
+2022-08-29 03:40:19.939 -- auc: 0.7000701321101939, Δauc: 0.7719028908443524, pcoc: 1.0360231741286805, Δpcoc: 1.0485614809808852, #instance: 415000
+2022-08-29 03:40:20.507 -- auc: 0.7001884661814595, Δauc: 0.7102411236208144, pcoc: 1.034638327892735, Δpcoc: 0.9243203429450766, #instance: 420000
+2022-08-29 03:40:27.288 -- auc: 0.7006907632851784, Δauc: 0.7431837258890996, pcoc: 1.0344677378024412, Δpcoc: 1.0180135481841082, #instance: 425000
+2022-08-29 03:40:27.354 -- auc: 0.7005572363114702, Δauc: 0.6895387929456914, pcoc: 1.0333412806089157, Δpcoc: 0.9339849043496048, #instance: 430000
+2022-08-29 03:40:27.930 -- auc: 0.7008331417160986, Δauc: 0.7243223809048237, pcoc: 1.0326039934935698, Δpcoc: 0.9655631895988218, #instance: 435000
+2022-08-29 03:40:28.581 -- auc: 0.7011963414449067, Δauc: 0.732237016890538, pcoc: 1.0330825154046155, Δpcoc: 1.0828522870140354, #instance: 440000
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:>                                      (0 + 4) / 7]2022-08-29 03:40:35.290 -- auc: 0.7014357768108614, Δauc: 0.720713493044115, pcoc: 1.033344409689538, Δpcoc: 1.059508376237419, #instance: 445000
+2022-08-29 03:40:35.534 -- auc: 0.701954054443982, Δauc: 0.747376762694426, pcoc: 1.0324051551107833, Δpcoc: 0.9491894902979455, #instance: 450000
+2022-08-29 03:40:35.845 -- auc: 0.7021293371565687, Δauc: 0.7177999354435232, pcoc: 1.0314625304996885, Δpcoc: 0.9470056644300135, #instance: 455000
+2022-08-29 03:40:36.574 -- auc: 0.7024963368778577, Δauc: 0.7341144914756026, pcoc: 1.0320278229306157, Δpcoc: 1.0920215010643006, #instance: 460000
+2022-08-29 03:40:43.240 -- auc: 0.7021582670906853, Δauc: 0.6752394877997744, pcoc: 1.0310816419090938, Δpcoc: 0.9434839693116553, #instance: 465000
+2022-08-29 03:40:43.484 -- auc: 0.7020781790589061, Δauc: 0.695572423919899, pcoc: 1.0302426793036783, Δpcoc: 0.9545362918149858, #instance: 470000
+2022-08-29 03:40:43.771 -- auc: 0.7022673641112511, Δauc: 0.7160713080712344, pcoc: 1.031093872141427, Δpcoc: 1.1284601692833118, #instance: 475000
+2022-08-29 03:40:44.570 -- auc: 0.7025092205356338, Δauc: 0.7251252745744097, pcoc: 1.0313331825722176, Δpcoc: 1.0570291400783591, #instance: 480000
+2022-08-29 03:40:50.740 -- auc: 0.7028193533061503, Δauc: 0.7323019022614892, pcoc: 1.0312693334121412, Δpcoc: 1.024756719084347, #instance: 485000
+2022-08-29 03:40:51.062 -- auc: 0.7030390953534404, Δauc: 0.7231676653629024, pcoc: 1.0302727749322984, Δpcoc: 0.9389660011890323, #instance: 490000
+2022-08-29 03:40:51.270 -- auc: 0.7032407582540738, Δauc: 0.7228999480864466, pcoc: 1.0291891083113662, Δpcoc: 0.9258125038917907, #instance: 495000
+2022-08-29 03:40:52.108 -- auc: 0.7033617445860953, Δauc: 0.714646166874809, pcoc: 1.0293060952331985, Δpcoc: 1.0415350268413495, #instance: 500000
+2022-08-29 03:40:58.281 -- auc: 0.7036260943808859, Δauc: 0.7303370417083689, pcoc: 1.0293897998556871, Δpcoc: 1.0380545611594134, #instance: 505000
+2022-08-29 03:40:58.591 -- auc: 0.7038578068765933, Δauc: 0.725421686173076, pcoc: 1.028649267121145, Δpcoc: 0.9588136255056009, #instance: 510000
+2022-08-29 03:40:58.813 -- auc: 0.7041736757912904, Δauc: 0.7370299343309537, pcoc: 1.0293173159236515, Δpcoc: 1.1062496304512024, #instance: 515000
+2022-08-29 03:40:59.735 -- auc: 0.7043700950556255, Δauc: 0.7228199757864899, pcoc: 1.0285966849797707, Δpcoc: 0.9589204202497625, #instance: 520000
+2022-08-29 03:41:05.901 -- auc: 0.704552213024808, Δauc: 0.7196199871807276, pcoc: 1.028971933251228, Δpcoc: 1.075602049336714, #instance: 525000
+2022-08-29 03:41:06.202 -- auc: 0.7046897193182111, Δauc: 0.7191877815150725, pcoc: 1.0283598149517579, Δpcoc: 0.9627746114940763, #instance: 530000
+2022-08-29 03:41:06.436 -- auc: 0.7048318789632713, Δauc: 0.7185561634503379, pcoc: 1.0280236551523503, Δpcoc: 0.9887021058270721, #instance: 535000
+2022-08-29 03:41:07.464 -- auc: 0.7048839457043745, Δauc: 0.7118698347107438, pcoc: 1.0272236306118339, Δpcoc: 0.9405109707266093, #instance: 540000
+2022-08-29 03:41:13.704 -- auc: 0.7049861040743874, Δauc: 0.7151155733471074, pcoc: 1.0268331290943107, Δpcoc: 0.9841171443462372, #instance: 545000
+2022-08-29 03:41:13.922 -- auc: 0.705607971356194, Δauc: 0.7742822596404377, pcoc: 1.0267438503142028, Δpcoc: 1.0163698910098327, #instance: 550000
+2022-08-29 03:41:14.178 -- auc: 0.7056378879462133, Δauc: 0.7062584136703144, pcoc: 1.0269510633048102, Δpcoc: 1.0512358805066662, #instance: 555000
+2022-08-29 03:41:15.108 -- auc: 0.7057679882604875, Δauc: 0.7192309097552064, pcoc: 1.0262476159464058, Δpcoc: 0.9519056439399719, #instance: 560000
+2022-08-29 03:41:21.282 -- auc: 0.7058295227342951, Δauc: 0.7138892568823503, pcoc: 1.026319296513546, Δpcoc: 1.0349285598622253, #instance: 565000
+2022-08-29 03:41:21.487 -- auc: 0.7058885687355045, Δauc: 0.7115634752897018, pcoc: 1.0261347592502106, Δpcoc: 1.0046402819597038, #instance: 570000
+2022-08-29 03:41:21.693 -- auc: 0.7060399015522618, Δauc: 0.721794292355372, pcoc: 1.0258502852598375, Δpcoc: 0.9930575460195541, #instance: 575000
+2022-08-29 03:41:22.798 -- auc: 0.7060576396545919, Δauc: 0.7104121087590666, pcoc: 1.0250188841324934, Δpcoc: 0.9329511069116139, #instance: 580000
+2022-08-29 03:41:28.908 -- auc: 0.7061484469882986, Δauc: 0.7166169294644846, pcoc: 1.025237062194446, Δpcoc: 1.0527245694358878, #instance: 585000
+2022-08-29 03:41:29.050 -- auc: 0.7061792360800137, Δauc: 0.7106952677175613, pcoc: 1.0249602265675721, Δpcoc: 0.9904996548828325, #instance: 590000
+2022-08-29 03:41:29.175 -- auc: 0.706455365146733, Δauc: 0.7360841964130623, pcoc: 1.0249064406410577, Δpcoc: 1.0181573684278287, #instance: 595000
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:>                                      (0 + 4) / 7]2022-08-29 03:41:30.514 -- auc: 0.7064076811943956, Δauc: 0.7008789361755294, pcoc: 1.0248137421170047, Δpcoc: 1.0134626011939565, #instance: 600000
+2022-08-29 03:41:36.567 -- auc: 0.7062642531392468, Δauc: 0.6870243562185165, pcoc: 1.0246411384724776, Δpcoc: 1.0026319026947021, #instance: 605000
+2022-08-29 03:41:36.712 -- auc: 0.7061550856034805, Δauc: 0.6922809334110167, pcoc: 1.0243820346893582, Δpcoc: 0.9921442429730847, #instance: 610000
+2022-08-29 03:41:36.849 -- auc: 0.7062828535483263, Δauc: 0.72192088522983, pcoc: 1.024593741061736, Δpcoc: 1.0527607017272227, #instance: 615000
+2022-08-29 03:41:38.292 -- auc: 0.7065220380162931, Δauc: 0.7335667358229598, pcoc: 1.0234298130443464, Δpcoc: 0.8951455467277103, #instance: 620000
+2022-08-29 03:41:44.211 -- auc: 0.7065512610994158, Δauc: 0.7092000258264464, pcoc: 1.0232841350907835, Δpcoc: 1.0050570916384458, #instance: 625000
+2022-08-29 03:41:44.365 -- auc: 0.7068404331938194, Δauc: 0.7441839252690448, pcoc: 1.0236140606234796, Δpcoc: 1.0685976236253172, #instance: 630000
+2022-08-29 03:41:44.519 -- auc: 0.7066980701246162, Δauc: 0.6873670103092784, pcoc: 1.0236087985513793, Δpcoc: 1.0228957176208495, #instance: 635000
+2022-08-29 03:41:45.967 -- auc: 0.7066382275724119, Δauc: 0.699040560622989, pcoc: 1.0231339403859747, Δpcoc: 0.9669277516403639, #instance: 640000
+2022-08-29 03:41:51.736 -- auc: 0.7069330990599713, Δauc: 0.7435891131553996, pcoc: 1.0228132278558848, Δpcoc: 0.982430826963448, #instance: 645000
+2022-08-29 03:41:52.042 -- auc: 0.7071787064524517, Δauc: 0.740213058419244, pcoc: 1.0232104775007154, Δpcoc: 1.0783328382174173, #instance: 650000
+2022-08-29 03:41:52.202 -- auc: 0.7074741367853126, Δauc: 0.7460980002251154, pcoc: 1.0233018610628046, Δpcoc: 1.0357418935020248, #instance: 655000
+2022-08-29 03:41:53.662 -- auc: 0.7076346294108167, Δauc: 0.7287257857694586, pcoc: 1.023103471832522, Δpcoc: 0.9974005039484223, #instance: 660000
+2022-08-29 03:41:59.637 -- auc: 0.7078325611072669, Δauc: 0.7329579551474683, pcoc: 1.021759810122188, Δpcoc: 0.8655059037964201, #instance: 665000
+2022-08-29 03:41:59.702 -- auc: 0.7080885749124131, Δauc: 0.7418496819456909, pcoc: 1.0220692226682195, Δpcoc: 1.067557105462845, #instance: 670000
+2022-08-29 03:41:59.942 -- auc: 0.708123684342882, Δauc: 0.7144285994231612, pcoc: 1.0218347117403894, Δpcoc: 0.9895558509097737, #instance: 675000
+2022-08-29 03:42:01.315 -- auc: 0.7082422737540024, Δauc: 0.7242515527791813, pcoc: 1.0219046375009455, Δpcoc: 1.0313001562047888, #instance: 680000
+2022-08-29 03:42:07.319 -- auc: 0.7081462315909794, Δauc: 0.6942854289423749, pcoc: 1.0219805732208664, Δpcoc: 1.032723762912135, #instance: 685000
+2022-08-29 03:42:07.391 -- auc: 0.7082761511749208, Δauc: 0.7264516319772942, pcoc: 1.0212808269952962, Δpcoc: 0.9292975195816585, #instance: 690000
+2022-08-29 03:42:07.638 -- auc: 0.7082999748776071, Δauc: 0.7109996435017045, pcoc: 1.0215472544871902, Δpcoc: 1.061604987930607, #instance: 695000
+2022-08-29 03:42:09.013 -- auc: 0.7084756108507517, Δauc: 0.7335710744116861, pcoc: 1.0217394268537134, Δpcoc: 1.0491576498481119, #instance: 700000
+2022-08-29 03:42:14.903 -- auc: 0.7085297204169252, Δauc: 0.7160460906287998, pcoc: 1.0215023385820243, Δpcoc: 0.9863181271051106, #instance: 705000
+2022-08-29 03:42:14.964 -- auc: 0.7085909430557924, Δauc: 0.7133103884142755, pcoc: 1.0216630178242432, Δpcoc: 1.0475414923742308, #instance: 710000
+2022-08-29 03:42:15.530 -- auc: 0.7087030870491352, Δauc: 0.7233803061715105, pcoc: 1.0214251160433572, Δpcoc: 0.9844451453410038, #instance: 715000
+2022-08-29 03:42:16.662 -- auc: 0.7089297856645362, Δauc: 0.7404537922341636, pcoc: 1.0208954142708364, Δpcoc: 0.945233602701507, #instance: 720000
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:=====>                                 (1 + 4) / 7]2022-08-29 03:42:22.316 -- auc: 0.7090114340653775, Δauc: 0.7198726868008243, pcoc: 1.0211231269925052, Δpcoc: 1.0596148876378135, #instance: 725000
+2022-08-29 03:42:22.384 -- auc: 0.7093059590995562, Δauc: 0.7501685552921826, pcoc: 1.0211817481773695, Δpcoc: 1.0312227812760018, #instance: 730000
+2022-08-29 03:42:23.008 -- auc: 0.7093278100328793, Δauc: 0.7108309278350515, pcoc: 1.0207259184231627, Δpcoc: 0.9495222719510397, #instance: 735000
+2022-08-29 03:42:25.051 -- auc: 0.7094441214836749, Δauc: 0.7264430179151782, pcoc: 1.0205660344238503, Δpcoc: 0.9962420048252228, #instance: 739959
+2022-08-29 03:42:29.891 -- auc: 0.7094429152684723, Δauc: 0.7087164828140984, pcoc: 1.020832303927433, Δpcoc: 1.0626877538415769, #instance: 744959
+2022-08-29 03:42:29.903 -- auc: 0.7096746821661688, Δauc: 0.7414052842135034, pcoc: 1.0197105787455636, Δpcoc: 0.8724872302878034, #instance: 749959
+2022-08-29 03:42:30.543 -- auc: 0.709862976554569, Δauc: 0.7399079603697603, pcoc: 1.0199939238665803, Δpcoc: 1.0673538802398577, #instance: 754959
+2022-08-29 03:42:32.652 -- auc: 0.7100285359771342, Δauc: 0.7319333729081863, pcoc: 1.0195415507802863, Δpcoc: 0.9573068374937231, #instance: 759959
+2022-08-29 03:42:37.487 -- auc: 0.7100355132066691, Δauc: 0.7111348503569468, pcoc: 1.0200655321370309, Δpcoc: 1.1088112356762092, #instance: 764959
+2022-08-29 03:42:37.500 -- auc: 0.7099430294613425, Δauc: 0.6951122577332118, pcoc: 1.020405239917068, Δpcoc: 1.0755976304313204, #instance: 769959
+2022-08-29 03:42:38.204 -- auc: 0.7100452442273992, Δauc: 0.7252756449779387, pcoc: 1.019715625962625, Δpcoc: 0.92074800473313, #instance: 774959
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:===========>                           (2 + 4) / 7]2022-08-29 03:42:40.251 -- auc: 0.7100706295517581, Δauc: 0.7136219705273414, pcoc: 1.0193854152311816, Δpcoc: 0.9711047214620253, #instance: 779959
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:================>                      (3 + 4) / 7][Stage 11:>                                      (0 + 4) / 4][Stage 15:======================>                (4 + 3) / 7][Stage 11:>                                      (0 + 4) / 4][Stage 15:===========================>           (5 + 2) / 7]2022-08-29 03:42:43.935 -- auc: 0.7100116341896053, Δauc: 0.7030978390828523, pcoc: 1.0187129645605002, Δpcoc: 0.9179420035756277, #instance: 784959
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:=================================>     (6 + 1) / 7]2022-08-29 03:42:46.253 -- auc: 0.7102389396608928, Δauc: 0.7445771916794194, pcoc: 1.0184692815685827, Δpcoc: 0.9814867176205279, #instance: 789959
+2022-08-29 03:42:51.996 -- auc: 0.7105979397217934, Δauc: 0.7601675586965002, pcoc: 1.0181419277305623, Δpcoc: 0.9712415549714687, #instance: 794959
+2022-08-29 03:42:57.786 -- auc: 0.7106639926240159, Δauc: 0.717170685577062, pcoc: 1.0180698196039408, Δpcoc: 1.0080624656832737, #instance: 799959
+2022-08-29 03:43:03.717 -- auc: 0.7107043992555906, Δauc: 0.7052251764722958, pcoc: 1.0176867363908846, Δpcoc: 0.9686673322127233, #instance: 804959
+2022-08-29 03:43:09.795 -- auc: 0.7108822033197824, Δauc: 0.7262384422755875, pcoc: 1.017437642581062, Δpcoc: 0.986395524098323, #instance: 809959
+2022-08-29 03:43:15.733 -- auc: 0.7109615418300261, Δauc: 0.7204108523018695, pcoc: 1.0175248156093768, Δpcoc: 1.0296404754861872, #instance: 814959
+2022-08-29 03:43:21.613 -- auc: 0.7110906585728631, Δauc: 0.7266313913970451, pcoc: 1.0171709359441865, Δpcoc: 0.9689167849140464, #instance: 819959
+2022-08-29 03:43:27.602 -- auc: 0.7110426179381102, Δauc: 0.703985020661157, pcoc: 1.0176865735533709, Δpcoc: 1.103121279925108, #instance: 824959
+2022-08-29 03:43:33.512 -- auc: 0.7113383728732373, Δauc: 0.7464665581167398, pcoc: 1.0166649347286096, Δpcoc: 0.8843974228044158, #instance: 829959
+2022-08-29 03:43:39.247 -- auc: 0.7113448321585452, Δauc: 0.7074461401136993, pcoc: 1.0169914972099148, Δpcoc: 1.0627034412076075, #instance: 834959
+2022-08-29 03:43:45.060 -- auc: 0.7113827433913189, Δauc: 0.7152131570823159, pcoc: 1.0169586920681875, Δpcoc: 1.0121588565207817, #instance: 839959
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:=================================>     (6 + 1) / 7]2022-08-29 03:43:50.754 -- auc: 0.7115130657816905, Δauc: 0.7283453600042447, pcoc: 1.0167878461323374, Δpcoc: 0.9920215467189221, #instance: 844959
+2022-08-29 03:43:56.437 -- auc: 0.7119245796471152, Δauc: 0.7701649594425957, pcoc: 1.0164013008510522, Δpcoc: 0.9611555244773626, #instance: 849959
+2022-08-29 03:44:02.207 -- auc: 0.7119632927630113, Δauc: 0.7163147944690244, pcoc: 1.0166576555488551, Δpcoc: 1.0541383400165214, #instance: 854959
+2022-08-29 03:44:08.007 -- auc: 0.7118688499434612, Δauc: 0.69664143951219, pcoc: 1.0165841736412056, Δpcoc: 1.005162868419839, #instance: 859959
+2022-08-29 03:44:13.745 -- auc: 0.7119680413578405, Δauc: 0.7233111496516031, pcoc: 1.0159835482684163, Δpcoc: 0.9306124261188023, #instance: 864959
+2022-08-29 03:44:19.694 -- auc: 0.7120339628902557, Δauc: 0.7246423613530506, pcoc: 1.0164558922471325, Δpcoc: 1.1029439150512992, #instance: 869959
+2022-08-29 03:44:25.325 -- auc: 0.7119594621921006, Δauc: 0.6947967746502439, pcoc: 1.0160634521727616, Δpcoc: 0.958710560479115, #instance: 874959
+2022-08-29 03:44:30.886 -- auc: 0.7121219178337513, Δauc: 0.741490395161543, pcoc: 1.0161949472413578, Δpcoc: 1.0389443910483158, #instance: 879959
+2022-08-29 03:44:36.596 -- auc: 0.7122807151827544, Δauc: 0.7386748503079583, pcoc: 1.0160380197317183, Δpcoc: 0.9901440787589413, #instance: 884959
+2022-08-29 03:44:42.692 -- auc: 0.7122663841320138, Δauc: 0.7091372906622877, pcoc: 1.0159408964289405, Δpcoc: 0.999535009874935, #instance: 889959
+[Stage 11:>                                      (0 + 4) / 4][Stage 15:=================================>     (6 + 1) / 7]2022-08-29 03:44:48.445 -- auc: 0.7123737566464377, Δauc: 0.7277383853965207, pcoc: 1.0159621088164539, Δpcoc: 1.0194247331512107, #instance: 894959
+2022-08-29 03:44:54.201 -- auc: 0.7120926234325348, Δauc: 0.6605325404991023, pcoc: 1.0157686668370915, Δpcoc: 0.981286454491499, #instance: 899959
+2022-08-29 03:44:59.929 -- auc: 0.7120853920397392, Δauc: 0.7086421619962444, pcoc: 1.0156107456814674, Δpcoc: 0.9903794080018997, #instance: 904959
+2022-08-29 03:45:05.778 -- auc: 0.7122793660462216, Δauc: 0.7454001600148066, pcoc: 1.015354778190562, Δpcoc: 0.9725749458970323, #instance: 909959
+2022-08-29 03:45:11.554 -- auc: 0.712489163127553, Δauc: 0.7484881937398479, pcoc: 1.0155618988872706, Δpcoc: 1.0509854897685436, #instance: 914959
+2022-08-29 03:45:17.311 -- auc: 0.7124749790137073, Δauc: 0.710272025662199, pcoc: 1.0157636744291345, Δpcoc: 1.054480003240781, #instance: 919959
+                                                                                                                          2022-08-29 03:45:20.819 -- auc: 0.7125108546372315, Δauc: 0.7546117546117546, pcoc: 1.0157503661246117, Δpcoc: 1.0009194929842595, #instance: 920763
+2022-08-29 03:45:20.865 -- auc: 0.7125806654007747, Δauc: 0.7349791268385939, pcoc: 1.0154676125548405, Δpcoc: 0.9258317545840614, #instance: 923556
+2022-08-29 03:45:20.876 -- auc: 0.7125935951952405, Δauc: 0.7043616930494517, pcoc: 1.0159861300197008, Δpcoc: 1.3565281111261118, #instance: 925640
+2022-08-29 03:45:20.886 -- auc: 0.7126111178474788, Δauc: 0.7279657562168773, pcoc: 1.0160923041041094, Δpcoc: 1.1134410699208577, #instance: 926788
+[Stage 11:>                                      (0 + 4) / 4][Stage 17:>                                      (0 + 4) / 4]                                                                                                                          [2022-08-29 03:45:38.400] [info] C[0]:9 has stopped.
+[2022-08-29 03:45:38.401] [info] PS job with coordinator address 10.0.1.85:51285 stopped.
+Debug -- model output:
+2022-08-29 03:45:28       1640 dnn.dnn.0.bias__dense_data.dat
+2022-08-29 03:45:28        443 dnn.dnn.0.bias__dense_meta.json
+2022-08-29 03:45:28       3280 dnn.dnn.0.bias__dense_state.dat
+2022-08-29 03:45:35       1640 dnn.dnn.0.running_mean__dense_data.dat
+2022-08-29 03:45:35        370 dnn.dnn.0.running_mean__dense_meta.json
+2022-08-29 03:45:35       1640 dnn.dnn.0.running_var__dense_data.dat
+2022-08-29 03:45:35        369 dnn.dnn.0.running_var__dense_meta.json
+2022-08-29 03:45:28       1640 dnn.dnn.0.weight__dense_data.dat
+2022-08-29 03:45:28        445 dnn.dnn.0.weight__dense_meta.json
+2022-08-29 03:45:28       3280 dnn.dnn.0.weight__dense_state.dat
+2022-08-29 03:45:29       4096 dnn.dnn.1.bias__dense_data.dat
+2022-08-29 03:45:29        449 dnn.dnn.1.bias__dense_meta.json
+2022-08-29 03:45:29       8192 dnn.dnn.1.bias__dense_state.dat
+2022-08-29 03:45:28    1679360 dnn.dnn.1.weight__dense_data.dat
+2022-08-29 03:45:28        455 dnn.dnn.1.weight__dense_meta.json
+2022-08-29 03:45:28    3358720 dnn.dnn.1.weight__dense_state.dat
+2022-08-29 03:45:30       4096 dnn.dnn.3.bias__dense_data.dat
+2022-08-29 03:45:29        445 dnn.dnn.3.bias__dense_meta.json
+2022-08-29 03:45:30       8192 dnn.dnn.3.bias__dense_state.dat
+2022-08-29 03:45:35       4096 dnn.dnn.3.running_mean__dense_data.dat
+2022-08-29 03:45:35        371 dnn.dnn.3.running_mean__dense_meta.json
+2022-08-29 03:45:36       4096 dnn.dnn.3.running_var__dense_data.dat
+2022-08-29 03:45:36        370 dnn.dnn.3.running_var__dense_meta.json
+2022-08-29 03:45:29       4096 dnn.dnn.3.weight__dense_data.dat
+2022-08-29 03:45:29        447 dnn.dnn.3.weight__dense_meta.json
+2022-08-29 03:45:29       8192 dnn.dnn.3.weight__dense_state.dat
+2022-08-29 03:45:31       4096 dnn.dnn.4.bias__dense_data.dat
+2022-08-29 03:45:31        449 dnn.dnn.4.bias__dense_meta.json
+2022-08-29 03:45:31       8192 dnn.dnn.4.bias__dense_state.dat
+2022-08-29 03:45:30    4194304 dnn.dnn.4.weight__dense_data.dat
+2022-08-29 03:45:30        457 dnn.dnn.4.weight__dense_meta.json
+2022-08-29 03:45:31    8388608 dnn.dnn.4.weight__dense_state.dat
+2022-08-29 03:45:31       4096 dnn.dnn.6.bias__dense_data.dat
+2022-08-29 03:45:31        445 dnn.dnn.6.bias__dense_meta.json
+2022-08-29 03:45:32       8192 dnn.dnn.6.bias__dense_state.dat
+2022-08-29 03:45:36       4096 dnn.dnn.6.running_mean__dense_data.dat
+2022-08-29 03:45:36        371 dnn.dnn.6.running_mean__dense_meta.json
+2022-08-29 03:45:36       4096 dnn.dnn.6.running_var__dense_data.dat
+2022-08-29 03:45:36        370 dnn.dnn.6.running_var__dense_meta.json
+2022-08-29 03:45:31       4096 dnn.dnn.6.weight__dense_data.dat
+2022-08-29 03:45:31        447 dnn.dnn.6.weight__dense_meta.json
+2022-08-29 03:45:31       8192 dnn.dnn.6.weight__dense_state.dat
+2022-08-29 03:45:33       4096 dnn.dnn.7.bias__dense_data.dat
+2022-08-29 03:45:33        449 dnn.dnn.7.bias__dense_meta.json
+2022-08-29 03:45:33       8192 dnn.dnn.7.bias__dense_state.dat
+2022-08-29 03:45:32    4194304 dnn.dnn.7.weight__dense_data.dat
+2022-08-29 03:45:32        457 dnn.dnn.7.weight__dense_meta.json
+2022-08-29 03:45:33    8388608 dnn.dnn.7.weight__dense_state.dat
+2022-08-29 03:45:34          4 dnn.dnn.9.bias__dense_data.dat
+2022-08-29 03:45:34        443 dnn.dnn.9.bias__dense_meta.json
+2022-08-29 03:45:34          8 dnn.dnn.9.bias__dense_state.dat
+2022-08-29 03:45:33       4096 dnn.dnn.9.weight__dense_data.dat
+2022-08-29 03:45:33        451 dnn.dnn.9.weight__dense_meta.json
+2022-08-29 03:45:33       8192 dnn.dnn.9.weight__dense_state.dat
+2022-08-29 03:45:27   63102496 dnn_sparse__sparse_0.dat
+2022-08-29 03:45:27   63118816 dnn_sparse__sparse_1.dat
+2022-08-29 03:45:27   63277664 dnn_sparse__sparse_2.dat
+2022-08-29 03:45:27   63243664 dnn_sparse__sparse_3.dat
+2022-08-29 03:45:24        509 dnn_sparse__sparse_meta.json
+2022-08-29 03:45:35          4 fwfm.interaction_weight_layer.bias__dense_data.dat
+2022-08-29 03:45:35        463 fwfm.interaction_weight_layer.bias__dense_meta.json
+2022-08-29 03:45:35          8 fwfm.interaction_weight_layer.bias__dense_state.dat
+2022-08-29 03:45:34       3280 fwfm.interaction_weight_layer.weight__dense_data.dat
+2022-08-29 03:45:34        470 fwfm.interaction_weight_layer.weight__dense_meta.json
+2022-08-29 03:45:34       6560 fwfm.interaction_weight_layer.weight__dense_state.dat
+2022-08-29 03:45:34       1640 fwfm.linear_weight_layer.weight__dense_data.dat
+2022-08-29 03:45:34        464 fwfm.linear_weight_layer.weight__dense_meta.json
+2022-08-29 03:45:34       3280 fwfm.linear_weight_layer.weight__dense_state.dat
+2022-08-29 03:45:24   63102496 lr_sparse__sparse_0.dat
+2022-08-29 03:45:23   63118816 lr_sparse__sparse_1.dat
+2022-08-29 03:45:23   63277664 lr_sparse__sparse_2.dat
+2022-08-29 03:45:24   63243664 lr_sparse__sparse_3.dat
+2022-08-29 03:45:20        508 lr_sparse__sparse_meta.json
+
+
+[2022-08-29 03:45:38.897] [info] PS job with coordinator address 10.0.1.85:56803 started.
+[2022-08-29 03:45:38.897] [info] PSRunner::RunPS: pid: 2812, tid: 3170, thread: 0x7fd144f79700
+[2022-08-29 03:45:38.897] [info] PSRunner::RunPSCoordinator: pid: 2812, tid: 3170, thread: 0x7fd144f79700
+[2022-08-29 03:45:38.898] [info] ActorProcess::Receiving: Coordinator pid: 2812, tid: 3173, thread: 0x7fd167fff700
+[2022-08-29 03:45:38.937] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+PS Coordinator node [32mC[0]:9[m is ready.
+[Stage 19:>                                      (0 + 4) / 4][Stage 22:>                                      (0 + 4) / 4]                                                                                                                          [Stage 19:>                                                                                                   (0 + 4) / 4][Stage 19:>                                      (0 + 4) / 4][Stage 23:>                                      (0 + 4) / 7]2022-08-29 03:45:49.616 -- auc: 0.7336824292563693, Δauc: 0.7336824292563693, pcoc: 1.0844407161076863, Δpcoc: 1.0844407161076863, #instance: 5000
+2022-08-29 03:45:49.742 -- auc: 0.7313658025821572, Δauc: 0.7293351952469368, pcoc: 0.9802326016087349, Δpcoc: 0.8946886270200435, #instance: 10000
+2022-08-29 03:45:50.464 -- auc: 0.7286972104052241, Δauc: 0.7221849478634288, pcoc: 1.0703796925649016, Δpcoc: 1.3112106070901355, #instance: 15000
+2022-08-29 03:45:50.515 -- auc: 0.7250505916560204, Δauc: 0.7127782201286809, pcoc: 1.100904672335412, Δpcoc: 1.202587220842475, #instance: 20000
+2022-08-29 03:45:50.554 -- auc: 0.726830606039848, Δauc: 0.7338623877454175, pcoc: 1.1137638960502216, Δpcoc: 1.1702063947716015, #instance: 25000
+2022-08-29 03:45:50.626 -- auc: 0.7300448680790472, Δauc: 0.7454511546347058, pcoc: 1.100362132462143, Δpcoc: 1.0374287046187105, #instance: 30000
+2022-08-29 03:45:51.419 -- auc: 0.7328660073800738, Δauc: 0.7516460688965705, pcoc: 1.1167239780426026, Δpcoc: 1.222263299866228, #instance: 35000
+2022-08-29 03:45:51.438 -- auc: 0.7349484413278691, Δauc: 0.7488213577049136, pcoc: 1.106161652158699, Δpcoc: 1.037476006959904, #instance: 40000
+2022-08-29 03:45:51.463 -- auc: 0.7332568349312383, Δauc: 0.7199590071927664, pcoc: 1.1024675837614044, Δpcoc: 1.0730510145608634, #instance: 45000
+2022-08-29 03:45:51.500 -- auc: 0.7362896538909843, Δauc: 0.7654835380671794, pcoc: 1.1086819323867854, Δpcoc: 1.167257179752473, #instance: 50000
+2022-08-29 03:45:52.340 -- auc: 0.7377264497761158, Δauc: 0.7514692119063678, pcoc: 1.1114395550434324, Δpcoc: 1.1396441006962257, #instance: 55000
+2022-08-29 03:45:52.359 -- auc: 0.7393603756468702, Δauc: 0.7553735572603497, pcoc: 1.1050000134521358, Δpcoc: 1.0404590711755268, #instance: 60000
+2022-08-29 03:45:52.382 -- auc: 0.7406724777531959, Δauc: 0.7561879353786868, pcoc: 1.1078671207346507, Δpcoc: 1.1437243406589215, #instance: 65000
+2022-08-29 03:45:52.424 -- auc: 0.7397462633339646, Δauc: 0.7274144752809433, pcoc: 1.11801494601775, Δpcoc: 1.2644633560964507, #instance: 70000
+2022-08-29 03:45:53.210 -- auc: 0.7414119390495219, Δauc: 0.764369490003833, pcoc: 1.1194654992162367, Δpcoc: 1.1393929160222775, #instance: 75000
+2022-08-29 03:45:53.290 -- auc: 0.7434997088146177, Δauc: 0.7733991413619128, pcoc: 1.1210322201852185, Δpcoc: 1.1439823085611516, #instance: 80000
+2022-08-29 03:45:53.301 -- auc: 0.7433047037806644, Δauc: 0.7398678395448465, pcoc: 1.1261136179183586, Δpcoc: 1.2159777887879986, #instance: 85000
+2022-08-29 03:45:53.399 -- auc: 0.7441521775132545, Δauc: 0.7583780991735537, pcoc: 1.1253700265428697, Δpcoc: 1.112691793590784, #instance: 90000
+2022-08-29 03:45:54.079 -- auc: 0.7429428033694829, Δauc: 0.7209556151605938, pcoc: 1.127473534992942, Δpcoc: 1.1659224742575536, #instance: 95000
+2022-08-29 03:45:54.165 -- auc: 0.7445108402426319, Δauc: 0.77305940532526, pcoc: 1.1286725312907884, Δpcoc: 1.1510783148689505, #instance: 100000
+2022-08-29 03:45:54.226 -- auc: 0.7455680586117186, Δauc: 0.7673144540148255, pcoc: 1.1333203762016444, Δpcoc: 1.2301705990518843, #instance: 105000
+2022-08-29 03:45:54.289 -- auc: 0.7460625639989715, Δauc: 0.7565977562502081, pcoc: 1.134531134837998, Δpcoc: 1.1608006915738505, #instance: 110000
+2022-08-29 03:45:54.951 -- auc: 0.7469985836280677, Δauc: 0.7640927230657237, pcoc: 1.1264694364887042, Δpcoc: 0.9787556094427904, #instance: 115000
+2022-08-29 03:45:55.024 -- auc: 0.7477795856940005, Δauc: 0.7664165103189493, pcoc: 1.129329190250519, Δpcoc: 1.1940224003501054, #instance: 120000
+2022-08-29 03:45:55.146 -- auc: 0.7480728562561878, Δauc: 0.7554898631778688, pcoc: 1.1321237327206901, Δpcoc: 1.201969265168713, #instance: 125000
+2022-08-29 03:45:55.207 -- auc: 0.7467000048152803, Δauc: 0.7132769283107854, pcoc: 1.1295047380138186, Δpcoc: 1.070224234227384, #instance: 130000
+2022-08-29 03:45:55.833 -- auc: 0.7454582378780068, Δauc: 0.7155564641662342, pcoc: 1.1245929216275066, Δpcoc: 1.0140901861343792, #instance: 135000
+2022-08-29 03:45:55.901 -- auc: 0.7439245784134705, Δauc: 0.7058290214448169, pcoc: 1.1210365099980826, Δpcoc: 1.0374703458286225, #instance: 140000
+2022-08-29 03:45:56.034 -- auc: 0.7443986740614921, Δauc: 0.7567170984455959, pcoc: 1.1205618879542418, Δpcoc: 1.1081376389094761, #instance: 145000
+2022-08-29 03:45:56.085 -- auc: 0.7453870928298069, Δauc: 0.7786421450998977, pcoc: 1.1248267165555812, Δpcoc: 1.2591546955487587, #instance: 150000
+2022-08-29 03:45:56.690 -- auc: 0.7443521368584142, Δauc: 0.7132531956571029, pcoc: 1.1255229668068425, Δpcoc: 1.145981050537018, #instance: 155000
+2022-08-29 03:45:56.770 -- auc: 0.7440589411775731, Δauc: 0.735161581368918, pcoc: 1.1273295045126486, Δpcoc: 1.1825486148696347, #instance: 160000
+2022-08-29 03:45:56.944 -- auc: 0.7440166494198172, Δauc: 0.7419011220506607, pcoc: 1.1249197100265296, Δpcoc: 1.0559179444130653, #instance: 165000
+2022-08-29 03:45:56.987 -- auc: 0.7437260493894855, Δauc: 0.7344601745286676, pcoc: 1.1225591857554549, Δpcoc: 1.0522233444255786, #instance: 170000
+2022-08-29 03:45:57.573 -- auc: 0.7431150297307312, Δauc: 0.7234199247728637, pcoc: 1.1208345109964992, Δpcoc: 1.0649570426499912, #instance: 175000
+2022-08-29 03:45:57.650 -- auc: 0.7443036821732885, Δauc: 0.7878270367960117, pcoc: 1.1223818932263654, Δpcoc: 1.1779146542460281, #instance: 180000
+2022-08-29 03:45:57.835 -- auc: 0.7442560168378031, Δauc: 0.7420134309508386, pcoc: 1.121491687933526, Δpcoc: 1.0917898383033409, #instance: 185000
+2022-08-29 03:45:57.874 -- auc: 0.7445792305648331, Δauc: 0.7568631053542174, pcoc: 1.1231304939849909, Δpcoc: 1.1850105965578999, #instance: 190000
+2022-08-29 03:45:58.437 -- auc: 0.7450988762470416, Δauc: 0.7636963148273783, pcoc: 1.1212928411482288, Δpcoc: 1.0557324879548766, #instance: 195000
+2022-08-29 03:45:58.552 -- auc: 0.7441099517751206, Δauc: 0.7085192205055219, pcoc: 1.1188901408314615, Δpcoc: 1.0336734894867783, #instance: 200000
+2022-08-29 03:45:58.749 -- auc: 0.7442229802805138, Δauc: 0.748502892490424, pcoc: 1.11838110299074, Δpcoc: 1.0986238857458908, #instance: 205000
+2022-08-29 03:45:58.795 -- auc: 0.7444129559620529, Δauc: 0.7526824981339143, pcoc: 1.1190299105521118, Δpcoc: 1.1459633366363804, #instance: 210000
+2022-08-29 03:45:59.310 -- auc: 0.7445369550759493, Δauc: 0.7491040635055202, pcoc: 1.1185105056705293, Δpcoc: 1.0974564891914989, #instance: 215000
+2022-08-29 03:45:59.431 -- auc: 0.7448269060572792, Δauc: 0.75615836791148, pcoc: 1.1170087443519199, Δpcoc: 1.057405506239997, #instance: 220000
+2022-08-29 03:45:59.637 -- auc: 0.7447609758692203, Δauc: 0.7417161512027491, pcoc: 1.11955271819584, Δpcoc: 1.2437664810816447, #instance: 225000
+2022-08-29 03:45:59.668 -- auc: 0.7443346208175664, Δauc: 0.7255423787595614, pcoc: 1.1189933945270163, Δpcoc: 1.0946888299875481, #instance: 230000
+2022-08-29 03:46:00.175 -- auc: 0.7444993163190101, Δauc: 0.7525721421058665, pcoc: 1.1189748303620435, Δpcoc: 1.1181197604501103, #instance: 235000
+2022-08-29 03:46:00.307 -- auc: 0.7442432552371238, Δauc: 0.7329604727267531, pcoc: 1.1180234708763321, Δpcoc: 1.0753107105178394, #instance: 240000
+2022-08-29 03:46:00.567 -- auc: 0.7439469873774782, Δauc: 0.7274829350184508, pcoc: 1.1212143275347388, Δpcoc: 1.299411399381144, #instance: 245000
+2022-08-29 03:46:00.578 -- auc: 0.7438620917097559, Δauc: 0.7395212624580649, pcoc: 1.121188540793695, Δpcoc: 1.1199481832910572, #instance: 250000
+2022-08-29 03:46:01.048 -- auc: 0.7444131990845517, Δauc: 0.7734396504266446, pcoc: 1.1223239722843004, Δpcoc: 1.1827201934961171, #instance: 255000
+2022-08-29 03:46:01.194 -- auc: 0.7445350262836843, Δauc: 0.7508542652197536, pcoc: 1.1224862611072524, Δpcoc: 1.13075125935566, #instance: 260000
+2022-08-29 03:46:01.467 -- auc: 0.7443108883773537, Δauc: 0.7327156508264463, pcoc: 1.1229274075232225, Δpcoc: 1.1466941706836224, #instance: 265000
+2022-08-29 03:46:01.477 -- auc: 0.7440987145680205, Δauc: 0.7319981166592797, pcoc: 1.1238632865889542, Δpcoc: 1.176200982112034, #instance: 270000
+2022-08-29 03:46:01.922 -- auc: 0.7441368112564478, Δauc: 0.7459303523593653, pcoc: 1.125573057532048, Δpcoc: 1.229520152215244, #instance: 275000
+2022-08-29 03:46:02.066 -- auc: 0.7438615485550479, Δauc: 0.7297360599988439, pcoc: 1.1246319760277854, Δpcoc: 1.0749297412328942, #instance: 280000
+2022-08-29 03:46:02.369 -- auc: 0.7438231477331486, Δauc: 0.7417131895339204, pcoc: 1.1241130286801604, Δpcoc: 1.0961864202521567, #instance: 285000
+2022-08-29 03:46:02.427 -- auc: 0.7437317971162736, Δauc: 0.7385323378593096, pcoc: 1.1222094767945934, Δpcoc: 1.0246731334406396, #instance: 290000
+2022-08-29 03:46:02.820 -- auc: 0.7437966126059754, Δauc: 0.747921701787676, pcoc: 1.1231963753492766, Δpcoc: 1.184396819914541, #instance: 295000
+2022-08-29 03:46:02.962 -- auc: 0.7434952038369617, Δauc: 0.7261300360301343, pcoc: 1.1221666454321326, Δpcoc: 1.0636935518231503, #instance: 300000
+2022-08-29 03:46:03.269 -- auc: 0.7434094049644504, Δauc: 0.7383561968187189, pcoc: 1.1219212667473704, Δpcoc: 1.1072295875434417, #instance: 305000
+2022-08-29 03:46:03.329 -- auc: 0.7436287950946225, Δauc: 0.7565491271844473, pcoc: 1.1215779114015443, Δpcoc: 1.1014057848342629, #instance: 310000
+2022-08-29 03:46:03.692 -- auc: 0.7436808383987574, Δauc: 0.7476121967789633, pcoc: 1.1202912670866818, Δpcoc: 1.042964696187025, #instance: 315000
+2022-08-29 03:46:03.826 -- auc: 0.7438714672990935, Δauc: 0.7559382826429083, pcoc: 1.1209020645083874, Δpcoc: 1.1612920104702817, #instance: 320000
+2022-08-29 03:46:04.185 -- auc: 0.7439830370992044, Δauc: 0.7513369246317938, pcoc: 1.1224063565805769, Δpcoc: 1.2309405179250807, #instance: 325000
+2022-08-29 03:46:04.249 -- auc: 0.7435390573419007, Δauc: 0.7136840619264976, pcoc: 1.1232945640433907, Δpcoc: 1.183743265610707, #instance: 330000
+2022-08-29 03:46:04.566 -- auc: 0.7441162246869382, Δauc: 0.7824939658638486, pcoc: 1.1232304827861672, Δpcoc: 1.1189409699176718, #instance: 335000
+2022-08-29 03:46:04.701 -- auc: 0.744303567988946, Δauc: 0.7570185513516728, pcoc: 1.1224000977935364, Δpcoc: 1.067336125288181, #instance: 340000
+2022-08-29 03:46:05.101 -- auc: 0.7441719767694415, Δauc: 0.7342116477272727, pcoc: 1.1227486362458112, Δpcoc: 1.1472356408834457, #instance: 345000
+2022-08-29 03:46:05.157 -- auc: 0.7439568053712156, Δauc: 0.7273321817551723, pcoc: 1.1232768803582134, Δpcoc: 1.1626396981719274, #instance: 350000
+2022-08-29 03:46:05.427 -- auc: 0.7438381444142462, Δauc: 0.7349441809283648, pcoc: 1.1233597824395003, Δpcoc: 1.1293840003463458, #instance: 355000
+2022-08-29 03:46:05.568 -- auc: 0.7436143674633491, Δauc: 0.7258279511444293, pcoc: 1.1243854370257056, Δpcoc: 1.2039449878086317, #instance: 360000
+2022-08-29 03:46:05.989 -- auc: 0.743599551558513, Δauc: 0.7428498010090565, pcoc: 1.1243615185236315, Δpcoc: 1.1226417057441942, #instance: 365000
+2022-08-29 03:46:06.052 -- auc: 0.7438108687686223, Δauc: 0.7583796217774763, pcoc: 1.1235594217526235, Δpcoc: 1.068738841875033, #instance: 370000
+2022-08-29 03:46:06.289 -- auc: 0.7437510423399796, Δauc: 0.7365207759485008, pcoc: 1.1259096358560206, Δpcoc: 1.3415815391038592, #instance: 375000
+2022-08-29 03:46:06.448 -- auc: 0.7435654706128496, Δauc: 0.7277662039615873, pcoc: 1.1268447289649406, Δpcoc: 1.2047986396261163, #instance: 380000
+2022-08-29 03:46:06.875 -- auc: 0.7436141376136562, Δauc: 0.7471125039419741, pcoc: 1.1261724849551402, Δpcoc: 1.0762103497982025, #instance: 385000
+2022-08-29 03:46:06.945 -- auc: 0.7434049786219159, Δauc: 0.7283533491675867, pcoc: 1.1258064095422227, Δpcoc: 1.098067976757438, #instance: 390000
+2022-08-29 03:46:07.149 -- auc: 0.7431644146021805, Δauc: 0.7240417603683399, pcoc: 1.1244975470942375, Δpcoc: 1.026363480160808, #instance: 395000
+2022-08-29 03:46:07.339 -- auc: 0.7437712689653342, Δauc: 0.792724133243403, pcoc: 1.1249101438449816, Δpcoc: 1.1588370867922335, #instance: 400000
+2022-08-29 03:46:07.778 -- auc: 0.7436873084311311, Δauc: 0.7368600954726314, pcoc: 1.125259399682794, Δpcoc: 1.1543272115007233, #instance: 405000
+2022-08-29 03:46:07.857 -- auc: 0.7433348108057234, Δauc: 0.7145782135575816, pcoc: 1.1249551530653705, Δpcoc: 1.1005641049649342, #instance: 410000
+2022-08-29 03:46:08.017 -- auc: 0.7434520682436814, Δauc: 0.753823373574631, pcoc: 1.1266758904626302, Δpcoc: 1.2959110414894828, #instance: 415000
+2022-08-29 03:46:08.207 -- auc: 0.7436078868290832, Δauc: 0.7575218882119911, pcoc: 1.1272481800545862, Δpcoc: 1.177502590610135, #instance: 420000
+2022-08-29 03:46:08.688 -- auc: 0.7434120046207703, Δauc: 0.7256225151705378, pcoc: 1.1270826630110304, Δpcoc: 1.1130178011493919, #instance: 425000
+2022-08-29 03:46:08.771 -- auc: 0.743514446728565, Δauc: 0.7516955984801756, pcoc: 1.1274537539287455, Δpcoc: 1.1603744819665411, #instance: 430000
+2022-08-29 03:46:08.878 -- auc: 0.7436800722242485, Δauc: 0.7562595532039976, pcoc: 1.1283430626187048, Δpcoc: 1.217813869033541, #instance: 435000
+2022-08-29 03:46:09.085 -- auc: 0.743760945904081, Δauc: 0.7501866085658375, pcoc: 1.1276469056589227, Δpcoc: 1.06726377911684, #instance: 440000
+2022-08-29 03:46:09.570 -- auc: 0.7441113859106598, Δauc: 0.777039411072765, pcoc: 1.1283578728139811, Δpcoc: 1.19989707836738, #instance: 445000
+2022-08-29 03:46:09.665 -- auc: 0.7441346978552048, Δauc: 0.7456217746615845, pcoc: 1.1280995455625675, Δpcoc: 1.1043399783629406, #instance: 450000
+2022-08-29 03:46:09.737 -- auc: 0.7442344824028666, Δauc: 0.7522773945176643, pcoc: 1.1286255482137726, Δpcoc: 1.1822851242290602, #instance: 455000
+2022-08-29 03:46:09.943 -- auc: 0.7442524021975578, Δauc: 0.7416784756856899, pcoc: 1.1299977722666852, Δpcoc: 1.2819050230197053, #instance: 460000
+2022-08-29 03:46:10.465 -- auc: 0.7447644653592762, Δauc: 0.7930750569912647, pcoc: 1.1293504132642778, Δpcoc: 1.0702670623616475, #instance: 465000
+2022-08-29 03:46:10.581 -- auc: 0.7449109260764801, Δauc: 0.7586619645799011, pcoc: 1.1299395242827386, Δpcoc: 1.1918452738059893, #instance: 470000
+2022-08-29 03:46:10.601 -- auc: 0.744817163049835, Δauc: 0.7349132501835762, pcoc: 1.1295988379402433, Δpcoc: 1.0958045225638848, #instance: 475000
+2022-08-29 03:46:10.815 -- auc: 0.7447495026575681, Δauc: 0.7391641298408769, pcoc: 1.128294610507887, Δpcoc: 1.007790243554258, #instance: 480000
+2022-08-29 03:46:11.367 -- auc: 0.7446120004944515, Δauc: 0.7323091591769157, pcoc: 1.1275714994422072, Δpcoc: 1.0604383846124013, #instance: 485000
+2022-08-29 03:46:11.465 -- auc: 0.7447296485814727, Δauc: 0.7571338245490503, pcoc: 1.1261886842562872, Δpcoc: 1.0001766530075513, #instance: 490000
+2022-08-29 03:46:11.488 -- auc: 0.7441513411946892, Δauc: 0.6890530981581002, pcoc: 1.125459087628015, Δpcoc: 1.0536793897181382, #instance: 495000
+2022-08-29 03:46:11.673 -- auc: 0.744422756717225, Δauc: 0.7706989062786015, pcoc: 1.1257603639776677, Δpcoc: 1.1594447336263127, #instance: 500000
+2022-08-29 03:46:12.284 -- auc: 0.7446663378716061, Δauc: 0.7679494373904163, pcoc: 1.1245957488669753, Δpcoc: 1.0146073310874228, #instance: 505000
+2022-08-29 03:46:12.333 -- auc: 0.7445124772929593, Δauc: 0.729218104338843, pcoc: 1.1240592855514246, Δpcoc: 1.0690181493759154, #instance: 510000
+2022-08-29 03:46:12.428 -- auc: 0.7447258327947693, Δauc: 0.7668168842394257, pcoc: 1.1239647232016101, Δpcoc: 1.1137198505837933, #instance: 515000
+2022-08-29 03:46:12.553 -- auc: 0.7447163896344448, Δauc: 0.7435613849908396, pcoc: 1.1241792811407074, Δpcoc: 1.1485965584411102, #instance: 520000
+2022-08-29 03:46:13.179 -- auc: 0.7446755982228606, Δauc: 0.7425654143504294, pcoc: 1.1227908186059543, Δpcoc: 0.988125912074385, #instance: 525000
+2022-08-29 03:46:13.194 -- auc: 0.74473004975407, Δauc: 0.7516678845451223, pcoc: 1.1213347682415677, Δpcoc: 0.9753014816957362, #instance: 530000
+2022-08-29 03:46:13.333 -- auc: 0.7447053567522546, Δauc: 0.7420059945998625, pcoc: 1.120845977892472, Δpcoc: 1.0672347052082134, #instance: 535000
+2022-08-29 03:46:13.405 -- auc: 0.745071645862103, Δauc: 0.7858042383185687, pcoc: 1.1204238781484794, Δpcoc: 1.0721684357053356, #instance: 540000
+2022-08-29 03:46:14.082 -- auc: 0.7449844803640377, Δauc: 0.7364303699542731, pcoc: 1.1193854335661615, Δpcoc: 1.0110348675932204, #instance: 545000
+2022-08-29 03:46:14.093 -- auc: 0.7451066024769679, Δauc: 0.7582994573344298, pcoc: 1.1191516339471796, Δpcoc: 1.0931292952231642, #instance: 550000
+2022-08-29 03:46:14.242 -- auc: 0.7451582691209931, Δauc: 0.7491950162054954, pcoc: 1.1200962735248068, Δpcoc: 1.2441218933638405, #instance: 555000
+2022-08-29 03:46:14.261 -- auc: 0.745213934638553, Δauc: 0.7519691563501594, pcoc: 1.1197034022165557, Δpcoc: 1.0746808507639891, #instance: 560000
+2022-08-29 03:46:14.958 -- auc: 0.7449976824351499, Δauc: 0.7203206150843492, pcoc: 1.1193759538795758, Δpcoc: 1.0815233432563247, #instance: 565000
+2022-08-29 03:46:14.992 -- auc: 0.7451567685045761, Δauc: 0.763044292355372, pcoc: 1.1186551709326429, Δpcoc: 1.0361885920166969, #instance: 570000
+2022-08-29 03:46:15.124 -- auc: 0.7451664038961718, Δauc: 0.7490405701754386, pcoc: 1.1180932240860586, Δpcoc: 1.049824076263528, #instance: 575000
+2022-08-29 03:46:15.159 -- auc: 0.7451053291494211, Δauc: 0.7346749066354004, pcoc: 1.1179853764314505, Δpcoc: 1.1047754577900235, #instance: 580000
+2022-08-29 03:46:15.830 -- auc: 0.7454287920340441, Δauc: 0.7810673121254035, pcoc: 1.1164549710882685, Δpcoc: 0.9568677028020223, #instance: 585000
+2022-08-29 03:46:15.896 -- auc: 0.7453680762753473, Δauc: 0.7376683114836267, pcoc: 1.1164008035602873, Δpcoc: 1.1096029581613098, #instance: 590000
+2022-08-29 03:46:15.988 -- auc: 0.7452939978521863, Δauc: 0.7368734965824995, pcoc: 1.1159955238934456, Δpcoc: 1.0666882186938242, #instance: 595000
+2022-08-29 03:46:16.087 -- auc: 0.7453075976550377, Δauc: 0.7460879390495867, pcoc: 1.1155919739288753, Δpcoc: 1.0670196913182735, #instance: 600000
+2022-08-29 03:46:16.693 -- auc: 0.7453243868847892, Δauc: 0.7488315364801317, pcoc: 1.1144901563036795, Δpcoc: 0.9908190889854651, #instance: 605000
+2022-08-29 03:46:16.809 -- auc: 0.7452853846437462, Δauc: 0.7397250134546396, pcoc: 1.1144788682279616, Δpcoc: 1.112994675668294, #instance: 610000
+2022-08-29 03:46:16.858 -- auc: 0.7454655004916724, Δauc: 0.7682099607851876, pcoc: 1.1145530510708774, Δpcoc: 1.1244474383624825, #instance: 615000
+2022-08-29 03:46:16.989 -- auc: 0.7456493601569445, Δauc: 0.7661040363904812, pcoc: 1.1143588976112906, Δpcoc: 1.0889554502148378, #instance: 620000
+2022-08-29 03:46:17.554 -- auc: 0.7458511860481305, Δauc: 0.7712152363364708, pcoc: 1.1138574784329425, Δpcoc: 1.0522106052176352, #instance: 625000
+2022-08-29 03:46:17.691 -- auc: 0.74563978397542, Δauc: 0.7165963718082335, pcoc: 1.1135453930828794, Δpcoc: 1.072064733034686, #instance: 630000
+2022-08-29 03:46:17.729 -- auc: 0.7458787358506278, Δauc: 0.7773126584517422, pcoc: 1.1131691615604413, Δpcoc: 1.063440637929099, #instance: 635000
+2022-08-29 03:46:17.905 -- auc: 0.7459189640364312, Δauc: 0.7506893228760501, pcoc: 1.1132246863030046, Δpcoc: 1.1209189899869867, #instance: 640000
+2022-08-29 03:46:18.412 -- auc: 0.7459423684552999, Δauc: 0.7493001648472228, pcoc: 1.1127853187018395, Δpcoc: 1.0567605252619143, #instance: 645000
+2022-08-29 03:46:18.568 -- auc: 0.7458804402979027, Δauc: 0.737372159090909, pcoc: 1.1123130816830098, Δpcoc: 1.0508661910891532, #instance: 650000
+2022-08-29 03:46:18.603 -- auc: 0.7458827539369984, Δauc: 0.7464539403512325, pcoc: 1.1118008135440762, Δpcoc: 1.0433493913358944, #instance: 655000
+2022-08-29 03:46:18.819 -- auc: 0.7457993799904268, Δauc: 0.7343848797250859, pcoc: 1.1114400238187916, Δpcoc: 1.0606023462613423, #instance: 660000
+2022-08-29 03:46:19.273 -- auc: 0.7459654864203692, Δauc: 0.7686022639544106, pcoc: 1.111580539793742, Δpcoc: 1.1306316419771523, #instance: 665000
+2022-08-29 03:46:19.459 -- auc: 0.7459725940205472, Δauc: 0.7469789586233331, pcoc: 1.11063216970846, Δpcoc: 0.986632781057823, #instance: 670000
+2022-08-29 03:46:19.471 -- auc: 0.7459270981492728, Δauc: 0.7379347608119249, pcoc: 1.1108196762506235, Δpcoc: 1.1381943644704045, #instance: 675000
+2022-08-29 03:46:19.726 -- auc: 0.7460692731943627, Δauc: 0.7659292096219932, pcoc: 1.110924451597693, Δpcoc: 1.1261203694343567, #instance: 680000
+2022-08-29 03:46:20.130 -- auc: 0.7463090157481032, Δauc: 0.7793381672461971, pcoc: 1.1108204218090731, Δpcoc: 1.0966665552269599, #instance: 685000
+2022-08-29 03:46:20.336 -- auc: 0.7464381035976788, Δauc: 0.7637697980490362, pcoc: 1.1107970520908335, Δpcoc: 1.1072890507120665, #instance: 690000
+2022-08-29 03:46:20.347 -- auc: 0.7465604368660772, Δauc: 0.7650074701279961, pcoc: 1.109124037900723, Δpcoc: 0.9060493701142691, #instance: 695000
+2022-08-29 03:46:20.633 -- auc: 0.7466989913849297, Δauc: 0.7667218393529416, pcoc: 1.1092468922303844, Δpcoc: 1.1280924098132408, #instance: 700000
+[Stage 19:>                                      (0 + 4) / 4][Stage 23:=====>                                 (1 + 4) / 7]2022-08-29 03:46:21.194 -- auc: 0.7467847307378568, Δauc: 0.7582453608247423, pcoc: 1.109347217737126, Δpcoc: 1.1244241348902384, #instance: 705000
+2022-08-29 03:46:21.232 -- auc: 0.7466971825902191, Δauc: 0.7331635540464063, pcoc: 1.1092084868343393, Δpcoc: 1.0888982826663602, #instance: 710000
+2022-08-29 03:46:21.591 -- auc: 0.7468491292428439, Δauc: 0.76814293598234, pcoc: 1.108359567227634, Δpcoc: 0.992911553808621, #instance: 715000
+2022-08-29 03:46:22.050 -- auc: 0.7469615515130396, Δauc: 0.7636843881566905, pcoc: 1.1088275387062816, Δpcoc: 1.1836217302415106, #instance: 720000
+2022-08-29 03:46:22.131 -- auc: 0.7470042686176235, Δauc: 0.7533274709049852, pcoc: 1.108879846575576, Δpcoc: 1.1168495698979026, #instance: 725000
+2022-08-29 03:46:22.221 -- auc: 0.7471457295460844, Δauc: 0.7689284467245038, pcoc: 1.1091741135304698, Δpcoc: 1.1534299650499897, #instance: 729959
+2022-08-29 03:46:22.506 -- auc: 0.7471213599265437, Δauc: 0.7410800167562132, pcoc: 1.1097830887210864, Δpcoc: 1.2111321087424636, #instance: 734959
+2022-08-29 03:46:22.909 -- auc: 0.7472268651278933, Δauc: 0.7616959451648331, pcoc: 1.1091902936606317, Δpcoc: 1.0278291716132053, #instance: 739959
+2022-08-29 03:46:23.030 -- auc: 0.7472995905554245, Δauc: 0.7586092511456237, pcoc: 1.1099811466188012, Δpcoc: 1.247248975029827, #instance: 744959
+2022-08-29 03:46:23.095 -- auc: 0.7474494987758221, Δauc: 0.7669741962535805, pcoc: 1.1097133365230427, Δpcoc: 1.0733215964653275, #instance: 749959
+2022-08-29 03:46:23.419 -- auc: 0.7476998269635378, Δauc: 0.7879710477941176, pcoc: 1.1103170917965859, Δpcoc: 1.217270562753958, #instance: 754959
+2022-08-29 03:46:23.927 -- auc: 0.7478829070751545, Δauc: 0.7734850765672684, pcoc: 1.1090853372737552, Δpcoc: 0.9451130923334059, #instance: 759959
+[Stage 19:>                                      (0 + 4) / 4][Stage 23:===========>                           (2 + 4) / 7]2022-08-29 03:46:23.980 -- auc: 0.7478779113427723, Δauc: 0.7459828279137741, pcoc: 1.1090081118441288, Δpcoc: 1.0979194486842436, #instance: 764959
+2022-08-29 03:46:24.319 -- auc: 0.7478910406834675, Δauc: 0.7491556257247005, pcoc: 1.1092675838452721, Δpcoc: 1.1515048142300537, #instance: 769959
+[Stage 19:>                                      (0 + 4) / 4][Stage 23:================>                      (3 + 4) / 7]2022-08-29 03:46:24.817 -- auc: 0.747926606620229, Δauc: 0.753872239650696, pcoc: 1.1097613442040901, Δpcoc: 1.1906301351572504, #instance: 774959
+2022-08-29 03:46:24.872 -- auc: 0.7481685127795332, Δauc: 0.7838073435654077, pcoc: 1.1097492732985719, Δpcoc: 1.1079399463642075, #instance: 779959
+[Stage 19:>                                      (0 + 4) / 4][Stage 23:======================>                (4 + 3) / 7]2022-08-29 03:46:25.226 -- auc: 0.7481593225454447, Δauc: 0.7464655695130881, pcoc: 1.1104453860360048, Δpcoc: 1.231530329419507, #instance: 784959
+[Stage 19:>                                      (0 + 4) / 4][Stage 23:===========================>           (5 + 2) / 7]2022-08-29 03:46:25.763 -- auc: 0.7484508702300201, Δauc: 0.7888454685704446, pcoc: 1.1099858552545239, Δpcoc: 1.0445819035761774, #instance: 789959
+2022-08-29 03:46:26.135 -- auc: 0.7484240509725191, Δauc: 0.7444521261635636, pcoc: 1.1098065670523654, Δpcoc: 1.0825708640549712, #instance: 794959
+2022-08-29 03:46:26.657 -- auc: 0.7485079436663195, Δauc: 0.7583981835909288, pcoc: 1.1091689497139738, Δpcoc: 1.02067875214245, #instance: 799959
+[Stage 19:>                                      (0 + 4) / 4][Stage 23:=================================>     (6 + 1) / 7]2022-08-29 03:46:27.542 -- auc: 0.7485315526909161, Δauc: 0.7490661922726438, pcoc: 1.1076578968059942, Δpcoc: 0.9143032659938679, #instance: 804959
+2022-08-29 03:46:28.442 -- auc: 0.7486585890641156, Δauc: 0.7614318134390651, pcoc: 1.1063729919619518, Δpcoc: 0.9462479032002963, #instance: 809959
+2022-08-29 03:46:29.331 -- auc: 0.7488024673851098, Δauc: 0.7677548150899347, pcoc: 1.1057407633305303, Δpcoc: 1.0178710723176916, #instance: 814959
+2022-08-29 03:46:30.224 -- auc: 0.7489315916739225, Δauc: 0.7657625806924487, pcoc: 1.1047722453218458, Δpcoc: 0.9727075384070836, #instance: 819959
+2022-08-29 03:46:31.116 -- auc: 0.7489425854033502, Δauc: 0.7511512138429752, pcoc: 1.1051507894180221, Δpcoc: 1.1678708143532277, #instance: 824959
+2022-08-29 03:46:32.007 -- auc: 0.7491639924099933, Δauc: 0.7761304583804189, pcoc: 1.103720301898893, Δpcoc: 0.9185207769708726, #instance: 829959
+2022-08-29 03:46:32.893 -- auc: 0.7491975537934294, Δauc: 0.7522623968732668, pcoc: 1.1028780362464061, Δpcoc: 0.9849783920993408, #instance: 834959
+2022-08-29 03:46:33.778 -- auc: 0.7493161980843726, Δauc: 0.7657090735595409, pcoc: 1.1022992065857167, Δpcoc: 1.0176086052044018, #instance: 839959
+2022-08-29 03:46:34.662 -- auc: 0.7493807929472659, Δauc: 0.7572779045294565, pcoc: 1.1015334516228263, Δpcoc: 0.9905274941566142, #instance: 844959
+2022-08-29 03:46:35.547 -- auc: 0.7498068770880689, Δauc: 0.8102646847268442, pcoc: 1.1006316185101095, Δpcoc: 0.9717399391035239, #instance: 849959
+2022-08-29 03:46:36.421 -- auc: 0.7498849635480482, Δauc: 0.7609908509929295, pcoc: 1.0997174720273646, Δpcoc: 0.96606345214541, #instance: 854959
+2022-08-29 03:46:37.290 -- auc: 0.7498593167109822, Δauc: 0.7463205088538389, pcoc: 1.0989137273537917, Δpcoc: 0.9739875580345452, #instance: 859959
+2022-08-29 03:46:38.158 -- auc: 0.7499650660112147, Δauc: 0.765416284872716, pcoc: 1.0974855936920485, Δpcoc: 0.8944948796693444, #instance: 864959
+2022-08-29 03:46:39.033 -- auc: 0.7500938237427677, Δauc: 0.7731466841041749, pcoc: 1.0977441849393044, Δpcoc: 1.1450932498102064, #instance: 869959
+2022-08-29 03:46:39.913 -- auc: 0.7500524715235894, Δauc: 0.7458085039748424, pcoc: 1.096296421307067, Δpcoc: 0.884713975424619, #instance: 874959
+2022-08-29 03:46:40.785 -- auc: 0.750279815661276, Δauc: 0.7889154210146971, pcoc: 1.0959887339243308, Δpcoc: 1.0427569519389759, #instance: 879959
+2022-08-29 03:46:41.665 -- auc: 0.7504957181721006, Δauc: 0.7860820936402914, pcoc: 1.0954256968451181, Δpcoc: 1.0025213429297524, #instance: 884959
+2022-08-29 03:46:42.554 -- auc: 0.7505998518636801, Δauc: 0.7685396102252594, pcoc: 1.0949666505014843, Δpcoc: 1.0174254011689572, #instance: 889959
+2022-08-29 03:46:43.437 -- auc: 0.7507644774481868, Δauc: 0.7787702897301227, pcoc: 1.09413057077581, Δpcoc: 0.9576522982522343, #instance: 894959
+2022-08-29 03:46:44.320 -- auc: 0.7505668763696225, Δauc: 0.7147650245112873, pcoc: 1.0937182032151225, Δpcoc: 1.0202111710862416, #instance: 899959
+2022-08-29 03:46:45.210 -- auc: 0.7506589284162186, Δauc: 0.7665627708363426, pcoc: 1.0926475748354278, Δpcoc: 0.9215914166491964, #instance: 904959
+2022-08-29 03:46:46.101 -- auc: 0.7509503762822876, Δauc: 0.7991931317802761, pcoc: 1.0919197509396064, Δpcoc: 0.9702785843509739, #instance: 909959
+2022-08-29 03:46:46.984 -- auc: 0.7513069350123891, Δauc: 0.8121442283416932, pcoc: 1.0914204384518909, Δpcoc: 1.006023654992553, #instance: 914959
+2022-08-29 03:46:47.869 -- auc: 0.7514838744973794, Δauc: 0.7847780230366935, pcoc: 1.0916881353993244, Δpcoc: 1.143053345191173, #instance: 919959
+                                                                                                                          2022-08-29 03:46:48.868 -- auc: 0.7514731791845429, Δauc: 0.7432939258051365, pcoc: 1.0918789883706606, Δpcoc: 1.265896414265488, #instance: 921107
+2022-08-29 03:46:48.879 -- auc: 0.7516388151659257, Δauc: 0.8036479263391987, pcoc: 1.0918376813572563, Δpcoc: 1.078740314433449, #instance: 923900
+2022-08-29 03:46:48.897 -- auc: 0.7516296128968061, Δauc: 0.7480852924862397, pcoc: 1.0926910512600116, Δpcoc: 1.6532623197721399, #instance: 925984
+2022-08-29 03:46:48.910 -- auc: 0.751679121981515, Δauc: 0.8098574765241432, pcoc: 1.092700520188561, Δpcoc: 1.1033137862881024, #instance: 926788
+[2022-08-29 03:46:48.921] [info] C[0]:9 has stopped.
+[2022-08-29 03:46:48.923] [info] PS job with coordinator address 10.0.1.85:56803 stopped.
+Debug -- test result sample:
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------------------+
+|label| I1| I2| I3| I4| I5| I6| I7| I8| I9|I10|I11|I12|I13|      C1|      C2|      C3|      C4|      C5|      C6|      C7|      C8|      C9|     C10|     C11|     C12|     C13|     C14|     C15|     C16|     C17|     C18|     C19|     C20|     C21|     C22|     C23|     C24|     C25|     C26|       rawPrediction|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------------------+
+|  1.0| -1|  6| -1|  4|  3| -1|  0| -1|  0| -1|  1| 81| -1|a5ba1c3d|ebaec6a9|417e6103|6faef306|e94c429f|6fcd6dcb|4628641f|bb8f153d|2e4e821f|ac062eaf|750506a2|d5b16f99|a77a4a56|    None|807d0495|    None|    None|7232d217|9512c20b|080347b3|8e01df1e|607fc1a8|    None|7cc1f2ce|30436bfc|b757e957| 0.10503604263067245|
+|  0.0|  6|  7| 11| 18|  1|  1|  0|  1| 14|  1|  1| 47| 11|265366bf|5b6b66b5|a74d1bfe|f2463ffb|e2f069f8|6fcd6dcb|62e218de|ab96c6b2|2e4e821f|e63d98b4|c939136f|482646e9|00c5ffb7|    None|dd7f4897|    None|    None|b8170bba|108a0699|47849e55|73b3f46d|d994ba60|    None|bc3b414b|30436bfc|2ba8d787|0.010848325677216053|
+|  0.0|  1| 27|  1| 28|  2|  0|  0| 30|  3|  0|  2| 98|  1|8a2b1e43|2dcf8c7b|98d05706|67ecc871|8b20d33c|6fcd6dcb|89105e99|06d3d3ad|2e4e821f|31184e3d|fa478aa9|6d137d63|bf78d0d4|    None|eb20d45d|    None|    None|b8170bba|9512c20b|8024f45f|0683bc6f|fa7eca6c|    None|db3d0bce|30436bfc|b757e957|0.020336704328656197|
+|  0.0| 13| 60|  0| -1| -1|  0|  0| 51|  0|  0| -1| 97|  2|ad98e872|cea68cd3|417e6103|b0c5e548|729e35ab|6fcd6dcb|4628641f|c0375b13|1df5e154|62da11e3|14874876|195135b4|f4fc3c5e|be4ee537|fdc9e405|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|7cc1f2ce|30436bfc|e1be5ef2|0.017589667811989784|
+|  0.0|  2| -1|  7| -1| -1|  0|  0|  0|  6|  0| -1|110|  7|788a5d5b|0f636fe1|9fd46023|386c49ee|3389d680|6fcd6dcb|d6135635|cd5745bc|2e4e821f|16ec16d6|fa478aa9|beaaae41|00c5ffb7|    None|1748f7cb|    None|    None|a1eb1511|9512c20b|ef426d46|0683bc6f|6e86ac23|    None|03d140a9|30436bfc|b757e957| 0.01259589847177267|
+|  1.0|  1| 11|  1| -1| -1|  0|  0| 53|  6|  0| -1| 93|  1|ad98e872|95ec7994|d3fc2ea9|f2463ffb|27d2607e|6fcd6dcb|e7222fbe|47b90fcf|2e4e821f|62da11e3|14874876|dec6ef9e|405ca118|be4ee537|8526f472|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|165fbf32|30436bfc|e1be5ef2|0.015524826943874359|
+|  0.0| -1| 33| -1| -1| -1|  0|  0|  1|  1|  0| -1|144| -1|788a5d5b|0f636fe1|40617e73|f2463ffb|c6fc10d3|919c68e4|80fd8626|cd5745bc|e0d906cb|16ec16d6|fa478aa9|12716184|00c5ffb7|    None|1748f7cb|    None|    None|b8170bba|9512c20b|ef426d46|0683bc6f|6e86ac23|    None|a1b026f8|57e36578|b757e957| 0.01487733330577612|
+|  0.0|  1| 42|  1| 19|  1|  0|  2| 12|  1|  0|  2| 75|  1|c364de43|efd6941b|926b4fb3|f671d866|1315f676|6fcd6dcb|812a1d5d|775cf4c3|2e4e821f|34ede241|38a9b7e4|12d71fa6|d49eb1df|    None|b26ead5a|    None|    None|b8170bba|9512c20b|66281ff5|48c051b2|02fd8626|    None|f94c9004|30436bfc|b757e957| 0.02451818250119686|
+|  0.0| -1| 22| -1| 19|  1| -1|  0| 52|  0| -1|  1|107| -1|b258b156|f8f73cc3|9e7b0171|f7f54f97|c6fc10d3|6fcd6dcb|a94b9e37|ab58f00e|1df5e154|1ff038f8|45d1e659|922577f0|a77a4a56|    None|0d1b25dd|    None|    None|a1eb1511|9512c20b|72a30573|89957d13|fda47bef|    None|b7e5da34|30436bfc|2ccea557|0.023910917341709137|
+|  0.0|  7| 10|  1| -1| -1|  0|  0|  0|  3|  0| -1|153|  1|90aff04f|5879ea73|01406fef|f2463ffb|4dc31926|919c68e4|1d52e8a9|8f551379|2e4e821f|aa62325e|6c8ec5e9|519fe012|a77a4a56|6d42b4ff|eea7f013|2514f91d|1f7fc70b|9c96b059|9512c20b|8166fdd6|7a9d5592|a2e08c67|6b9b3338|9f4102b0|ff654802|b757e957|0.015671782195568085|
+|  0.0|  1| 20| -1| -1|  2| -1|  0| 27|  0| -1|  1|105| -1|ad98e872|107444b0|d28f3c7f|4112a6d8|f1738f48|6fcd6dcb|34c5f05f|5b36efb5|7cee8453|62da11e3|14874876|fa016258|bf78d0d4|be4ee537|050a3f52|4cdc3efa|d20856aa|d9f758ff|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|9e0d584e|30436bfc|e1be5ef2| 0.05072786286473274|
+|  0.0| -1|  1|  0| -1| -1|  0|  0|  0|  3|  0| -1| 24|  1|ee43d3c3|66b15bcf|70b32aaa|f2463ffb|e67876e2|6fcd6dcb|aa44acd1|038e402d|2e4e821f|15c7dcb3|ec8859f8|35233f47|405ca118|    None|d0064bf9|    None|    None|b8170bba|9512c20b|991252ee|5143e46f|cd90b96d|    None|652f7670|30436bfc|b757e957|0.024097705259919167|
+|  0.0|  1| 16|  0| -1| -1|  0|  0| 28|  1|  0| -1|  1|  0|788a5d5b|8b38d68d|01a0c607|f2463ffb|1315f676|6fcd6dcb|a7fad249|cd5745bc|2e4e821f|16ec16d6|fa478aa9|12716184|e07cc34d|    None|1748f7cb|    None|    None|b8170bba|9512c20b|ef426d46|0683bc6f|6e86ac23|    None|16e6b497|30436bfc|ed10571d|0.027339741587638855|
+|  0.0|  2|  6|  2|  7|  2|  0|  0| 11|  1|  0|  1| 80|  2|80b034cf|6cb37419|16955be1|6faef306|03e8e8bf|6fcd6dcb|96569523|4f0efcd9|25dd8f9a|c9157c35|13c74600|1cf94aaa|bf78d0d4|be4ee537|d580d6e0|4cdc3efa|d20856aa|03fcae79|9512c20b|19fff361|066e393f|865c4c0d|b5dbbb47|6d55e2ab|321935cd|b757e957|0.044756148010492325|
+|  0.0| 11| 20|  3| 11|  2|  0|  0|  0|  8|  0|  1| 52|  3|02bd17b1|191fa7b7|417e6103|55b6bcb1|e62c84df|6fcd6dcb|4628641f|b376349d|a48e16ed|8e577c72|b59debeb|52147525|bf78d0d4|be4ee537|9ad63abb|4cdc3efa|d20856aa|c013b6d8|9512c20b|52e7472d|ea204b9e|734283f4|f006b3a7|7cc1f2ce|991321ea|2ccea557|0.026785356923937798|
+|  0.0| -1| 31|  2| 87| -1|  0|  0|  1|  2|  0| -1|142|  2|f6f6e154|929c447a|1060ad6a|b17e4793|298be4c8|919c68e4|d5db561f|8f551379|25dd8f9a|35669396|667f0064|77239e37|f4fc3c5e|55191c09|eea7f013|2514f91d|1f7fc70b|f7389918|9512c20b|350c928d|19664003|ce94fa62|2c11a4ab|092f30d0|321935cd|2f33557c| 0.01867697387933731|
+|  0.0|  2| -1| -1| -1| -1| -1| -1|  0|  2| -1| -1|112| -1|46aa1925|266e819f|df0300da|67ecc871|a65a9963|6fcd6dcb|bf764604|038e402d|2e4e821f|8cd7809e|341f402c|12716184|e07cc34d|    None|06985472|    None|    None|6691e292|9512c20b|5fbbb259|638322c5|881268a5|    None|39cefd73|30436bfc|2ccea557| 0.02770569548010826|
+|  0.0|  4| -1|  4|  4| -1|  1|  0| 30|  0|  1| -1| 13|  4|ad98e872|dd86c04a|d917dc13|9d24e8e8|2e453517|6fcd6dcb|4561103f|6b8ae8e7|2e4e821f|62da11e3|14874876|3c40f0e4|00c5ffb7|be4ee537|4fd34fbf|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|aa14a3fa|991321ea|e1be5ef2|0.021140914410352707|
+|  0.0| -1| -1|  2|  3| -1|  2|  0| 18|  3|  0| -1| 52|  2|4ec5f9f0|8b66c66c|f1fb47b1|f2463ffb|c6fc10d3|6fcd6dcb|e2bfe50c|8803671a|2e4e821f|45e70ba8|63ea5b33|f69b2f92|bf78d0d4|    None|640aa475|    None|    None|d9f758ff|9512c20b|4bc49915|4e9372ce|5c3f3da6|    None|78b358b6|30436bfc|2ccea557|0.028826739639043808|
+|  0.0|  1|  1|  2|  1| -1|  0|  0| 14|  1|  0| -1| 65|  2|    None|1aa13681|cf60bce9|f2463ffb|664ff944|6fcd6dcb|8a7e4bde|038e402d|e25a4c11|    None|    None|991b27cd|a77a4a56|    None|da33df36|    None|    None|a1eb1511|9512c20b|    None|    None|    None|    None|bed01803|cdc3217e|962813c6| 0.08178123086690903|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------------------+
+only showing top 20 rows
+
+[2022-08-29 03:46:49.147] [info] PS job with coordinator address 10.0.1.85:49563 started.
+[2022-08-29 03:46:49.147] [info] PSRunner::RunPS: pid: 2812, tid: 3263, thread: 0x7fd14577a700
+[2022-08-29 03:46:49.147] [info] PSRunner::RunPSCoordinator: pid: 2812, tid: 3263, thread: 0x7fd14577a700
+[2022-08-29 03:46:49.148] [info] ActorProcess::Receiving: Coordinator pid: 2812, tid: 3266, thread: 0x7fd147f7f700
+[2022-08-29 03:46:49.243] [info] C[0]:9: The coordinator has connected to 4 servers and 4 workers.
+PS Coordinator node [32mC[0]:9[m is ready.
+[Stage 27:>                                      (0 + 4) / 4][Stage 30:>                                      (0 + 4) / 4]                                                                                                                          [Stage 27:>                                      (0 + 4) / 4][Stage 31:>                                      (0 + 4) / 4]2022-08-29 03:47:02.571 -- auc: 0.7454450109472847, Δauc: 0.7454450109472847, pcoc: 1.1290986192079238, Δpcoc: 1.1290986192079238, #instance: 5000
+2022-08-29 03:47:02.652 -- auc: 0.7386643765063131, Δauc: 0.7282561996525035, pcoc: 1.216216502124316, Δpcoc: 1.3247787869893588, #instance: 10000
+2022-08-29 03:47:03.083 -- auc: 0.734462413821657, Δauc: 0.7289797738149881, pcoc: 1.1517175430709907, Δpcoc: 1.0317576956597103, #instance: 15000
+2022-08-29 03:47:03.510 -- auc: 0.7304038005767626, Δauc: 0.7184795931989466, pcoc: 1.1640556266537536, Δpcoc: 1.2002634667103587, #instance: 20000
+2022-08-29 03:47:03.522 -- auc: 0.731703454033471, Δauc: 0.7368852701702442, pcoc: 1.1204303653390557, Δpcoc: 0.9703594664164952, #instance: 25000
+2022-08-29 03:47:03.542 -- auc: 0.7339377798820304, Δauc: 0.7473567566278564, pcoc: 1.144058339452483, Δpcoc: 1.2770941067433013, #instance: 30000
+2022-08-29 03:47:03.970 -- auc: 0.7298065800615576, Δauc: 0.7028439153439154, pcoc: 1.1488586909398084, Δpcoc: 1.1802324167319707, #instance: 35000
+2022-08-29 03:47:04.421 -- auc: 0.7284229313043201, Δauc: 0.7196558585054447, pcoc: 1.1266972802253366, Δpcoc: 0.9960811444500971, #instance: 40000
+2022-08-29 03:47:04.432 -- auc: 0.7314546058849349, Δauc: 0.7587321992968501, pcoc: 1.1442677396375949, Δpcoc: 1.2937984080150209, #instance: 45000
+2022-08-29 03:47:04.444 -- auc: 0.7309008012085164, Δauc: 0.7262140833546658, pcoc: 1.132141070618494, Δpcoc: 1.0331903216401501, #instance: 50000
+2022-08-29 03:47:04.847 -- auc: 0.7313045851990784, Δauc: 0.7352049571370305, pcoc: 1.1201931853313813, Δpcoc: 1.0107533840032725, #instance: 55000
+2022-08-29 03:47:05.300 -- auc: 0.7328116345934108, Δauc: 0.7501389649535167, pcoc: 1.1266731489011002, Δpcoc: 1.2003559134653863, #instance: 60000
+2022-08-29 03:47:05.372 -- auc: 0.7339311692000071, Δauc: 0.7474722860281634, pcoc: 1.1299913171724818, Δpcoc: 1.1699805967269405, #instance: 65000
+2022-08-29 03:47:05.445 -- auc: 0.7333162696888366, Δauc: 0.7273890304353854, pcoc: 1.1104927968763605, Δpcoc: 0.9050474502146244, #instance: 70000
+2022-08-29 03:47:05.724 -- auc: 0.7324985613011326, Δauc: 0.7193549007738882, pcoc: 1.1166531462333116, Δpcoc: 1.2148198644034296, #instance: 75000
+2022-08-29 03:47:06.172 -- auc: 0.7332438074655891, Δauc: 0.743561307646593, pcoc: 1.119273324799585, Δpcoc: 1.15758326483069, #instance: 80000
+2022-08-29 03:47:06.273 -- auc: 0.732337561125128, Δauc: 0.718334194214876, pcoc: 1.1216260520988535, Δpcoc: 1.1586079843342305, #instance: 85000
+2022-08-29 03:47:06.377 -- auc: 0.7325185809302523, Δauc: 0.7361665777156143, pcoc: 1.1307433976444667, Δpcoc: 1.3127501090960716, #instance: 90000
+2022-08-29 03:47:06.598 -- auc: 0.7311034601202189, Δauc: 0.7012904152717936, pcoc: 1.1376325182571125, Δpcoc: 1.2831328175121681, #instance: 95000
+2022-08-29 03:47:07.072 -- auc: 0.7299584995542723, Δauc: 0.7098289574302457, pcoc: 1.130507172241907, Δpcoc: 1.0146907745803917, #instance: 100000
+2022-08-29 03:47:07.198 -- auc: 0.7290937964384954, Δauc: 0.7123510672894986, pcoc: 1.128353165189244, Δpcoc: 1.0883117126567023, #instance: 105000
+2022-08-29 03:47:07.275 -- auc: 0.7286128108670735, Δauc: 0.7167326726932198, pcoc: 1.1311267179960833, Δpcoc: 1.1954067341038879, #instance: 110000
+2022-08-29 03:47:07.469 -- auc: 0.7268230867197155, Δauc: 0.6911444782797225, pcoc: 1.127538532457296, Δpcoc: 1.054215669631958, #instance: 115000
+2022-08-29 03:47:07.943 -- auc: 0.7267478020406042, Δauc: 0.7281312575942127, pcoc: 1.1375907941616792, Δpcoc: 1.3980094588917793, #instance: 120000
+2022-08-29 03:47:08.104 -- auc: 0.7258350958550068, Δauc: 0.7052289465145237, pcoc: 1.1339517766369647, Δpcoc: 1.0570595419339541, #instance: 125000
+2022-08-29 03:47:08.207 -- auc: 0.7263812471902136, Δauc: 0.7415042581067802, pcoc: 1.1263929561753527, Δpcoc: 0.9542540041513221, #instance: 130000
+2022-08-29 03:47:08.337 -- auc: 0.7272714471373811, Δauc: 0.748885498352633, pcoc: 1.1217000612600452, Δpcoc: 1.0101346699304359, #instance: 135000
+2022-08-29 03:47:08.816 -- auc: 0.7269793710563537, Δauc: 0.7177271548983155, pcoc: 1.1127428797392442, Δpcoc: 0.9274683629424827, #instance: 140000
+[Stage 27:>                                      (0 + 4) / 4][Stage 31:=========>                             (1 + 3) / 4]2022-08-29 03:47:09.007 -- auc: 0.7273114741434659, Δauc: 0.7377044759173184, pcoc: 1.1150830140877597, Δpcoc: 1.1834057600669612, #instance: 145000
+2022-08-29 03:47:09.106 -- auc: 0.7287305790491446, Δauc: 0.7672425701778203, pcoc: 1.1093877231920566, Δpcoc: 0.9581679304440817, #instance: 150000
+2022-08-29 03:47:09.684 -- auc: 0.7280468736549588, Δauc: 0.7071730371694405, pcoc: 1.1099111511387973, Δpcoc: 1.124585499540407, #instance: 155000
+2022-08-29 03:47:09.907 -- auc: 0.7288801370105711, Δauc: 0.7549257489669421, pcoc: 1.1110085216847863, Δpcoc: 1.1450613014400006, #instance: 160000
+2022-08-29 03:47:10.003 -- auc: 0.7285955007905556, Δauc: 0.720138726191485, pcoc: 1.1073452503057988, Δpcoc: 0.9942472634545292, #instance: 165000
+2022-08-29 03:47:10.548 -- auc: 0.7283965998417764, Δauc: 0.721173425892096, pcoc: 1.1074780156773496, Δpcoc: 1.111610142623677, #instance: 170000
+2022-08-29 03:47:10.811 -- auc: 0.7285667551438921, Δauc: 0.7346185941253676, pcoc: 1.1103564848750298, Δpcoc: 1.2144579437394805, #instance: 175000
+2022-08-29 03:47:10.903 -- auc: 0.7283166192852024, Δauc: 0.7177108562093824, pcoc: 1.111602961344087, Δpcoc: 1.1598458988913174, #instance: 180000
+[Stage 27:>                                      (0 + 4) / 4][Stage 31:===================>                   (2 + 2) / 4][Stage 27:>                                      (0 + 4) / 4][Stage 31:=============================>         (3 + 1) / 4]2022-08-29 03:47:11.804 -- auc: 0.7278256592134182, Δauc: 0.7098900343642611, pcoc: 1.110792806089197, Δpcoc: 1.0796990474065145, #instance: 185000
+                                                                                                                          2022-08-29 03:47:12.640 -- auc: 0.7285295051310239, Δauc: 0.7604935476567807, pcoc: 1.1072359769948577, Δpcoc: 0.9404884415959555, #instance: 188281
+2022-08-29 03:47:12.652 -- auc: 0.7289924293130162, Δauc: 0.7609910781468343, pcoc: 1.1060624183353296, Δpcoc: 1.0282593480833284, #instance: 191030
+2022-08-29 03:47:12.679 -- auc: 0.7297402406242577, Δauc: 0.7689914677403892, pcoc: 1.1071082590712256, Δpcoc: 1.1604809979597728, #instance: 194627
+2022-08-29 03:47:12.691 -- auc: 0.7297761778296665, Δauc: 0.7351254480286739, pcoc: 1.1070375413882523, Δpcoc: 1.0972250699996948, #instance: 195974
+[2022-08-29 03:47:12.702] [info] C[0]:9 has stopped.
+[2022-08-29 03:47:12.704] [info] PS job with coordinator address 10.0.1.85:49563 stopped.
+Debug -- test result sample:
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------------------+
+|label| I1| I2| I3| I4| I5| I6| I7| I8| I9|I10|I11|I12|I13|      C1|      C2|      C3|      C4|      C5|      C6|      C7|      C8|      C9|     C10|     C11|     C12|     C13|     C14|     C15|     C16|     C17|     C18|     C19|     C20|     C21|     C22|     C23|     C24|     C25|     C26|       rawPrediction|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------------------+
+|  0.0|  5| 30|  1| -1| 15|  0|  0|  7|  8|  0|  3| 52|  1|ad98e872|efc01d31|7ad6521e|f2463ffb|729e35ab|6fcd6dcb|3fd1c581|4aa7575b|2e4e821f|62da11e3|14874876|b79cff9b|a77a4a56|be4ee537|814ee703|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|bff3f545|30436bfc|e1be5ef2| 0.07128122448921204|
+|  0.0| 13| 17|  5| 18| -1|  0|  0| 46|  5|  0| -1| 53|  5|9c5e7eea|b60a35fd|c807feb8|6521d620|c6fc10d3|6fcd6dcb|a8e30f6f|8f551379|25dd8f9a|29e73dfa|e218472a|b8bad512|a77a4a56|52e56658|c7b99eb2|2514f91d|1f7fc70b|a1eb1511|9512c20b|11e42bd8|7f07d42f|6f2d7eee|c9d9a16d|5aa3f86f|321935cd|b757e957| 0.02763162925839424|
+|  0.0|  2| 38|  7| 29|  8|  0|  0|  0|  7|  0|  2| 74|  7|9a60beb5|d5e25e67|97159060|6521d620|729e35ab|6fcd6dcb|909cb59d|73dc0131|e25a4c11|7663c354|879196ec|6af001bb|a77a4a56|    None|c750d256|    None|    None|b8170bba|139221a3|5df32efd|39d760ec|90475999|    None|4b823a1a|cdc3217e|962813c6| 0.03393314778804779|
+|  0.0| 28| 19| 10| 27| -1|  0|  0|  0| 10|  0| -1| 13|  8|c657f27d|21f155a8|5469d547|f2463ffb|b27acb78|6fcd6dcb|24416b63|2ee1739a|e25a4c11|e2ae989e|7a517368|586fb9ab|a77a4a56|be4ee537|4ad20746|4cdc3efa|d20856aa|b8170bba|9512c20b|e2a1b32a|9565032f|beab1f0d|b97a8a6a|9d6a65e7|cdc3217e|b757e957|0.007688113488256931|
+|  0.0|  1| 28| -1| 10|  6|  0|  0|  1|  2|  0|  3| 75| -1|238d4da6|f079ac66|b2eeed40|f2463ffb|729e35ab|6fcd6dcb|e2d8d8d0|5624f044|2e4e821f|d707c918|573186f5|52dab28d|26bb0b02|521d9fcb|bbcd081a|83f41762|1f7fc70b|b8170bba|1889c49d|89111db8|108c7285|21b603cb|75260276|8a1b8c9e|ff654802|2ccea557| 0.02408767305314541|
+|  0.0| -1| 68| 11| 40| 13|  1|  0|  6| 13|  0|  6| 17| 11|17d454c9|3a15ee08|17f8a1e6|14841cc2|513057af|6fcd6dcb|2d72123e|038e402d|2e4e821f|b11cffb3|a80c992e|42f81f59|26bb0b02|    None|2b8e321d|    None|    None|b8170bba|139221a3|f31b6bcb|179c710e|30f4b981|    None|59c61d47|ff654802|2ccea557| 0.06893947720527649|
+|  0.0|  7| 45|  8| 12| 13|  1|  0| 26| 11|  1|  3| 47|  8|349b3fec|a52ef97d|21d9a494|9a05483b|27d2607e|6fcd6dcb|7cc76e13|28c74e94|46dedfa6|96c47d68|95f8ca79|63d8765b|a77a4a56|    None|7ee363e3|    None|    None|b8170bba|9512c20b|9fd919ec|6266f3f2|d6d5f3fd|    None|4777f484|ff654802|2ccea557|0.044866759330034256|
+|  0.0| -1| 23| -1|  0| 24|  2|  1| -1|  2|  2|  7| 48| -1|f2c6ac96|929c447a|fe54dcfd|a80a77f7|6ca919cf|6fcd6dcb|d935d694|8f551379|25dd8f9a|de9037c8|c9e2bb98|3b14273f|26bb0b02|44c9f75a|eea7f013|2514f91d|1f7fc70b|b8170bba|9512c20b|2190ed1e|9f4ff207|7010f9d9|c7ffaa64|118885ac|0b3c06d0|2f33557c| 0.12490036338567734|
+|  0.0|  6| -1|  7|  7| -1|  1|  0|  4|  6|  1| -1|  3|  7|dce6779f|40fdd8a3|02ed7d62|f2463ffb|fcd95698|6fcd6dcb|d0b71593|6f78d5bb|2e4e821f|9c28f20c|f02982f0|5a48b525|bf78d0d4|    None|c5f96f4e|    None|    None|b8170bba|139221a3|e4446fa0|b1e61f83|25df6868|    None|3c0f1a65|30436bfc|b757e957|0.045650776475667953|
+|  0.0|  2| 29|  2| 14|  2|  0|  0|  1|  2|  0|  2| 63|  2|3460f301|920243e1|96a6bc10|f2463ffb|c1624652|6fcd6dcb|8d3106da|038e402d|2e4e821f|50b67172|818c7aba|a064d0ab|bf78d0d4|    None|13a9a701|    None|    None|b7771e51|9512c20b|a0d5e918|7b1edd0b|1d913ef6|    None|500e2dea|30436bfc|962813c6| 0.06174636259675026|
+|  0.0| 12| 16|  2| -1| -1|  0|  0|  2|  0|  0| -1| 97|  1|ad98e872|420acc05|486df68e|f21cc470|f1031577|6fcd6dcb|b34fe188|e013af63|2e4e821f|62da11e3|14874876|e9db7237|405ca118|be4ee537|e9b95271|4cdc3efa|d20856aa|a1eb1511|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|5d7cbac4|30436bfc|e1be5ef2|0.009604107588529587|
+|  0.0|  1| 22| -1| -1| -1|  0|  0|  0|  4|  0| -1| -1| -1|3803b409|0b36556b|e065fffb|720ca231|c6fc10d3|919c68e4|7511c9b0|038e402d|2e4e821f|104ac205|840c48dc|12716184|6397311a|    None|66984516|    None|    None|a1eb1511|0a1d513f|e50e4f50|2f1424ac|85d53c10|    None|ac93dc68|ff654802|b757e957|0.015595993027091026|
+|  0.0| 11| 45|  2| -1| -1|  0|  0| 26|  1|  0| -1|111|  2|ad98e872|e56937ee|bd0c71fd|e6b5b2ee|664ff944|6fcd6dcb|77645973|060ba641|a48e16ed|62da11e3|14874876|f48feaa5|bf78d0d4|be4ee537|4dcc1c44|4cdc3efa|d20856aa|a1eb1511|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|9da978d1|991321ea|e1be5ef2| 0.01225166954100132|
+|  0.0|  1| 44| 10| 13| -1|  3|  0| 28| 11|  2| -1| 14| 10|84bff1e0|58cc2d25|aa637c0e|b0c5e548|acf676aa|6fcd6dcb|06fdb025|6032e7d9|a48e16ed|b9c9cead|d648cfd6|12716184|e07cc34d|be4ee537|4a9e2549|4cdc3efa|d20856aa|d9f758ff|9512c20b|8aa18328|99a9dcbc|f43dd1a1|b2f5f59e|e6206154|991321ea|b757e957|0.014580866321921349|
+|  0.0| 12|  9| 11| 11| -1|  1|  0| 17|  0|  1| -1| 46| 11|ad98e872|aa6b54f0|2a5042e6|72e99bed|8c0b6781|6fcd6dcb|5e1469a5|9eb0357e|2e4e821f|62da11e3|14874876|b9d15e54|a77a4a56|be4ee537|e1a362e8|4cdc3efa|d20856aa|b8170bba|cc7a7d35|156cbe87|96fbe197|15562d5d|d3df7183|3c33d68e|991321ea|e1be5ef2|0.020685208961367607|
+|  0.0|  5| 27| -1| 79| -1|  0|  0|  6|  3|  0| -1|142| -1|38accf8d|40fe6fdf|05532a26|f2463ffb|76d7b3d6|919c68e4|a16c1c7a|eff23bd2|a48e16ed|0a9c0d14|9e62d8f5|58ee4e5a|bf78d0d4|521d9fcb|20da7a0d|4cdc3efa|753da5f3|a1eb1511|9512c20b|fbafabb1|03266b9a|7cfe05fe|9adabce7|b532efb4|991321ea|2ccea557| 0.01810731180012226|
+|  0.0|  6|  6|  6| 10| -1|  2|  0|  1|  6|  1| -1|  3|  6|57183dd6|dc20f0c1|fca853fb|f2463ffb|e755064d|6fcd6dcb|58c3b696|d0da5290|2e4e821f|56758322|d19bd6bf|12716184|bf78d0d4|be4ee537|71a4005f|4cdc3efa|d20856aa|a1eb1511|0a1d513f|ba8718a0|b1f4106e|8a34c92e|40d290b2|bdeb7414|30436bfc|2ccea557| 0.01606767624616623|
+|  0.0|  2| 38|  2| 19|  6|  0|  0|  0|  2|  0|  1| 73|  2|9004d890|df1b84fe|77a18ede|386c49ee|9a2a479c|6fcd6dcb|4a7d88df|8670cd10|2e4e821f|4ecd1b37|ed0ce343|6089b0e2|a77a4a56|    None|d96198f0|    None|    None|a1eb1511|9512c20b|c599b801|7e98b867|e7220716|    None|cc4e7cf8|ff654802|b757e957| 0.06133383512496948|
+|  0.0| -1| 42|  3| 30|  1|  0|  0|  0|  3|  0|  2| 87|  3|1f2ca124|aa0578a7|77e3e7f7|67ecc871|3f13e496|6fcd6dcb|9bd7bd0f|2ef4aa88|7cee8453|07ab4c13|854e94da|12716184|a77a4a56|    None|85863b42|    None|    None|7232d217|9512c20b|c4e2fc6a|1ee4f4c3|f43f73fb|    None|4686ac80|30436bfc|2ccea557|0.013902423903346062|
+|  0.0|  1| 17|  4|  4|  7|  1|  0|  0|  6|  1|  1| 20|  4|c3350145|5f5565e2|5469d547|3ecc0053|c6fc10d3|6fcd6dcb|24416b63|2ee1739a|1df5e154|36e146c9|4bf76849|8a30cdb9|a77a4a56|be4ee537|4ad20746|4cdc3efa|d20856aa|c013b6d8|9512c20b|cff01d9e|ec3ac83e|c76c9034|bb31044d|9d6a65e7|30436bfc|2ccea557|0.028837595134973526|
++-----+---+---+---+---+---+---+---+---+---+---+---+---+---+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------+--------------------+
+only showing top 20 rows
+
+[Stage 34:>                                                                                                   (0 + 4) / 7][Stage 34:==========================================>                                                         (3 + 4) / 7][Stage 34:=====================================================================================>              (6 + 1) / 7]                                                                                                                          [Stage 38:=====================================================================================>              (6 + 1) / 7]                                                                                                                          Debug -- Train AUC:  0.7516779979496624
+Debug -- Test AUC:  0.7297787991089646
+Debug--spark stop
+22/08/29 03:47:18 WARN ExecutorPodsWatchSnapshotSource: Kubernetes client has been closed (this is expected if the application is shutting down.)
