@@ -19,8 +19,7 @@ We are continuously adding models:
 |  AutoInt  |  [autoint.py](autoint/autoint.py)   |  [autoint_net.py](../../python/algos/autoint_net.py)  | [AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks](https://arxiv.org/abs/1810.11921)                 |
 |  xDeepFM  |  [xdeepfm.py](xdeepfm/xdeepfm.py)   |  [xdeepfm_net.py](../../python/algos/xdeepfm_net.py)  | [xDeepFM: Combining Explicit and Implicit Feature Interactions for Recommender Systems](https://arxiv.org/pdf/1803.05170.pdf)          |
 |   FwFM    |       [fwfm.py](fwfm/fwfm.py)       |     [fwfm_net.py](../../python/algos/fwfm_net.py)     | [Field-weighted Factorization Machines for Click-Through Rate Prediction in Display Advertising](https://arxiv.org/pdf/1806.03514.pdf) |
-
-
+|   FFM     |     [deepffm.py](deepffm/deepffm.py)|  [deepffm_net.py](../../python/algos/deepffm_net.py)  | [Field-aware Factorization Machines for CTR Prediction](https://www.csie.ntu.edu.tw/~cjlin/papers/ffm.pdf)
 
 ## Benchmarks
 |   Model   |                                       criteo-d5 |                                           ml-1m |                                          ml-25m |
@@ -34,7 +33,7 @@ We are continuously adding models:
 |  AutoInt  | Train AUC:  `0.7558` <br /> Test AUC:  `0.7361` | Train AUC:  `0.9028` <br /> Test AUC:  `0.8741` | Train AUC:  `0.8968` <br /> Test AUC:  `0.8421` |
 |  xDeepFM  | Train AUC:  `0.7541` <br /> Test AUC:  `0.7300` | Train AUC:  `0.8892` <br /> Test AUC:  `0.8641` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8367` |
 |   FwFM    | Train AUC:  `0.7517` <br /> Test AUC:  `0.7298` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8660` | Train AUC:  `0.8918` <br /> Test AUC:  `0.8376` |
-
+|   FFM     | Train AUC:  `0.7518` <br /> Test AUC:  `0.7280` | Train AUC:  `0.8919` <br /> Test AUC:  `0.8672` | Train AUC:  `0.8921` <br /> Test AUC:  `0.8379` |
 
 ## How to run
 
