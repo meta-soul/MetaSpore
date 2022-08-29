@@ -16,7 +16,7 @@
 
 import torch 
 import metaspore as ms
-from ...layers import MLPLayer, Attention, LRLayer
+from ...layers import MLPLayer, DIEN_DIN_AttLayer, LRLayer
 
 
 class DIN(torch.nn.Module):
@@ -40,8 +40,9 @@ class DIN(torch.nn.Module):
                  din_hidden_activations='dice',
                  din_hidden_batch_norm=True,
                  din_hidden_dropout=0.25,
-                 seq_column_index_list=[1],
-                 target_column_index_list = [2],
+                 # din_seq_column_index_list[i]与din_target_column_index_list[i]做attention
+                 din_seq_column_index_list=[1, 3],
+                 din_target_column_index_list = [2, 4],
                  deep_hidden_units=[32, 16],
                  deep_hidden_activations='ReLU',
                  deep_hidden_dropout=0.2,
@@ -56,30 +57,24 @@ class DIN(torch.nn.Module):
         
         self.use_wide = use_wide
         self.use_deep = use_deep
-        # din_column_name_path = 's3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIN.txt'
-        # din_combine_schema_path = 's3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_DIN.txt'
-        # wide_column_name_path = 's3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIN.txt'
-        # wide_combine_schema_path = 's3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_wide.txt'
-        # deep_column_name_path = 's3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIN.txt'
-        # deep_combine_schema_path = 's3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_deep.txt'
 
         self.embedding_table = ms.EmbeddingLookup(din_embedding_dim, din_column_name_path, din_combine_schema_path)
         self.embedding_table.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha = ftrl_alpha, beta=ftrl_beta)
         self.embedding_table.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
         
         self.feature_nums = self.embedding_table.feature_count
-        self.seq_column_index_list = seq_column_index_list
-        self.target_column_index_list = target_column_index_list
+        self.seq_column_index_list = din_seq_column_index_list
+        self.target_column_index_list = din_target_column_index_list
         self.other_column_index_list = []
         for i in range(self.feature_nums):
             if i not in self.seq_column_index_list and i not in self.target_column_index_list:
                 self.other_column_index_list.append(i)
-        concat_feature_num = len(seq_column_index_list)
-        self._attention = Attention(input_dim=din_embedding_dim * concat_feature_num,
-                                    hidden_units=din_attention_hidden_layers,
-                                    hidden_activations=din_attention_hidden_activations,
-                                    dropout_rates=din_attention_dropout,
-                                    batch_norm=din_attention_batch_norm)
+        concat_feature_num = len(din_seq_column_index_list)
+        self.DIN_attention = DIEN_DIN_AttLayer(input_dim=din_embedding_dim * concat_feature_num,
+                                    att_hidden_size=din_attention_hidden_layers,
+                                    att_activation=din_attention_hidden_activations,
+                                    att_dropout=din_attention_dropout,
+                                    use_att_bn=din_attention_batch_norm)
 
         total_input_size = din_embedding_dim * self.feature_nums
         self.mlp = MLPLayer(input_dim=total_input_size,
@@ -111,44 +106,44 @@ class DIN(torch.nn.Module):
                                 )
 
         self.final_activation = torch.nn.Sigmoid()
-        
-    def forward(self, x):
-        x, offset = self.embedding_table(x)     
-        column_nums = self.feature_nums
-        # 利用offset计算取出每个feature的embedding
+    
+    def get_column_embedding(self, column_index_list, x_reshape, column_nums, is_seq_column=True):
+        all_column_embedding = None
+        if is_seq_column:
+            for column_index in column_index_list:
+                column_embedding = x_reshape[column_index::column_nums]         
+                column_embedding = torch.nn.utils.rnn.pad_sequence(column_embedding, batch_first=True)
+                if all_column_embedding is None:
+                    all_column_embedding = column_embedding
+                else:
+                    all_column_embedding = torch.cat((all_column_embedding, column_embedding), dim=2) 
+        else:
+            for column_index in column_index_list:
+                column_embedding = x_reshape[column_index::column_nums]
+                column_embedding = torch.stack(column_embedding).squeeze()
+                if all_column_embedding is None:
+                    all_column_embedding = column_embedding
+                else:
+                    all_column_embedding = torch.cat((all_column_embedding, column_embedding), dim=1) 
+           
+        return all_column_embedding
+    
+    def get_field_embedding_list(self, x, offset):
         x_reshape = [x[offset[i]:offset[i+1],:] for i in range(offset.shape[0]-1)]
         x_reshape.append(x[offset[offset.shape[0]-1]:x.shape[0],:])
-        
+        return x_reshape
+    
+    def forward(self, x):
+        x, offset = self.embedding_table(x)     
+        x_reshape = self.get_field_embedding_list(x, offset)
+        column_nums = self.feature_nums
         other_embedding = None
-        for other_column_idx in self.other_column_index_list:
-            other_column_embedding = x_reshape[other_column_idx::column_nums]
-            other_column_embedding = torch.stack(other_column_embedding)
-            other_column_embedding = other_column_embedding.squeeze()
-            if other_embedding is None:
-                other_embedding = other_column_embedding
-            else:
-                other_embedding = torch.cat((other_embedding, other_column_embedding), dim=1) 
-            
-        target_embedding = None
-        for target_column_index in self.target_column_index_list:
-            target_column_embedding = x_reshape[target_column_index::column_nums]
-            target_column_embedding = torch.stack(target_column_embedding).squeeze()
-            if target_embedding is None:
-                target_embedding = target_column_embedding
-            else:
-                target_embedding = torch.cat((target_embedding, target_column_embedding), dim=1) 
-        seq_embedding = None
-        for seq_column_index in self.seq_column_index_list:
-            if seq_embedding is None:
-                item_seq_length = [offset[i] - offset[i-1] for i in range(seq_column_index+1, offset.shape[0], column_nums)]
-                item_seq_length = torch.tensor(item_seq_length)
-            item_seq_embedding = x_reshape[seq_column_index::column_nums]         
-            item_seq_embedding = torch.nn.utils.rnn.pad_sequence(item_seq_embedding, batch_first=True)
-            if seq_embedding is None:
-                seq_embedding = item_seq_embedding
-            else:
-                seq_embedding = torch.cat((seq_embedding, item_seq_embedding), dim=2) 
-        all_sum_pooling = self._attention(target_embedding, seq_embedding, item_seq_length)         
+        other_embedding = self.get_column_embedding(self.other_column_index_list, x_reshape, column_nums, is_seq_column=False)
+        target_embedding = self.get_column_embedding(self.target_column_index_list, x_reshape, column_nums, is_seq_column=False)               
+        seq_embedding = self.get_column_embedding(self.seq_column_index_list, x_reshape, column_nums, is_seq_column=True)  
+        item_seq_length = [offset[i] - offset[i-1] for i in range(self.seq_column_index_list[0]+1, offset.shape[0], column_nums)]
+        item_seq_length = torch.tensor(item_seq_length)
+        all_sum_pooling = self.DIN_attention(target_embedding, seq_embedding, item_seq_length).squeeze()
         emb_concat = torch.cat((other_embedding, all_sum_pooling, target_embedding), dim=1)     
         din_out = self.mlp(emb_concat) 
         if self.use_wide:
