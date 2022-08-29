@@ -16,7 +16,7 @@
 
 import torch 
 import metaspore as ms
-from ...layers import MLPLayer, Attention, LRLayer
+from ...layers import MLPLayer, LRLayer
 
 
 class DIN(torch.nn.Module):
