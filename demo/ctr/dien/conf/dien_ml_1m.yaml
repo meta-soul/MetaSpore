@@ -30,8 +30,8 @@ metric_update_interval: 100
 ## model hyper params
 sparse_init_var: 0.01
 adam_learning_rate: 0.0001
-use_wide: False
-use_deep: False
+use_wide: True
+use_deep: True
 input_label_column_index: 0
 
 # feature column
