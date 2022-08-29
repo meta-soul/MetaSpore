@@ -100,8 +100,10 @@ def train(spark, trian_dataset, **model_params):
 
                 dien_dnn_hidden_units = dien_dnn_hidden_units,
                 dien_use_dnn_bn = dien_use_dnn_bn,
-                dien_dnn_dropout = dien_dnn_dropout
+                dien_dnn_dropout = dien_dnn_dropout,
                 dien_dnn_activation = dien_dnn_activation,
+                  
+                dien_use_gru_bias = dien_use_gru_bias,
                   
                 deep_hidden_units = deep_hidden_units,
                 deep_dropout = deep_dropout,
@@ -114,18 +116,18 @@ def train(spark, trian_dataset, **model_params):
                 ) #None
     
     
-    estimator = ms.PyTorchEstimator(module=module,
-                                  worker_count=worker_count,
-                                  server_count=server_count,
+    estimator = ms.PyTorchEstimator(module = module,
+                                  worker_count = worker_count,
+                                  server_count = server_count,
                                   agent_class = DIENAgent,
-                                  model_out_path=model_out_path,
-                                  model_export_path=None,
-                                  model_version=model_version,
-                                  experiment_name=experiment_name,
-                                  metric_update_interval=metric_update_interval,
-                                  input_label_column_index=input_label_column_index,
-                                  target_loss_weight=target_loss_weight,
-                                  auxilary_loss_weight = auxilary_loss_weight) #100
+                                  model_out_path = model_out_path,
+                                  model_export_path = None,
+                                  model_version = model_version,
+                                  experiment_name = experiment_name,
+                                  metric_update_interval = metric_update_interval,
+                                  input_label_column_index = input_label_column_index,
+                                  dien_target_loss_weight = dien_target_loss_weight,
+                                  dien_auxilary_loss_weight = dien_auxilary_loss_weight) 
     train_dataset.show(20)
     model = estimator.fit(trian_dataset)
      ## dnn learning rate

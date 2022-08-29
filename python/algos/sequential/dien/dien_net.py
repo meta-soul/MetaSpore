@@ -16,7 +16,7 @@
 
 import torch 
 import metaspore as ms
-from ...layers import MLPLayer, InterestExtractorNetwork, InterestEvolvingLayer, SequenceAttLayer, LRLayer
+from ...layers import MLPLayer, InterestExtractorNetwork, InterestEvolvingLayer, LRLayer
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence, pack_sequence, pad_sequence
 import numpy as np
 
@@ -52,9 +52,8 @@ class DIEN(torch.nn.Module):
             dien_use_dnn_bn = True,
             dien_dnn_dropout = 0.1,
             dien_dnn_activation = 'Dice',
-
-            target_loss_weight = 1.0,
-            auxilary_loss_weight = 1.0,
+                 
+            dien_use_gru_bias = False,
 
             deep_hidden_units = [64,16],
             deep_dropout = 0.1,
@@ -79,7 +78,7 @@ class DIEN(torch.nn.Module):
                                                    wide_combine_schema_path)
             self.lr_sparse.updater = ms.FTRLTensorUpdater()
             self.lr_sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
-            self.lr = LRLayer(self.embedding_size, self.lr_sparse.feature_count)
+            self.lr = LRLayer(wide_embedding_size, self.lr_sparse.feature_count)
   
         # deep
         if self.use_deep:
@@ -113,22 +112,27 @@ class DIEN(torch.nn.Module):
         # self.att_units = [4*self.embedding_size*self.item_feature_number] + att_hidden_units
         # self.dnn_units = [(2*self.item_feature_number+self.user_feature_number)*self.embedding_size] + dnn_hidden_units
 
-        self.intereset_extractor = InterestExtractorNetwork(self.embedding_size, 
-                                                            self.aux_units, 
-                                                            self.embedding_size, 
-                                                            self.gru_num_layer, 
-                                                            aux_activation, 
-                                                            aux_dropout, 
-                                                            use_aux_bn)
+        self.intereset_extractor = InterestExtractorNetwork(embedding_size = dien_embedding_size, 
+                                                            gru_hidden_size = dien_embedding_size, 
+                                                            gru_num_layers = dien_gru_num_layer,
+                                                            use_gru_bias = dien_use_gru_bias,
+                                                            aux_input_dim = 2*dien_embedding_size*self.item_feature_count,
+                                                            aux_hidden_units = dien_aux_hidden_units, 
+                                                            aux_activation = dien_aux_activation, 
+                                                            aux_dropout =  dien_aux_dropout,
+                                                            use_aux_bn = dien_use_aux_bn)
         
-        self.interest_evolution = InterestEvolvingLayer(self.embedding_size, 
-                                                        self.embedding_size, 
-                                                        self.gru_num_layer, 
-                                                        self.att_units, 
-                                                        att_activation, 
-                                                        att_dropout, 
-                                                        use_att_bn, 
-                                                        max_length)
+        self.interest_evolution = InterestEvolvingLayer(embedding_size = dien_embedding_size, 
+                                                        gru_hidden_size = dien_embedding_size,
+                                                        gru_num_layers = dien_gru_num_layer, 
+                                                        use_gru_bias = dien_use_gru_bias,
+                                                        att_input_dim = dien_embedding_size*self.item_feature_count,
+                                                        att_hidden_units = dien_att_hidden_units, 
+                                                        att_activation = dien_att_activation, 
+                                                        att_dropout = dien_att_dropout, 
+                                                        use_att_bn = dien_use_att_bn,
+                                                        )
+        
         
         self.dnn_predict_layers = MLPLayer(input_dim = (2*self.item_feature_count+self.non_seq_feature_count)*dien_embedding_size, 
                                        hidden_units = dien_dnn_hidden_units, 
@@ -138,9 +142,8 @@ class DIEN(torch.nn.Module):
                                        dropout_rates = dien_dnn_dropout, 
                                        batch_norm = dien_use_dnn_bn)
         
-        self.dnn_predict_layer = torch.nn.Linear(self.dnn_units[-1], 1)
         
-    def get_field_embedding_list(x):
+    def get_field_embedding_list(self, x):
         x, offset = self.dien_embedding_layer(x) 
         # reshape
         x_reshape = [x[offset[i]:offset[i+1],:] for i in range(offset.shape[0]-1)]
@@ -151,23 +154,24 @@ class DIEN(torch.nn.Module):
         x = self.get_field_embedding_list(x) 
         
         # calculate sequence length
-        seq_length = [item.shape[0] for item in x_reshape[self.feature_slice['item_seq'][0]::self.total_feature]]
+        seq_length = [seq.shape[0] for seq in x[self.post_item_seq_index[0]::self.total_feature_count]]
         
         # split feature
         post_item_seq, neg_item_seq, target_item, non_seq_feature = [], [], [], []
         for feature_index in range(self.total_feature_count):
+            feature = x[feature_index::self.total_feature_count]
         # for every column
             if feature_index in self.post_item_seq_index: # collect positive item sequence feature
-                post_item_seq.append(torch.nn.utils.rnn.pad_sequence(x_reshape[feature_index::self.total_feature_count],batch_first=True))
+                post_item_seq.append(torch.nn.utils.rnn.pad_sequence(feature,batch_first=True))
                 
-            if feature_index in self.neg_item_seq_index: # collect negtive item sequence feature
-                neg_item_seq.append(torch.nn.utils.rnn.pad_sequence(x_reshape[feature_index::self.total_feature_count],batch_first=True))
+            elif feature_index in self.neg_item_seq_index: # collect negtive item sequence feature
+                neg_item_seq.append(torch.nn.utils.rnn.pad_sequence(feature,batch_first=True))
                 
-            if feature_index in self.target_item_index: # collect target item feature
-                target_item.append(torch.stack(x_reshape[feature_index::self.total_feature_count]).squeeze())
+            elif feature_index in self.target_item_index: # collect target item feature
+                target_item.append(torch.stack(feature).squeeze())
                 
             else:# collect non sequence feature
-                non_seq_feature.append(torch.stack(x_reshape[feature_index::self.total_feature_count]).squeeze())
+                non_seq_feature.append(torch.stack(feature).squeeze())
          
         # concat four categories of feature
         target_item, non_seq_feature = torch.cat(target_item, dim=-1), torch.cat(non_seq_feature, dim=-1)
@@ -194,15 +198,15 @@ class DIEN(torch.nn.Module):
         interest, aux_loss = self.intereset_extractor(post_item_seq_pack, neg_item_seq_pack)
         evolution = self.interest_evolution(target_item, interest)
         dien_in = torch.cat([ target_item, non_seq_feature, evolution], dim=-1)
-        preds = self.self.dnn_predict_layers(dien_in)
+        logit = self.dnn_predict_layers(dien_in)
 
         if self.use_wide:
             lr_feature_map = self.lr_sparse(x)
             lr_logit = self.lr(lr_feature_map)
-            preds += lr_logit
+            logit += lr_logit
         if self.use_deep:
             nn_feature_map = self.dnn_sparse(x)
             dnn_logit = self.dnn(nn_feature_map)
-            preds += dnn_logit
+            logit += dnn_logit
             
-        return torch.sigmoid(preds), aux_loss
+        return torch.sigmoid(logit), aux_loss

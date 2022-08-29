@@ -90,7 +90,7 @@ class MLPLayer(torch.nn.Module):
             dense_layers.append(torch.nn.Linear(hidden_units[-1], output_dim, bias=use_bias))
         ## final activation
         if final_activation is not None:
-            dense_layers.append(self.set_activation(final_activation, None))
+            dense_layers.append(self.set_activation(final_activation, output_dim))
         ## all in one
         self.dnn = torch.nn.Sequential(*dense_layers)
 
@@ -395,7 +395,13 @@ class CompressedInteractionNet(torch.nn.Module):
 class DIEN_DIN_AttLayer(torch.nn.Module):
     def __init__(self, input_dim, att_hidden_size, att_activation, att_dropout, use_att_bn):
         super(DIEN_DIN_AttLayer, self).__init__()
-        self.att_mlp_layers = MLPLayer(input_dim=input_dim*4, output_dim=1, hidden_units=att_hidden_size, hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
+        self.att_mlp_layers = MLPLayer(input_dim = input_dim*4, 
+                                       output_dim = 1, 
+                                       hidden_units = att_hidden_size, 
+                                       hidden_activations = att_activation, 
+                                       final_activation = att_activation,
+                                       dropout_rates = att_dropout, 
+                                       batch_norm = use_att_bn)
         
     def forward(self, query, keys, keys_length):
         batch_size, max_length, dim = keys.size()
@@ -411,7 +417,7 @@ class DIEN_DIN_AttLayer(torch.nn.Module):
         output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
         output = output.unsqueeze(1)
         output = output / (keys.shape[-1] ** 0.5)
-        outputs = torch.nn.functional.softmax(output, dim=-1)
+        output = torch.nn.functional.softmax(output, dim=-1)
         output = torch.matmul(output, keys) 
         return output
         
@@ -423,23 +429,24 @@ class InterestEvolvingLayer(torch.nn.Module):
         embedding_size,
         gru_hidden_size,
         gru_num_layers,
+        use_gru_bias,
+        att_input_dim,
         att_hidden_units,
         att_activation,
         att_dropout,
         use_att_bn,
-        max_length
     ):
         super(InterestEvolvingLayer, self).__init__()
-        self.attention_layer = SequenceAttLayer(att_hidden_units, att_activation, att_dropout, use_att_bn, max_length)
+        self.attention_layer = DIEN_DIN_AttLayer(att_input_dim, att_hidden_units, att_activation, att_dropout, use_att_bn)
         self.dynamic_rnn = torch.nn.GRU(
             input_size = embedding_size,
             hidden_size = gru_hidden_size,
             num_layers = gru_num_layers,
-            bias = False,
+            bias = use_gru_bias,
             batch_first = True,
         )
         
-    def forward(self,target_item,interest):
+    def forward(self, target_item, interest):
         packed_rnn_outputs,_= self.dynamic_rnn(interest)
         rnn_outputs,rnn_length = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
         att_outputs = self.attention_layer(target_item, rnn_outputs, rnn_length)
@@ -449,19 +456,36 @@ class InterestEvolvingLayer(torch.nn.Module):
 # Interest Extractor Network
 # This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py 
 class InterestExtractorNetwork(torch.nn.Module):
-    def __init__(self, embedding_size, aux_units, gru_hidden_size, gru_num_layers, aux_activation, aux_dropout, use_aux_bn):
+    def __init__(self, 
+                 embedding_size, 
+                 gru_hidden_size, 
+                 gru_num_layers,
+                 use_gru_bias,
+                 aux_input_dim, 
+                 aux_hidden_units,  
+                 aux_activation, 
+                 aux_dropout, 
+                 use_aux_bn):
         super(InterestExtractorNetwork, self).__init__()
         self.gru_layers = torch.nn.GRU(
             input_size = embedding_size,
             hidden_size = gru_hidden_size,
             num_layers = gru_num_layers,
-            bias = False,
+            bias = use_gru_bias,
             batch_first = True,
         )
-        self.auxiliary_net = MLPLayer(input_dim=aux_units[0], output_dim=1, hidden_units=aux_units[1:], hidden_activations=aux_activation, final_activation=aux_activation, dropout_rates=aux_dropout, batch_norm=use_aux_bn)
+        self.auxiliary_net = MLPLayer(input_dim = aux_input_dim, 
+                                      output_dim = 1, 
+                                      hidden_units = aux_hidden_units, 
+                                      hidden_activations = aux_activation, 
+                                      final_activation = aux_activation, 
+                                      dropout_rates = aux_dropout,
+                                      batch_norm = use_aux_bn)
         
     def forward(self, item_seq_pack, neg_item_seq_pack=None):
         packed_rnn_outputs,_=self.gru_layers(item_seq_pack)
+        
+        # padding all sequence
         rnn_outputs,_ = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
         item_seq,_ = pad_packed_sequence(item_seq_pack, batch_first=True)
         neg_item_seq,_ = pad_packed_sequence(neg_item_seq_pack, batch_first=True)
@@ -471,8 +495,10 @@ class InterestExtractorNetwork(torch.nn.Module):
     def auxiliary_loss(self, h_states, click_seq, noclick_seq):
         click_input = torch.cat([h_states, click_seq], dim=-1)
         noclick_input = torch.cat([h_states, noclick_seq], dim=-1)
+        
         click_prop = self.auxiliary_net(click_input.view(h_states.shape[0]*h_states.shape[1], -1)).view(-1, 1)
         click_target = torch.ones(click_prop.shape, device=click_input.device)
+        
         noclick_prop = self.auxiliary_net(noclick_input.view(h_states.shape[0]*h_states.shape[1], -1)).view(-1, 1)
         noclick_target = torch.zeros(noclick_prop.shape, device=noclick_input.device)
         

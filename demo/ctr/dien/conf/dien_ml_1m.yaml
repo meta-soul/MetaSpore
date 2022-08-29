@@ -1,10 +1,10 @@
 ## spark session
 app_name: 'CTR Demo DIEN'
 local: True
-worker_count: 1
-server_count: 1
-worker_cpu: 1
-server_cpu: 1
+worker_count: 2
+server_count: 2
+worker_cpu: 2
+server_cpu: 2
 batch_size: 1000
 worker_memory: '5G'
 server_memory: '5G'
@@ -30,8 +30,8 @@ metric_update_interval: 100
 ## model hyper params
 sparse_init_var: 0.01
 adam_learning_rate: 0.0001
-use_wide: True
-use_deep: True
+use_wide: False
+use_deep: False
 input_label_column_index: 0
 
 # feature column
@@ -57,8 +57,10 @@ dien_use_dnn_bn: True
 dien_dnn_dropout: 0.1
 dien_dnn_activation: 'Dice'
 
-target_loss_weight: 1.0
-auxilary_loss_weight: 1.0
+dien_use_gru_bias: False
+
+dien_target_loss_weight: 1.0
+dien_auxilary_loss_weight: 1.0
 
 # deep
 deep_hidden_units: [64,16]
