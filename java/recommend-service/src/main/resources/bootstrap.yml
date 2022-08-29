@@ -1,7 +1,7 @@
 spring:
   cloud:
     consul:
-      host: 127.0.0.1
+      host: {CONSUL_HOST}
       port: 8500
       config:
         enabled: true
