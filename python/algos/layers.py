@@ -392,31 +392,27 @@ class CompressedInteractionNet(torch.nn.Module):
 
 # Sequence Attention Layer
 # This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py 
-class SequenceAttLayer(torch.nn.Module):
-    def __init__(self, att_hidden_size, att_activation, att_dropout, use_att_bn, max_length):
-        super(SequenceAttLayer, self).__init__()
-        self.att_mlp_layers = MLPLayer(input_dim=att_hidden_size[0], hidden_units=att_hidden_size[1:], hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
-        self.dense = torch.nn.Linear(att_hidden_size[-1],1)
-        self.mask_mat = torch.arange(max_length).view(1, -1)  
+class DIEN_DIN_AttLayer(torch.nn.Module):
+    def __init__(self, input_dim, att_hidden_size, att_activation, att_dropout, use_att_bn):
+        super(DIEN_DIN_AttLayer, self).__init__()
+        self.att_mlp_layers = MLPLayer(input_dim=input_dim*4, output_dim=1, hidden_units=att_hidden_size, hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
         
-        
-    def forward(self,target_item, rnn_outputs, rnn_length):
-        target_item = target_item.repeat(1, rnn_outputs.shape[1])
-        target_item = target_item.view(-1, rnn_outputs.shape[1], rnn_outputs.shape[2])
-        
-        input_tensor = torch.cat([target_item, rnn_outputs, target_item-rnn_outputs, target_item*rnn_outputs], dim=-1)
-        output = self.att_mlp_layers(input_tensor)
-        output = torch.transpose(self.dense(output), -1, -2)
-        
-        output = output.squeeze(1)
-        mask = self.mask_mat.repeat(output.shape[0], 1)
-        mask = (mask >= rnn_length.unsqueeze(1))
+    def forward(self, query, keys, keys_length):
+        batch_size, max_length, dim = keys.size()
+        mask_mat = torch.arange(max_length).view(1, -1)  
+        query = query.repeat(1, max_length)
+        query = query.view(-1, max_length, dim)
+        input_tensor = torch.cat([query, keys, query-keys, query*keys], dim=-1)
+        input_tensor = input_tensor.view(batch_size * max_length, -1) # [B*T 4*H]
+        output = self.att_mlp_layers(input_tensor).view(batch_size, max_length) #[B T]
+        mask = mask_mat.repeat(output.shape[0], 1)
+        mask = (mask >= keys_length.unsqueeze(1))
         mask_value = 0.0
         output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
         output = output.unsqueeze(1)
-        output = output / (rnn_outputs.shape[-1] ** 0.5)
-        
-        output = torch.matmul(output, rnn_outputs) 
+        output = output / (keys.shape[-1] ** 0.5)
+        outputs = torch.nn.functional.softmax(output, dim=-1)
+        output = torch.matmul(output, keys) 
         return output
         
 # Interest Evolving Layer
