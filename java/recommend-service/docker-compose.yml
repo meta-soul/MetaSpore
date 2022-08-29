@@ -7,7 +7,7 @@ services:
     # 也可以直接使用mvn package docker:build 之后生成的image
     build:
       context: .
-      dockerfile: DockerFile  # need mvn package first
+      dockerfile: Dockerfile  # need mvn package first
     image: dmetasoul/recommend-service-11:1.0
     ports:
       - "8080:8080"
