@@ -18,7 +18,7 @@ We are continuously adding models:
 |    PNN    |        [pnn.py](pnn/pnn.py)         |      [pnn_net.py](../../python/algos/pnn_net.py)      | [Product-based Neural Networks for User Response Prediction](https://arxiv.org/pdf/1611.00144.pdf)                                     |
 |  AutoInt  |  [autoint.py](autoint/autoint.py)   |  [autoint_net.py](../../python/algos/autoint_net.py)  | [AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks](https://arxiv.org/abs/1810.11921)                 |
 |  xDeepFM  |  [xdeepfm.py](xdeepfm/xdeepfm.py)   |  [xdeepfm_net.py](../../python/algos/xdeepfm_net.py)  | [xDeepFM: Combining Explicit and Implicit Feature Interactions for Recommender Systems](https://arxiv.org/pdf/1803.05170.pdf)          |
-
+| FFM            | [deepffm.p](deepffm/deepffm.py)|  [deepffm_net.py](../../python/algos/deepffm_net.py)  | [Field-aware Factorization Machines for CTR Prediction](https://www.csie.ntu.edu.tw/~cjlin/papers/ffm.pdf)
 
 ## Benchmarks
 |   Model   |                                       criteo-d5 |                                           ml-1m |                                          ml-25m |
@@ -31,7 +31,7 @@ We are continuously adding models:
 |   oPNN    | Train AUC:  `0.7533` <br /> Test AUC:  `0.7287` | Train AUC:  `0.8896` <br /> Test AUC:  `0.8633` | Train AUC:  `0.8905` <br /> Test AUC:  `0.8353` |
 |  AutoInt  | Train AUC:  `0.7558` <br /> Test AUC:  `0.7361` | Train AUC:  `0.9028` <br /> Test AUC:  `0.8741` | Train AUC:  `0.8968` <br /> Test AUC:  `0.8421` |
 |  xDeepFM  | Train AUC:  `0.7541` <br /> Test AUC:  `0.7300` | Train AUC:  `0.8892` <br /> Test AUC:  `0.8641` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8367` |
-
+|  DeepFFM  | Train AUC:  `0.7518` <br /> Test AUC:  `0.7280` | Train AUC:  `0.8919` <br /> Test AUC:  `0.8672` | Train AUC:  `0.8921` <br /> Test AUC:  `0.8379` |
 
 ## How to run
 
