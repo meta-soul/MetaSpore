@@ -23,32 +23,33 @@ import numpy as np
 
 class DIEN(torch.nn.Module):
     def __init__(self,
-            embedding_size=30,
-            aux_hidden_units=[32,16],
+            embedding_size = 30,
+            aux_hidden_units = [32,16],
             use_aux_bn = False,
-            aux_dropout =0,
+            aux_dropout = 0,
             aux_activation = 'Sigmoid',
             gru_num_layer = 1,
             att_hidden_units = [40],
-            use_att_bn=False,
+            use_att_bn = False,
             att_dropout = 0,
             att_activation = 'Sigmoid',
-            dnn_hidden_units=[64,16],
+            dnn_hidden_units = [64,16],
             use_dnn_bn = True,
-            dnn_dropout=0.1,
-            dnn_activation ='Dice', 
+            dnn_dropout = 0.1,
+            dnn_activation = 'Dice', 
             column_name_path = None,
             combine_schema_path = None,
-            sparse_init_var=0.01,
+            sparse_init_var = 0.01,
             feature_slice = None,
-            use_wide=False,
-            use_deep=False,
+            use_wide = False,
+            use_deep = False,
             wide_deep_combine_schema_path = None,
-            deep_hidden_units=[64,16],
+            deep_hidden_units = [64,16],
             deep_dropout = 0.1,
             deep_activation = 'relu',
-            use_deep_bn=True,
-            use_deep_bias=True,
+            use_deep_bn = True,
+            use_deep_bias = True,
+            max_length = 10,
             ):
         super().__init__()
         self.use_wide = use_wide
@@ -95,7 +96,7 @@ class DIEN(torch.nn.Module):
         self.embedding_layer.itializer = ms.NormalTensorInitializer(var=sparse_init_var)
 
         self.intereset_extractor = InterestExtractorNetwork(self.embedding_size, self.aux_units, self.embedding_size, self.gru_num_layer, aux_activation, aux_dropout, use_aux_bn)
-        self.interest_evolution = InterestEvolvingLayer(self.embedding_size, self.embedding_size, self.gru_num_layer, self.att_units, att_activation, att_dropout, use_att_bn)
+        self.interest_evolution = InterestEvolvingLayer(self.embedding_size, self.embedding_size, self.gru_num_layer, self.att_units, att_activation, att_dropout, use_att_bn, max_length)
 
         self.dnn_mlp_layers = MLPLayer(input_dim=self.dnn_units[0], hidden_units=self.dnn_units[1:], hidden_activations=dnn_activation, dropout_rates=dnn_dropout, batch_norm=use_dnn_bn)
         self.dnn_predict_layer = torch.nn.Linear(self.dnn_units[-1], 1)

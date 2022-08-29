@@ -100,6 +100,7 @@ def train(spark, trian_dataset, **model_params):
                 deep_activation =deep_activation,
                 use_deep_bn=use_deep_bn,
                 use_deep_bias=use_deep_bias,
+                max_length = max_length,
                 ) #None
     
     

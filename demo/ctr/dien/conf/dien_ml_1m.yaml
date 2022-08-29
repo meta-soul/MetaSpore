@@ -58,3 +58,4 @@ deep_dropout: 0.1
 deep_activation: 'relu'
 use_deep_bn: True
 use_deep_bias: True
+max_length: 10
