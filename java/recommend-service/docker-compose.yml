@@ -28,7 +28,7 @@ services:
     container_name: standalone-serving
     restart: on-failure
     image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1
-    command: consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui
+    command: /opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port 50000 -init_load_path /data/models
     ports:
       - "50000:50000"
     volumes:
