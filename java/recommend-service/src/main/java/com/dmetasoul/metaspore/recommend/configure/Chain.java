@@ -1,12 +1,10 @@
 package com.dmetasoul.metaspore.recommend.configure;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.util.set.Sets;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -92,7 +90,7 @@ public class Chain {
     }
 
     public void setTimeOutUnit(String data) {
-        switch (Strings.capitalize(data.toLowerCase())) {
+        switch (StringUtils.capitalize(data.toLowerCase())) {
             case "Nanos":
                 timeOutUnit = TimeUnit.NANOSECONDS;
                 break;

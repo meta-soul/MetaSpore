@@ -17,7 +17,7 @@ package com.dmetasoul.metaspore.recommend.configure;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.elasticsearch.common.Strings;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
@@ -44,7 +44,7 @@ public class ThreadPoolConfig {
         private int capacity;
 
         public void setTimeunit(String data) {
-            switch (Strings.capitalize(data.toLowerCase())) {
+            switch (StringUtils.capitalize(data.toLowerCase())) {
                 case "Nanos":
                     timeunit = TimeUnit.NANOSECONDS;
                     break;
