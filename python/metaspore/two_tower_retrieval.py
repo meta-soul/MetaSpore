@@ -117,7 +117,7 @@ class FaissIndexBuildingAgent(PyTorchAgent):
                 ids_data += self.item_ids_field_delimiter
                 for k, value in enumerate(embeddings[i]):
                     if k > 0:
-                        ids_data += ','
+                        ids_data += self.item_ids_value_delimiter
                     ids_data += str(value)
             ids_data += '\n'
         ids_data = ids_data.encode('utf-8')
@@ -193,14 +193,20 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
 
     def load_item_ids(self):
         from .input import read_s3_csv
-        import pyspark.sql.functions as F
+        from pyspark.sql.types import StructType, StructField, StringType, FloatType, ArrayType
         item_ids_input_dir = '%sfaiss/item_ids/' % self.model_in_path
         item_ids_input_path = '%s*' % item_ids_input_dir
-        df = read_s3_csv(self.spark_session, item_ids_input_path, delimiter=self.item_ids_field_delimiter)
-        df = df.withColumnRenamed('_c0', 'id').withColumnRenamed('_c1', 'name')
         if self.output_item_embeddings:
-            df = df.withColumnRenamed('_c2', 'item_embedding')
-            df = df.withColumn('item_embedding', F.split(F.col('item_embedding'), ',').cast('array<float>'))
+            schema = StructType([StructField('id', StringType(), True),
+                                 StructField('name', StringType(), True),
+                                 StructField('item_embedding', ArrayType(FloatType()), True)])
+        else:
+            schema = StructType([StructField('id', StringType(), True),
+                                 StructField('name', StringType(), True)])
+        df = read_s3_csv(self.spark_session, item_ids_input_path,
+                         schema=schema,
+                         delimiter=self.item_ids_field_delimiter,
+                         multivalue_delimiter=self.item_ids_value_delimiter)
         return df
 
     def _default_feed_validation_dataset(self):
@@ -215,15 +221,15 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
         if self.output_user_embeddings:
             df = df.select(self.increasing_id_column_name,
                            F.struct(
-                                self.recommendation_info_column_name + '_indices',
-                                self.recommendation_info_column_name + '_distances',
-                                self.recommendation_info_column_name + '_user_embedding')
+                                F.col(self.recommendation_info_column_name + '_indices').alias('indices'),
+                                F.col(self.recommendation_info_column_name + '_distances').alias('distances'),
+                                F.col(self.recommendation_info_column_name + '_user_embedding').alias('user_embedding'))
                             .alias(self.recommendation_info_column_name))
         else:
             df = df.select(self.increasing_id_column_name,
                            F.struct(
-                                self.recommendation_info_column_name + '_indices',
-                                self.recommendation_info_column_name + '_distances')
+                                F.col(self.recommendation_info_column_name + '_indices').alias('indices'),
+                                F.col(self.recommendation_info_column_name + '_distances').alias('distances'))
                             .alias(self.recommendation_info_column_name))
         self.dataset = dataset
         self.validation_result = df
@@ -507,7 +513,7 @@ class TwoTowerRetrievalEstimator(TwoTowerRetrievalHelperMixin, PyTorchEstimator)
                             f"{self.item_ids_column_indices!r} is invalid")
         if self.item_ids_column_names is not None and (
            not isinstance(self.item_ids_column_names, (list, tuple)) or
-           not all(isinstance(x, int) for x in self.item_ids_column_names)):
+           not all(isinstance(x, str) for x in self.item_ids_column_names)):
             raise TypeError(f"item_ids_column_names must be list or tuple of strings; "
                             f"{self.item_ids_column_names!r} is invalid")
 
