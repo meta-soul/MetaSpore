@@ -33,6 +33,7 @@ class LRLayer(torch.nn.Module):
         out = torch.sum(inputs, dim=1, keepdim=True)
         return out
 
+# This code is adapted from github repository: https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
 class Dice(torch.nn.Module):
 
     def __init__(self, hidden_size):
@@ -111,57 +112,6 @@ class MLPLayer(torch.nn.Module):
                 return torch.nn.ReLU() ## defalut relu
         else:
             return torch.nn.ReLU() ## defalut relu
-    
-class Attention(torch.nn.Module):
-    def __init__(
-            self,
-            input_dim,
-            hidden_units=[16, 8],
-            hidden_activations="dice",
-            dropout_rates=0.15,
-            batch_norm=True,
-            return_scores=False):
-                
-        super().__init__()
-        self.return_scores = return_scores
-        self.mlp = MLPLayer(
-            input_dim=input_dim * 4,
-            output_dim=1,
-            hidden_units=hidden_units,
-            hidden_activations=hidden_activations,
-            final_activation=None,
-            dropout_rates=dropout_rates,
-            batch_norm=batch_norm)
- 
-    def forward(self, query, keys, keys_length):
-        """
-        Parameters
-        ----------
-        query: 2D tensor, [Batch, Hidden]
-        keys: 3D tensor, [Batch, Time, Hidden]
-        keys_length: 1D tensor, [Batch]
-        Returns
-        -------
-        outputs: 2D tensor, [Batch, Hidden]
-        """
-        batch_size, max_length, dim = keys.size()
-        query = query.unsqueeze(1).expand(-1, max_length, -1)
-        din_all = torch.cat(
-            [query, keys, query - keys, query * keys], dim=-1)
-        din_all = din_all.view(batch_size * max_length, -1) # [B*T 4*H]
-        outputs = self.mlp(din_all).view(batch_size, max_length)  # [B, T]
-        # Scale
-        outputs = outputs / (dim ** 0.5)
-        # Mask
-        mask = (torch.arange(max_length, device=keys_length.device).repeat(
-            batch_size, 1) < keys_length.view(-1, 1))
-        outputs[~mask] = -math.inf
-        outputs = torch.nn.functional.softmax(outputs, dim=1)
-        if not self.return_scores:
-            # Weighted sum
-            outputs = torch.matmul(
-                outputs.unsqueeze(1), keys).squeeze()  # [B, H]
-        return outputs
     
 # Factorization machine layer
 class FMLayer(torch.nn.Module):
@@ -442,31 +392,27 @@ class CompressedInteractionNet(torch.nn.Module):
 
 # Sequence Attention Layer
 # This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py 
-class SequenceAttLayer(torch.nn.Module):
-    def __init__(self, att_hidden_size, att_activation, att_dropout, use_att_bn, max_length):
-        super(SequenceAttLayer, self).__init__()
-        self.att_mlp_layers = MLPLayer(input_dim=att_hidden_size[0], hidden_units=att_hidden_size[1:], hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
-        self.dense = torch.nn.Linear(att_hidden_size[-1],1)
-        self.mask_mat = torch.arange(max_length).view(1, -1)  
+class DIEN_DIN_AttLayer(torch.nn.Module):
+    def __init__(self, input_dim, att_hidden_size, att_activation, att_dropout, use_att_bn):
+        super(DIEN_DIN_AttLayer, self).__init__()
+        self.att_mlp_layers = MLPLayer(input_dim=input_dim*4, output_dim=1, hidden_units=att_hidden_size, hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
         
-        
-    def forward(self,target_item, rnn_outputs, rnn_length):
-        target_item = target_item.repeat(1, rnn_outputs.shape[1])
-        target_item = target_item.view(-1, rnn_outputs.shape[1], rnn_outputs.shape[2])
-        
-        input_tensor = torch.cat([target_item, rnn_outputs, target_item-rnn_outputs, target_item*rnn_outputs], dim=-1)
-        output = self.att_mlp_layers(input_tensor)
-        output = torch.transpose(self.dense(output), -1, -2)
-        
-        output = output.squeeze(1)
-        mask = self.mask_mat.repeat(output.shape[0], 1)
-        mask = (mask >= rnn_length.unsqueeze(1))
+    def forward(self, query, keys, keys_length):
+        batch_size, max_length, dim = keys.size()
+        mask_mat = torch.arange(max_length).view(1, -1)  
+        query = query.repeat(1, max_length)
+        query = query.view(-1, max_length, dim)
+        input_tensor = torch.cat([query, keys, query-keys, query*keys], dim=-1)
+        input_tensor = input_tensor.view(batch_size * max_length, -1) # [B*T 4*H]
+        output = self.att_mlp_layers(input_tensor).view(batch_size, max_length) #[B T]
+        mask = mask_mat.repeat(output.shape[0], 1)
+        mask = (mask >= keys_length.unsqueeze(1))
         mask_value = 0.0
         output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
         output = output.unsqueeze(1)
-        output = output / (rnn_outputs.shape[-1] ** 0.5)
-        
-        output = torch.matmul(output, rnn_outputs) 
+        output = output / (keys.shape[-1] ** 0.5)
+        outputs = torch.nn.functional.softmax(output, dim=-1)
+        output = torch.matmul(output, keys) 
         return output
         
 # Interest Evolving Layer
@@ -499,7 +445,6 @@ class InterestEvolvingLayer(torch.nn.Module):
         att_outputs = self.attention_layer(target_item, rnn_outputs, rnn_length)
         outputs = att_outputs.squeeze(1)
         return outputs
-    
     
 # Interest Extractor Network
 # This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py 

@@ -112,6 +112,7 @@ def read_dataset(movies_path, ratings_path, genome_path, links_path, **kwargs):
     return movies, ratings, genomes, links
 
 def merge_dataset(movies, ratings):
+    movies = movies.withColumn('year', F.regexp_extract('title', r'(.+)\s*\((\d+)\)', 2))
     dataset = ratings
     dataset = dataset.join(movies, on=dataset.movie_id==movies.movie_id, how='leftouter').drop(movies.movie_id)
     dataset = dataset.select('user_id', \
@@ -119,7 +120,8 @@ def merge_dataset(movies, ratings):
                              'title', \
                              'genre', \
                              'rating', \
-                             'timestamp')
+                             'timestamp', \
+                             'year')
     print('Debug -- dataset sample:')
     dataset.show(10)
     return dataset
