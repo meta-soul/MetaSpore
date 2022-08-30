@@ -16,7 +16,7 @@
 |  AutoInt  |  [autoint.py](autoint/autoint.py)   |  [autoint_net.py](../../python/algos/autoint_net.py)  | [AutoInt: Automatic Feature Interaction Learning via Self-Attentive Neural Networks](https://arxiv.org/abs/1810.11921)                 |
 |  xDeepFM  |  [xdeepfm.py](xdeepfm/xdeepfm.py)   |  [xdeepfm_net.py](../../python/algos/xdeepfm_net.py)  | [xDeepFM: Combining Explicit and Implicit Feature Interactions for Recommender Systems](https://arxiv.org/pdf/1803.05170.pdf)          |
 |   FwFM    |       [fwfm.py](fwfm/fwfm.py)       |     [fwfm_net.py](../../python/algos/fwfm_net.py)     | [Field-weighted Factorization Machines for Click-Through Rate Prediction in Display Advertising](https://arxiv.org/pdf/1806.03514.pdf) |
-|   FFM     |     [deepffm.py](deepffm/deepffm.py)|  [deepffm_net.py](../../python/algos/deepffm_net.py)  | [Field-aware Factorization Machines for CTR Prediction](https://www.csie.ntu.edu.tw/~cjlin/papers/ffm.pdf)
+|   FFM     |     [ffm.py](ffm/ffm.py)|  [ffm_net.py](../../python/algos/ffm_net.py)  | [Field-aware Factorization Machines for CTR Prediction](https://www.csie.ntu.edu.tw/~cjlin/papers/ffm.pdf)
 
 
 ## 基准
