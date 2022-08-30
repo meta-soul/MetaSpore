@@ -133,8 +133,8 @@ class FFMLayer(torch.nn.Module):
 
         dot_sum = 0
         for i in range(self._feature_count - 1):
-            for j in range(i + 1, self._feature_count - 1):
-                embedding_ij = field_aware_embedding_list[j][:, i, :]
+            for j in range(i + 1, self._feature_count):
+                embedding_ij = field_aware_embedding_list[j - 1][:, i, :]
                 embedding_ji = field_aware_embedding_list[i][:, j, :]
                 dot_sum += torch.sum(embedding_ij * embedding_ji, dim=1, keepdim=True)
         return dot_sum
