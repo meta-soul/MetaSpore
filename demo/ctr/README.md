@@ -33,7 +33,7 @@ We are continuously adding models:
 |  AutoInt  | Train AUC:  `0.7558` <br /> Test AUC:  `0.7361` | Train AUC:  `0.9028` <br /> Test AUC:  `0.8741` | Train AUC:  `0.8968` <br /> Test AUC:  `0.8421` |
 |  xDeepFM  | Train AUC:  `0.7541` <br /> Test AUC:  `0.7300` | Train AUC:  `0.8892` <br /> Test AUC:  `0.8641` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8367` |
 |   FwFM    | Train AUC:  `0.7517` <br /> Test AUC:  `0.7298` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8660` | Train AUC:  `0.8918` <br /> Test AUC:  `0.8376` |
-|   FFM     | Train AUC:  `0.7518` <br /> Test AUC:  `0.7280` | Train AUC:  `0.8919` <br /> Test AUC:  `0.8672` | Train AUC:  `0.8921` <br /> Test AUC:  `0.8379` |
+|   FFM     | Train AUC:  `0.7517` <br /> Test AUC:  `0.7285` | Train AUC:  `0.8936` <br /> Test AUC:  `0.8698` | Train AUC:  `0.8912` <br /> Test AUC:  `0.8368` |
 
 ## How to run
 
