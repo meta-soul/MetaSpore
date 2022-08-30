@@ -113,6 +113,32 @@ class FMLayer(torch.nn.Module):
         return cross_term
 
 
+# Field-aware Factorization machine layer
+class FFMLayer(torch.nn.Module):
+    def __init__(self,
+                 feature_count,
+                 embedding_dim,
+                 embedding_module_list):
+        super().__init__()
+        self._feature_count = feature_count
+        self._embedding_dim = embedding_dim
+        self._embedding_module_list = embedding_module_list
+
+    def forward(self, inputs):
+        # [B, F x E] = > [[B, F x E]] => [[B, F, E]]
+        field_aware_embedding_list = [
+            each_layer(inputs).reshape(-1, self._feature_count, self._embedding_dim) 
+            for each_layer in self._embedding_module_list
+        ]
+
+        dot_sum = 0
+        for i in range(self._feature_count - 1):
+            for j in range(i + 1, self._feature_count):
+                embedding_ij = field_aware_embedding_list[j - 1][:, i, :]
+                embedding_ji = field_aware_embedding_list[i][:, j, :]
+                dot_sum += torch.sum(embedding_ij * embedding_ji, dim=1, keepdim=True)
+        return dot_sum
+
 # Cross net layer
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/layers/interaction.py
 class CrossNet(torch.nn.Module):
