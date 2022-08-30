@@ -20,6 +20,7 @@ import faiss
 import pyspark
 from . import _metaspore
 from .estimator import PyTorchAgent
+from .estimator import PyTorchLauncher
 from .estimator import PyTorchModel
 from .estimator import PyTorchEstimator
 from .metric import ModelMetric
@@ -195,6 +196,17 @@ class TwoTowerIndexBuilder(object):
         pass
 
 class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
+    def __init__(self, agent):
+        super().__init__(agent)
+        self.faiss_index_description = getattr(agent, 'faiss_index_description', 'Flat')
+        self.faiss_metric_type = getattr(agent, 'faiss_metric_type', 'METRIC_INNER_PRODUCT')
+        if not isinstance(self.faiss_index_description, str) or not self.faiss_index_description:
+            raise TypeError(f"faiss_index_description must be non-empty string; {self.faiss_index_description!r} is invalid")
+        if not isinstance(self.faiss_metric_type, str) or not self.faiss_metric_type:
+            raise TypeError(f"faiss_metric_type must be non-empty string; {self.faiss_metric_type!r} is invalid")
+        if not isinstance(getattr(faiss, self.faiss_metric_type, None), int):
+            raise ValueError(f"faiss_metric_type must specify a valid Faiss metric type; {self.faiss_metric_type!r} is invalid")
+
     @property
     def item_index_dir(self):
         if not hasattr(self, '_item_index_dir'):
@@ -245,8 +257,8 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
 
     def _create_faiss_index_partition(self):
         item_embedding_size = self.agent.item_embedding_size
-        faiss_index_description = self.agent.faiss_index_description
-        faiss_metric_type = self.agent.faiss_metric_type
+        faiss_index_description = self.faiss_index_description
+        faiss_metric_type = self.faiss_metric_type
         params = item_embedding_size, faiss_index_description, faiss_metric_type
         print('faiss index params: %r' % (params,))
         metric_type = getattr(faiss, faiss_metric_type)
@@ -293,8 +305,17 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
     def begin_creating_index(self):
         super().begin_creating_index()
 
+    def _copy_faiss_index(self):
+        if self.agent.model_export_path is not None:
+            from .url_utils import use_s3
+            from .file_utils import copy_dir
+            src_path = use_s3('%s%s/' % (self.agent.model_out_path, self.index_type))
+            dst_path = use_s3('%s%s.ptm.msd/%s/' % (self.agent.model_export_path, self.agent.experiment_name, self.index_type))
+            copy_dir(src_path, dst_path)
+
     def end_creating_index(self):
         self._output_index_meta()
+        self._copy_faiss_index()
         super().end_creating_index()
 
     def begin_creating_index_partition(self):
@@ -316,24 +337,71 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
         super().end_querying_index()
 
 class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
+    def __init__(self, agent):
+        super().__init__(agent)
+        self.milvus_collection_name = getattr(agent, 'milvus_collection_name', None)
+        self.milvus_host = getattr(agent, 'milvus_host', 'localhost')
+        self.milvus_port = getattr(agent, 'milvus_port', 19530)
+        self.milvus_item_id_field_name = getattr(agent, 'milvus_item_id_field_name', 'item_id')
+        self.milvus_item_embedding_field_name = getattr(agent, 'milvus_item_embedding_field_name', 'item_embedding')
+        self.milvus_index_type = getattr(agent, 'milvus_index_type', 'IVF_FLAT')
+        self.milvus_metric_type = getattr(agent, 'milvus_metric_type', 'IP')
+        self.milvus_nlist = getattr(agent, 'milvus_nlist', 1024)
+        self.milvus_nprobe = getattr(agent, 'milvus_nprobe', 128)
+        if self.milvus_collection_name is None:
+            raise RuntimeError("milvus_collection_name is required")
+        if not isinstance(self.milvus_collection_name, str) or not self.milvus_collection_name:
+            raise TypeError(f"milvus_collection_name must be non-empty string; {self.milvus_collection_name!r} is invalid")
+        if not isinstance(self.milvus_host, str) or not self.milvus_host:
+            raise TypeError(f"milvus_host must be non-empty string; {self.milvus_host!r} is invalid")
+        if not isinstance(self.milvus_port, int) or self.milvus_port <= 0:
+            raise TypeError(f"milvus_port must be positive integer; {self.milvus_port!r} is invalid")
+        if not isinstance(self.milvus_item_id_field_name, str) or not self.milvus_item_id_field_name:
+            raise TypeError(f"milvus_item_id_field_name must be non-empty string; {self.milvus_item_id_field_name!r} is invalid")
+        if not isinstance(self.milvus_item_embedding_field_name, str) or not self.milvus_item_embedding_field_name:
+            raise TypeError(f"milvus_item_embedding_field_name must be non-empty string; {self.milvus_item_embedding_field_name!r} is invalid")
+        if not isinstance(self.milvus_index_type, str) or not self.milvus_index_type:
+            raise TypeError(f"milvus_index_type must be non-empty string; {self.milvus_index_type!r} is invalid")
+        if not isinstance(self.milvus_metric_type, str) or not self.milvus_metric_type:
+            raise TypeError(f"milvus_metric_type must be non-empty string; {self.milvus_metric_type!r} is invalid")
+        if not isinstance(self.milvus_nlist, int) or self.milvus_nlist <= 0:
+            raise TypeError(f"milvus_nlist must be positive integer; {self.milvus_nlist!r} is invalid")
+        if not isinstance(self.milvus_nprobe, int) or self.milvus_nprobe <= 0:
+            raise TypeError(f"milvus_nprobe must be positive integer; {self.milvus_nprobe!r} is invalid")
+
+    @staticmethod
+    def _get_milvus_attributes():
+        milvus_attributes = (
+            'milvus_collection_name',
+            'milvus_host',
+            'milvus_port',
+            'milvus_item_id_field_name',
+            'milvus_item_embedding_field_name',
+            'milvus_index_type',
+            'milvus_metric_type',
+            'milvus_nlist',
+            'milvus_nprobe',
+        )
+        return milvus_attributes
+
     @property
     def milvus_alias(self):
         if not hasattr(self, '_milvus_alias'):
-            milvus_description = self.agent.milvus_description
-            worker_count = self.agent.worker_count
-            rank = self.agent.rank
+            milvus_collection_name = self.milvus_collection_name
             if self.agent.is_coordinator:
-                self._milvus_alias = '%s_connection_coordinator' % milvus_description
+                self._milvus_alias = '%s_connection_coordinator' % milvus_collection_name
             else:
-                self._milvus_alias = '%s_connection_worker_%d_%d' % (milvus_description, worker_count, rank)
+                rank = self.agent.rank
+                worker_count = self.agent.worker_count
+                self._milvus_alias = '%s_connection_worker_%d_%d' % (milvus_collection_name, worker_count, rank)
         return self._milvus_alias
 
     def _open_milvus_connection(self):
         from pymilvus import connections
-        host = self.agent.milvus_host
-        port = self.agent.milvus_port
+        host = self.milvus_host
+        port = self.milvus_port
         print("Create milvus connection %s" % self.milvus_alias)
-        connections.connect(alias=self.milvus_alias, host=host, port=port)
+        connections.connect(alias=self.milvus_alias, host=host, port=str(port))
 
     def _close_milvus_connection(self):
         from pymilvus import connections
@@ -344,47 +412,47 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         from pymilvus import Collection
         from pymilvus import utility
         milvus_alias = self.milvus_alias
-        milvus_description = self.agent.milvus_description
-        if utility.has_collection(collection_name=milvus_description, using=milvus_alias):
-            print("Drop existing milvus collection %s" % milvus_description)
-            collection = Collection(name=milvus_description, using=milvus_alias)
+        milvus_collection_name = self.milvus_collection_name
+        if utility.has_collection(collection_name=milvus_collection_name, using=milvus_alias):
+            print("Drop existing milvus collection %s" % milvus_collection_name)
+            collection = Collection(name=milvus_collection_name, using=milvus_alias)
             collection.drop()
 
     def _create_milvus_collection(self):
         from pymilvus import Collection
         milvus_alias = self.milvus_alias
-        milvus_description = self.agent.milvus_description
+        milvus_collection_name = self.milvus_collection_name
         milvus_schema = self._get_milvus_schema()
-        print("Create milvus collection %s" % milvus_description)
-        self._milvus_collection = Collection(name=milvus_description, schema=milvus_schema, using=milvus_alias)
+        print("Create milvus collection %s" % milvus_collection_name)
+        self._milvus_collection = Collection(name=milvus_collection_name, schema=milvus_schema, using=milvus_alias)
 
     def _open_milvus_collection(self):
         from pymilvus import Collection
         milvus_alias = self.milvus_alias
-        milvus_description = self.agent.milvus_description
-        print("Open milvus collection %s" % milvus_description)
-        self._milvus_collection = Collection(name=milvus_description, using=milvus_alias)
+        milvus_collection_name = self.milvus_collection_name
+        print("Open milvus collection %s" % milvus_collection_name)
+        self._milvus_collection = Collection(name=milvus_collection_name, using=milvus_alias)
 
     def _load_milvus_collection(self):
         from pymilvus import Collection
         milvus_alias = self.milvus_alias
-        milvus_description = self.agent.milvus_description
-        print("Load milvus collection %s" % milvus_description)
-        self._milvus_collection = Collection(name=milvus_description, using=milvus_alias)
+        milvus_collection_name = self.milvus_collection_name
+        print("Load milvus collection %s" % milvus_collection_name)
+        self._milvus_collection = Collection(name=milvus_collection_name, using=milvus_alias)
         self._milvus_collection.load()
 
     def _get_milvus_schema(self):
         from pymilvus import CollectionSchema
         milvus_fields = self._get_milvus_fields()
-        milvus_description = self.agent.milvus_description
-        milvus_schema = CollectionSchema(fields=milvus_fields, description=milvus_description)
+        milvus_collection_name = self.milvus_collection_name
+        milvus_schema = CollectionSchema(fields=milvus_fields, description=milvus_collection_name)
         return milvus_schema
 
     def _get_milvus_fields(self):
         from pymilvus import DataType
         from pymilvus import FieldSchema
-        item_id_field_name = self.agent.item_id_column_name
-        item_embedding_field_name = self.agent.milvus_embedding_field
+        item_id_field_name = self.milvus_item_id_field_name
+        item_embedding_field_name = self.milvus_item_embedding_field_name
         item_embedding_size = self.agent.item_embedding_size
         milvus_fields = [
             FieldSchema(name=item_id_field_name, dtype=DataType.INT64, is_primary=True),
@@ -393,15 +461,15 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         return milvus_fields
 
     def _create_milvus_index(self):
-        milvus_description = self.agent.milvus_description
-        milvus_index_type = self.agent.milvus_index_type
-        milvus_metric_type = self.agent.milvus_metric_type
-        milvus_nlist = self.agent.milvus_nlist
-        item_embedding_field_name = self.agent.milvus_embedding_field
+        milvus_collection_name = self.milvus_collection_name
+        milvus_index_type = self.milvus_index_type
+        milvus_metric_type = self.milvus_metric_type
+        milvus_nlist = self.milvus_nlist
+        item_embedding_field_name = self.milvus_item_embedding_field_name
         index_params = {"index_type": milvus_index_type,
                         "metric_type": milvus_metric_type,
                         "params": {"nlist": milvus_nlist}}
-        print("Creating milvus index %s" % milvus_description)
+        print("Creating milvus index %s" % milvus_collection_name)
         self._milvus_collection.create_index(field_name=item_embedding_field_name, index_params=index_params)
 
     def output_item_embedding_batch(self, embeddings, id_ndarray):
@@ -410,9 +478,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
     def search_item_embedding_batch(self, embeddings):
         k = self.agent.retrieval_item_count
         output_user_embeddings = self.agent.output_user_embeddings
-        milvus_metric_type = self.agent.milvus_metric_type
-        milvus_nprobe = self.agent.milvus_nprobe
-        item_embedding_field_name = self.agent.milvus_embedding_field
+        milvus_metric_type = self.milvus_metric_type
+        milvus_nprobe = self.milvus_nprobe
+        item_embedding_field_name = self.milvus_item_embedding_field_name
         search_params = {"metric_type": milvus_metric_type, "params": {"nprobe": milvus_nprobe}}
         search_results = self._milvus_collection.search(
             data=embeddings,
@@ -459,9 +527,42 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         self._close_milvus_connection()
         super().end_querying_index()
 
-class FaissIndexBuildingAgent(PyTorchAgent):
+class TwoTowerIndexBaseAgent(PyTorchAgent):
+    def _get_metric_class(self):
+        return ModelMetric
+
+    def _get_index_builder_class(self):
+        if self.index_builder_class is not None:
+            return self.index_builder_class
+        attributes = TwoTowerMilvusIndexBuilder._get_milvus_attributes()
+        for attribute in attributes:
+            if hasattr(self, attribute):
+                return TwoTowerMilvusIndexBuilder
+        return TwoTowerFaissIndexBuilder
+
+    def _create_index_builder(self):
+        index_builder_class = self._get_index_builder_class()
+        index_builder = index_builder_class(self)
+        return index_builder
+
+    def distribute_index_builder_class(self):
+        builder = self.index_builder_class
+        rdd = self.spark_context.parallelize(range(self.worker_count), self.worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_index_builder_class(builder, _)).collect()
+
+    @classmethod
+    def _distribute_index_builder_class(cls, builder, _):
+        self = __class__.get_instance()
+        self.index_builder_class = builder
+        return _
+
     def start_workers(self):
-        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.distribute_index_builder_class()
+        super().start_workers()
+
+class TwoTowerIndexBuildingAgent(TwoTowerIndexBaseAgent):
+    def start_workers(self):
+        self.index_builder = self._create_index_builder()
         self.index_builder.begin_creating_index()
         super().start_workers()
 
@@ -471,7 +572,7 @@ class FaissIndexBuildingAgent(PyTorchAgent):
 
     def worker_start(self):
         super().worker_start()
-        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder = self._create_index_builder()
         self.index_builder.begin_creating_index_partition()
 
     def worker_stop(self):
@@ -528,12 +629,9 @@ class FaissIndexBuildingAgent(PyTorchAgent):
             ids_data += '\n'
         return ids_data
 
-    def _get_metric_class(self):
-        return ModelMetric
-
-class FaissIndexRetrievalAgent(PyTorchAgent):
+class TwoTowerIndexRetrievalAgent(TwoTowerIndexBaseAgent):
     def start_workers(self):
-        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder = self._create_index_builder()
         self.index_builder.begin_querying_index()
         super().start_workers()
 
@@ -543,7 +641,7 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
 
     def worker_start(self):
         super().worker_start()
-        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder = self._create_index_builder()
         self.index_builder.begin_querying_index()
 
     def worker_stop(self):
@@ -634,17 +732,18 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
                             .alias(self.recommendation_info_column_name))
         return df
 
-    def _get_metric_class(self):
-        return ModelMetric
+class TwoTowerRetrievalLauncher(PyTorchLauncher):
+    def _initialize_agent(self, agent):
+        agent.index_builder_class = self.index_builder_class
+        super()._initialize_agent(agent)
 
 class TwoTowerRetrievalHelperMixin(object):
     def __init__(self,
                  item_dataset=None,
+                 index_builder_class=None,
                  index_building_agent_class=None,
                  retrieval_agent_class=None,
                  item_embedding_size=None,
-                 faiss_index_description='Flat',
-                 faiss_metric_type='METRIC_INNER_PRODUCT',
                  item_id_column_name='item_id',
                  item_ids_column_indices=None,
                  item_ids_column_names=None,
@@ -659,11 +758,10 @@ class TwoTowerRetrievalHelperMixin(object):
                  **kwargs):
         super().__init__(**kwargs)
         self.item_dataset = item_dataset
+        self.index_builder_class = index_builder_class
         self.index_building_agent_class = index_building_agent_class
         self.retrieval_agent_class = retrieval_agent_class
         self.item_embedding_size = item_embedding_size
-        self.faiss_index_description = faiss_index_description
-        self.faiss_metric_type = faiss_metric_type
         self.item_id_column_name = item_id_column_name
         self.item_ids_column_indices = item_ids_column_indices
         self.item_ids_column_names = item_ids_column_names
@@ -676,8 +774,6 @@ class TwoTowerRetrievalHelperMixin(object):
         self.user_embedding_column_name = user_embedding_column_name
         self.retrieval_item_count = retrieval_item_count
         self.extra_agent_attributes['item_embedding_size'] = self.item_embedding_size
-        self.extra_agent_attributes['faiss_index_description'] = self.faiss_index_description
-        self.extra_agent_attributes['faiss_metric_type'] = self.faiss_metric_type
         self.extra_agent_attributes['item_id_column_name'] = self.item_id_column_name
         self.extra_agent_attributes['item_ids_column_indices'] = self.item_ids_column_indices
         self.extra_agent_attributes['item_ids_column_names'] = self.item_ids_column_names
@@ -696,18 +792,14 @@ class TwoTowerRetrievalHelperMixin(object):
             raise TypeError(f"module must be TwoTowerRetrievalModule; {self.module!r} is invalid")
         if self.item_dataset is not None and not isinstance(self.item_dataset, pyspark.sql.DataFrame):
             raise TypeError(f"item_dataset must be pyspark.sql.DataFrame; {self.item_dataset!r} is invalid")
-        if self.index_building_agent_class is not None and not issubclass(self.index_building_agent_class, FaissIndexBuildingAgent):
-            raise TypeError(f"index_building_agent_class must be subclass of FaissIndexBuildingAgent; {self.index_building_agent_class!r} is invalid")
-        if self.retrieval_agent_class is not None and not issubclass(self.retrieval_agent_class, FaissIndexRetrievalAgent):
-            raise TypeError(f"retrieval_agent_class must be subclass of FaissIndexRetrievalAgent; {self.retrieval_agent_class!r} is invalid")
+        if self.index_builder_class is not None and not issubclass(self.index_builder_class, TwoTowerIndexBuilder):
+            raise TypeError(f"index_builder_class must be subclass of TwoTowerIndexBuilder; {self.index_builder_class!r} is invalid")
+        if self.index_building_agent_class is not None and not issubclass(self.index_building_agent_class, TwoTowerIndexBuildingAgent):
+            raise TypeError(f"index_building_agent_class must be subclass of TwoTowerIndexBuildingAgent; {self.index_building_agent_class!r} is invalid")
+        if self.retrieval_agent_class is not None and not issubclass(self.retrieval_agent_class, TwoTowerIndexRetrievalAgent):
+            raise TypeError(f"retrieval_agent_class must be subclass of TwoTowerIndexRetrievalAgent; {self.retrieval_agent_class!r} is invalid")
         if not isinstance(self.item_embedding_size, int) or self.item_embedding_size <= 0:
             raise TypeError(f"item_embedding_size must be positive integer; {self.item_embedding_size!r} is invalid")
-        if not isinstance(self.faiss_index_description, str) or not self.faiss_index_description:
-            raise TypeError(f"faiss_index_description must be non-empty string; {self.faiss_index_description!r} is invalid")
-        if not isinstance(self.faiss_metric_type, str) or not self.faiss_metric_type:
-            raise TypeError(f"faiss_metric_type must be non-empty string; {self.faiss_metric_type!r} is invalid")
-        if not isinstance(getattr(faiss, self.faiss_metric_type, None), int):
-            raise ValueError(f"faiss_metric_type must specify a valid Faiss metric type; {self.faiss_metric_type!r} is invalid")
         if not isinstance(self.item_id_column_name, str) or not self.item_id_column_name:
             raise TypeError(f"item_id_column_name must be non-empty string; {self.item_id_column_name!r} is invalid")
         if self.item_ids_column_indices is not None and (
@@ -733,23 +825,30 @@ class TwoTowerRetrievalHelperMixin(object):
         if not isinstance(self.retrieval_item_count, int) or self.retrieval_item_count <= 0:
             raise TypeError(f"retrieval_item_count must be positive integer; {self.retrieval_item_count!r} is invalid")
 
+    def _get_launcher_class(self):
+        return TwoTowerRetrievalLauncher
+
     def _get_model_class(self):
         return TwoTowerRetrievalModel
 
     def _get_index_building_agent_class(self):
-        return self.index_building_agent_class or FaissIndexBuildingAgent
+        return self.index_building_agent_class or TwoTowerIndexBuildingAgent
 
     def _get_retrieval_agent_class(self):
-        return self.retrieval_agent_class or FaissIndexRetrievalAgent
+        return self.retrieval_agent_class or TwoTowerIndexRetrievalAgent
+
+    def _create_launcher(self, dataset, is_training_mode):
+        launcher = super()._create_launcher(dataset, is_training_mode)
+        launcher.index_builder_class = self.index_builder_class
+        return launcher
 
     def _get_model_arguments(self, module):
         args = super()._get_model_arguments(module)
         args['item_dataset'] = self.item_dataset
+        args['index_builder_class'] = self.index_builder_class
         args['index_building_agent_class'] = self.index_building_agent_class
         args['retrieval_agent_class'] = self.retrieval_agent_class
         args['item_embedding_size'] = self.item_embedding_size
-        args['faiss_index_description'] = self.faiss_index_description
-        args['faiss_metric_type'] = self.faiss_metric_type
         args['item_id_column_name'] = self.item_id_column_name
         args['item_ids_column_indices'] = self.item_ids_column_indices
         args['item_ids_column_names'] = self.item_ids_column_names
@@ -871,14 +970,6 @@ class TwoTowerRetrievalEstimator(TwoTowerRetrievalHelperMixin, PyTorchEstimator)
             raise TypeError(f"item_ids_column_names must be list or tuple of strings; "
                             f"{self.item_ids_column_names!r} is invalid")
 
-    def _copy_faiss_index(self):
-        if self.model_export_path is not None:
-            from .url_utils import use_s3
-            from .file_utils import copy_dir
-            src_path = use_s3('%sfaiss/' % self.model_out_path)
-            dst_path = use_s3('%s%s.ptm.msd/faiss/' % (self.model_export_path, self.experiment_name))
-            copy_dir(src_path, dst_path)
-
     def _fit(self, dataset):
         self._clear_output()
         launcher = self._create_launcher(dataset, True)
@@ -894,7 +985,6 @@ class TwoTowerRetrievalEstimator(TwoTowerRetrievalHelperMixin, PyTorchEstimator)
             launcher2.model_in_path = self.model_out_path
             launcher2.model_out_path = None
             launcher2.launch()
-            self._copy_faiss_index()
         model = self._create_model(module)
         self.final_metric = launcher.agent_object._metric
         return model
