@@ -194,6 +194,127 @@ class TwoTowerIndexBuilder(object):
     def end_querying_index(self):
         pass
 
+class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
+    @property
+    def item_index_dir(self):
+        if not hasattr(self, '_item_index_dir'):
+            from .url_utils import use_s3
+            model_in_path = self.agent.model_in_path
+            self._item_index_dir = use_s3('%s%s/item_index/' % (model_in_path, self.index_type))
+        return self._item_index_dir
+
+    @property
+    def item_index_partition_file_name(self):
+        if not hasattr(self, '_item_index_partition_file_name'):
+            rank = self.agent.rank
+            worker_count = self.agent.worker_count
+            self._item_index_partition_file_name = 'part_%d_%d.dat' % (worker_count, rank)
+        return self._item_index_partition_file_name
+
+    @property
+    def item_index_partition_path(self):
+        if not hasattr(self, '_item_index_partition_path'):
+            dir_path = self.item_index_dir
+            file_name = self.item_index_partition_file_name
+            self._item_index_partition_path = '%s%s' % (dir_path, file_name)
+        return self._item_index_partition_path
+
+    def _make_index_meta(self):
+        meta_version = 1
+        partition_count = self.agent.worker_count
+        item_ids_field_delimiter = self.agent.item_ids_field_delimiter
+        item_ids_value_delimiter = self.agent.item_ids_value_delimiter
+        output_item_embeddings = self.agent.output_item_embeddings
+        meta = {
+            'meta_version' : meta_version,
+            'partition_count' : partition_count,
+            'item_ids_field_delimiter' : item_ids_field_delimiter,
+            'item_ids_value_delimiter' : item_ids_value_delimiter,
+            'output_item_embeddings' : output_item_embeddings,
+        }
+        return meta
+
+    def _get_index_partition_count(self):
+        meta = self._load_index_meta()
+        partition_count = meta['partition_count']
+        return partition_count
+
+    def _get_index_pattition_path(self, item_index_dir, partition_count, rank):
+        partition_path = '%spart_%d_%d.dat' % (item_index_dir, partition_count, rank)
+        return partition_path
+
+    def _create_faiss_index_partition(self):
+        item_embedding_size = self.agent.item_embedding_size
+        faiss_index_description = self.agent.faiss_index_description
+        faiss_metric_type = self.agent.faiss_metric_type
+        params = item_embedding_size, faiss_index_description, faiss_metric_type
+        print('faiss index params: %r' % (params,))
+        metric_type = getattr(faiss, faiss_metric_type)
+        params = item_embedding_size, faiss_index_description, metric_type
+        faiss_index = faiss.index_factory(*params)
+        self._faiss_index = faiss.IndexIDMap(faiss_index)
+
+    def _output_faiss_index_partition(self):
+        print('faiss index ntotal [%d]: %d' % (self.agent.rank, self._faiss_index.ntotal))
+        _metaspore.ensure_local_directory(self.item_index_dir)
+        item_index_stream = _metaspore.OutputStream(self.item_index_partition_path)
+        item_index_writer = faiss.PyCallbackIOWriter(item_index_stream.write)
+        faiss.write_index(self._faiss_index, item_index_writer)
+
+    def output_item_embedding_batch(self, embeddings, id_ndarray):
+        self._faiss_index.add_with_ids(embeddings, id_ndarray)
+
+    def _load_faiss_index(self):
+        item_index_dir = self.item_index_dir
+        partition_count = self._get_index_partition_count()
+        item_embedding_size = self.agent.item_embedding_size
+        self._faiss_index = faiss.IndexShards(item_embedding_size, True, False)
+        for rank in range(partition_count):
+            index_partition_path = self._get_index_pattition_path(item_index_dir, partition_count, rank)
+            item_index_stream = _metaspore.InputStream(index_partition_path)
+            item_index_reader = faiss.PyCallbackIOReader(item_index_stream.read)
+            index = faiss.read_index(item_index_reader)
+            self._faiss_index.add_shard(index)
+            item_index_stream = None
+        print('faiss index ntotal: %d' % self._faiss_index.ntotal)
+
+    def search_item_embedding_batch(self, embeddings):
+        k = self.agent.retrieval_item_count
+        output_user_embeddings = self.agent.output_user_embeddings
+        distances, indices = self._faiss_index.search(embeddings, k)
+        indices = list(indices)
+        distances = list(distances)
+        embeddings = list(embeddings) if output_user_embeddings else None
+        return indices, distances, embeddings
+
+    def _unload_faiss_index(self):
+        del self._faiss_index
+
+    def begin_creating_index(self):
+        super().begin_creating_index()
+
+    def end_creating_index(self):
+        self._output_index_meta()
+        super().end_creating_index()
+
+    def begin_creating_index_partition(self):
+        super().begin_creating_index_partition()
+        self._create_faiss_index_partition()
+
+    def end_creating_index_partition(self):
+        super().end_creating_index_partition()
+        self._output_faiss_index_partition()
+
+    def begin_querying_index(self):
+        super().begin_querying_index()
+        if self.agent.is_worker:
+            self._load_faiss_index()
+
+    def end_querying_index(self):
+        if self.agent.is_worker:
+            self._unload_faiss_index()
+        super().end_querying_index()
+
 class FaissIndexBuildingAgent(PyTorchAgent):
     def worker_start(self):
         super().worker_start()
