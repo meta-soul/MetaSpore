@@ -108,27 +108,24 @@ class DIN(torch.nn.Module):
 
         self.final_activation = torch.nn.Sigmoid()
     
-    def get_column_embedding(self, column_index_list, x_reshape, column_nums, is_seq_column=True):
-        all_column_embedding = None
-        if is_seq_column:
-            for column_index in column_index_list:
-                column_embedding = x_reshape[column_index::column_nums]         
-                column_embedding = torch.nn.utils.rnn.pad_sequence(column_embedding, batch_first=True)
-                if all_column_embedding is None:
-                    all_column_embedding = column_embedding
-                else:
-                    all_column_embedding = torch.cat((all_column_embedding, column_embedding), dim=2) 
-        else:
-            for column_index in column_index_list:
-                column_embedding = x_reshape[column_index::column_nums]
-                column_embedding = torch.stack(column_embedding).squeeze()
-                if all_column_embedding is None:
-                    all_column_embedding = column_embedding
-                else:
-                    all_column_embedding = torch.cat((all_column_embedding, column_embedding), dim=1) 
-           
+    def get_seq_column_embedding(self, seq_column_index_list, x_reshape, column_nums):
+        all_column_embedding = []
+        for column_index in seq_column_index_list:
+            column_embedding = x_reshape[column_index::column_nums]         
+            column_embedding = torch.nn.utils.rnn.pad_sequence(column_embedding, batch_first=True)
+            all_column_embedding.append(column_embedding)
+        all_column_embedding = torch.cat(all_column_embedding, dim=2)
         return all_column_embedding
     
+    def get_non_seq_column_embedding(self, non_seq_column_index_list, x_reshape, column_nums):
+        all_column_embedding = []
+        for column_index in non_seq_column_index_list:
+            column_embedding = x_reshape[column_index::column_nums]
+            column_embedding = torch.stack(column_embedding).squeeze()
+            all_column_embedding.append(column_embedding)
+        all_column_embedding = torch.cat(all_column_embedding, dim=1) 
+        return all_column_embedding
+        
     def get_field_embedding_list(self, x, offset):
         x_reshape = [x[offset[i]:offset[i+1],:] for i in range(offset.shape[0]-1)]
         x_reshape.append(x[offset[offset.shape[0]-1]:x.shape[0],:])
@@ -139,9 +136,9 @@ class DIN(torch.nn.Module):
         x_reshape = self.get_field_embedding_list(x, offset)
         column_nums = self.feature_nums
         other_embedding = None
-        other_embedding = self.get_column_embedding(self.other_column_index_list, x_reshape, column_nums, is_seq_column=False)
-        target_embedding = self.get_column_embedding(self.target_column_index_list, x_reshape, column_nums, is_seq_column=False)               
-        seq_embedding = self.get_column_embedding(self.seq_column_index_list, x_reshape, column_nums, is_seq_column=True)  
+        other_embedding = self.get_non_seq_column_embedding(self.other_column_index_list, x_reshape, column_nums)
+        target_embedding = self.get_non_seq_column_embedding(self.target_column_index_list, x_reshape, column_nums)               
+        seq_embedding = self.get_seq_column_embedding(self.seq_column_index_list, x_reshape, column_nums)
         item_seq_length = [offset[i] - offset[i-1] for i in range(self.seq_column_index_list[0]+1, offset.shape[0], column_nums)]
         item_seq_length = torch.tensor(item_seq_length)
         all_sum_pooling = self.DIN_attention(target_embedding, seq_embedding, item_seq_length).squeeze()
