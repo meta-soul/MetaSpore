@@ -107,10 +107,7 @@ class DIEN(torch.nn.Module):
         self.total_feature_count = self.dien_embedding_layer.feature_count
         self.item_feature_count = len(target_item)
         self.non_seq_feature_count = self.total_feature_count - 3*self.item_feature_count
-        
-        # self.aux_units = [2*dien_embedding_size*self.item_feature_count] + dien_aux_hidden_units
-        # self.att_units = [4*self.embedding_size*self.item_feature_number] + att_hidden_units
-        # self.dnn_units = [(2*self.item_feature_number+self.user_feature_number)*self.embedding_size] + dnn_hidden_units
+
 
         self.intereset_extractor = InterestExtractorNetwork(embedding_size = dien_embedding_size, 
                                                             gru_hidden_size = dien_embedding_size, 
