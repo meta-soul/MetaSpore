@@ -433,7 +433,7 @@ class PyTorchAgent(Agent):
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
         self.trainer.train(loss)
-        self.update_progress(batch_size=len(labels), batch_loss=loss,
+        self.update_progress(batch_size=len(minibatch), batch_loss=loss,
                              predictions=predictions, labels=labels)
 
     def validate_minibatch(self, minibatch):
@@ -451,7 +451,7 @@ class PyTorchAgent(Agent):
         predictions = self.model(minibatch)
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
-        self.update_progress(batch_size=len(labels), batch_loss=loss,
+        self.update_progress(batch_size=len(minibatch), batch_loss=loss,
                              predictions=predictions, labels=labels)
         return self._make_validation_result(minibatch, labels, predictions)
 
