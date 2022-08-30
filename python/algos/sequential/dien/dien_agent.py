@@ -21,13 +21,13 @@ import torch.nn.functional as F
 
 class DIENAgent(ms.PyTorchAgent):
     def __init__(self, 
-                 target_loss_weight=1.0,
-                 auxilary_loss_weight=1.0,
+                 dien_target_loss_weight=1.0,
+                 dien_auxilary_loss_weight=1.0,
                  **kwargs):
         super().__init__()
         self.target_loss = nn.BCELoss()
-        self.target_loss_weight = target_loss_weight
-        self.auxilary_loss_weight = auxilary_loss_weight
+        self.target_loss_weight = dien_target_loss_weight
+        self.auxilary_loss_weight = dien_auxilary_loss_weight
 
     def train_minibatch(self, minibatch):
         self.model.train()

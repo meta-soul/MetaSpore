@@ -74,48 +74,60 @@ def read_dataset(spark):
     
 def train(spark, trian_dataset, **model_params):
     ## init wide and deep model
-    module = DIEN(embedding_size=embedding_size,
-                aux_hidden_units=aux_hidden_units,
-                gru_num_layer = gru_num_layer,
-                att_hidden_units = att_hidden_units,
-                dnn_hidden_units=dnn_hidden_units,
-                column_name_path=column_name_path,
-                combine_schema_path=combine_schema_path,
-                sparse_init_var=sparse_init_var,
-                feature_slice = feature_slice,
-                use_aux_bn= use_aux_bn,
-                aux_dropout = aux_dropout,
-                aux_activation= aux_activation,
-                use_att_bn= use_att_bn,
-                att_dropout=att_dropout,
-                att_activation= att_activation,
-                use_dnn_bn= use_dnn_bn,
-                dnn_dropout= dnn_dropout,
-                dnn_activation= dnn_activation,
-                use_wide=use_wide,
-                use_deep=use_deep,
-                wide_deep_combine_schema_path=wide_deep_combine_schema_path,
-                deep_hidden_units=deep_hidden_units,
-                deep_dropout =deep_dropout,
-                deep_activation =deep_activation,
-                use_deep_bn=use_deep_bn,
-                use_deep_bias=use_deep_bias,
-                max_length = max_length,
+    module = DIEN(column_name_path = column_name_path,
+                dien_combine_schema_path = dien_combine_schema_path,
+                wide_combine_schema_path = wide_combine_schema_path,
+                deep_combine_schema_path = deep_combine_schema_path,
+                sparse_init_var = sparse_init_var,
+                use_wide = use_wide,
+                use_deep = use_deep,
+
+                post_item_seq = post_item_seq,
+                neg_item_seq = neg_item_seq,
+                target_item = target_item,
+                  
+                dien_embedding_size = dien_embedding_size,
+                dien_gru_num_layer = dien_gru_num_layer,
+                dien_aux_hidden_units = dien_aux_hidden_units,
+                dien_use_aux_bn = dien_use_aux_bn,
+                dien_aux_dropout = dien_aux_dropout,
+                dien_aux_activation = dien_aux_activation,
+
+                dien_att_hidden_units = dien_att_hidden_units,
+                dien_use_att_bn = dien_use_att_bn,
+                dien_att_dropout = dien_att_dropout,
+                dien_att_activation = dien_att_activation,
+
+                dien_dnn_hidden_units = dien_dnn_hidden_units,
+                dien_use_dnn_bn = dien_use_dnn_bn,
+                dien_dnn_dropout = dien_dnn_dropout,
+                dien_dnn_activation = dien_dnn_activation,
+                  
+                dien_use_gru_bias = dien_use_gru_bias,
+                  
+                deep_hidden_units = deep_hidden_units,
+                deep_dropout = deep_dropout,
+                deep_activation = deep_activation,
+                use_deep_bn = use_deep_bn,
+                use_deep_bias = use_deep_bias,
+                deep_embedding_size = deep_embedding_size,
+
+                wide_embedding_size = wide_embedding_size
                 ) #None
     
     
-    estimator = ms.PyTorchEstimator(module=module,
-                                  worker_count=worker_count,
-                                  server_count=server_count,
+    estimator = ms.PyTorchEstimator(module = module,
+                                  worker_count = worker_count,
+                                  server_count = server_count,
                                   agent_class = DIENAgent,
-                                  model_out_path=model_out_path,
-                                  model_export_path=None,
-                                  model_version=model_version,
-                                  experiment_name=experiment_name,
-                                  metric_update_interval=metric_update_interval,
-                                  input_label_column_index=input_label_column_index,
-                                  target_loss_weight=target_loss_weight,
-                                  auxilary_loss_weight = auxilary_loss_weight) #100
+                                  model_out_path = model_out_path,
+                                  model_export_path = None,
+                                  model_version = model_version,
+                                  experiment_name = experiment_name,
+                                  metric_update_interval = metric_update_interval,
+                                  input_label_column_index = input_label_column_index,
+                                  dien_target_loss_weight = dien_target_loss_weight,
+                                  dien_auxilary_loss_weight = dien_auxilary_loss_weight) 
     train_dataset.show(20)
     model = estimator.fit(trian_dataset)
      ## dnn learning rate

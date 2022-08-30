@@ -19,6 +19,7 @@ import metaspore as ms
 from ...layers import MLPLayer, DIEN_DIN_AttLayer, LRLayer
 
 
+
 class DIN(torch.nn.Module):
     def __init__(self,
                  use_wide=True,
