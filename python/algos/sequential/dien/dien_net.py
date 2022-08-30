@@ -178,23 +178,6 @@ class DIEN(torch.nn.Module):
         post_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(torch.cat(post_item_seq, dim=-1), seq_length , batch_first=True, enforce_sorted=False)
         neg_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(torch.cat(neg_item_seq, dim=-1), seq_length , batch_first=True, enforce_sorted=False)
         
-#         # split feature
-#         feature = {}
-#         total_feature = np.sum([len(index) for index in self.feature_slice.values()])
-#         seq_length = [item.shape[0] for item in x_reshape[self.feature_slice['item_seq'][0]::self.total_feature]]
-#         for keys in self.feature_slice.keys():
-#             keys_list = []
-#             for slice_index in self.feature_slice[keys]:
-#                 single_feature = torch.squeeze(pad_sequence(x_reshape[slice_index::self.total_feature],batch_first=True))
-#                 keys_list.append(single_feature)
-#             feature[keys] = torch.cat(keys_list, dim=-1)
-
-#         user = feature['user']
-#         target_item = feature['target_item']
-#         item_seq_pack = pack_padded_sequence(feature['item_seq'], seq_length , batch_first=True, enforce_sorted=False)
-#         neg_item_seq_pack = pack_padded_sequence(feature['neg_item_seq'], seq_length , batch_first=True, enforce_sorted=False)
-
-        
         interest, aux_loss = self.intereset_extractor(post_item_seq_pack, neg_item_seq_pack)
         evolution = self.interest_evolution(target_item, interest)
         dien_in = torch.cat([ target_item, non_seq_feature, evolution], dim=-1)
