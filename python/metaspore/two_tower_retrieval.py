@@ -315,6 +315,150 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
             self._unload_faiss_index()
         super().end_querying_index()
 
+class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
+    @property
+    def milvus_alias(self):
+        if not hasattr(self, '_milvus_alias'):
+            milvus_description = self.agent.milvus_description
+            worker_count = self.agent.worker_count
+            rank = self.agent.rank
+            if self.agent.is_coordinator:
+                self._milvus_alias = '%s_connection_coordinator' % milvus_description
+            else:
+                self._milvus_alias = '%s_connection_worker_%d_%d' % (milvus_description, worker_count, rank)
+        return self._milvus_alias
+
+    def _open_milvus_connection(self):
+        from pymilvus import connections
+        host = self.agent.milvus_host
+        port = self.agent.milvus_port
+        print("Create milvus connection %s" % self.milvus_alias)
+        connections.connect(alias=self.milvus_alias, host=host, port=port)
+
+    def _close_milvus_connection(self):
+        from pymilvus import connections
+        print("Release milvus connection %s" % self.milvus_alias)
+        connections.disconnect(alias=self.milvus_alias)
+
+    def _drop_milvus_collection_if_exists(self):
+        from pymilvus import Collection
+        from pymilvus import utility
+        milvus_alias = self.milvus_alias
+        milvus_description = self.agent.milvus_description
+        if utility.has_collection(collection_name=milvus_description, using=milvus_alias):
+            print("Drop existing milvus collection %s" % milvus_description)
+            collection = Collection(name=milvus_description, using=milvus_alias)
+            collection.drop()
+
+    def _create_milvus_collection(self):
+        from pymilvus import Collection
+        milvus_alias = self.milvus_alias
+        milvus_description = self.agent.milvus_description
+        milvus_schema = self._get_milvus_schema()
+        print("Create milvus collection %s" % milvus_description)
+        self._milvus_collection = Collection(name=milvus_description, schema=milvus_schema, using=milvus_alias)
+
+    def _open_milvus_collection(self):
+        from pymilvus import Collection
+        milvus_alias = self.milvus_alias
+        milvus_description = self.agent.milvus_description
+        print("Open milvus collection %s" % milvus_description)
+        self._milvus_collection = Collection(name=milvus_description, using=milvus_alias)
+
+    def _load_milvus_collection(self):
+        from pymilvus import Collection
+        milvus_alias = self.milvus_alias
+        milvus_description = self.agent.milvus_description
+        print("Load milvus collection %s" % milvus_description)
+        self._milvus_collection = Collection(name=milvus_description, using=milvus_alias)
+        self._milvus_collection.load()
+
+    def _get_milvus_schema(self):
+        from pymilvus import CollectionSchema
+        milvus_fields = self._get_milvus_fields()
+        milvus_description = self.agent.milvus_description
+        milvus_schema = CollectionSchema(fields=milvus_fields, description=milvus_description)
+        return milvus_schema
+
+    def _get_milvus_fields(self):
+        from pymilvus import DataType
+        from pymilvus import FieldSchema
+        item_id_field_name = self.agent.item_id_column_name
+        item_embedding_field_name = self.agent.milvus_embedding_field
+        item_embedding_size = self.agent.item_embedding_size
+        milvus_fields = [
+            FieldSchema(name=item_id_field_name, dtype=DataType.INT64, is_primary=True),
+            FieldSchema(name=item_embedding_field_name, dtype=DataType.FLOAT_VECTOR, dim=item_embedding_size)
+        ]
+        return milvus_fields
+
+    def _create_milvus_index(self):
+        milvus_description = self.agent.milvus_description
+        milvus_index_type = self.agent.milvus_index_type
+        milvus_metric_type = self.agent.milvus_metric_type
+        milvus_nlist = self.agent.milvus_nlist
+        item_embedding_field_name = self.agent.milvus_embedding_field
+        index_params = {"index_type": milvus_index_type,
+                        "metric_type": milvus_metric_type,
+                        "params": {"nlist": milvus_nlist}}
+        print("Creating milvus index %s" % milvus_description)
+        self._milvus_collection.create_index(field_name=item_embedding_field_name, index_params=index_params)
+
+    def output_item_embedding_batch(self, embeddings, id_ndarray):
+        self._milvus_collection.insert([id_ndarray, embeddings])
+
+    def search_item_embedding_batch(self, embeddings):
+        k = self.agent.retrieval_item_count
+        output_user_embeddings = self.agent.output_user_embeddings
+        milvus_metric_type = self.agent.milvus_metric_type
+        milvus_nprobe = self.agent.milvus_nprobe
+        item_embedding_field_name = self.agent.milvus_embedding_field
+        search_params = {"metric_type": milvus_metric_type, "params": {"nprobe": milvus_nprobe}}
+        search_results = self._milvus_collection.search(
+            data=embeddings,
+            anns_field=item_embedding_field_name,
+            param=search_params,
+            limit=k,
+            expr=None
+        )
+        indices = [result.ids for result in search_results]
+        distances = [result.distances for result in search_results]
+        embeddings = list(embeddings) if output_user_embeddings else None
+        return indices, distances, embeddings
+
+    def begin_creating_index(self):
+        super().begin_creating_index()
+        self._open_milvus_connection()
+        self._drop_milvus_collection_if_exists()
+        self._create_milvus_collection()
+        self._load_milvus_collection()
+
+    def end_creating_index(self):
+        self._create_milvus_index()
+        self._close_milvus_connection()
+        super().end_creating_index()
+
+    def begin_creating_index_partition(self):
+        super().begin_creating_index_partition()
+        self._open_milvus_connection()
+        self._open_milvus_collection()
+
+    def end_creating_index_partition(self):
+        self._close_milvus_connection()
+        super().end_creating_index_partition()
+
+    def begin_querying_index(self):
+        super().begin_querying_index()
+        self._open_milvus_connection()
+        if self.agent.is_coordinator:
+            self._load_milvus_collection()
+        else:
+            self._open_milvus_collection()
+
+    def end_querying_index(self):
+        self._close_milvus_connection()
+        super().end_querying_index()
+
 class FaissIndexBuildingAgent(PyTorchAgent):
     def start_workers(self):
         self.index_builder = TwoTowerFaissIndexBuilder(self)
