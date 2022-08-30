@@ -24,7 +24,7 @@ import sys
 from operator import itemgetter
 
 sys.path.append('../../../')
-from python.algos.deepffm_net import DeepFFM
+from python.algos.ffm_net import FFM
 
 def load_config(path):
     params=dict()
@@ -75,7 +75,7 @@ def read_dataset(spark):
     
 def train(spark, trian_dataset, **model_params):
     ## init wide and deep model
-    module = DeepFFM(**model_params) #None
+    module = FFM(**model_params) #None
     
     estimator = ms.PyTorchEstimator(module=module, **model_params)
     model = estimator.fit(trian_dataset)
