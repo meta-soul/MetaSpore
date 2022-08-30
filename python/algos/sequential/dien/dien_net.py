@@ -108,9 +108,8 @@ class DIEN(torch.nn.Module):
         self.item_feature_count = len(target_item)
         self.non_seq_feature_count = self.total_feature_count - 3*self.item_feature_count
 
-
-        self.intereset_extractor = InterestExtractorNetwork(embedding_size = dien_embedding_size, 
-                                                            gru_hidden_size = dien_embedding_size, 
+        self.intereset_extractor = InterestExtractorNetwork(embedding_size = dien_embedding_size*self.item_feature_count, 
+                                                            gru_hidden_size = dien_embedding_size*self.item_feature_count, 
                                                             gru_num_layers = dien_gru_num_layer,
                                                             use_gru_bias = dien_use_gru_bias,
                                                             aux_input_dim = 2*dien_embedding_size*self.item_feature_count,
@@ -119,8 +118,8 @@ class DIEN(torch.nn.Module):
                                                             aux_dropout =  dien_aux_dropout,
                                                             use_aux_bn = dien_use_aux_bn)
         
-        self.interest_evolution = InterestEvolvingLayer(embedding_size = dien_embedding_size, 
-                                                        gru_hidden_size = dien_embedding_size,
+        self.interest_evolution = InterestEvolvingLayer(embedding_size = dien_embedding_size*self.item_feature_count, 
+                                                        gru_hidden_size = dien_embedding_size*self.item_feature_count,
                                                         gru_num_layers = dien_gru_num_layer, 
                                                         use_gru_bias = dien_use_gru_bias,
                                                         att_input_dim = dien_embedding_size*self.item_feature_count,
@@ -172,8 +171,14 @@ class DIEN(torch.nn.Module):
          
         # concat four categories of feature
         target_item, non_seq_feature = torch.cat(target_item, dim=-1), torch.cat(non_seq_feature, dim=-1)
-        post_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(torch.cat(post_item_seq, dim=-1), seq_length , batch_first=True, enforce_sorted=False)
-        neg_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(torch.cat(neg_item_seq, dim=-1), seq_length , batch_first=True, enforce_sorted=False)
+        post_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = torch.cat(post_item_seq, dim=-1), 
+                                                                     lengths = seq_length , 
+                                                                     batch_first = True, 
+                                                                     enforce_sorted = False)
+        neg_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = torch.cat(neg_item_seq, dim=-1), 
+                                                                    lengths = seq_length , 
+                                                                    batch_first = True, 
+                                                                    enforce_sorted = False)
         
         interest, aux_loss = self.intereset_extractor(post_item_seq_pack, neg_item_seq_pack)
         evolution = self.interest_evolution(target_item, interest)
