@@ -19,7 +19,7 @@ import metaspore as ms
 
 from .layers import LRLayer, MLPLayer, FFMLayer
 
-class DeepFFM(torch.nn.Module):
+class FFM(torch.nn.Module):
     def __init__(self,
                  use_wide=True,
                  use_dnn=True,
