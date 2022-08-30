@@ -19,10 +19,10 @@ import torch
 import faiss
 import pyspark
 from . import _metaspore
-from .embedding import EmbeddingOperator
 from .estimator import PyTorchAgent
 from .estimator import PyTorchModel
 from .estimator import PyTorchEstimator
+from .metric import ModelMetric
 
 class TwoTowerRetrievalModule(torch.nn.Module):
     def __init__(self, user_module, item_module, similarity_module):
@@ -353,6 +353,7 @@ class FaissIndexBuildingAgent(PyTorchAgent):
         ids_data = self._make_item_ids_mapping_batch(minibatch, embeddings, id_ndarray)
         self.index_builder.output_item_ids_mapping_batch(ids_data)
         self.index_builder.output_item_embedding_batch(embeddings, id_ndarray)
+        self.update_progress(batch_size=len(minibatch))
         return minibatch
 
     def _make_item_ids_mapping_batch(self, minibatch, embeddings, id_ndarray):
@@ -382,6 +383,9 @@ class FaissIndexBuildingAgent(PyTorchAgent):
                     ids_data += str(value)
             ids_data += '\n'
         return ids_data
+
+    def _get_metric_class(self):
+        return ModelMetric
 
 class FaissIndexRetrievalAgent(PyTorchAgent):
     def start_workers(self):
@@ -431,6 +435,7 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
         embeddings = predictions.detach().numpy()
         indices, distances, embeddings = self.index_builder.search_item_embedding_batch(embeddings)
         minibatch = self._make_validation_result(minibatch, indices, distances, embeddings)
+        self.update_progress(batch_size=len(minibatch))
         return minibatch
 
     def _make_validation_result(self, minibatch, indices, distances, embeddings):
@@ -484,6 +489,9 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
                            F.struct(indices, distances)
                             .alias(self.recommendation_info_column_name))
         return df
+
+    def _get_metric_class(self):
+        return ModelMetric
 
 class TwoTowerRetrievalHelperMixin(object):
     def __init__(self,
