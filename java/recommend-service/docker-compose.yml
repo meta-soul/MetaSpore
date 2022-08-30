@@ -8,10 +8,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile  # need mvn package first
-    image: dmetasoul/recommend-service-11:1.0
+    image: dmetasoul/recommend-service-11:1.0-SNAPSHOT
     command: java -jar recommend-service-1.0-SNAPSHOT.jar
     environment:
-      CONSUL_HOST: 172.17.0.1
+      CONSUL_HOST: consul
     ports:
       - "8080:8080"
     depends_on:

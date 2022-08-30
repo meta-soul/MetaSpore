@@ -16,7 +16,7 @@ feature-service:
         uri: jdbc:mysql://localhost:3306/recomend?profileSQL=true  # uri need in jdbc
         driver: com.mysql.cj.jdbc.Driver  # driver need in jdbc
         user: root   # if not set, default root
-        password: test  # if not set, default test
+        password: root  # if not set, default test
     - name: recall
       kind: Redis
       options:
