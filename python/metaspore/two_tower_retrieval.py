@@ -55,6 +55,145 @@ class TwoTowerRetrievalModule(torch.nn.Module):
         sim = self._similarity_module(user_emb, item_emb)
         return sim
 
+class TwoTowerIndexBuilder(object):
+    def __init__(self, agent):
+        self._agent = agent
+
+    @property
+    def agent(self):
+        return self._agent
+
+    @property
+    def index_type(self):
+        if not hasattr(self, '_index_type'):
+            from .name_utils import simplify_name
+            from .name_utils import to_lower_snake_case
+            self_class_name = self.__class__.__name__
+            base_class_name = TwoTowerIndexBuilder.__name__
+            name = simplify_name(self_class_name, base_class_name)
+            self._index_type = to_lower_snake_case(name)
+        return self._index_type
+
+    @property
+    def index_meta_dir(self):
+        if not hasattr(self, '_index_meta_dir'):
+            from .url_utils import use_s3
+            model_in_path = self.agent.model_in_path
+            self._index_meta_dir = use_s3('%s%s/' % (model_in_path, self.index_type))
+        return self._index_meta_dir
+
+    @property
+    def index_meta_file_name(self):
+        return 'index_meta.json'
+
+    @property
+    def index_meta_path(self):
+        if not hasattr(self, '_index_meta_path'):
+            dir_path = self.index_meta_dir
+            file_name = self.index_meta_file_name
+            self._index_meta_path = '%s%s' % (dir_path, file_name)
+        return self._index_meta_path
+
+    @property
+    def item_ids_dir(self):
+        if not hasattr(self, '_item_ids_dir'):
+            from .url_utils import use_s3
+            model_in_path = self.agent.model_in_path
+            self._item_ids_dir = use_s3('%s%s/item_ids/' % (model_in_path, self.index_type))
+        return self._item_ids_dir
+
+    @property
+    def item_ids_partition_file_name(self):
+        if not hasattr(self, '_item_ids_partition_file_name'):
+            rank = self.agent.rank
+            worker_count = self.agent.worker_count
+            self._item_ids_partition_file_name = 'part_%d_%d.dat' % (worker_count, rank)
+        return self._item_ids_partition_file_name
+
+    @property
+    def item_ids_partition_path(self):
+        if not hasattr(self, '_item_ids_partition_path'):
+            dir_path = self.item_ids_dir
+            file_name = self.item_ids_partition_file_name
+            self._item_ids_partition_path = '%s%s' % (dir_path, file_name)
+        return self._item_ids_partition_path
+
+    def _make_index_meta(self):
+        raise NotImplementedError
+
+    def _output_index_meta(self):
+        meta = self._make_index_meta()
+        string = json.dumps(meta, separators=(',', ': '), indent=4)
+        data = (string + '\n').encode('utf-8')
+        _metaspore.ensure_local_directory(self.index_meta_dir)
+        _metaspore.stream_write_all(self.index_meta_path, data)
+
+    def _load_index_meta(self):
+        data = _metaspore.stream_read_all(self.index_meta_path)
+        string = data.decode('utf-8')
+        meta = json.loads(string)
+        return meta
+
+    def _open_item_ids_partition_output_stream(self):
+        print("Open %s item ids mapping partition file: %s" % (self.index_type, self.item_ids_partition_path))
+        _metaspore.ensure_local_directory(self.item_ids_dir)
+        self._item_ids_partition_output_stream = _metaspore.OutputStream(self.item_ids_partition_path)
+
+    def _close_item_ids_partition_output_stream(self):
+        self._item_ids_partition_output_stream = None
+
+    def output_item_ids_mapping_batch(self, ids_data):
+        ids_data = ids_data.encode('utf-8')
+        self._item_ids_partition_output_stream.write(ids_data)
+
+    def _make_item_ids_schema(self):
+        from pyspark.sql.types import StructType
+        from pyspark.sql.types import StructField
+        from pyspark.sql.types import StringType
+        from pyspark.sql.types import FloatType
+        from pyspark.sql.types import ArrayType
+        if self.agent.output_item_embeddings:
+            schema = StructType([StructField('id', StringType(), True),
+                                 StructField('name', StringType(), True),
+                                 StructField('item_embedding', ArrayType(FloatType()), True)])
+        else:
+            schema = StructType([StructField('id', StringType(), True),
+                                 StructField('name', StringType(), True)])
+        return schema
+
+    def load_item_ids(self):
+        from .input import read_s3_csv
+        spark = self.agent.spark_session
+        schema = self._make_item_ids_schema()
+        item_ids_field_delimiter = self.agent.item_ids_field_delimiter
+        item_ids_value_delimiter = self.agent.item_ids_value_delimiter
+        df = read_s3_csv(spark, self.item_ids_dir,
+                         schema=schema,
+                         delimiter=item_ids_field_delimiter,
+                         multivalue_delimiter=item_ids_value_delimiter)
+        return df
+
+    def search_item_embedding_batch(self, embeddings):
+        raise NotImplementedError
+
+    def begin_creating_index(self):
+        pass
+
+    def end_creating_index(self):
+        pass
+
+    def begin_creating_index_partition(self):
+        self._open_item_ids_partition_output_stream()
+
+    def end_creating_index_partition(self):
+        self._close_item_ids_partition_output_stream()
+
+    def begin_querying_index(self):
+        pass
+
+    def end_querying_index(self):
+        pass
+
 class FaissIndexBuildingAgent(PyTorchAgent):
     def worker_start(self):
         super().worker_start()
