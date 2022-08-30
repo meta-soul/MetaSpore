@@ -11,7 +11,7 @@ services:
     image: dmetasoul/recommend-service-11:1.0
     command: java -jar recommend-service-1.0-SNAPSHOT.jar
     environment:
-      CONSUL_HOST: consul
+      CONSUL_HOST: 172.17.0.1
     ports:
       - "8080:8080"
     depends_on:
@@ -26,6 +26,8 @@ services:
     command: consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui
     ports:
       - "8500:8500"
+      - "8600:8600"
+      - "8300:8300"
 
   serving:
     container_name: standalone-serving
