@@ -34,7 +34,7 @@ def load_config(path):
     return params
 
 def init_spark():
-    subprocess.run(['zip', '-r', 'demo/ctr/deepffm/python.zip', 'python'], cwd='../../../')
+    subprocess.run(['zip', '-r', 'demo/ctr/ffm/python.zip', 'python'], cwd='../../../')
     spark_confs={
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
