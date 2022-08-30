@@ -89,13 +89,13 @@ class FFM(torch.nn.Module):
         self.final_activation = torch.nn.Sigmoid()
 
     def forward(self, x):
-        nn_feature_map = self.dnn_sparse(x)
-        fm_out = self.ffm(nn_feature_map)
+        ffm_out = self.ffm(x)
         if self.use_wide:
             lr_feature_map = self.lr_sparse(x)
             lr_out = self.lr(lr_feature_map)
-            fm_out += lr_out
+            ffm_out += lr_out
         if self.use_dnn:
+            nn_feature_map = self.dnn_sparse(x)
             dnn_out = self.dnn(nn_feature_map)
-            fm_out += dnn_out
-        return self.final_activation(fm_out)
+            ffm_out += dnn_out
+        return self.final_activation(ffm_out)
