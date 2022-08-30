@@ -316,28 +316,23 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
         super().end_querying_index()
 
 class FaissIndexBuildingAgent(PyTorchAgent):
+    def start_workers(self):
+        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder.begin_creating_index()
+        super().start_workers()
+
+    def stop_workers(self):
+        super().stop_workers()
+        self.index_builder.end_creating_index()
+
     def worker_start(self):
         super().worker_start()
-        self.setup_faiss_index()
+        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder.begin_creating_index_partition()
 
-    def setup_faiss_index(self):
-        from .url_utils import use_s3
-        self.item_index_output_dir = use_s3('%sfaiss/item_index/' % self.model_in_path)
-        self.item_index_output_path = '%spart_%d_%d.dat' % (self.item_index_output_dir, self.worker_count, self.rank)
-        self.item_ids_output_dir = use_s3('%sfaiss/item_ids/' % self.model_in_path)
-        self.item_ids_output_path = '%spart_%d_%d.dat' % (self.item_ids_output_dir, self.worker_count, self.rank)
-        self.index_meta_output_dir = use_s3('%sfaiss/' % self.model_in_path)
-        self.index_meta_output_path = '%sindex_meta.json' % self.index_meta_output_dir
-        _metaspore.ensure_local_directory(self.item_index_output_dir)
-        _metaspore.ensure_local_directory(self.item_ids_output_dir)
-        _metaspore.ensure_local_directory(self.index_meta_output_dir)
-        params = self.item_embedding_size, self.faiss_index_description, self.faiss_metric_type
-        print('faiss index params: %r' % (params,))
-        metric_type = getattr(faiss, self.faiss_metric_type)
-        params = self.item_embedding_size, self.faiss_index_description, metric_type
-        self.faiss_index = faiss.index_factory(*params)
-        self.faiss_index = faiss.IndexIDMap(self.faiss_index)
-        self.item_ids_stream = _metaspore.OutputStream(self.item_ids_output_path)
+    def worker_stop(self):
+        self.index_builder.end_creating_index_partition()
+        super().worker_stop()
 
     def _default_feed_validation_dataset(self):
         import pyspark.sql.functions as F
@@ -353,9 +348,15 @@ class FaissIndexBuildingAgent(PyTorchAgent):
         self.model.eval()
         minibatch = self.preprocess_minibatch(minibatch)
         predictions = self.model(minibatch)
-        ids_data = ''
-        id_ndarray = minibatch[self.item_id_column_name].values
         embeddings = predictions.detach().numpy()
+        id_ndarray = minibatch[self.item_id_column_name].values
+        ids_data = self._make_item_ids_mapping_batch(minibatch, embeddings, id_ndarray)
+        self.index_builder.output_item_ids_mapping_batch(ids_data)
+        self.index_builder.output_item_embedding_batch(embeddings, id_ndarray)
+        return minibatch
+
+    def _make_item_ids_mapping_batch(self, minibatch, embeddings, id_ndarray):
+        ids_data = ''
         for i in range(len(id_ndarray)):
             ids_data += str(id_ndarray[i])
             ids_data += self.item_ids_field_delimiter
@@ -380,117 +381,37 @@ class FaissIndexBuildingAgent(PyTorchAgent):
                         ids_data += self.item_ids_value_delimiter
                     ids_data += str(value)
             ids_data += '\n'
-        ids_data = ids_data.encode('utf-8')
-        self.item_ids_stream.write(ids_data)
-        self.faiss_index.add_with_ids(embeddings, id_ndarray)
-        return minibatch
-
-    def get_index_meta(self):
-        meta_version = 1
-        partition_count = self.worker_count
-        item_ids_field_delimiter = self.item_ids_field_delimiter
-        item_ids_value_delimiter = self.item_ids_value_delimiter
-        output_item_embeddings = self.output_item_embeddings
-        meta = {
-            'meta_version' : meta_version,
-            'partition_count' : partition_count,
-            'item_ids_field_delimiter' : item_ids_field_delimiter,
-            'item_ids_value_delimiter' : item_ids_value_delimiter,
-            'output_item_embeddings' : output_item_embeddings,
-        }
-        return meta
-
-    def output_index_meta(self):
-        if self.rank == 0:
-            meta = self.get_index_meta()
-            string = json.dumps(meta, separators=(',', ': '), indent=4)
-            data = (string + '\n').encode('utf-8')
-            _metaspore.stream_write_all(self.index_meta_output_path, data)
-
-    def output_faiss_index(self):
-        print('faiss index ntotal [%d]: %d' % (self.rank, self.faiss_index.ntotal))
-        item_index_stream = _metaspore.OutputStream(self.item_index_output_path)
-        item_index_writer = faiss.PyCallbackIOWriter(item_index_stream.write)
-        faiss.write_index(self.faiss_index, item_index_writer)
-        self.output_index_meta()
-        self.item_ids_stream = None
-
-    def worker_stop(self):
-        self.output_faiss_index()
-        super().worker_stop()
+        return ids_data
 
 class FaissIndexRetrievalAgent(PyTorchAgent):
+    def start_workers(self):
+        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder.begin_querying_index()
+        super().start_workers()
+
+    def stop_workers(self):
+        super().stop_workers()
+        self.index_builder.end_querying_index()
+
     def worker_start(self):
         super().worker_start()
-        self.load_faiss_index()
+        self.index_builder = TwoTowerFaissIndexBuilder(self)
+        self.index_builder.begin_querying_index()
 
-    def get_index_meta(self):
-        from .url_utils import use_s3
-        index_meta_input_dir = use_s3('%sfaiss/' % self.model_in_path)
-        index_meta_input_path = '%sindex_meta.json' % index_meta_input_dir
-        data = _metaspore.stream_read_all(index_meta_input_path)
-        string = data.decode('utf-8')
-        meta = json.loads(string)
-        return meta
-
-    def get_partition_count(self):
-        meta = self.get_index_meta()
-        partition_count = meta['partition_count']
-        return partition_count
-
-    def load_faiss_index(self):
-        from .url_utils import use_s3
-        item_index_input_dir = use_s3('%sfaiss/item_index/' % self.model_in_path)
-        self.faiss_index = faiss.IndexShards(self.item_embedding_size, True, False)
-        partition_count = self.get_partition_count()
-        for rank in range(partition_count):
-            item_index_input_path = '%spart_%d_%d.dat' % (item_index_input_dir, partition_count, rank)
-            item_index_stream = _metaspore.InputStream(item_index_input_path)
-            item_index_reader = faiss.PyCallbackIOReader(item_index_stream.read)
-            index = faiss.read_index(item_index_reader)
-            self.faiss_index.add_shard(index)
-        print('faiss index ntotal: %d' % self.faiss_index.ntotal)
-
-    def load_item_ids(self):
-        from .input import read_s3_csv
-        from pyspark.sql.types import StructType, StructField, StringType, FloatType, ArrayType
-        item_ids_input_dir = '%sfaiss/item_ids/' % self.model_in_path
-        item_ids_input_path = '%s*' % item_ids_input_dir
-        if self.output_item_embeddings:
-            schema = StructType([StructField('id', StringType(), True),
-                                 StructField('name', StringType(), True),
-                                 StructField('item_embedding', ArrayType(FloatType()), True)])
-        else:
-            schema = StructType([StructField('id', StringType(), True),
-                                 StructField('name', StringType(), True)])
-        df = read_s3_csv(self.spark_session, item_ids_input_path,
-                         schema=schema,
-                         delimiter=self.item_ids_field_delimiter,
-                         multivalue_delimiter=self.item_ids_value_delimiter)
-        return df
+    def worker_stop(self):
+        self.index_builder.end_querying_index()
+        super().worker_stop()
 
     def _default_feed_validation_dataset(self):
         import pyspark.sql.functions as F
-        self.item_ids_dataset = self.load_item_ids()
+        self.item_ids_dataset = self.index_builder.load_item_ids()
         dataset = self.dataset.withColumn(self.increasing_id_column_name,
                                           F.monotonically_increasing_id())
         df = dataset
         func = self.feed_validation_minibatch()
         output_schema = self._make_validation_result_schema(df)
         df = df.mapInPandas(func, output_schema)
-        if self.output_user_embeddings:
-            df = df.select(self.increasing_id_column_name,
-                           F.struct(
-                                F.col(self.recommendation_info_column_name + '_indices').alias('indices'),
-                                F.col(self.recommendation_info_column_name + '_distances').alias('distances'),
-                                F.col(self.recommendation_info_column_name + '_user_embedding').alias('user_embedding'))
-                            .alias(self.recommendation_info_column_name))
-        else:
-            df = df.select(self.increasing_id_column_name,
-                           F.struct(
-                                F.col(self.recommendation_info_column_name + '_indices').alias('indices'),
-                                F.col(self.recommendation_info_column_name + '_distances').alias('distances'))
-                            .alias(self.recommendation_info_column_name))
+        df = self._rename_validation_result(df)
         self.dataset = dataset
         self.validation_result = df
         # PySpark DataFrame & RDD is lazily evaluated.
@@ -504,19 +425,22 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
         return minibatch
 
     def _default_validate_minibatch(self, minibatch):
-        import pandas as pd
         self.model.eval()
         minibatch = self.preprocess_minibatch(minibatch)
         predictions = self.model(minibatch)
         embeddings = predictions.detach().numpy()
-        distances, indices = self.faiss_index.search(embeddings, self.retrieval_item_count)
+        indices, distances, embeddings = self.index_builder.search_item_embedding_batch(embeddings)
+        minibatch = self._make_validation_result(minibatch, indices, distances, embeddings)
+        return minibatch
+
+    def _make_validation_result(self, minibatch, indices, distances, embeddings):
         indices_name = self.recommendation_info_column_name + '_indices'
         distances_name = self.recommendation_info_column_name + '_distances'
-        minibatch[indices_name] = list(indices)
-        minibatch[distances_name] = list(distances)
-        if self.output_user_embeddings:
+        minibatch[indices_name] = indices
+        minibatch[distances_name] = distances
+        if embeddings is not None:
             user_embedding_name = self.recommendation_info_column_name + '_user_embedding'
-            minibatch[user_embedding_name] = list(embeddings)
+            minibatch[user_embedding_name] = embeddings
         return minibatch
 
     def _make_validation_result_schema(self, df):
@@ -542,6 +466,24 @@ class FaissIndexRetrievalAgent(PyTorchAgent):
         if self.output_user_embeddings:
             result_schema.add(user_embedding_name, ArrayType(FloatType()))
         return result_schema
+
+    def _rename_validation_result(self, df):
+        import pyspark.sql.functions as F
+        indices_name = self.recommendation_info_column_name + '_indices'
+        distances_name = self.recommendation_info_column_name + '_distances'
+        indices = F.col(indices_name).alias('indices')
+        distances = F.col(distances_name).alias('distances')
+        if self.output_user_embeddings:
+            user_embedding_name = self.recommendation_info_column_name + '_user_embedding'
+            user_embedding = F.col(user_embedding_name).alias('user_embedding')
+            df = df.select(self.increasing_id_column_name,
+                           F.struct(indices, distances, user_embedding)
+                            .alias(self.recommendation_info_column_name))
+        else:
+            df = df.select(self.increasing_id_column_name,
+                           F.struct(indices, distances)
+                            .alias(self.recommendation_info_column_name))
+        return df
 
 class TwoTowerRetrievalHelperMixin(object):
     def __init__(self,
