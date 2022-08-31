@@ -345,9 +345,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         self.milvus_item_id_field_name = getattr(agent, 'milvus_item_id_field_name', 'item_id')
         self.milvus_item_embedding_field_name = getattr(agent, 'milvus_item_embedding_field_name', 'item_embedding')
         self.milvus_index_type = getattr(agent, 'milvus_index_type', 'IVF_FLAT')
+        self.milvus_index_params = getattr(agent, 'milvus_index_params', {'nlist': 1024})
         self.milvus_metric_type = getattr(agent, 'milvus_metric_type', 'IP')
-        self.milvus_nlist = getattr(agent, 'milvus_nlist', 1024)
-        self.milvus_nprobe = getattr(agent, 'milvus_nprobe', 128)
+        self.milvus_search_params = getattr(agent, 'milvus_search_params', {'nprobe': 128})
         if self.milvus_collection_name is None:
             raise RuntimeError("milvus_collection_name is required")
         if not isinstance(self.milvus_collection_name, str) or not self.milvus_collection_name:
@@ -362,12 +362,12 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             raise TypeError(f"milvus_item_embedding_field_name must be non-empty string; {self.milvus_item_embedding_field_name!r} is invalid")
         if not isinstance(self.milvus_index_type, str) or not self.milvus_index_type:
             raise TypeError(f"milvus_index_type must be non-empty string; {self.milvus_index_type!r} is invalid")
+        if not isinstance(self.milvus_index_params, dict):
+            raise TypeError(f"milvus_index_params must be dict; {self.milvus_index_params!r} is invalid")
         if not isinstance(self.milvus_metric_type, str) or not self.milvus_metric_type:
             raise TypeError(f"milvus_metric_type must be non-empty string; {self.milvus_metric_type!r} is invalid")
-        if not isinstance(self.milvus_nlist, int) or self.milvus_nlist <= 0:
-            raise TypeError(f"milvus_nlist must be positive integer; {self.milvus_nlist!r} is invalid")
-        if not isinstance(self.milvus_nprobe, int) or self.milvus_nprobe <= 0:
-            raise TypeError(f"milvus_nprobe must be positive integer; {self.milvus_nprobe!r} is invalid")
+        if not isinstance(self.milvus_search_params, dict):
+            raise TypeError(f"milvus_search_params must be dict; {self.milvus_search_params!r} is invalid")
 
     @staticmethod
     def _get_milvus_attributes():
@@ -378,9 +378,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             'milvus_item_id_field_name',
             'milvus_item_embedding_field_name',
             'milvus_index_type',
+            'milvus_index_params',
             'milvus_metric_type',
-            'milvus_nlist',
-            'milvus_nprobe',
+            'milvus_search_params',
         )
         return milvus_attributes
 
@@ -468,12 +468,12 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
     def _create_milvus_index(self):
         milvus_collection_name = self.milvus_collection_name
         milvus_index_type = self.milvus_index_type
+        milvus_index_params = self.milvus_index_params
         milvus_metric_type = self.milvus_metric_type
-        milvus_nlist = self.milvus_nlist
         item_embedding_field_name = self.milvus_item_embedding_field_name
         index_params = {"index_type": milvus_index_type,
                         "metric_type": milvus_metric_type,
-                        "params": {"nlist": milvus_nlist}}
+                        "params": milvus_index_params}
         print("Creating milvus index %s" % milvus_collection_name)
         self._milvus_collection.create_index(field_name=item_embedding_field_name, index_params=index_params)
 
@@ -484,9 +484,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         k = self.agent.retrieval_item_count
         output_user_embeddings = self.agent.output_user_embeddings
         milvus_metric_type = self.milvus_metric_type
-        milvus_nprobe = self.milvus_nprobe
+        milvus_search_params = self.milvus_search_params
         item_embedding_field_name = self.milvus_item_embedding_field_name
-        search_params = {"metric_type": milvus_metric_type, "params": {"nprobe": milvus_nprobe}}
+        search_params = {"metric_type": milvus_metric_type, "params": milvus_search_params}
         search_results = self._milvus_collection.search(
             data=embeddings,
             anns_field=item_embedding_field_name,
