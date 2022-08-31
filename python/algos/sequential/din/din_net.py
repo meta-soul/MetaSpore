@@ -41,7 +41,7 @@ class DIN(torch.nn.Module):
                  din_hidden_activations='dice',
                  din_hidden_batch_norm=True,
                  din_hidden_dropout=0.25,
-                 # din_seq_column_index_list[i]与din_target_column_index_list[i]做attention
+                 # sequence column din_seq_column_index_list[i] will do attention with the target column din_target_column_index_list[i]
                  din_seq_column_index_list=[1, 3],
                  din_target_column_index_list = [2, 4],
                  deep_hidden_units=[32, 16],
@@ -56,7 +56,12 @@ class DIN(torch.nn.Module):
                 ):
         super().__init__()
         
-        assert len(din_seq_column_index_list)==len(din_target_column_index_list), "din_seq_column_index_list与din_target_column_index_list必须等长"
+        try:
+            if len(din_seq_column_index_list) != len(din_target_column_index_list):
+                raise Exception("din_seq_column_index_list and din_target_column_index_list must have same length")
+        except Exception as e:
+            print("error：",repr(e))
+            
         self.use_wide = use_wide
         self.use_deep = use_deep
 
