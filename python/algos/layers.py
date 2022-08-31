@@ -437,7 +437,11 @@ class InterestEvolvingLayer(torch.nn.Module):
         use_att_bn,
     ):
         super(InterestEvolvingLayer, self).__init__()
-        self.attention_layer = DIEN_DIN_AttLayer(att_input_dim, att_hidden_units, att_activation, att_dropout, use_att_bn)
+        self.attention_layer = DIEN_DIN_AttLayer(input_dim = att_input_dim, 
+                                                 att_hidden_size = att_hidden_units, 
+                                                 att_activation = att_activation, 
+                                                 att_dropout = att_dropout, 
+                                                 use_att_bn = use_att_bn)
         self.dynamic_rnn = torch.nn.GRU(
             input_size = embedding_size,
             hidden_size = gru_hidden_size,
@@ -486,9 +490,9 @@ class InterestExtractorNetwork(torch.nn.Module):
         packed_rnn_outputs,_=self.gru_layers(item_seq_pack)
         
         # padding all sequence
-        rnn_outputs,_ = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
-        item_seq,_ = pad_packed_sequence(item_seq_pack, batch_first=True)
-        neg_item_seq,_ = pad_packed_sequence(neg_item_seq_pack, batch_first=True)
+        rnn_outputs, _ = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
+        item_seq, _ = pad_packed_sequence(item_seq_pack, batch_first=True)
+        neg_item_seq, _ = pad_packed_sequence(neg_item_seq_pack, batch_first=True)
         aux_loss = self.auxiliary_loss(rnn_outputs[:,:-1,:], item_seq[:,1:,:], neg_item_seq[:,1:,:])
         return packed_rnn_outputs, aux_loss
     
