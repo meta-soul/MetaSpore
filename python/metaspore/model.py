@@ -440,7 +440,7 @@ class Model(object):
 
     def _do_export(self, path, *, model_export_selector=None, output_names=None):
         # change the dense dir
-        path += '/_dense/model.onnx'
+        path = os.path.join(use_s3(path), '_dense/model.onnx')
 
         module = self.module
         if model_export_selector is not None:
@@ -457,12 +457,12 @@ class Model(object):
 
         script = torch.jit.script(module)
         dir_path = os.path.dirname(path)
-        _metaspore.ensure_local_directory(use_s3(dir_path))
+        _metaspore.ensure_local_directory(dir_path)
 
         # use a flush to fake the onnx output
         class FakeStream(object):
             def write(self, data):
-                _metaspore.stream_write_all(use_s3(path), data)
+                _metaspore.stream_write_all(path, data)
 
             def flush(self):
                 pass
@@ -487,16 +487,12 @@ class Model(object):
 
     def export(self, path, *, model_export_selector=None, output_names=None):
         if not isinstance(path, str) or not path.strip():
-            raise TypeError(
-                f"path must be non-empty string; {path!r} is invalid")
+            raise TypeError(f"path must be non-empty string; {path!r} is invalid")
         path = path.strip()
+        if not path.endswith('/'):
+            raise ValueError(f"path must be directory path endswith /; {path!r} is invalid")
         if self._experiment_name is None:
-            raise RuntimeError(
-                f"experiment_name is not set; can not export to {path!r}")
-
-        # Since the  .ptm is unnecessary for the offline model, we just make the dir simpler
-        path += self._experiment_name
-
+            raise RuntimeError(f"experiment_name is not set; can not export to {path!r}")
         if self.training:
             message = "model is in training mode, can not export it; "
             message += "call the 'eval' method to set it in evaluation mode explicitly"

@@ -310,7 +310,7 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
             from .url_utils import use_s3
             from .file_utils import copy_dir
             src_path = use_s3('%s%s/' % (self.agent.model_in_path, self.index_type))
-            dst_path = use_s3('%s%s/%s/' % (self.agent.model_export_path, self.agent.experiment_name, self.index_type))
+            dst_path = use_s3('%s%s/' % (self.agent.model_export_path, self.index_type))
             copy_dir(src_path, dst_path)
 
     def end_creating_index(self):
