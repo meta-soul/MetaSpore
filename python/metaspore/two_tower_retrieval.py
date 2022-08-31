@@ -150,15 +150,16 @@ class TwoTowerIndexBuilder(object):
     def _make_item_ids_schema(self):
         from pyspark.sql.types import StructType
         from pyspark.sql.types import StructField
+        from pyspark.sql.types import LongType
         from pyspark.sql.types import StringType
         from pyspark.sql.types import FloatType
         from pyspark.sql.types import ArrayType
         if self.agent.output_item_embeddings:
-            schema = StructType([StructField('id', StringType(), True),
+            schema = StructType([StructField('id', LongType(), True),
                                  StructField('name', StringType(), True),
                                  StructField('item_embedding', ArrayType(FloatType()), True)])
         else:
-            schema = StructType([StructField('id', StringType(), True),
+            schema = StructType([StructField('id', LongType(), True),
                                  StructField('name', StringType(), True)])
         return schema
 
@@ -870,10 +871,18 @@ class TwoTowerRetrievalHelperMixin(object):
 
 class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
     def _transform_rec_info(self, rec_info, item_ids_dataset):
+        # ``_transform_rec_info`` transforms raw ``rec_info`` into more usable form
+        # with the help of ``item_ids_dataset``.
+        #
+        # In raw ``rec_info``, ``indices`` hold the raw item indices returned from
+        # the embedding retrieval engine (Faiss, Milvus or others). During the
+        # transformation process, those raw item indices are mapped to more readable
+        # form by ``item_ids_dataset``.
         import pyspark.sql.functions as F
         if self.output_user_embeddings:
             user_embeddings = rec_info.select(self.increasing_id_column_name,
                                               self.recommendation_info_column_name + '.user_embedding')
+        # zip, explode and rename
         rec_info = rec_info.withColumn(self.recommendation_info_column_name,
                                        F.arrays_zip(
                                            self.recommendation_info_column_name + '.indices',
@@ -885,6 +894,7 @@ class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
                                    'pos',
                                    F.col(self.recommendation_info_column_name + '.0').alias('index'),
                                    F.col(self.recommendation_info_column_name + '.1').alias('distance'))
+        # join and reverse the explode process
         rec_info = rec_info.join(item_ids_dataset, F.col('index') == F.col('id'))
         w = pyspark.sql.Window.partitionBy(self.increasing_id_column_name).orderBy('pos')
         if self.output_item_embeddings:
