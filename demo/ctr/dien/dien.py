@@ -73,7 +73,6 @@ def read_dataset(spark):
     return train_dataset, test_dataset
     
 def train(spark, trian_dataset, **model_params):
-    ## init wide and deep model
     module = DIEN(column_name_path = column_name_path,
                 dien_combine_schema_path = dien_combine_schema_path,
                 wide_combine_schema_path = wide_combine_schema_path,
@@ -130,7 +129,7 @@ def train(spark, trian_dataset, **model_params):
                                   dien_auxilary_loss_weight = dien_auxilary_loss_weight) 
     train_dataset.show(20)
     model = estimator.fit(trian_dataset)
-     ## dnn learning rate
+     ##learning rate
     estimator.updater = ms.AdamTensorUpdater(adam_learning_rate)
     import subprocess
     run_res = subprocess.run(['aws', 's3', 'ls', model_out_path], 

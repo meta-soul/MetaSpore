@@ -80,7 +80,7 @@ def sample(row, movie_list, sep=u'\u0001'):
 
 def negative_sequence(spark, fg_dataset, sep=u'\u0001'):
     rows = fg_dataset.withColumn('genre', F.regexp_replace('genre', sep, '\|'))\
-                     .select('movie_id', 'year', 'genre')\
+                     .select('movie_id', 'genre', 'year')\
                      .distinct()\
                      .rdd.map(lambda x: (x[0], x[1], x[2])).collect()
     movie_list_br = spark.sparkContext.broadcast([[x[0] for x in rows], [x[1] for x in rows], [x[2] for x in rows]])
