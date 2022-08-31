@@ -16,7 +16,7 @@ test_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/test.parquet
 
 ## model configurations
 din_column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIN.txt
-din_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_DIN.txt
+din_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema.txt
 wide_column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIN.txt
 wide_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/combine_column_schema_wide.txt
 deep_column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/1m/rank/column_schema_DIN.txt
@@ -44,8 +44,8 @@ din_hidden_layers: [32, 16]
 din_hidden_activations: dice
 din_hidden_batch_norm: True
 din_hidden_dropout: 0.25
-din_seq_column_index_list: [1, 3]
-din_target_column_index_list: [2, 4]
+din_seq_column_index_list: [1]
+din_target_column_index_list: [2, 3]
 deep_hidden_units: [32, 16]
 deep_hidden_activations: ReLU
 deep_hidden_dropout: 0.2

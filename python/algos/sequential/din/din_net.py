@@ -56,6 +56,7 @@ class DIN(torch.nn.Module):
                 ):
         super().__init__()
         
+        assert len(din_seq_column_index_list)==len(din_target_column_index_list), "din_seq_column_index_list与din_target_column_index_list必须等长"
         self.use_wide = use_wide
         self.use_deep = use_deep
 

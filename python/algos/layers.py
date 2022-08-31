@@ -395,29 +395,22 @@ class CompressedInteractionNet(torch.nn.Module):
 class DIEN_DIN_AttLayer(torch.nn.Module):
     def __init__(self, input_dim, att_hidden_size, att_activation, att_dropout, use_att_bn):
         super(DIEN_DIN_AttLayer, self).__init__()
-        self.att_mlp_layers = MLPLayer(input_dim = input_dim*4, 
-                                       output_dim = 1, 
-                                       hidden_units = att_hidden_size, 
-                                       hidden_activations = att_activation, 
-                                       final_activation = att_activation,
-                                       dropout_rates = att_dropout, 
-                                       batch_norm = use_att_bn)
+        self.att_mlp_layers = MLPLayer(input_dim=input_dim*4, output_dim=1, hidden_units=att_hidden_size, hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
         
     def forward(self, query, keys, keys_length):
         batch_size, max_length, dim = keys.size()
-        mask_mat = torch.arange(max_length).view(1, -1)  
-        query = query.repeat(1, max_length)
-        query = query.view(-1, max_length, dim)
+        mask_mat = torch.arange(max_length).view(1, -1)
+        query = query.unsqueeze(1).expand(batch_size, max_length, dim)
         input_tensor = torch.cat([query, keys, query-keys, query*keys], dim=-1)
         input_tensor = input_tensor.view(batch_size * max_length, -1) # [B*T 4*H]
         output = self.att_mlp_layers(input_tensor).view(batch_size, max_length) #[B T]
-        mask = mask_mat.repeat(output.shape[0], 1)
+        mask = mask_mat.expand(output.shape[0], -1)
         mask = (mask >= keys_length.unsqueeze(1))
         mask_value = 0.0
         output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
         output = output.unsqueeze(1)
         output = output / (keys.shape[-1] ** 0.5)
-        output = torch.nn.functional.softmax(output, dim=-1)
+        outputs = torch.nn.functional.softmax(output, dim=-1)
         output = torch.matmul(output, keys) 
         return output
         
