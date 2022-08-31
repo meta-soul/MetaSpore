@@ -15,9 +15,9 @@
 //
 
 #include <common/logger.h>
-#include <serving/arrow_helpers.h>
-#include <serving/arrow_record_batch_serde.h>
-#include <serving/arrow_tensor_serde.h>
+#include <common/arrow/arrow_helpers.h>
+#include <common/arrow/arrow_record_batch_serde.h>
+#include <common/arrow/arrow_tensor_serde.h>
 #include <serving/converters.h>
 #include <serving/dense_feature_extraction_model.h>
 #include <serving/grpc_input_output.h>
@@ -25,7 +25,7 @@
 #include <serving/ort_model.h>
 #include <serving/sparse_feature_extraction_model.h>
 #include <serving/sparse_lookup_model.h>
-#include <serving/utils.h>
+#include <common/utils.h>
 
 namespace metaspore::serving {
 

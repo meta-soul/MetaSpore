@@ -14,6 +14,10 @@
 # limitations under the License.
 #
 
+# Import pyarrow first, otherwise importing _metaspore may fail due to
+# wrong RUNPATH set in _metaspore.so.
+import pyarrow
+
 from ._metaspore import NodeRole
 from ._metaspore import ActorConfig
 from ._metaspore import PSRunner
@@ -44,6 +48,8 @@ from .agent import Agent
 from .model import Model
 from .model import SparseModel
 from .metric import ModelMetric
+from .metric import BasicModelMetric
+from .metric import BinaryClassificationModelMetric
 from .distributed_trainer import DistributedTrainer
 from .experiment import Experiment
 
@@ -100,6 +106,8 @@ from . import nn
 from . import input
 from . import output
 from . import spark
+from . import s3_utils
+from . import feature_group
 from . import patching_pickle
 from . import demo
 

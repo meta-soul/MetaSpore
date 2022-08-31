@@ -17,7 +17,7 @@
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/process/system.hpp>
 #include <boost/process/search_path.hpp>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <serving/py_preprocessing_process.h>
 
 using namespace metaspore::serving;

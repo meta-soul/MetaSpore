@@ -51,7 +51,7 @@ public class ThreadPoolService {
                 getMaximumPoolSize(threadPool),
                 getKeepAliveTime(threadPool),
                 getTimeunit(threadPool),
-                new ArrayBlockingQueue<Runnable>(getCapacity(threadPool)), Executors.defaultThreadFactory(),
+                new ArrayBlockingQueue<>(getCapacity(threadPool)), Executors.defaultThreadFactory(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
     }
     /**
@@ -65,7 +65,7 @@ public class ThreadPoolService {
                 getMaximumPoolSize(threadPool),
                 getKeepAliveTime(threadPool),
                 getTimeunit(threadPool),
-                new ArrayBlockingQueue<Runnable>(getCapacity(threadPool)), Executors.defaultThreadFactory(),
+                new ArrayBlockingQueue<>(getCapacity(threadPool)), Executors.defaultThreadFactory(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
     }
     /**
@@ -79,7 +79,7 @@ public class ThreadPoolService {
                 getMaximumPoolSize(threadPool),
                 getKeepAliveTime(threadPool),
                 getTimeunit(threadPool),
-                new ArrayBlockingQueue<Runnable>(getCapacity(threadPool)), Executors.defaultThreadFactory(),
+                new ArrayBlockingQueue<>(getCapacity(threadPool)), Executors.defaultThreadFactory(),
                 new ThreadPoolExecutor.CallerRunsPolicy());
     }
 

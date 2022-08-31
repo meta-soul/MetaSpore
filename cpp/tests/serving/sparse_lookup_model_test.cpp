@@ -15,14 +15,15 @@
 //
 
 #include <arrow/api.h>
-#include <serving/arrow_helpers.h>
+#include <common/arrow/arrow_helpers.h>
 #include <serving/sparse_lookup_model.h>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 
 #include <thread>
 
 using namespace std::chrono_literals;
 
+using namespace metaspore;
 using namespace metaspore::serving;
 
 TEST(SparseLookupModelTestSuite, SparseLookupModelTest) {

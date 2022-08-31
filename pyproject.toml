@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metaspore"
-version = "1.0.2"
+version = "1.1.0"
 description = "Metaspore: A Unified End-to-end Machine Intelligence Platform"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -34,16 +34,22 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
-    'numpy>=1.20.1',
-    'pandas>=1.2.3',
-    'nest_asyncio>=1.5.1',
-    'cloudpickle>=1.6.0',
-    'pyarrow>=3.0.0',
-    'PyYAML>=5.3.1',
-    'boto3>=1.17.41',
-    'python-consul>=1.1.0',
-    'findspark>=1.4.2',
-    'tabulate'
+    'numpy~=1.23.2',
+    'pandas~=1.4.3',
+    'findspark~=2.0.1',
+    'cloudpickle~=2.1.0',
+    'nest-asyncio~=1.5.5',
+    'attrs~=22.1.0',
+    'cattrs~=22.1.0',
+    'PyYAML~=5.4.1',
+    'tabulate~=0.8.10',
+    'pyarrow==7.0.0',
+    'botocore==1.24.21',
+    'boto3==1.21.21',
+    'awscli==1.22.76',
+    'awscli-plugin-endpoint~=0.4',
+    'fsspec[s3]~=2022.7.1',
+    'python-consul~=1.1.0',
 ]
 
 [project.urls]
@@ -51,16 +57,16 @@ repository = "https://github.com/meta-soul/MetaSpore"
 
 [tool.setuptools.packages.find]
 where = ["python"]
-include = ["metaspore", "metaspore.nn", "metaspore.compat", "ps"]
+include = ["metaspore", "metaspore.nn", "metaspore.compat", "metaspore.compat.ps", "ps"]
 
 [tool.cibuildwheel]
-manylinux-x86_64-image = "dmetasoul/py-wheel-env-manylinux2014:v1.0.1"
+manylinux-x86_64-image = "dmetasoul/py-wheel-env-manylinux2014:v1.1.0"
 build = "*-manylinux_x86_64"
 skip = ["cp36-*", "cp37-*", "cp311-*", "pp*"]
 
 [tool.cibuildwheel.linux]
-before-all = "python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && pushd /opt/_internal && tar -xJf static-libs-for-embedding-only.tar.xz && popd"
-before-build = "rm -rf /opt/metaspore-build-release/ && cmake -B /opt/metaspore-build-release -S {project} -DCMAKE_PREFIX_PATH=/opt/vcpkg_installed/x64-linux -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_TESTS=OFF -DBUILD_SERVING_BIN=OFF -DBUILD_TRAIN_PKG=ON && cmake --build /opt/metaspore-build-release --target metaspore_shared -- -j`nproc`"
+before-all = "pushd /opt/_internal && tar -xJf static-libs-for-embedding-only.tar.xz && popd"
+before-build = "python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/ && python -m pip install 'grpcio[protobuf]==1.37.1' pyarrow==7.0.0 numpy --no-cache-dir && rm -rf /opt/metaspore-build-release/ && cmake -B /opt/metaspore-build-release -S {project} -DCMAKE_PREFIX_PATH=/opt/vcpkg_installed/x64-linux -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_TESTS=OFF -DBUILD_SERVING_BIN=OFF -DBUILD_TRAIN_PKG=ON && cmake --build /opt/metaspore-build-release --target metaspore_shared -- -j`nproc`"
 
 [tool.cibuildwheel.linux.environment]
 _METASPORE_SO = "/opt/metaspore-build-release/_metaspore.so"

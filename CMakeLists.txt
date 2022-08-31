@@ -16,7 +16,7 @@
 
 cmake_minimum_required(VERSION 3.20 FATAL_ERROR)
 project(metaspore
-    VERSION 1.0.1
+    VERSION 1.1.0
     LANGUAGES CXX
     DESCRIPTION "MetaSpore AI Platform"
     HOMEPAGE_URL "https://github.com/meta-soul/MetaSpore.git"
@@ -36,6 +36,10 @@ endif()
 if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 11)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-free-nonheap-object")
 endif()
+
+# pyarrow does not enable _GLIBCXX_USE_CXX11_ABI, so do we
+string(REPLACE "-D_GLIBCXX_USE_CXX11_ABI=1" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+string(APPEND CMAKE_CXX_FLAGS " -D_GLIBCXX_USE_CXX11_ABI=0")
 
 option(BUILD_TRAIN_PKG "Enable training package build" ON)
 option(BUILD_SERVING_BIN "Enable serving binary build" ON)
