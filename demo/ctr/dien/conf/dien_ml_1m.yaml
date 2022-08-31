@@ -1,11 +1,11 @@
 ## spark session
 app_name: 'CTR Demo DIEN'
 local: True
-worker_count: 2
-server_count: 2
-worker_cpu: 2
-server_cpu: 2
-batch_size: 1000
+worker_count: 1
+server_count: 1
+worker_cpu: 1
+server_cpu: 1
+batch_size: 512
 worker_memory: '5G'
 server_memory: '5G'
 coordinator_memory: '5G'
@@ -25,20 +25,18 @@ model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dien/model_out/ml_1m/
 ## model_export_path: s3://dmetasoul-bucket/demo/movielens/model/din/model_export/ml_1m/
 model_version: '0.1'
 experiment_name: movie_lens_din_1m
-metric_update_interval: 100
+metric_update_interval: 30
 
 ## model hyper params
 sparse_init_var: 0.01
-adam_learning_rate: 0.0001
-use_wide: True
-use_deep: True
+adam_learning_rate: 0.0005
+use_wide: False
+use_deep: False
 input_label_column_index: 0
-
 # feature column
-post_item_seq: [1]
+pos_item_seq: [1]
 neg_item_seq: [2]
 target_item: [3]
-
 # dien
 dien_embedding_size: 30
 dien_gru_num_layer: 1
@@ -46,22 +44,17 @@ dien_aux_hidden_units: [32,16]
 dien_use_aux_bn: False
 dien_aux_dropout: 0
 dien_aux_activation: 'Sigmoid'
-
 dien_att_hidden_units: [40]
 dien_use_att_bn: False
 dien_att_dropout: 0
 dien_att_activation: 'Sigmoid'
-
 dien_dnn_hidden_units: [64,16]
 dien_use_dnn_bn: True
 dien_dnn_dropout: 0.1
 dien_dnn_activation: 'Dice'
-
 dien_use_gru_bias: False
-
 dien_target_loss_weight: 1.0
-dien_auxilary_loss_weight: 1.0
-
+dien_auxilary_loss_weight: 0
 # deep
 deep_hidden_units: [64,16]
 deep_dropout: 0.1
@@ -69,6 +62,5 @@ deep_activation: 'relu'
 use_deep_bn: True
 use_deep_bias: True
 deep_embedding_size: 30
-
 # wide
 wide_embedding_size: 30

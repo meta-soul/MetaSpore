@@ -30,46 +30,35 @@ class DIEN(torch.nn.Module):
             sparse_init_var = 0.01,
             use_wide = True,
             use_deep = True,
-                 
-            post_item_seq = [1],
+            pos_item_seq = [1],
             neg_item_seq = [2],
             target_item = [3],
-                 
             dien_embedding_size = 30,
-            dien_gru_num_layer = 1,
-                 
+            dien_gru_num_layer = 1,     
             dien_aux_hidden_units = [32,16],
             dien_use_aux_bn = False,
             dien_aux_dropout = 0,
             dien_aux_activation = 'Sigmoid',
-
             dien_att_hidden_units = [40],
             dien_use_att_bn = False,
             dien_att_dropout = 0,
             dien_att_activation = 'Sigmoid',
-
             dien_dnn_hidden_units = [64,16],
             dien_use_dnn_bn = True,
             dien_dnn_dropout = 0.1,
             dien_dnn_activation = 'Dice',
-                 
             dien_use_gru_bias = False,
-
             deep_hidden_units = [64,16],
             deep_dropout = 0.1,
             deep_activation = 'relu',
             use_deep_bn = True,
             use_deep_bias = True,
             deep_embedding_size = 30,
-
             wide_embedding_size = 30,
             ):
         super().__init__()
         self.use_wide = use_wide
         self.use_deep = use_deep
-        self.post_item_seq_index = post_item_seq
-        self.neg_item_seq_index = neg_item_seq
-        self.target_item_index = target_item
         
         # wide
         if self.use_wide:
@@ -103,10 +92,21 @@ class DIEN(torch.nn.Module):
         self.dien_embedding_layer.updater = ms.FTRLTensorUpdater()
         self.dien_embedding_layer.itializer = ms.NormalTensorInitializer(var=sparse_init_var)
         
-         # feature count
+        # The number of columns assigned to target_item,pos_item_seq and neg_item_seq must be same
+        assert len(target_item) == len(pos_item_seq) and len(target_item) == len(neg_item_seq) and len(pos_item_seq) == len(neg_item_seq),"The number of columns assigned to target_item,pos_item_seq and neg_item_seq must be same"
+        
+
+        # feature count
         self.total_feature_count = self.dien_embedding_layer.feature_count
         self.item_feature_count = len(target_item)
         self.non_seq_feature_count = self.total_feature_count - 3*self.item_feature_count
+        
+        
+        self.pos_item_seq_index = pos_item_seq
+        self.neg_item_seq_index = neg_item_seq
+        self.target_item_index = target_item
+        self.non_seq_index = [i for i in range(self.total_feature_count) if i not in self.pos_item_seq_index+self.neg_item_seq_index+self.target_item_index]
+        
 
         self.intereset_extractor = InterestExtractorNetwork(embedding_size = dien_embedding_size*self.item_feature_count, 
                                                             gru_hidden_size = dien_embedding_size*self.item_feature_count, 
@@ -145,42 +145,38 @@ class DIEN(torch.nn.Module):
         x_reshape = [x[offset[i]:offset[i+1],:] for i in range(offset.shape[0]-1)]
         x_reshape.append(x[offset[offset.shape[0]-1]:x.shape[0],:])
         return x_reshape
+    
+    def get_feature_concat(self,x,slice_index_list):
+        feature_list = []
+        for slice_index in slice_index_list:
+            single_feature = torch.squeeze(pad_sequence(x[slice_index::self.total_feature_count],batch_first=True))
+            feature_list.append(single_feature)
+        return torch.cat(feature_list, dim=-1)
 
     def forward(self, x):
         x = self.get_field_embedding_list(x) 
         
         # calculate sequence length
-        seq_length = [seq.shape[0] for seq in x[self.post_item_seq_index[0]::self.total_feature_count]]
+        seq_length = [seq.shape[0] for seq in x[self.pos_item_seq_index[0]::self.total_feature_count]]
         
-        # split feature
-        post_item_seq, neg_item_seq, target_item, non_seq_feature = [], [], [], []
-        for feature_index in range(self.total_feature_count):
-            feature = x[feature_index::self.total_feature_count]
-        # for every column
-            if feature_index in self.post_item_seq_index: # collect positive item sequence feature
-                post_item_seq.append(torch.nn.utils.rnn.pad_sequence(feature,batch_first=True))
-                
-            elif feature_index in self.neg_item_seq_index: # collect negtive item sequence feature
-                neg_item_seq.append(torch.nn.utils.rnn.pad_sequence(feature,batch_first=True))
-                
-            elif feature_index in self.target_item_index: # collect target item feature
-                target_item.append(torch.stack(feature).squeeze())
-                
-            else:# collect non sequence feature
-                non_seq_feature.append(torch.stack(feature).squeeze())
-         
-        # concat four categories of feature
-        target_item, non_seq_feature = torch.cat(target_item, dim=-1), torch.cat(non_seq_feature, dim=-1)
-        post_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = torch.cat(post_item_seq, dim=-1), 
+        # split feature      
+        non_seq_feature = self.get_feature_concat(x, self.target_item_index)
+        target_item = self.get_feature_concat(x, self.target_item_index)
+        pos_item_seq = self.get_feature_concat(x, self.pos_item_seq_index)
+        neg_item_seq = self.get_feature_concat(x, self.neg_item_seq_index)
+        
+        # pack sequential feature
+        pos_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = pos_item_seq, 
                                                                      lengths = seq_length , 
                                                                      batch_first = True, 
                                                                      enforce_sorted = False)
-        neg_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = torch.cat(neg_item_seq, dim=-1), 
+        neg_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = neg_item_seq, 
                                                                     lengths = seq_length , 
                                                                     batch_first = True, 
                                                                     enforce_sorted = False)
         
-        interest, aux_loss = self.intereset_extractor(post_item_seq_pack, neg_item_seq_pack)
+        
+        interest, aux_loss = self.intereset_extractor(pos_item_seq_pack, neg_item_seq_pack)
         evolution = self.interest_evolution(target_item, interest)
         dien_in = torch.cat([ target_item, non_seq_feature, evolution], dim=-1)
         logit = self.dnn_predict_layers(dien_in)

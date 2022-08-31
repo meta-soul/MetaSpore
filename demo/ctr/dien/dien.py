@@ -80,37 +80,30 @@ def train(spark, trian_dataset, **model_params):
                 sparse_init_var = sparse_init_var,
                 use_wide = use_wide,
                 use_deep = use_deep,
-
-                post_item_seq = post_item_seq,
+                pos_item_seq = pos_item_seq,
                 neg_item_seq = neg_item_seq,
-                target_item = target_item,
-                  
+                target_item = target_item,        
                 dien_embedding_size = dien_embedding_size,
                 dien_gru_num_layer = dien_gru_num_layer,
                 dien_aux_hidden_units = dien_aux_hidden_units,
                 dien_use_aux_bn = dien_use_aux_bn,
                 dien_aux_dropout = dien_aux_dropout,
                 dien_aux_activation = dien_aux_activation,
-
                 dien_att_hidden_units = dien_att_hidden_units,
                 dien_use_att_bn = dien_use_att_bn,
                 dien_att_dropout = dien_att_dropout,
                 dien_att_activation = dien_att_activation,
-
                 dien_dnn_hidden_units = dien_dnn_hidden_units,
                 dien_use_dnn_bn = dien_use_dnn_bn,
                 dien_dnn_dropout = dien_dnn_dropout,
-                dien_dnn_activation = dien_dnn_activation,
-                  
+                dien_dnn_activation = dien_dnn_activation,   
                 dien_use_gru_bias = dien_use_gru_bias,
-                  
                 deep_hidden_units = deep_hidden_units,
                 deep_dropout = deep_dropout,
                 deep_activation = deep_activation,
                 use_deep_bn = use_deep_bn,
                 use_deep_bias = use_deep_bias,
                 deep_embedding_size = deep_embedding_size,
-
                 wide_embedding_size = wide_embedding_size
                 ) #None
     
