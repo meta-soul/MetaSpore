@@ -89,6 +89,7 @@ else:
 try:
     import pyspark
     import faiss
+    import pymilvus
 except ImportError:
     pass
 else:

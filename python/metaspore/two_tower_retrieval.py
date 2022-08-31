@@ -400,12 +400,12 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         from pymilvus import connections
         host = self.milvus_host
         port = self.milvus_port
-        print("Create milvus connection %s" % self.milvus_alias)
+        print("Open milvus connection %s" % self.milvus_alias)
         connections.connect(alias=self.milvus_alias, host=host, port=str(port))
 
     def _close_milvus_connection(self):
         from pymilvus import connections
-        print("Release milvus connection %s" % self.milvus_alias)
+        print("Close milvus connection %s" % self.milvus_alias)
         connections.disconnect(alias=self.milvus_alias)
 
     def _drop_milvus_collection_if_exists(self):
@@ -439,6 +439,11 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         milvus_collection_name = self.milvus_collection_name
         print("Load milvus collection %s" % milvus_collection_name)
         self._milvus_collection = Collection(name=milvus_collection_name, using=milvus_alias)
+        self._milvus_collection.load()
+
+    def _release_milvus_collection(self):
+        milvus_collection_name = self.milvus_collection_name
+        print("Release milvus collection %s" % milvus_collection_name)
         self._milvus_collection.load()
 
     def _get_milvus_schema(self):
@@ -499,7 +504,6 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         self._open_milvus_connection()
         self._drop_milvus_collection_if_exists()
         self._create_milvus_collection()
-        self._load_milvus_collection()
 
     def end_creating_index(self):
         self._create_milvus_index()
@@ -524,6 +528,8 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             self._open_milvus_collection()
 
     def end_querying_index(self):
+        if self.agent.is_coordinator:
+            self._release_milvus_collection()
         self._close_milvus_connection()
         super().end_querying_index()
 
