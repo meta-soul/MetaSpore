@@ -137,16 +137,22 @@ class DIN(torch.nn.Module):
         x_reshape.append(x[offset[offset.shape[0]-1]:x.shape[0],:])
         return x_reshape
     
+    def get_seq_length(self, seq_column_index_list, x, offset, column_nums):
+        start_idx = self.seq_column_index_list[0]+1
+        item_seq_length = [offset[i] - offset[i-1] for i in range(start_idx, offset.shape[0], column_nums)]
+        if start_idx == column_nums:
+            item_seq_length.append(x.shape[0]-offset[-1])
+        item_seq_length = torch.tensor(item_seq_length)
+        return item_seq_length
+                       
     def forward(self, x):
-        x, offset = self.embedding_table(x)     
+        x, offset = self.embedding_table(x) 
         x_reshape = self.get_field_embedding_list(x, offset)
         column_nums = self.feature_nums
-        other_embedding = None
         other_embedding = self.get_non_seq_column_embedding(self.other_column_index_list, x_reshape, column_nums)
-        target_embedding = self.get_non_seq_column_embedding(self.target_column_index_list, x_reshape, column_nums)               
+        target_embedding = self.get_non_seq_column_embedding(self.target_column_index_list, x_reshape, column_nums)  
         seq_embedding = self.get_seq_column_embedding(self.seq_column_index_list, x_reshape, column_nums)
-        item_seq_length = [offset[i] - offset[i-1] for i in range(self.seq_column_index_list[0]+1, offset.shape[0], column_nums)]
-        item_seq_length = torch.tensor(item_seq_length)
+        item_seq_length = self.get_seq_length(self.seq_column_index_list, x, offset, column_nums)
         all_sum_pooling = self.DIN_attention(target_embedding, seq_embedding, item_seq_length).squeeze()
         emb_concat = torch.cat((other_embedding, all_sum_pooling, target_embedding), dim=1)     
         din_out = self.mlp(emb_concat) 

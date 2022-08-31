@@ -44,8 +44,8 @@ din_hidden_layers: [32, 16]
 din_hidden_activations: dice
 din_hidden_batch_norm: True
 din_hidden_dropout: 0.25
-din_seq_column_index_list: [1]
-din_target_column_index_list: [2]
+din_seq_column_index_list: [2]
+din_target_column_index_list: [1]
 deep_hidden_units: [32, 16]
 deep_hidden_activations: ReLU
 deep_hidden_dropout: 0.2
