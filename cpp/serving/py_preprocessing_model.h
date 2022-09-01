@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <serving/metaspore.pb.h>
+#include <common/metaspore.pb.h>
 #include <serving/model_base.h>
 
 namespace metaspore::serving {

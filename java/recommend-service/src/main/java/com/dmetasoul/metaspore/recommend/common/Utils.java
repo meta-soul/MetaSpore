@@ -24,6 +24,8 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.param.MetricType;
 import io.milvus.param.R;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
@@ -60,7 +62,11 @@ public class Utils {
         return value;
     }
 
-    public Object getField(Map map, String key) {
+    public static <T> T getField(Map<String, Object> data, String field) {
+        return getField(data, field, null);
+    }
+
+    public Object getObject(Map map, String key) {
         if (MapUtils.isNotEmpty(map) && map.containsKey(key)) {
             return map.get(key);
         }
@@ -138,14 +144,14 @@ public class Utils {
         Class<?> cla = obj.getClass();
         Field[] fields = cla.getDeclaredFields();
         for (Field field : fields) {
-            field.setAccessible(true);
-            String keyName = field.getName();
-            Object value = field.get(obj);
-            map.put(keyName, value);
+            if (field.trySetAccessible()) {
+                String keyName = field.getName();
+                Object value = field.get(obj);
+                map.put(keyName, value);
+            }
         }
         return map;
     }
-
     public static <T> T get(List<T> list, int index, T value) {
         if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {
             return list.get(index);

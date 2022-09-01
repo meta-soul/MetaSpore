@@ -22,14 +22,19 @@ import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
+import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
+import io.grpc.netty.shaded.io.netty.channel.epoll.EpollSocketChannel;
 import lombok.Data;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
+import org.bouncycastle.util.Strings;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
@@ -49,49 +54,54 @@ public class AlgoInferenceTask extends AlgoTransformTask {
     protected String modelName;
     protected String targetKey;
     protected int targetIndex;
-    protected String address;
-    protected String host;
-    protected int port;
     protected int maxReservation;
     protected String algoName;
-
     protected ManagedChannel channel;
-
     protected PredictGrpc.PredictBlockingStub client;
 
     public boolean initTask() {
         modelName = getOptionOrDefault("modelName", DEFAULT_MODEL_NAME);
         targetKey = getOptionOrDefault("targetKey", TARGET_KEY);
         targetIndex = getOptionOrDefault("targetIndex", TARGET_INDEX);
-        host = getOptionOrDefault("host", "127.0.0.1");
-        port = getOptionOrDefault("port", 9091);
-        channel = ManagedChannelBuilder.forAddress(host, port).usePlaintext().build();
+        log.info("initManagedChannel name: {} algoTransform: {}", name, algoTransform);
+        log.info("initManagedChannel name: {} option: {}", name, algoTransform.getOptions());
+        channel = initManagedChannel(algoTransform.getOptions());
         client = PredictGrpc.newBlockingStub(channel);
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
-        algoName = getOptionOrDefault("algo-name", "itemCF");
+        algoName = getOptionOrDefault("algo-name", "two_tower");
         return true;
+    }
+
+    public ManagedChannel initManagedChannel(@NonNull  Map<String, Object> option) {
+        String host = Utils.getField(option, "host", "127.0.0.1");
+        int port = Utils.getField(option, "port", 50000);
+        NegotiationType negotiationType = NegotiationType.valueOf(Strings.toUpperCase((String) option.getOrDefault("negotiationType", "plaintext")));
+        NettyChannelBuilder channelBuilder = NettyChannelBuilder.forAddress(host, port)
+                .keepAliveWithoutCalls((Boolean) option.getOrDefault("enableKeepAliveWithoutCalls", false))
+                .negotiationType(negotiationType)
+                .keepAliveTime((Long) option.getOrDefault("keepAliveTime", 300L), TimeUnit.SECONDS)
+                .keepAliveTimeout((Long) option.getOrDefault("keepAliveTimeout", 10L), TimeUnit.SECONDS);
+        return channelBuilder.build();
     }
 
     @Override
     public void addFunctions() {
         addFunction("genEmbedding", (fields, result, options) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FeatureTable featureTable = convFeatureTable(String.format("embedding_%s", name), fields);
             String targetName = Utils.getField(options, "targetKey", targetKey);
-            ArrowTensor arrowTensor = predict(featureTable, targetName);
+            String model = getOptionOrDefault("modelName", modelName);
+            ArrowTensor arrowTensor = predict(featureTable, model, targetName);
             List<Object> res = Lists.newArrayList();
             res.addAll(getFromTensor(arrowTensor));
             result.get(0).setValue(res, getFieldIndex(fields));
             return true;
         });
         addFunction("predictScore", (fields, result, options) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input fields must not empty");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FeatureTable featureTable = convFeatureTable(String.format("predict_%s", name), fields);
             String targetName = Utils.getField(options, "targetKey", targetKey);
             int index = Utils.getField(options, "targetIndex", targetIndex);
-            ArrowTensor arrowTensor = predict(featureTable, targetName);
+            String model = getOptionOrDefault("modelName", modelName);
+            ArrowTensor arrowTensor = predict(featureTable, model, targetName);
             List<Object> res = Lists.newArrayList();
             res.addAll(getFromTensor(arrowTensor, index));
             result.get(0).setValue(res, getFieldIndex(fields));
@@ -116,18 +126,14 @@ public class AlgoInferenceTask extends AlgoTransformTask {
         });
     }
 
+    @SneakyThrows
     @Override
     public void close() {
-        try {
-            while (!channel.isTerminated() && channel.awaitTermination(10, TimeUnit.MILLISECONDS)) {
-                Thread.yield();
-            }
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        if (channel == null || channel.isShutdown()) return;
+        channel.shutdown().awaitTermination(1, TimeUnit.SECONDS);
     }
 
-    protected ArrowTensor predict(FeatureTable featureTable, String targetKey) {
+    protected ArrowTensor predict(FeatureTable featureTable, String modelName, String targetKey) {
         Map<String, ArrowTensor> npsResultMap;
         try {
             npsResultMap = ServingClient.predictBlocking(client, modelName, List.of(featureTable), Collections.emptyMap());

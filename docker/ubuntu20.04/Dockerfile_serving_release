@@ -44,13 +44,14 @@ RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/
-RUN python -m pip install grpcio-tools numpy pyarrow --no-cache-dir
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+RUN python -m pip install 'grpcio[protobuf]==1.37.1' pyarrow==7.0.0 numpy --no-cache-dir
 
 FROM ${BUILD_IMAGE} as build_stage
 
 FROM serving_base as serving_release
 COPY --from=build_stage /opt/metaspore-serving/ /opt/metaspore-serving
+COPY --from=build_stage /opt/metaspore-build-release/libarrow.so* /opt/metaspore-serving/bin/
 COPY --from=build_stage /opt/metaspore-build-release/libonnxruntime* /opt/metaspore-serving/bin/
 COPY --from=build_stage /opt/metaspore-build-release/libstdc++.so* /opt/metaspore-serving/bin/
 COPY --from=build_stage /opt/metaspore-build-release/libgcc_s.so* /opt/metaspore-serving/bin/

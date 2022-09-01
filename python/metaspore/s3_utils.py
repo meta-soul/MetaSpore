@@ -14,6 +14,110 @@
 # limitations under the License.
 #
 
+import collections
+_cached_s3_config = None
+_cached_s3fs_config = None
+_cached_s3fs = None
+_s3_config_fields = 'aws_region', 'aws_endpoint', 'aws_access_key_id', 'aws_secret_access_key'
+S3Config = collections.namedtuple('S3Config', _s3_config_fields)
+
+def get_s3_config():
+    import os
+    import configparser
+    global _cached_s3_config
+    if _cached_s3_config is not None:
+        return _cached_s3_config
+    aws_region = None
+    aws_endpoint = None
+    aws_access_key_id = None
+    aws_secret_access_key = None
+    config_file_path = os.path.expanduser('~/.aws/config')
+    credentials_file_path = os.path.expanduser('~/.aws/credentials')
+    parser = configparser.ConfigParser()
+    parser.read(config_file_path)
+    try:
+        aws_region = parser['default']['region']
+    except KeyError:
+        pass
+    try:
+        s3_value = parser['default']['s3']
+    except KeyError:
+        s3_value = None
+    if s3_value is not None:
+        kv_config = dict()
+        for line in s3_value.strip().splitlines():
+            key, _, value = line.partition('=')
+            kv_config[key.strip()] = value.strip()
+        aws_endpoint = kv_config.get('endpoint_url')
+    parser = configparser.ConfigParser()
+    parser.read(credentials_file_path)
+    try:
+        aws_access_key_id = parser['default']['aws_access_key_id']
+    except KeyError:
+        pass
+    try:
+        aws_secret_access_key = parser['default']['aws_secret_access_key']
+    except KeyError:
+        pass
+    region = os.environ.get('AWS_REGION')
+    if region:
+        aws_region = region
+    endpoint = os.environ.get('AWS_ENDPOINT')
+    if endpoint:
+        aws_endpoint = endpoint
+    access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+    if access_key_id:
+        aws_access_key_id = access_key_id
+    secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    if secret_access_key:
+        aws_secret_access_key = secret_access_key
+    if aws_endpoint:
+        if not aws_endpoint.startswith('http://') and not aws_endpoint.startswith('https://'):
+            aws_endpoint = 'http://' + aws_endpoint
+    config = S3Config(aws_region, aws_endpoint, aws_access_key_id, aws_secret_access_key)
+    if config.aws_region:
+        os.environ['AWS_REGION'] = config.aws_region
+    else:
+        os.environ.unsetenv('AWS_REGION')
+    if config.aws_endpoint:
+        os.environ['AWS_ENDPOINT'] = config.aws_endpoint
+    else:
+        os.environ.unsetenv('AWS_ENDPOINT')
+    if config.aws_access_key_id:
+        os.environ['AWS_ACCESS_KEY_ID'] = config.aws_access_key_id
+    else:
+        os.environ.unsetenv('AWS_ACCESS_KEY_ID')
+    if config.aws_secret_access_key:
+        os.environ['AWS_SECRET_ACCESS_KEY'] = config.aws_secret_access_key
+    else:
+        os.environ.unsetenv('AWS_SECRET_ACCESS_KEY')
+    _cached_s3_config = config
+    return config
+
+def get_s3fs_config():
+    global _cached_s3fs_config
+    if _cached_s3fs_config is not None:
+        return _cached_s3fs_config
+    config = get_s3_config()
+    conf = dict(
+        anon=False,
+        key=config.aws_access_key_id,
+        secret=config.aws_secret_access_key,
+        config_kwargs={'proxies': {}, 'region_name': config.aws_region},
+        client_kwargs={'endpoint_url': config.aws_endpoint}
+    )
+    _cached_s3fs_config = conf
+    return conf
+
+def get_s3fs():
+    import fsspec
+    global _cached_s3fs
+    if _cached_s3fs is not None:
+        return _cached_s3fs
+    fs = fsspec.filesystem('s3', **get_s3fs_config())
+    _cached_s3fs = fs
+    return fs
+
 def parse_s3_url(s3_url):
     from urllib.parse import urlparse
     r = urlparse(s3_url, allow_fragments=False)
@@ -30,17 +134,12 @@ def parse_s3_dir_url(s3_url):
     return bucket, path
 
 def get_aws_endpoint():
-    import os
-    endpoint = os.environ.get('AWS_ENDPOINT')
-    if endpoint is not None:
-        if not endpoint.startswith('http://') and not endpoint.startswith('https://'):
-            endpoint = 'http://' + endpoint
-    return endpoint
+    config = get_s3_config()
+    return config.aws_endpoint
 
 def get_aws_region():
-    import os
-    region = os.environ.get('AWS_REGION')
-    return region
+    config = get_s3_config()
+    return config.aws_region
 
 def get_s3_client():
     import boto3

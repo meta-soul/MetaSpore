@@ -19,6 +19,9 @@ package com.dmetasoul.metaspore.recommend.common;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.stereotype.Component;
@@ -85,6 +88,27 @@ public class SpringBeanUtil implements ApplicationContextAware {
 
     public static Map<String, Object> getBeanMapByAnnotation(Class<? extends Annotation> clazz) {
         return ctx.getBeansWithAnnotation(clazz);
+    }
+
+    public static <T> T registerBean(String name, Class<T> clazz, Object... args) {
+        if (ctx.containsBean(name)) {
+            Object bean = ctx.getBean(name);
+            if (bean.getClass().isAssignableFrom(clazz)) {
+                return (T) bean;
+            } else {
+                throw new RuntimeException("can't register, exist bean:" + name);
+            }
+        }
+        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(clazz);
+        for (Object arg : args) {
+            beanDefinitionBuilder.addConstructorArgValue(arg);
+        }
+        BeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
+
+        BeanDefinitionRegistry beanFactory = (BeanDefinitionRegistry) ctx.getParentBeanFactory();
+        assert beanFactory != null;
+        beanFactory.registerBeanDefinition(name, beanDefinition);
+        return ctx.getBean(name, clazz);
     }
 
 }
