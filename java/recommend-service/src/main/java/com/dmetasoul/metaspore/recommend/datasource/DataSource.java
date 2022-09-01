@@ -21,6 +21,7 @@ import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.actuate.health.Status;
 
 import java.util.List;
 import java.util.Map;
@@ -71,4 +72,7 @@ public abstract class DataSource {
      *  datasource 根据request和context获取数据，目前除source=request外，获取数据的操作均转移到具体的SourceTableTask中实现
      */
     public List<Map<String, Object>> process(ServiceRequest request, DataContext context) {return null;}
+
+    public void doHealthCheck(Status status, Map<String, Object> details, Throwable exception) throws Exception {
+    }
 }

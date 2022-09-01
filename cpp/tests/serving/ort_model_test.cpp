@@ -15,12 +15,13 @@
 //
 
 #include <serving/ort_model.h>
-#include <serving/test_utils.h>
+#include <common/test_utils.h>
 #include <boost/asio/use_future.hpp>
 
 #include <fstream>
 #include <thread>
 
+using namespace metaspore;
 using namespace metaspore::serving;
 using namespace std::chrono_literals;
 using namespace std::string_literals;

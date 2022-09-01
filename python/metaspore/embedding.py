@@ -19,9 +19,10 @@ import os
 import numpy
 import torch
 from . import _metaspore
-from ._metaspore import CombineSchema
-from ._metaspore import IndexBatch
+from ._metaspore import SparseFeatureExtractor
 from ._metaspore import HashUniquifier
+from .feature_group import SparseFeatureGroup
+from .url_utils import is_url
 from .url_utils import use_s3
 from .file_utils import file_exists
 from .name_utils import is_valid_qualified_name
@@ -35,7 +36,7 @@ class EmbeddingBagModule(torch.nn.Module):
         self.second_dim = feature_count * emb_size
         self.emb_size = emb_size
         self.feature_count = feature_count
-        self.embedding_bag_mode=mode
+        self.embedding_bag_mode = mode
 
     def forward(self, input, weight, offsets, batch_size):
         embs = torch.nn.functional.embedding_bag(input, weight, offsets, mode=self.embedding_bag_mode)
@@ -77,31 +78,24 @@ class EmbeddingBagModule(torch.nn.Module):
 class EmbeddingOperator(torch.nn.Module):
     def __init__(self,
                  embedding_size=None,
-                 column_name_file_path=None,
+                 combine_schema_source=None,
                  combine_schema_file_path=None,
-                 delimiter=None,
                  dtype=torch.float32,
                  requires_grad=True,
                  updater=None,
                  initializer=None,
-                 alternative_column_name_file_path=None,
                  output_batchsize1_if_only_level0=False,
                  use_nan_fill=False,
                  save_as_text=False,
-                 embedding_bag_mode='sum',
+                 embedding_bag_mode='sum'
                 ):
         if embedding_size is not None:
             if not isinstance(embedding_size, int) or embedding_size <= 0:
                 raise TypeError(f"embedding_size must be positive integer; {embedding_size!r} is invalid")
-        if column_name_file_path is not None:
-            if not isinstance(column_name_file_path, str) or not file_exists(column_name_file_path):
-                raise RuntimeError(f"column name file {column_name_file_path!r} not found")
-        if combine_schema_file_path is not None:
-            if not isinstance(combine_schema_file_path, str) or not file_exists(combine_schema_file_path):
-                raise RuntimeError(f"combine schema file {combine_schema_file_path!r} not found")
-        if delimiter is not None:
-            if not isinstance(delimiter, str) or len(delimiter) != 1:
-                raise TypeError(f"delimiter must be string of length 1; {delimiter!r} is invalid")
+        if isinstance(combine_schema_source, SparseFeatureGroup):
+            if combine_schema_file_path is not None:
+                raise ValueError("can not specify combine_schema_file_path when SparseFeatureGroup is provided")
+            combine_schema_source = combine_schema_source.schema_source
         if dtype not in (torch.float32, torch.float64):
             raise TypeError(f"dtype must be one of: torch.float32, torch.float64; {dtype!r} is invalid")
         if updater is not None:
@@ -110,30 +104,28 @@ class EmbeddingOperator(torch.nn.Module):
         if initializer is not None:
             if not isinstance(initializer, TensorInitializer):
                 raise TypeError(f"initializer must be TensorInitializer; {initializer!r} is invalid")
-        if alternative_column_name_file_path is not None:
-            if not isinstance(alternative_column_name_file_path, str) or not file_exists(alternative_column_name_file_path):
-                raise RuntimeError(f"alternative column name file {alternative_column_name_file_path!r} not found")
         self._check_embedding_bag_mode(embedding_bag_mode)
         super().__init__()
         self._embedding_size = embedding_size
-        self._column_name_file_path = column_name_file_path
-        self._combine_schema_file_path = combine_schema_file_path
-        self._delimiter = delimiter
+        self._combine_schema_source = None
+        self._combine_schema_file_path = None
+        if combine_schema_file_path is not None:
+            self.combine_schema_file_path = combine_schema_file_path
+        elif combine_schema_source is not None:
+            self.combine_schema_source = combine_schema_source
         self._dtype = dtype
         self._requires_grad = requires_grad
         self._updater = updater
         self._initializer = initializer
         self._is_backing = False
         self._is_exported = True
-        self._alternative_column_name_file_path = alternative_column_name_file_path
         self._output_batchsize1_if_only_level0 = output_batchsize1_if_only_level0
         self._use_nan_fill = use_nan_fill
         self._save_as_text = save_as_text
         self._embedding_bag_mode = embedding_bag_mode
         self._distributed_tensor = None
-        self._combine_schema_source = None
-        self._combine_schema = None
-        if self._column_name_file_path is not None and self._combine_schema_file_path is not None:
+        self._feature_extractor = None
+        if self._combine_schema_source is not None:
             self._load_combine_schema()
 
         # init a embedding_bag
@@ -146,45 +138,28 @@ class EmbeddingOperator(torch.nn.Module):
         self.sparse_embedding_bag.export_onnx(path, name)
 
     @torch.jit.unused
-    def _load_combine_schema(self, use_alternative_column_name_file=False):
-        if self._combine_schema is not None:
+    def _load_combine_schema(self):
+        if self._feature_extractor is not None:
             raise RuntimeError("combine schema has been loaded")
-        if use_alternative_column_name_file:
-            column_name_file_path = self._checked_get_alternative_column_name_file_path()
-        else:
-            column_name_file_path = self._checked_get_column_name_file_path()
-        combine_schema_file_path = self._checked_get_combine_schema_file_path()
-        self._combine_schema = CombineSchema()
-        self._combine_schema.load_column_name_from_file(use_s3(column_name_file_path))
-        self._combine_schema.load_combine_schema_from_file(use_s3(combine_schema_file_path))
-        self._combine_schema_source = self._combine_schema.combine_schema_source
+        combine_schema_source = self._checked_get_combine_schema_source()
+        # For offline, the table name does not matter. Use a placeholder value.
+        table_name = '_sparse'
+        self._feature_extractor = SparseFeatureExtractor(table_name, combine_schema_source)
         string = f"\033[32mloaded combine schema from\033[m "
-        string += f"\033[32mcolumn name file \033[m{column_name_file_path!r} "
-        string += f"\033[32mand combine schema file \033[m{combine_schema_file_path!r}"
+        string += f"\033[32mcombine schema file \033[m{self.combine_schema_file_path!r}"
         print(string)
 
     @torch.jit.unused
-    def reload_combine_schema(self, use_alternative_column_name_file=False):
-        if use_alternative_column_name_file and self._alternative_column_name_file_path is None:
-            raise RuntimeError("alternative_column_name_file_path is not set")
-        self._combine_schema = None
-        self._load_combine_schema(use_alternative_column_name_file)
-
-    @torch.jit.unused
     def _ensure_combine_schema_loaded(self):
-        if self._combine_schema is None:
+        if self._feature_extractor is None:
             self._load_combine_schema()
 
     def __repr__(self):
         args = []
         if self._embedding_size is not None:
             args.append(f"{self._embedding_size}")
-        if self._column_name_file_path is not None:
-            args.append(f"column_name_file_path={self._column_name_file_path!r}")
         if self._combine_schema_file_path is not None:
             args.append(f"combine_schema_file_path={self._combine_schema_file_path!r}")
-        if self._delimiter is not None:
-            args.append(f"delimiter={self._delimiter!r}")
         if self._dtype is not None and self._dtype is not torch.float32:
             args.append(f"dtype={self._dtype}")
         if not self._requires_grad:
@@ -193,8 +168,6 @@ class EmbeddingOperator(torch.nn.Module):
             args.append(f"updater={self._updater!r}")
         if self._initializer is not None:
             args.append(f"initializer={self._initializer!r}")
-        if self._alternative_column_name_file_path is not None:
-            args.append(f"alternative_column_name_file_path={self._alternative_column_name_file_path!r}")
         if self._output_batchsize1_if_only_level0:
             args.append(f"output_batchsize1_if_only_level0={self._output_batchsize1_if_only_level0!r}")
         if self._use_nan_fill:
@@ -226,27 +199,6 @@ class EmbeddingOperator(torch.nn.Module):
 
     @property
     @torch.jit.unused
-    def column_name_file_path(self):
-        return self._column_name_file_path
-
-    @column_name_file_path.setter
-    @torch.jit.unused
-    def column_name_file_path(self, value):
-        if value is not None:
-            if not isinstance(value, str) or not file_exists(value):
-                raise RuntimeError(f"column name file {value!r} not found")
-        if self._column_name_file_path is not None:
-            raise RuntimeError(f"can not reset column_name_file_path {self._column_name_file_path!r} to {value!r}")
-        self._column_name_file_path = value
-
-    @torch.jit.unused
-    def _checked_get_column_name_file_path(self):
-        if self._column_name_file_path is None:
-            raise RuntimeError("column_name_file_path is not set")
-        return self._column_name_file_path
-
-    @property
-    @torch.jit.unused
     def is_backing(self):
         return self._is_backing
 
@@ -267,29 +219,24 @@ class EmbeddingOperator(torch.nn.Module):
 
     @property
     @torch.jit.unused
-    def has_alternative_column_name_file_path(self):
-        return self._alternative_column_name_file_path is not None
+    def combine_schema_source(self):
+        return self._combine_schema_source
 
-    @property
+    @combine_schema_source.setter
     @torch.jit.unused
-    def alternative_column_name_file_path(self):
-        return self._alternative_column_name_file_path
-
-    @alternative_column_name_file_path.setter
-    @torch.jit.unused
-    def alternative_column_name_file_path(self, value):
+    def combine_schema_source(self, value):
         if value is not None:
-            if not isinstance(value, str) or not file_exists(value):
-                raise RuntimeError(f"alternative column name file {value!r} not found")
-        if self._alternative_column_name_file_path is not None:
-            raise RuntimeError(f"can not reset alternative_column_name_file_path {self._alternative_column_name_file_path!r} to {value!r}")
-        self._alternative_column_name_file_path = value
+            if not isinstance(value, str):
+                raise TypeError(f"combine_schema_source must be string; {value!r} is invalid")
+        if self._combine_schema_source is not None:
+            raise RuntimeError(f"can not reset combine_schema_source {self._combine_schema_source!r} to {value!r}")
+        self.combine_schema_file_path = value
 
     @torch.jit.unused
-    def _checked_get_alternative_column_name_file_path(self):
-        if self._alternative_column_name_file_path is None:
-            raise RuntimeError("alternative_column_name_file_path is not set")
-        return self._alternative_column_name_file_path
+    def _checked_get_combine_schema_source(self):
+        if self._combine_schema_source is None:
+            raise RuntimeError("combine_schema_source is not set")
+        return self._combine_schema_source
 
     @property
     @torch.jit.unused
@@ -300,11 +247,24 @@ class EmbeddingOperator(torch.nn.Module):
     @torch.jit.unused
     def combine_schema_file_path(self, value):
         if value is not None:
-            if not isinstance(value, str) or not file_exists(value):
-                raise RuntimeError(f"combine schema file {value!r} not found")
+            if not isinstance(value, str):
+                raise TypeError(f"combine_schema_file_path must be string; {value!r} is invalid")
         if self._combine_schema_file_path is not None:
             raise RuntimeError(f"can not reset combine_schema_file_path {self._combine_schema_file_path!r} to {value!r}")
-        self._combine_schema_file_path = value
+        if value is None:
+            self._combine_schema_source = None
+            self._combine_schema_file_path = None
+        else:
+            if is_url(value):
+                value = use_s3(value)
+                if not file_exists(value):
+                    raise RuntimeError(f"combine schema file {value!r} not found")
+                combine_schema_data = _metaspore.stream_read_all(value)
+                self._combine_schema_source = combine_schema_data.decode('utf-8')
+                self._combine_schema_file_path = value
+            else:
+                self._combine_schema_source = value
+                self._combine_schema_file_path = '<string>'
 
     @torch.jit.unused
     def _checked_get_combine_schema_file_path(self):
@@ -314,32 +274,11 @@ class EmbeddingOperator(torch.nn.Module):
 
     @property
     @torch.jit.unused
-    def delimiter(self):
-        return self._delimiter
-
-    @delimiter.setter
-    @torch.jit.unused
-    def delimiter(self, value):
-        if value is not None:
-            if not isinstance(value, str) or len(value) != 1:
-                raise TypeError(f"delimiter must be string of length 1; {value!r} is invalid")
-        if self._delimiter is not None:
-            raise RuntimeError(f"can not reset delimiter {self._delimiter!r} to {value!r}")
-        self._delimiter = value
-
-    @torch.jit.unused
-    def _checked_get_delimiter(self):
-        if self._delimiter is None:
-            return '\001'
-        return self._delimiter
-
-    @property
-    @torch.jit.unused
     def feature_count(self):
-        schema = self._combine_schema
-        if schema is None:
+        extractor = self._feature_extractor
+        if extractor is None:
             raise RuntimeError(f"combine schema is not loaded; can not get feature count")
-        count = schema.feature_count
+        count = extractor.feature_count
         return count
 
     @property
@@ -526,14 +465,16 @@ class EmbeddingOperator(torch.nn.Module):
         self._data.requires_grad = self.training and self.requires_grad
 
     @torch.jit.unused
-    def _combine_to_indices_and_offsets(self, ndarrays, feature_offset):
-        delim = self._checked_get_delimiter()
-        batch = IndexBatch(ndarrays, delim)
-        indices, offsets = self._combine_schema.combine_to_indices_and_offsets(batch, feature_offset)
+    def _combine_to_indices_and_offsets(self, minibatch, feature_offset):
+        import pyarrow as pa
+        batch = pa.RecordBatch.from_pandas(minibatch)
+        indices, offsets = self._feature_extractor.extract(batch)
+        if not feature_offset:
+            offsets = offsets[::self.feature_count]
         return indices, offsets
 
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
+    def _do_combine(self, minibatch):
         raise NotImplementedError
 
     @torch.jit.unused
@@ -542,10 +483,10 @@ class EmbeddingOperator(torch.nn.Module):
         return keys
 
     @torch.jit.unused
-    def _combine(self, ndarrays):
+    def _combine(self, minibatch):
         self._clean()
         self._ensure_combine_schema_loaded()
-        self._indices, self._indices_meta = self._do_combine(ndarrays)
+        self._indices, self._indices_meta = self._do_combine(minibatch)
         self._keys = self._uniquify_hash_codes(self._indices)
 
     @torch.jit.unused
@@ -661,8 +602,8 @@ class EmbeddingOperator(torch.nn.Module):
 
 class EmbeddingSumConcat(EmbeddingOperator):
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
-        return self._combine_to_indices_and_offsets(ndarrays, True)
+    def _do_combine(self, minibatch):
+        return self._combine_to_indices_and_offsets(minibatch, True)
 
     @torch.jit.unused
     def _do_compute(self):
@@ -675,8 +616,8 @@ class EmbeddingSumConcat(EmbeddingOperator):
 
 class EmbeddingRangeSum(EmbeddingOperator):
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
-        return self._combine_to_indices_and_offsets(ndarrays, False)
+    def _do_combine(self, minibatch):
+        return self._combine_to_indices_and_offsets(minibatch, False)
 
     @torch.jit.unused
     def _do_compute(self):
@@ -689,8 +630,8 @@ class EmbeddingRangeSum(EmbeddingOperator):
 
 class EmbeddingLookup(EmbeddingOperator):
     @torch.jit.unused
-    def _do_combine(self, ndarrays):
-        return self._combine_to_indices_and_offsets(ndarrays, True)
+    def _do_combine(self, minibatch):
+        return self._combine_to_indices_and_offsets(minibatch, True)
 
     @torch.jit.unused
     def _do_compute(self):

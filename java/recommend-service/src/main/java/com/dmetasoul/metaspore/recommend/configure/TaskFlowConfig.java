@@ -67,87 +67,107 @@ public class TaskFlowConfig {
     }
 
     public void featureCheckAndInit() {
-        for (FeatureConfig.Source item : featureConfig.getSource()) {
-            if (!item.checkAndDefault()) {
-                log.error("Source item {} is check fail!", item.getName());
-                throw new RuntimeException("Source check fail!");
+        if (featureConfig == null) return;
+        if (CollectionUtils.isNotEmpty(featureConfig.getSource())) {
+            for (FeatureConfig.Source item : featureConfig.getSource()) {
+                if (!item.checkAndDefault()) {
+                    log.error("Source item {} is check fail!", item.getName());
+                    throw new RuntimeException("Source check fail!");
+                }
+                sources.put(item.getName(), item);
             }
-            sources.put(item.getName(), item);
         }
-        for (FeatureConfig.SourceTable item : featureConfig.getSourceTable()) {
-            FeatureConfig.Source source = sources.get(item.getSource());
-            if (source == null) {
-                log.error("SourceTable: {} source {} is not config!", item.getName(), item.getSource());
-                throw new RuntimeException("SourceTable check fail!");
+        if (CollectionUtils.isNotEmpty(featureConfig.getSourceTable())) {
+            for (FeatureConfig.SourceTable item : featureConfig.getSourceTable()) {
+                FeatureConfig.Source source = sources.get(item.getSource());
+                if (source == null) {
+                    log.error("SourceTable: {} source {} is not config!", item.getName(), item.getSource());
+                    throw new RuntimeException("SourceTable check fail!");
+                }
+                if (!item.checkAndDefault()) {
+                    log.error("SourceTable item {} is check fail!", item.getName());
+                    throw new RuntimeException("SourceTable check fail!");
+                }
+                if (source.getKind().equalsIgnoreCase("redis") && item.getColumnNames().size() != 2) {
+                    log.error("SourceTable: {} from redis column size only support 2!", item.getName());
+                    throw new RuntimeException("SourceTable check fail!");
+                }
+                item.setKind(source.getKind());
+                if (item.getKind().equalsIgnoreCase("Redis") || item.getKind().equalsIgnoreCase("MongoDB")
+                        || item.getKind().equalsIgnoreCase("JDBC")) {
+                    item.setTaskName(item.getKind() + item.getTaskName());
+                }
+                sourceTables.put(item.getName(), item);
             }
-            if (!item.checkAndDefault()) {
-                log.error("SourceTable item {} is check fail!", item.getName());
-                throw new RuntimeException("SourceTable check fail!");
-            }
-            if (source.getKind().equalsIgnoreCase("redis") && item.getColumnNames().size() != 2) {
-                log.error("SourceTable: {} from redis column size only support 2!", item.getName());
-                throw new RuntimeException("SourceTable check fail!");
-            }
-            item.setKind(source.getKind());
-            if (item.getKind().equalsIgnoreCase("Redis") || item.getKind().equalsIgnoreCase("MongoDB")
-                || item.getKind().equalsIgnoreCase("JDBC")) {
-                item.setTaskName(item.getKind() + item.getTaskName());
-            }
-            sourceTables.put(item.getName(), item);
         }
-        for (FeatureConfig.Feature item : featureConfig.getFeature()) {
-            if (!item.checkAndDefault()) {
-                log.error("Feature item {} is check fail!", item.getName());
-                throw new RuntimeException("Feature check fail!");
+        if (CollectionUtils.isNotEmpty(featureConfig.getFeature())) {
+            for (FeatureConfig.Feature item : featureConfig.getFeature()) {
+                if (!item.checkAndDefault()) {
+                    log.error("Feature item {} is check fail!", item.getName());
+                    throw new RuntimeException("Feature check fail!");
+                }
+                features.put(item.getName(), item);
             }
-            features.put(item.getName(), item);
         }
-        for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
-            if (!item.checkAndDefault()) {
-                log.error("AlgoTransform item {} is check fail!", item.getName());
-                throw new RuntimeException("AlgoTransform check fail!");
+        if (CollectionUtils.isNotEmpty(featureConfig.getAlgoTransform())) {
+            for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
+                if (!item.checkAndDefault()) {
+                    log.error("AlgoTransform item {} is check fail!", item.getName());
+                    throw new RuntimeException("AlgoTransform check fail!");
+                }
+                algoTransforms.put(item.getName(), item);
             }
-            algoTransforms.put(item.getName(), item);
         }
     }
     public void recommendCheckAndInit() {
-        for (RecommendConfig.Service item: recommendConfig.getServices()) {
-            if (!item.checkAndDefault()) {
-                log.error("Service item {} is check fail!", item.getName());
-                throw new RuntimeException("Service check fail!");
+        if (recommendConfig == null) return;
+        if (CollectionUtils.isNotEmpty(recommendConfig.getServices())) {
+            for (RecommendConfig.Service item : recommendConfig.getServices()) {
+                if (!item.checkAndDefault()) {
+                    log.error("Service item {} is check fail!", item.getName());
+                    throw new RuntimeException("Service check fail!");
+                }
+                services.put(item.getName(), item);
             }
-            services.put(item.getName(), item);
         }
-        for (RecommendConfig.Experiment item: recommendConfig.getExperiments()) {
-            if (!item.checkAndDefault()) {
-                log.error("Experiment item {} is check fail!", item.getName());
-                throw new RuntimeException("Experiment check fail!");
+        if (CollectionUtils.isNotEmpty(recommendConfig.getExperiments())) {
+            for (RecommendConfig.Experiment item : recommendConfig.getExperiments()) {
+                if (!item.checkAndDefault()) {
+                    log.error("Experiment item {} is check fail!", item.getName());
+                    throw new RuntimeException("Experiment check fail!");
+                }
+                experiments.put(item.getName(), item);
             }
-            experiments.put(item.getName(), item);
         }
-        for (RecommendConfig.Layer item: recommendConfig.getLayers()) {
-            for (RecommendConfig.ExperimentItem experimentItem : item.getExperiments()) {
-                if (!experiments.containsKey(experimentItem.getName())) {
-                    log.error("Layer: {} depend {} is not config!", item.getName(), experimentItem.getName());
+        if (CollectionUtils.isNotEmpty(recommendConfig.getLayers())) {
+            for (RecommendConfig.Layer item : recommendConfig.getLayers()) {
+                for (RecommendConfig.ExperimentItem experimentItem : item.getExperiments()) {
+                    if (!experiments.containsKey(experimentItem.getName())) {
+                        log.error("Layer: {} depend {} is not config!", item.getName(), experimentItem.getName());
+                        throw new RuntimeException("Layer check fail!");
+                    }
+                }
+                if (!item.checkAndDefault()) {
+                    log.error("Feature item {} is check fail!", item.getName());
                     throw new RuntimeException("Layer check fail!");
                 }
+                layers.put(item.getName(), item);
             }
-            if (!item.checkAndDefault()) {
-                log.error("Feature item {} is check fail!", item.getName());
-                throw new RuntimeException("Layer check fail!");
-            }
-            layers.put(item.getName(), item);
         }
-        for (RecommendConfig.Scene item: recommendConfig.getScenes()) {
-            if (!item.checkAndDefault()) {
-                log.error("AlgoTransform item {} is check fail!", item.getName());
-                throw new RuntimeException("Scene check fail!");
+        if (CollectionUtils.isNotEmpty(recommendConfig.getScenes())) {
+            for (RecommendConfig.Scene item : recommendConfig.getScenes()) {
+                if (!item.checkAndDefault()) {
+                    log.error("AlgoTransform item {} is check fail!", item.getName());
+                    throw new RuntimeException("Scene check fail!");
+                }
+                scenes.put(item.getName(), item);
             }
-            scenes.put(item.getName(), item);
         }
     }
 
     private void checkAlgoTransform() {
+        if (featureConfig == null) return;
+        if (CollectionUtils.isEmpty(featureConfig.getAlgoTransform())) return;
         for (FeatureConfig.AlgoTransform item : featureConfig.getAlgoTransform()) {
             Map<String, String> fieldMap = Maps.newHashMap();
             Set<String> dependSet = Sets.newHashSet();
@@ -207,6 +227,8 @@ public class TaskFlowConfig {
     }
 
     private void checkFeatureAndInit() {
+        if (featureConfig == null) return;
+        if (CollectionUtils.isEmpty(featureConfig.getFeature())) return;
         for (FeatureConfig.Feature item: featureConfig.getFeature()) {
             Set<String> immediateSet = Sets.newHashSet();
             Map<String, String> fieldMap = Maps.newHashMap();

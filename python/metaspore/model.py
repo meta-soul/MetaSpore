@@ -607,8 +607,7 @@ class SparseModel(Model):
                 tensor.item.export_sparse_embedding_bag(sparse_onnx_dir, name)
 
                 # copy the schema
-                data = _metaspore.stream_read_all(
-                    tensor.item.combine_schema_file_path)
+                data = tensor.item.combine_schema_source.encode('utf-8')
                 _metaspore.stream_write_all(
                     use_s3(path + '/' + dir + '/' + 'combine_schema.txt'), data)
 
@@ -682,10 +681,10 @@ class SparseModel(Model):
             asyncio.run(self._sparse_tensors_prune_old(max_age))
         self.agent.barrier()
 
-    def _execute_combine(self, ndarrays):
+    def _execute_combine(self, minibatch):
         for tensor in self._embedding_operators:
             if not tensor.is_backing:
-                tensor.item._combine(ndarrays)
+                tensor.item._combine(minibatch)
 
     def _execute_pull(self):
         asyncio.run(self._pull_tensors())
@@ -695,15 +694,15 @@ class SparseModel(Model):
             if not tensor.is_backing:
                 tensor.item._compute()
 
-    def _execute_cast(self, ndarrays):
+    def _execute_cast(self, minibatch):
         for mod in self._cast_operators:
-            mod._cast(ndarrays)
+            mod._cast(minibatch)
 
-    def __call__(self, ndarrays):
-        self._execute_combine(ndarrays)
+    def __call__(self, minibatch):
+        self._execute_combine(minibatch)
         self._execute_pull()
         self._execute_compute()
-        self._execute_cast(ndarrays)
+        self._execute_cast(minibatch)
         fake_input = torch.tensor(0.0)
         x = self.module(fake_input)
         return x

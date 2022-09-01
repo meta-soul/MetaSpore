@@ -206,6 +206,9 @@ feature-service:
         - origin_scores
     - name: algotransform_twotower_user_embedding
       taskName: AlgoInference
+      options:
+        host: localhost
+        port: 50000
       feature: feature_twotower_user
       fieldActions:
         - name: user_embedding
@@ -213,7 +216,8 @@ feature-service:
           fields: [ user_id, last_genre, gender, age, name, language ]
           func: genEmbedding
           options:
-            targetKey: "output"
+            modelName: two_towers_simplex
+            targetKey: output
         - name: user_id
           type: str
           fields: user_id

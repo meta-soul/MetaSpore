@@ -52,6 +52,11 @@ class metaspore_build_ext(build_ext):
         ext_so_path = self.get_ext_fullpath(ext.name)
         print(f'ext copy so cwd: {os.getcwd()} from {metaspore_so_path} to {ext_so_path}')
         shutil.copy(metaspore_so_path, ext_so_path)
+        src_libs_path = os.path.join(os.path.dirname(metaspore_so_path), '.libs')
+        dst_libs_path = os.path.join(os.path.dirname(ext_so_path), '.libs')
+        print(f'ext copy .libs cwd: {os.getcwd()} from {src_libs_path} to {dst_libs_path}')
+        shutil.rmtree(dst_libs_path, True)
+        shutil.copytree(src_libs_path, dst_libs_path)
 
 setup(
     ext_modules=[MetaSporeExtension('metaspore/_metaspore')],

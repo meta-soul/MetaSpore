@@ -23,7 +23,7 @@
 #include <serving/sparse_feature_extraction_model.h>
 #include <serving/sparse_lookup_model.h>
 #include <serving/tabular_model.h>
-#include <serving/threadpool.h>
+#include <common/threadpool.h>
 
 #include <filesystem>
 

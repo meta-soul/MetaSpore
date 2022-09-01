@@ -55,9 +55,9 @@ pip install torch==1.11.0+cpu -f https://download.pytorch.org/whl/cpu/torch_stab
 ```
 这两个依赖没有作为 metaspore wheel 的默认依赖，这样方便用户选择需要的版本。
 
-Spark 官方打包的 PySpark，没有包含 hadoop-cloud 的 jar 包，无法访问 S3 等云存储。我们提供了一个打包好 S3 客户端的 [PySpark 安装包](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2.f8301b97d4-py2.py3-none-any.whl)，可以从这里下载后安装：
+Spark 官方打包的 PySpark，没有包含 hadoop-cloud 的 jar 包，无法访问 S3 等云存储。我们提供了一个打包好 S3 客户端的 [PySpark 安装包](https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl)，可以从这里下载后安装：
 ```bash
-pip install pyspark-3.1.2.f8301b97d4-py2.py3-none-any.whl
+pip install pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl
 ```
 
 关于如何设置 S3 等云存储的访问，请参考 [配置 MetaSpore 离线训练 S3 访问权限](docs/s3-access-cn.md)

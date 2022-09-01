@@ -92,6 +92,17 @@ class SessionBuilder(object):
         builder.config('spark.kubernetes.executor.request.cores', str(num_threads))
         builder.config('spark.executorEnv.OMP_NUM_THREADS', str(num_threads))
 
+    def _config_env(self, builder, name, value):
+        import os
+        if value:
+            value = str(value)
+            os.environ[name] = value
+        else:
+            value = ''
+            os.environ.unsetenv(name)
+        builder.config('spark.executorEnv.%s' % (name,), value)
+        builder.config('spark.yarn.appMasterEnv.%s' % (name,), value)
+
     def _add_extra_configs(self, builder):
         builder.config('spark.python.worker.reuse', 'true')
         builder.config('spark.dynamicAllocation.enabled', 'false')
@@ -101,6 +112,19 @@ class SessionBuilder(object):
         builder.config('spark.yarn.maxAppAttempts', '1')
         builder.config('spark.scheduler.minRegisteredResourcesRatio', '1.0')
         builder.config('spark.scheduler.maxRegisteredResourcesWaitingTime', '1800s')
+
+    def _add_s3_configs(self, builder):
+        from .s3_utils import get_s3_config
+        config = get_s3_config()
+        self._config_env(builder, 'AWS_REGION', config.aws_region)
+        self._config_env(builder, 'AWS_ENDPOINT', config.aws_endpoint)
+        self._config_env(builder, 'AWS_ACCESS_KEY_ID', config.aws_access_key_id)
+        self._config_env(builder, 'AWS_SECRET_ACCESS_KEY', config.aws_secret_access_key)
+        if config.aws_endpoint:
+            builder.config('spark.hadoop.fs.s3a.endpoint', config.aws_endpoint)
+        builder.config('spark.hadoop.fs.s3a.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
+        builder.config('spark.hadoop.fs.s3.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
+        builder.config('spark.hadoop.fs.oss.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
 
     def _add_user_spark_configs(self, builder):
         for k, v in self.spark_confs.items():
@@ -114,6 +138,7 @@ class SessionBuilder(object):
         self._config_batch_size(builder)
         self._config_resources(builder)
         self._add_extra_configs(builder)
+        self._add_s3_configs(builder)
         self._add_user_spark_configs(builder)
         spark_session = builder.getOrCreate()
         spark_context = spark_session.sparkContext
