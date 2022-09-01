@@ -16,6 +16,7 @@
 
 import json
 import torch
+import numpy
 import faiss
 import pyspark
 from . import _metaspore
@@ -119,8 +120,34 @@ class TwoTowerIndexBuilder(object):
             self._item_ids_partition_path = '%s%s' % (dir_path, file_name)
         return self._item_ids_partition_path
 
+    @property
+    def have_item_ids_partition_files(self):
+        return self.agent.enable_item_id_mapping or self.agent.output_item_embeddings
+
     def _make_index_meta(self):
-        raise NotImplementedError
+        meta_version = 1
+        index_type = self.index_type
+        partition_count = self.agent.worker_count
+        item_embedding_size = self.agent.item_embedding_size
+        item_ids_field_delimiter = self.agent.item_ids_field_delimiter
+        item_ids_value_delimiter = self.agent.item_ids_value_delimiter
+        enable_item_id_mapping = self.agent.enable_item_id_mapping
+        output_item_embeddings = self.agent.output_item_embeddings
+        have_item_ids_partition_files = self.have_item_ids_partition_files
+        item_id_column_type = self.item_id_column_type
+        meta = {
+            'meta_version' : meta_version,
+            'index_type' : index_type,
+            'partition_count' : partition_count,
+            'item_embedding_size' : item_embedding_size,
+            'item_ids_field_delimiter' : item_ids_field_delimiter,
+            'item_ids_value_delimiter' : item_ids_value_delimiter,
+            'enable_item_id_mapping': enable_item_id_mapping,
+            'output_item_embeddings' : output_item_embeddings,
+            'have_item_ids_partition_files' : have_item_ids_partition_files,
+            'item_id_column_type' : item_id_column_type,
+        }
+        return meta
 
     def _output_index_meta(self):
         meta = self._make_index_meta()
@@ -135,6 +162,11 @@ class TwoTowerIndexBuilder(object):
         meta = json.loads(string)
         return meta
 
+    def get_index_meta(self):
+        if not hasattr(self, '_index_meta'):
+            self._index_meta = self._load_index_meta()
+        return self._index_meta
+
     def _open_item_ids_partition_output_stream(self):
         print("Open %s item ids mapping partition file: %s" % (self.index_type, self.item_ids_partition_path))
         _metaspore.ensure_local_directory(self.item_ids_dir)
@@ -143,32 +175,141 @@ class TwoTowerIndexBuilder(object):
     def _close_item_ids_partition_output_stream(self):
         self._item_ids_partition_output_stream = None
 
+    def _convert_spark_item_id_column_type(self, data_type):
+        from pyspark.sql.types import StringType
+        from pyspark.sql.types import IntegerType
+        from pyspark.sql.types import LongType
+        if isinstance(data_type, StringType):
+            return 'string'
+        elif isinstance(data_type, (IntegerType, LongType)):
+            return 'int64'
+        else:
+            message = f"item id column type must be one of: int, long, string; "
+            message += f"{data_type!r} is not supported"
+            raise RuntimeError(message)
+
+    @property
+    def item_id_column_type(self):
+        if not hasattr(self, '_item_id_column_type'):
+            item_id_column_name = self.agent.item_id_column_name
+            item_ids_column_indices = self.agent.item_ids_column_indices
+            item_ids_column_names = self.agent.item_ids_column_names
+            enable_item_id_mapping = self.agent.enable_item_id_mapping
+            if enable_item_id_mapping:
+                self._item_id_column_type = 'int64'
+            elif item_ids_column_indices is not None:
+                assert len(item_ids_column_indices) == 1
+                column_index = item_ids_column_indices[0]
+                item_dataset = self.agent.dataset
+                if column_index >= len(item_dataset.schema):
+                    message = f"column_index {column_index} in item_ids_column_indices is out of range; "
+                    message += f"item_dataset has only {len(item_dataset.schema)} columns"
+                    raise RuntimeError(message)
+                field = item_dataset.schema[column_index]
+                self._item_id_column_type = self._convert_spark_item_id_column_type(field.dataType)
+            else:
+                assert item_ids_column_names is not None
+                assert len(item_ids_column_names) == 1
+                column_name = item_ids_column_names[0]
+                item_dataset = self.agent.dataset
+                if column_name not in item_dataset.columns:
+                    message = f"column_name {column_name!r} in item_ids_column_names is not found "
+                    message += f"in the columns of item_dataset: {item_dataset.columns!r}"
+                    raise RuntimeError(message)
+                field = item_dataset.schema[column_name]
+                self._item_id_column_type = self._convert_spark_item_id_column_type(field.dataType)
+        return self._item_id_column_type
+
+    def get_item_id_ndarray(self, minibatch):
+        item_id_column_name = self.agent.item_id_column_name
+        item_ids_column_indices = self.agent.item_ids_column_indices
+        item_ids_column_names = self.agent.item_ids_column_names
+        enable_item_id_mapping = self.agent.enable_item_id_mapping
+        if enable_item_id_mapping:
+            column = minibatch.loc[:, item_id_column_name]
+        elif item_ids_column_indices is not None:
+            assert len(item_ids_column_indices) == 1
+            column_index = item_ids_column_indices[0]
+            column = minibatch.iloc[:, column_index]
+        else:
+            assert item_ids_column_names is not None
+            assert len(item_ids_column_names) == 1
+            column_name = item_ids_column_names[0]
+            column = minibatch.loc[:, column_name]
+        id_ndarray = column.values
+        return id_ndarray
+
+    def make_item_ids_mapping_batch(self, minibatch, embeddings, id_ndarray):
+        item_ids_column_indices = self.agent.item_ids_column_indices
+        item_ids_column_names = self.agent.item_ids_column_names
+        item_ids_field_delimiter = self.agent.item_ids_field_delimiter
+        item_ids_value_delimiter = self.agent.item_ids_value_delimiter
+        enable_item_id_mapping = self.agent.enable_item_id_mapping
+        output_item_embeddings = self.agent.output_item_embeddings
+        ids_data = ''
+        for i in range(len(id_ndarray)):
+            ids_data += str(id_ndarray[i])
+            ids_data += item_ids_field_delimiter
+            if enable_item_id_mapping:
+                if item_ids_column_indices is not None:
+                    for j, index in enumerate(item_ids_column_indices):
+                        if j > 0:
+                            ids_data += item_ids_value_delimiter
+                        field = minibatch.iloc[i, index]
+                        if field is not None:
+                            ids_data += str(field)
+                else:
+                    for j, column_name in enumerate(item_ids_column_names):
+                        if j > 0:
+                            ids_data += item_ids_value_delimiter
+                        field = minibatch.loc[i, column_name]
+                        if field is not None:
+                            ids_data += str(field)
+            if output_item_embeddings:
+                ids_data += item_ids_field_delimiter
+                for k, value in enumerate(embeddings[i]):
+                    if k > 0:
+                        ids_data += item_ids_value_delimiter
+                    ids_data += str(value)
+            ids_data += '\n'
+        return ids_data
+
     def output_item_ids_mapping_batch(self, ids_data):
         ids_data = ids_data.encode('utf-8')
         self._item_ids_partition_output_stream.write(ids_data)
 
-    def _make_item_ids_schema(self):
+    def _make_item_ids_schema(self, meta):
         from pyspark.sql.types import StructType
         from pyspark.sql.types import StructField
         from pyspark.sql.types import LongType
         from pyspark.sql.types import StringType
         from pyspark.sql.types import FloatType
         from pyspark.sql.types import ArrayType
-        if self.agent.output_item_embeddings:
-            schema = StructType([StructField('id', LongType(), True),
-                                 StructField('name', StringType(), True),
-                                 StructField('item_embedding', ArrayType(FloatType()), True)])
+        enable_item_id_mapping = meta['enable_item_id_mapping']
+        output_item_embeddings = meta['output_item_embeddings']
+        item_id_column_type = meta['item_id_column_type']
+        fields = []
+        if enable_item_id_mapping:
+            fields.append(StructField('id', LongType(), True))
+            fields.append(StructField('name', StringType(), True))
         else:
-            schema = StructType([StructField('id', LongType(), True),
-                                 StructField('name', StringType(), True)])
+            id_column_type = LongType() if item_id_column_type == 'int64' else StringType()
+            fields.append(StructField('id', id_column_type, True))
+        if output_item_embeddings:
+            fields.append(StructField('item_embedding', ArrayType(FloatType()), True))
+        schema = StructType(fields)
         return schema
 
     def load_item_ids(self):
         from .input import read_s3_csv
+        meta = self.get_index_meta()
+        item_ids_field_delimiter = meta['item_ids_field_delimiter']
+        item_ids_value_delimiter = meta['item_ids_value_delimiter']
+        have_item_ids_partition_files = meta['have_item_ids_partition_files']
+        if not have_item_ids_partition_files:
+            return None
         spark = self.agent.spark_session
-        schema = self._make_item_ids_schema()
-        item_ids_field_delimiter = self.agent.item_ids_field_delimiter
-        item_ids_value_delimiter = self.agent.item_ids_value_delimiter
+        schema = self._make_item_ids_schema(meta)
         df = read_s3_csv(spark, self.item_ids_dir,
                          schema=schema,
                          delimiter=item_ids_field_delimiter,
@@ -178,17 +319,28 @@ class TwoTowerIndexBuilder(object):
     def search_item_embedding_batch(self, embeddings):
         raise NotImplementedError
 
+    def _copy_index_files(self):
+        if self.agent.model_export_path is not None:
+            from .url_utils import use_s3
+            from .file_utils import copy_dir
+            src_path = use_s3('%s%s/' % (self.agent.model_in_path, self.index_type))
+            dst_path = use_s3('%s%s/' % (self.agent.model_export_path, self.index_type))
+            copy_dir(src_path, dst_path)
+
     def begin_creating_index(self):
         pass
 
     def end_creating_index(self):
-        pass
+        self._output_index_meta()
+        self._copy_index_files()
 
     def begin_creating_index_partition(self):
-        self._open_item_ids_partition_output_stream()
+        if self.have_item_ids_partition_files:
+            self._open_item_ids_partition_output_stream()
 
     def end_creating_index_partition(self):
-        self._close_item_ids_partition_output_stream()
+        if self.have_item_ids_partition_files:
+            self._close_item_ids_partition_output_stream()
 
     def begin_querying_index(self):
         pass
@@ -233,24 +385,10 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
         return self._item_index_partition_path
 
     def _make_index_meta(self):
-        meta_version = 1
-        partition_count = self.agent.worker_count
-        item_ids_field_delimiter = self.agent.item_ids_field_delimiter
-        item_ids_value_delimiter = self.agent.item_ids_value_delimiter
-        output_item_embeddings = self.agent.output_item_embeddings
-        meta = {
-            'meta_version' : meta_version,
-            'partition_count' : partition_count,
-            'item_ids_field_delimiter' : item_ids_field_delimiter,
-            'item_ids_value_delimiter' : item_ids_value_delimiter,
-            'output_item_embeddings' : output_item_embeddings,
-        }
+        meta = super()._make_index_meta()
+        meta['faiss_index_description'] = self.faiss_index_description
+        meta['faiss_metric_type'] = self.faiss_metric_type
         return meta
-
-    def _get_index_partition_count(self):
-        meta = self._load_index_meta()
-        partition_count = meta['partition_count']
-        return partition_count
 
     def _get_index_pattition_path(self, item_index_dir, partition_count, rank):
         partition_path = '%spart_%d_%d.dat' % (item_index_dir, partition_count, rank)
@@ -274,13 +412,31 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
         item_index_writer = faiss.PyCallbackIOWriter(item_index_stream.write)
         faiss.write_index(self._faiss_index, item_index_writer)
 
+    def _convert_spark_item_id_column_type(self, data_type):
+        # the faiss index only supports int64 item id
+        _item_id_column_type = super()._convert_spark_item_id_column_type(data_type)
+        return 'int64'
+
+    def get_item_id_ndarray(self, minibatch):
+        id_ndarray = super().get_item_id_ndarray(minibatch)
+        if id_ndarray.dtype != numpy.int64:
+            try:
+                id_ndarray = id_ndarray.astype(numpy.int64)
+            except ValueError as ex:
+                message = "the faiss index only supports int64 item id, "
+                message += "can not convert the item id ndarray to int64 numpy ndarray; "
+                message += "consider setting enable_item_id_mapping=True"
+                raise RuntimeError(message) from ex
+        return id_ndarray
+
     def output_item_embedding_batch(self, embeddings, id_ndarray):
         self._faiss_index.add_with_ids(embeddings, id_ndarray)
 
     def _load_faiss_index(self):
         item_index_dir = self.item_index_dir
-        partition_count = self._get_index_partition_count()
-        item_embedding_size = self.agent.item_embedding_size
+        meta = self.get_index_meta()
+        partition_count = meta['partition_count']
+        item_embedding_size = meta['item_embedding_size']
         self._faiss_index = faiss.IndexShards(item_embedding_size, True, False)
         for rank in range(partition_count):
             index_partition_path = self._get_index_pattition_path(item_index_dir, partition_count, rank)
@@ -302,22 +458,6 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
 
     def _unload_faiss_index(self):
         del self._faiss_index
-
-    def begin_creating_index(self):
-        super().begin_creating_index()
-
-    def _copy_faiss_index(self):
-        if self.agent.model_export_path is not None:
-            from .url_utils import use_s3
-            from .file_utils import copy_dir
-            src_path = use_s3('%s%s/' % (self.agent.model_in_path, self.index_type))
-            dst_path = use_s3('%s%s/' % (self.agent.model_export_path, self.index_type))
-            copy_dir(src_path, dst_path)
-
-    def end_creating_index(self):
-        self._output_index_meta()
-        self._copy_faiss_index()
-        super().end_creating_index()
 
     def begin_creating_index_partition(self):
         super().begin_creating_index_partition()
@@ -345,6 +485,7 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         self.milvus_port = getattr(agent, 'milvus_port', 19530)
         self.milvus_item_id_field_name = getattr(agent, 'milvus_item_id_field_name', 'item_id')
         self.milvus_item_embedding_field_name = getattr(agent, 'milvus_item_embedding_field_name', 'item_embedding')
+        self.milvus_string_item_id_max_length = getattr(agent, 'milvus_string_item_id_max_length', 65535)
         self.milvus_index_type = getattr(agent, 'milvus_index_type', 'IVF_FLAT')
         self.milvus_index_params = getattr(agent, 'milvus_index_params', {'nlist': 1024})
         self.milvus_metric_type = getattr(agent, 'milvus_metric_type', 'IP')
@@ -361,6 +502,8 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             raise TypeError(f"milvus_item_id_field_name must be non-empty string; {self.milvus_item_id_field_name!r} is invalid")
         if not isinstance(self.milvus_item_embedding_field_name, str) or not self.milvus_item_embedding_field_name:
             raise TypeError(f"milvus_item_embedding_field_name must be non-empty string; {self.milvus_item_embedding_field_name!r} is invalid")
+        if not isinstance(self.milvus_string_item_id_max_length, int) or not 1 <= self.milvus_string_item_id_max_length <= 65535:
+            raise TypeError(f"milvus_string_item_id_max_length must be integer between 1 and 65535; {self.milvus_string_item_id_max_length!r} is invalid")
         if not isinstance(self.milvus_index_type, str) or not self.milvus_index_type:
             raise TypeError(f"milvus_index_type must be non-empty string; {self.milvus_index_type!r} is invalid")
         if not isinstance(self.milvus_index_params, dict):
@@ -378,6 +521,7 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             'milvus_port',
             'milvus_item_id_field_name',
             'milvus_item_embedding_field_name',
+            'milvus_string_item_id_max_length',
             'milvus_index_type',
             'milvus_index_params',
             'milvus_metric_type',
@@ -396,6 +540,20 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
                 worker_count = self.agent.worker_count
                 self._milvus_alias = '%s_connection_worker_%d_%d' % (milvus_collection_name, worker_count, rank)
         return self._milvus_alias
+
+    def _make_index_meta(self):
+        meta = super()._make_index_meta()
+        meta['milvus_collection_name'] = self.milvus_collection_name
+        meta['milvus_host'] = self.milvus_host
+        meta['milvus_port'] = self.milvus_port
+        meta['milvus_item_id_field_name'] = self.milvus_item_id_field_name
+        meta['milvus_item_embedding_field_name'] = self.milvus_item_embedding_field_name
+        meta['milvus_string_item_id_max_length'] = self.milvus_string_item_id_max_length
+        meta['milvus_index_type'] = self.milvus_index_type
+        meta['milvus_index_params'] = self.milvus_index_params
+        meta['milvus_metric_type'] = self.milvus_metric_type
+        meta['milvus_search_params'] = self.milvus_search_params
+        return meta
 
     def _open_milvus_connection(self):
         from pymilvus import connections
@@ -460,10 +618,14 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         item_id_field_name = self.milvus_item_id_field_name
         item_embedding_field_name = self.milvus_item_embedding_field_name
         item_embedding_size = self.agent.item_embedding_size
-        milvus_fields = [
-            FieldSchema(name=item_id_field_name, dtype=DataType.INT64, is_primary=True),
-            FieldSchema(name=item_embedding_field_name, dtype=DataType.FLOAT_VECTOR, dim=item_embedding_size)
-        ]
+        milvus_fields = []
+        if self.item_id_column_type == 'int64':
+            milvus_fields.append(FieldSchema(name=item_id_field_name, dtype=DataType.INT64, is_primary=True))
+        else:
+            milvus_fields.append(FieldSchema(name=item_id_field_name, dtype=DataType.VARCHAR, is_primary=True,
+                                             max_length=self.milvus_string_item_id_max_length))
+        milvus_fields.append(FieldSchema(name=item_embedding_field_name, dtype=DataType.FLOAT_VECTOR,
+                                         dim=item_embedding_size))
         return milvus_fields
 
     def _create_milvus_index(self):
@@ -588,7 +750,9 @@ class TwoTowerIndexBuildingAgent(TwoTowerIndexBaseAgent):
 
     def _default_feed_validation_dataset(self):
         import pyspark.sql.functions as F
-        df = self.dataset.withColumn(self.item_id_column_name, F.monotonically_increasing_id())
+        df = self.dataset
+        if self.enable_item_id_mapping:
+            df = df.withColumn(self.item_id_column_name, F.monotonically_increasing_id())
         func = self.feed_validation_minibatch()
         df = df.mapInPandas(func, df.schema)
         df.write.format('noop').mode('overwrite').save()
@@ -601,40 +765,13 @@ class TwoTowerIndexBuildingAgent(TwoTowerIndexBaseAgent):
         minibatch = self.preprocess_minibatch(minibatch)
         predictions = self.model(minibatch)
         embeddings = predictions.detach().numpy()
-        id_ndarray = minibatch[self.item_id_column_name].values
-        ids_data = self._make_item_ids_mapping_batch(minibatch, embeddings, id_ndarray)
-        self.index_builder.output_item_ids_mapping_batch(ids_data)
+        id_ndarray = self.index_builder.get_item_id_ndarray(minibatch)
+        if self.index_builder.have_item_ids_partition_files:
+            ids_data = self.index_builder.make_item_ids_mapping_batch(minibatch, embeddings, id_ndarray)
+            self.index_builder.output_item_ids_mapping_batch(ids_data)
         self.index_builder.output_item_embedding_batch(embeddings, id_ndarray)
         self.update_progress(batch_size=len(minibatch))
         return minibatch
-
-    def _make_item_ids_mapping_batch(self, minibatch, embeddings, id_ndarray):
-        ids_data = ''
-        for i in range(len(id_ndarray)):
-            ids_data += str(id_ndarray[i])
-            ids_data += self.item_ids_field_delimiter
-            if self.item_ids_column_indices is not None:
-                for j, index in enumerate(self.item_ids_column_indices):
-                    if j > 0:
-                        ids_data += self.item_ids_value_delimiter
-                    field = minibatch.iloc[i, index]
-                    if field is not None:
-                        ids_data += str(field)
-            else:
-                for j, column_name in enumerate(self.item_ids_column_names):
-                    if j > 0:
-                        ids_data += self.item_ids_value_delimiter
-                    field = minibatch.loc[i, column_name]
-                    if field is not None:
-                        ids_data += str(field)
-            if self.output_item_embeddings:
-                ids_data += self.item_ids_field_delimiter
-                for k, value in enumerate(embeddings[i]):
-                    if k > 0:
-                        ids_data += self.item_ids_value_delimiter
-                    ids_data += str(value)
-            ids_data += '\n'
-        return ids_data
 
 class TwoTowerIndexRetrievalAgent(TwoTowerIndexBaseAgent):
     def start_workers(self):
@@ -700,6 +837,7 @@ class TwoTowerIndexRetrievalAgent(TwoTowerIndexBaseAgent):
     def _make_validation_result_schema(self, df):
         from pyspark.sql.types import StructType
         from pyspark.sql.types import ArrayType
+        from pyspark.sql.types import StringType
         from pyspark.sql.types import LongType
         from pyspark.sql.types import FloatType
         fields = []
@@ -714,8 +852,15 @@ class TwoTowerIndexRetrievalAgent(TwoTowerIndexBaseAgent):
         for field in df.schema.fields:
             if field.name not in reserved:
                 fields.append(field)
+        meta = self.index_builder.get_index_meta()
         result_schema = StructType(fields)
-        result_schema.add(indices_name, ArrayType(LongType()))
+        enable_item_id_mapping = meta['enable_item_id_mapping']
+        item_id_column_type = meta['item_id_column_type']
+        if enable_item_id_mapping:
+            result_schema.add(indices_name, ArrayType(LongType()))
+        else:
+            id_column_type = LongType() if item_id_column_type == 'int64' else StringType()
+            result_schema.add(indices_name, ArrayType(id_column_type))
         result_schema.add(distances_name, ArrayType(FloatType()))
         if self.output_user_embeddings:
             result_schema.add(user_embedding_name, ArrayType(FloatType()))
@@ -756,6 +901,7 @@ class TwoTowerRetrievalHelperMixin(object):
                  item_ids_column_names=None,
                  item_ids_field_delimiter='\002',
                  item_ids_value_delimiter='\001',
+                 enable_item_id_mapping=False,
                  output_item_embeddings=False,
                  output_user_embeddings=False,
                  increasing_id_column_name='iid',
@@ -774,6 +920,7 @@ class TwoTowerRetrievalHelperMixin(object):
         self.item_ids_column_names = item_ids_column_names
         self.item_ids_field_delimiter = item_ids_field_delimiter
         self.item_ids_value_delimiter = item_ids_value_delimiter
+        self.enable_item_id_mapping = enable_item_id_mapping
         self.output_item_embeddings = output_item_embeddings
         self.output_user_embeddings = output_user_embeddings
         self.increasing_id_column_name = increasing_id_column_name
@@ -786,6 +933,7 @@ class TwoTowerRetrievalHelperMixin(object):
         self.extra_agent_attributes['item_ids_column_names'] = self.item_ids_column_names
         self.extra_agent_attributes['item_ids_field_delimiter'] = self.item_ids_field_delimiter
         self.extra_agent_attributes['item_ids_value_delimiter'] = self.item_ids_value_delimiter
+        self.extra_agent_attributes['enable_item_id_mapping'] = self.enable_item_id_mapping
         self.extra_agent_attributes['output_item_embeddings'] = self.output_item_embeddings
         self.extra_agent_attributes['output_user_embeddings'] = self.output_user_embeddings
         self.extra_agent_attributes['increasing_id_column_name'] = self.increasing_id_column_name
@@ -810,14 +958,14 @@ class TwoTowerRetrievalHelperMixin(object):
         if not isinstance(self.item_id_column_name, str) or not self.item_id_column_name:
             raise TypeError(f"item_id_column_name must be non-empty string; {self.item_id_column_name!r} is invalid")
         if self.item_ids_column_indices is not None and (
-           not isinstance(self.item_ids_column_indices, (list, tuple)) or
+           not isinstance(self.item_ids_column_indices, (list, tuple)) or not self.item_ids_column_indices or
            not all(isinstance(x, int) and x >= 0 for x in self.item_ids_column_indices)):
-            raise TypeError(f"item_ids_column_indices must be list or tuple of non-negative integers; "
+            raise TypeError(f"item_ids_column_indices must be non-empty list or tuple of non-negative integers; "
                             f"{self.item_ids_column_indices!r} is invalid")
         if self.item_ids_column_names is not None and (
-           not isinstance(self.item_ids_column_names, (list, tuple)) or
+           not isinstance(self.item_ids_column_names, (list, tuple)) or not self.item_ids_column_names or
            not all(isinstance(x, str) for x in self.item_ids_column_names)):
-            raise TypeError(f"item_ids_column_names must be list or tuple of strings; "
+            raise TypeError(f"item_ids_column_names must be non-empty list or tuple of strings; "
                             f"{self.item_ids_column_names!r} is invalid")
         if not isinstance(self.item_ids_field_delimiter, str) or len(self.item_ids_field_delimiter) != 1:
             raise TypeError(f"item_ids_field_delimiter must be string of length 1; {self.item_ids_field_delimiter!r} is invalid")
@@ -861,6 +1009,7 @@ class TwoTowerRetrievalHelperMixin(object):
         args['item_ids_column_names'] = self.item_ids_column_names
         args['item_ids_field_delimiter'] = self.item_ids_field_delimiter
         args['item_ids_value_delimiter'] = self.item_ids_value_delimiter
+        args['enable_item_id_mapping'] = self.enable_item_id_mapping
         args['output_item_embeddings'] = self.output_item_embeddings
         args['output_user_embeddings'] = self.output_user_embeddings
         args['increasing_id_column_name'] = self.increasing_id_column_name
@@ -870,6 +1019,20 @@ class TwoTowerRetrievalHelperMixin(object):
         return args
 
 class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
+    def _get_item_struct_fields(self, item_ids_dataset):
+        import pyspark.sql.functions as F
+        fields = []
+        if item_ids_dataset is None:
+            fields.append(F.col('index').alias('name'))
+        elif 'name' in item_ids_dataset.columns:
+            fields.append('name')
+        else:
+            fields.append(F.col('id').alias('name'))
+        fields.append('distance')
+        if item_ids_dataset is not None and 'item_embedding' in item_ids_dataset.columns:
+            fields.append('item_embedding')
+        return fields
+
     def _transform_rec_info(self, rec_info, item_ids_dataset):
         # ``_transform_rec_info`` transforms raw ``rec_info`` into more usable form
         # with the help of ``item_ids_dataset``.
@@ -878,6 +1041,8 @@ class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
         # the embedding retrieval engine (Faiss, Milvus or others). During the
         # transformation process, those raw item indices are mapped to more readable
         # form by ``item_ids_dataset``.
+        #
+        # ``item_ids_dataset`` can be None and it can have two or three columns.
         import pyspark.sql.functions as F
         if self.output_user_embeddings:
             user_embeddings = rec_info.select(self.increasing_id_column_name,
@@ -895,16 +1060,12 @@ class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
                                    F.col(self.recommendation_info_column_name + '.0').alias('index'),
                                    F.col(self.recommendation_info_column_name + '.1').alias('distance'))
         # join and reverse the explode process
-        rec_info = rec_info.join(item_ids_dataset, F.col('index') == F.col('id'))
+        if item_ids_dataset is not None:
+            rec_info = rec_info.join(item_ids_dataset, F.col('index') == F.col('id'))
+        fields = self._get_item_struct_fields(item_ids_dataset)
+        rec_info = rec_info.select(self.increasing_id_column_name, 'pos',
+                                   F.struct(*fields).alias(self.recommendation_info_column_name))
         w = pyspark.sql.Window.partitionBy(self.increasing_id_column_name).orderBy('pos')
-        if self.output_item_embeddings:
-            rec_info = rec_info.select(self.increasing_id_column_name, 'pos',
-                                       (F.struct('name', 'distance', 'item_embedding')
-                                         .alias(self.recommendation_info_column_name)))
-        else:
-            rec_info = rec_info.select(self.increasing_id_column_name, 'pos',
-                                       (F.struct('name', 'distance')
-                                         .alias(self.recommendation_info_column_name)))
         rec_info = rec_info.select(self.increasing_id_column_name, 'pos',
                                    (F.collect_list(self.recommendation_info_column_name)
                                     .over(w).alias(self.recommendation_info_column_name)))
@@ -942,7 +1103,6 @@ class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
                   user_embedding_value_delimiter="\003"):
         import pyspark.sql.functions as F
         from pyspark.sql.functions import pandas_udf
-        output_item_embeddings = self.output_item_embeddings
         @pandas_udf('string')
         def format_rec_info(rec_info):
             import pandas as pd
@@ -955,7 +1115,7 @@ class TwoTowerRetrievalModel(TwoTowerRetrievalHelperMixin, PyTorchModel):
                     string += item['name']
                     string += recommendation_info_field_delimiter
                     string += str(item['distance'])
-                    if output_item_embeddings:
+                    if 'item_embedding' in item:
                         string += recommendation_info_field_delimiter
                         string += item_embedding_value_delimiter.join(map(str, item['item_embedding']))
                 output.append(string)
@@ -975,16 +1135,13 @@ class TwoTowerRetrievalEstimator(TwoTowerRetrievalHelperMixin, PyTorchEstimator)
             raise RuntimeError("item_dataset must be specified to export model")
         if self.item_ids_column_indices is None and self.item_ids_column_names is None:
             raise RuntimeError("one of item_ids_column_indices and item_ids_column_names must be specified")
-        if self.item_ids_column_indices is not None and (
-           not isinstance(self.item_ids_column_indices, (list, tuple)) or
-           not all(isinstance(x, int) and x >= 0 for x in self.item_ids_column_indices)):
-            raise TypeError(f"item_ids_column_indices must be list or tuple of non-negative integers; "
-                            f"{self.item_ids_column_indices!r} is invalid")
-        if self.item_ids_column_names is not None and (
-           not isinstance(self.item_ids_column_names, (list, tuple)) or
-           not all(isinstance(x, str) for x in self.item_ids_column_names)):
-            raise TypeError(f"item_ids_column_names must be list or tuple of strings; "
-                            f"{self.item_ids_column_names!r} is invalid")
+        if not self.enable_item_id_mapping:
+            if self.item_ids_column_indices is not None and len(self.item_ids_column_indices) != 1:
+                raise RuntimeError(f"when enable_item_id_mapping is false, item_ids_column_indices must contain "
+                                   f"exactly one column index, {self.item_ids_column_indices!r} is invalid")
+            if self.item_ids_column_names is not None and len(self.item_ids_column_names) != 1:
+                raise RuntimeError(f"when enable_item_id_mapping is false, item_ids_column_names must contain "
+                                   f"exactly one column name, {self.item_ids_column_names!r} is invalid")
 
     def _fit(self, dataset):
         self._clear_output()
