@@ -109,6 +109,7 @@ def read_dataset(movies_path, ratings_path, users_path, imdb_path, **kwargs):
 
 def merge_dataset(users, movies, ratings):
     # merge movies, users, ratings
+    movies = movies.withColumn('year', F.regexp_extract('title', r'(.+)\s*\((\d+)\)', 2))
     dataset = ratings.join(users, on=ratings.user_id==users.user_id, how='leftouter').drop(users.user_id)
     dataset = dataset.join(movies, on=dataset.movie_id==movies.movie_id,how='leftouter').drop(movies.movie_id)
     dataset = dataset.select('user_id', \
@@ -120,7 +121,8 @@ def merge_dataset(users, movies, ratings):
                              'title', \
                              'genre', \
                              'rating', \
-                             'timestamp')
+                             'timestamp',\
+                             'year')
     print('Debug -- dataset sample:')
     dataset.show(10)
     return dataset
