@@ -19,6 +19,7 @@ import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
@@ -27,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
-
+@Slf4j
 @FunctionAnnotation("typeTransform")
 public class TypeFunction implements Function{
     @Override
@@ -38,36 +39,34 @@ public class TypeFunction implements Function{
         Assert.notNull(outType, "output type should be set!");
         for (int i = 0; i < input.getValue().size(); ++i) {
             Object value = input.getValue().get(i);
-            if (outType.equals(DataTypeEnum.STRING)) {
-                output.addIndexData(FieldData.create(i, parseString(value)));
+            Object data = null;
+            if (outType.equals(input.getType())) {
+                data = value;
+            }else if (outType.equals(DataTypeEnum.STRING)) {
+                data = parseString(value);
+            } else if (outType.equals(DataTypeEnum.LONG)) {
+                data = parseLong(value);
+            } else if (outType.equals(DataTypeEnum.INT)) {
+                data = parseInteger(value);
+            } else if (outType.equals(DataTypeEnum.DOUBLE)) {
+                data = parseDouble(value);
+            } else if (outType.equals(DataTypeEnum.BOOL)) {
+                data = parseBoolean(value);
+            } else if (outType.equals(DataTypeEnum.DATE)) {
+                data = parseLocalDateTime(value);
+            } else if (outType.equals(DataTypeEnum.TIMESTAMP)) {
+                data = parseTimestamp(value);
+            } else if (outType.equals(DataTypeEnum.DECIMAL)) {
+                data = parseBigDecimal(value);
+            } else if (outType.equals(DataTypeEnum.FLOAT)) {
+                data = parseFloat(value);
+            } else if (outType.equals(DataTypeEnum.TIME)) {
+                data = parseLocalTime(value);
             }
-            if (outType.equals(DataTypeEnum.LONG)) {
-                output.addIndexData(FieldData.create(i, parseLong(value)));
+            if (value != null && data == null) {
+                log.error("typeTransform type not match, transform fail, output null at inType: {}, outType: {}, value: {}", input.getType(), outType, value);
             }
-            if (outType.equals(DataTypeEnum.INT)) {
-                output.addIndexData(FieldData.create(i, parseInteger(value)));
-            }
-            if (outType.equals(DataTypeEnum.DOUBLE)) {
-                output.addIndexData(FieldData.create(i, parseDouble(value)));
-            }
-            if (outType.equals(DataTypeEnum.BOOL)) {
-                output.addIndexData(FieldData.create(i, parseBoolean(value)));
-            }
-            if (outType.equals(DataTypeEnum.DATE)) {
-                output.addIndexData(FieldData.create(i, parseLocalDateTime(value)));
-            }
-            if (outType.equals(DataTypeEnum.TIMESTAMP)) {
-                output.addIndexData(FieldData.create(i, parseTimestamp(value)));
-            }
-            if (outType.equals(DataTypeEnum.DECIMAL)) {
-                output.addIndexData(FieldData.create(i, parseBigDecimal(value)));
-            }
-            if (outType.equals(DataTypeEnum.FLOAT)) {
-                output.addIndexData(FieldData.create(i, parseFloat(value)));
-            }
-            if (outType.equals(DataTypeEnum.TIME)) {
-                output.addIndexData(FieldData.create(i, parseLocalTime(value)));
-            }
+            output.addIndexData(FieldData.create(i, data));
         }
         return true;
     }
