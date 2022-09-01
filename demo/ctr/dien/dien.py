@@ -119,7 +119,9 @@ def train(spark, trian_dataset, **model_params):
                                   metric_update_interval = metric_update_interval,
                                   input_label_column_index = input_label_column_index,
                                   dien_target_loss_weight = dien_target_loss_weight,
-                                  dien_auxilary_loss_weight = dien_auxilary_loss_weight) 
+                                  dien_auxilary_loss_weight = dien_auxilary_loss_weight,
+                                  shuffle_training_dataset = shuffle_training_dataset,
+                                  training_epoches = training_epoches) 
     train_dataset.show(20)
     model = estimator.fit(trian_dataset)
      ##learning rate
