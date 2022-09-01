@@ -410,7 +410,7 @@ class DIEN_DIN_AttLayer(torch.nn.Module):
         output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
         output = output.unsqueeze(1)
         output = output / (keys.shape[-1] ** 0.5)
-        outputs = torch.nn.functional.softmax(output, dim=-1)
+        output = torch.nn.functional.softmax(output, dim=-1)
         output = torch.matmul(output, keys) 
         return output
         
