@@ -206,7 +206,7 @@ public class TaskFlowConfig {
                     dependSet.add(algoTransformItem);
                 }
             }
-            for (FeatureConfig.FieldAction fieldAction : item.getActionList()) {
+            for (FieldAction fieldAction : item.getActionList()) {
                 List<FeatureConfig.Field> fields = fieldAction.getFields();
                 if (CollectionUtils.isNotEmpty(fields)) {
                     for (FeatureConfig.Field field : fields) {

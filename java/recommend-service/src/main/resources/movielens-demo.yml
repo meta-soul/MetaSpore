@@ -1,0 +1,230 @@
+feature-service:
+  Source:
+    - name: request
+      format: json
+    - name: movielens
+      kind: MongoDB
+      options:
+        uri: mongodb://root:example@localhost:27017/movielens?authSource=admin
+  SourceTable:
+    - name: item
+      source: movielens
+      columns:
+        - movie_id: long
+        - genre: str
+        - title: str
+        - imdb_url: str
+        - queryid: str
+    - name: user
+      source: movielens
+      columns:
+        - user_id: long
+        - gender: str
+        - age: int
+        - occupation: str
+        - zip: str
+        - recent_movie_ids: str
+        - last_movie: str
+        - last_genre: str
+        - user_greater_than_three_rate: decimal
+        - user_movie_avg_rating: double
+        - queryid: str
+    - name: requestData
+      source: request
+      columns:
+        - user_id: long
+    - name: item_feature
+      source: movielens
+      columns:
+        - movielens: long
+        - watch_volume: double
+        - genre: str
+        - movie_avg_rating: double
+        - movie_greater_than_three_rate: decimal
+        - genre_watch_volume: double
+        - genre_movie_avg_rating: double
+        - genre_greater_than_three_rate: decimal
+        - queryid: str
+    - name: itemcf
+      source: movielens
+      columns:
+        - id: str
+        - item_ids: list_str
+        - item_scores: list_double
+    - name: swing
+      source: movielens
+      columns:
+        - id: str
+        - item_ids: list_str
+        - item_scores: list_double
+    - name: milvusItem
+      source: movielens
+      columns:
+        - id: str
+        - item_id: str
+        - title: str
+        - cfValues: str
+  Feature:
+    - name: feature_twotower_user
+      from: [ user, requestData]
+      select: [ user.user_id, last_movie, recent_movie_ids ]
+      condition:
+        - requestData.user_id: user.user_id
+    - name: feature_twotower_match
+      from: [ algotransform_twotower_milvus, milvusItem]
+      select: [ algotransform_twotower_milvus.user_id, milvusItem.item_id, algotransform_twotower_milvus.item_score ]
+      condition:
+        - algotransform_twotower_milvus.milvus_id: milvusItem.id
+  AlgoTransform:
+    - name: algotransform_twotower_user_embedding
+      taskName: AlgoInference
+      options:
+        host: localhost
+        port: 50000
+      feature: feature_twotower_user
+      fieldActions:
+        - name: user_embedding
+          type: list_float
+          func: genEmbedding
+          input: user_id
+          algoColumns:
+            - sparse: [user_id, last_movie, recent_movie_ids]
+          options:
+            modelName: two_towers_dssm
+            targetKey: output
+        - name: user_id
+          type: str
+          func: typeTransform
+          fields: user_id
+      output:
+        - user_id
+        - user_embedding
+    - name: algotransform_twotower_milvus
+      taskName: MilvusSearch
+      options:
+        host: localhost
+        port: 19530
+      algoTransform: algotransform_twotower_user_embedding
+      fieldActions:
+        - name: user_id
+          type: str
+          fields: user_id
+        - name: milvus_id
+          type: str
+          input: milvus_ids
+          func: flatList
+        - name: item_score
+          type: double
+          input: scores
+          func: flatList
+        - names: [ milvus_ids, scores]
+          types: [ list_str, list_double]
+          fields: user_embedding
+          func: milvusIdScore
+          options:
+            collectionName: ml_1m_dssm
+            field: item_embedding
+      output:
+        - user_id
+        - milvus_id
+        - item_score
+    - name: algotransform_twotower_match
+      taskName: ItemMatcher
+      feature: feature_twotower_match
+      options:
+        algo-name: "twotower"
+      fieldActions:
+        - names: [unique_user_id, itemScore]
+          types: [str, map_str_double]
+          fields: [user_id, item_id, item_score]
+          func: toItemScore2
+        - names: [user_id, item_id, score, origin_scores]
+          types: [str, str, double, map_str_double]
+          input: [unique_user_id, itemScore]
+          func: recallCollectItem
+      output:
+        - user_id
+        - item_id
+        - score
+        - origin_scores
+recommend-service:
+  Services:
+    - name: TwoTowersMatcher
+      tasks: algotransform_twotower_match
+      options:
+        milvusCollectionName: two_towers_simplex
+        twoTowersSimpleXModelName: two_towers_simplex
+        twoTowersSimpleXAlgoLevel: 3
+        twoTowersSimpleXMaxReservation: 200
+    - name: diversifyBaseService
+      options:
+        useDiversify: true
+        window: 4
+        tolerance: 4
+    - name: diversifyMMRService
+      options:
+        useDiversify: true
+        lambda: 0.7
+        window: 5
+        tolerance: 5
+  Experiments:
+    - name: match.base
+      options:
+        maxReservation: 5
+      chains:
+        - then: TwoTowersMatcher
+          transforms:
+            - name: cutOff
+    - name: match.multiple
+      options:
+        maxReservation: 10
+      chains:
+        - when: [TwoTowersMatcher]
+          transforms:
+            - name: summaryBySchema
+              option: {dupFields: [ user_id, item_id ], mergeOperator: {score: maxScore, origin_scores: mergeScoreInfo}}
+            - name: orderAndLimit
+              option: {orderFields: [score]}
+    - name: rank.base
+      chains:
+        - then: WideAndDeepRanker
+    - name: rank.wideDeep
+      chains:
+        - then: WideAndDeepRanker
+    - name: rank.lightGBM
+      chains:
+        - then: LightGBMRanker
+    - name: diversify.base
+      chains:
+        - then: diversifyBaseService
+    - name: diversify.MMR
+      chains:
+        - then: diversifyMMRService
+  Layers:
+    - name: match
+      experiments:
+        - name: match.base
+          ratio: 0.5
+        - name: match.multiple
+          ratio: 0.5
+    - name: rank
+      experiments:
+        - name: rank.base
+          ratio: 0.0
+        - name: rank.wideDeep
+          ratio: 0.5
+        - name: rank.lightGBM
+          ratio: 0.5
+    - name: diversify
+      experiments:
+        - name: diversify.base
+          ratio: 0.5
+        - name: diversify.MMR
+          ratio: 0.5
+  Scenes:
+    - name: guess-you-like
+      chains:   # 串行执行chain
+        - then: [match]
+      columns:
+        - user_id: str
+        - item_id: str

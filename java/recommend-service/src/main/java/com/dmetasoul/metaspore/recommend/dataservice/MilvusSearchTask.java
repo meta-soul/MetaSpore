@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @ServiceAnnotation("MilvusSearch")
 public class MilvusSearchTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
-    public static final int DEFAULT_MAX_RESERVATION = 50;
+    public static final int DEFAULT_MAX_RESERVATION = 5;
     private MilvusServiceClient milvusTemplate;
     private int maxReservation;
     private String collectionName;
@@ -95,7 +95,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
         String searchParams = Utils.getField(options,"searchParams", "{\"nprobe\":128}");
         MetricType metricType = Utils.getMetricType(Utils.getField(options,"metricType", 2));
         SearchParam searchParam = SearchParam.newBuilder()
-                .withCollectionName(collectionName)
+                .withCollectionName(collection)
                 .withMetricType(metricType)
                 .withOutFields(names)
                 .withTopK(limit)
