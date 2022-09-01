@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @ServiceAnnotation("MilvusSearch")
 public class MilvusSearchTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
-    public static final int DEFAULT_MAX_RESERVATION = 5;
+    public static final int DEFAULT_MAX_RESERVATION = 50;
     private MilvusServiceClient milvusTemplate;
     private int maxReservation;
     private String collectionName;

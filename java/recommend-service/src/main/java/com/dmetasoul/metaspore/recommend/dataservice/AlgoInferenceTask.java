@@ -40,6 +40,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.bouncycastle.util.Strings;
 import org.springframework.util.Assert;
 
+import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +76,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
         return true;
     }
 
-    public ManagedChannel initManagedChannel(@NonNull  Map<String, Object> option) {
+    public ManagedChannel initManagedChannel(Map<String, Object> option) {
         String host = Utils.getField(option, "host", "127.0.0.1");
         int port = Utils.getField(option, "port", 50000);
         NegotiationType negotiationType = NegotiationType.valueOf(Strings.toUpperCase((String) option.getOrDefault("negotiationType", "plaintext")));
@@ -91,7 +92,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
     public void addFunctions() {
         addFunction("genEmbedding", new Function() {
             @Override
-            public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, @NonNull FieldAction fieldAction) {
+            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction fieldAction) {
                 Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
                 List<FeatureTable> featureTables = Lists.newArrayList();
                 for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
@@ -118,13 +119,13 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                 return true;
             }
             @Override
-            public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, Map<String, Object> options) {
+            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
                 return false;
             }
         });
         addFunction("predictScore", new Function() {
             @Override
-            public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, FieldAction fieldAction) {
+            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction fieldAction) {
                 Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
                 List<FeatureTable> featureTables = Lists.newArrayList();
                 for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
@@ -152,7 +153,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                 return true;
             }
             @Override
-            public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, Map<String, Object> options) {
+            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
                 return false;
             }
         });
