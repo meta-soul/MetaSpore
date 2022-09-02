@@ -52,7 +52,8 @@ public enum DataTypeEnum {
     STRING(0, String.class, FieldType.nullable(ArrowType.Utf8.INSTANCE), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof String)) {
+            String data = parseString(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match String value:{}!", value);
                 return false;
             }
@@ -60,7 +61,6 @@ public enum DataTypeEnum {
             if (value == null) {
                 vector.setNull(index);
             } else {
-                String data = (String) value;
                 byte[] b = data.getBytes(StandardCharsets.UTF_8);
                 VarCharHolder vch = new VarCharHolder();
                 vch.start = 0;
@@ -76,7 +76,8 @@ public enum DataTypeEnum {
     LONG(1, Long.class, FieldType.nullable(new ArrowType.Int(64, true)), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof Long)) {
+            Long data = parseLong(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Long value：{}!", value);
                 return false;
             }
@@ -84,7 +85,7 @@ public enum DataTypeEnum {
                 ((BigIntVector)featureTable.getVector(col)).setNull(index);
                 featureTable.setRowCount(index+1);
             } else {
-                featureTable.setLong(index, (Long) value, featureTable.getVector(col));
+                featureTable.setLong(index, data, featureTable.getVector(col));
             }
             return true;
         }
@@ -92,7 +93,8 @@ public enum DataTypeEnum {
     INT(2,Integer.class, FieldType.nullable(new ArrowType.Int(32, true)), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof Integer)) {
+            Integer data = parseInteger(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Integer value:{}!", value);
                 return false;
             }
@@ -100,7 +102,7 @@ public enum DataTypeEnum {
                 ((IntVector)featureTable.getVector(col)).setNull(index);
                 featureTable.setRowCount(index+1);
             } else {
-                featureTable.setInt(index, (Integer) value, featureTable.getVector(col));
+                featureTable.setInt(index, data, featureTable.getVector(col));
             }
             return true;
         }
@@ -108,7 +110,8 @@ public enum DataTypeEnum {
     DOUBLE(3, Double.class, FieldType.nullable(new ArrowType.FloatingPoint(FloatingPointPrecision.DOUBLE)), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof Double)) {
+            Double data = parseDouble(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Double value: {}! ", value);
                 return false;
             }
@@ -116,7 +119,7 @@ public enum DataTypeEnum {
                 ((Float8Vector)featureTable.getVector(col)).setNull(index);
                 featureTable.setRowCount(index+1);
             } else {
-                featureTable.setDouble(index, (Double) value, featureTable.getVector(col));
+                featureTable.setDouble(index, data, featureTable.getVector(col));
             }
             return true;
         }
@@ -147,14 +150,15 @@ public enum DataTypeEnum {
     BOOL(5, Boolean.class, FieldType.nullable(ArrowType.Bool.INSTANCE), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof Boolean)) {
+            Boolean data = parseBoolean(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Boolean value: {}!", value);
                 return false;
             }
             if (value == null) {
                 ((BitVector)featureTable.getVector(col)).setNull(index);
             } else {
-                ((BitVector)featureTable.getVector(col)).setSafe(index, ((Boolean)value) ? 1 : 0);
+                ((BitVector)featureTable.getVector(col)).setSafe(index, data ? 1 : 0);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -219,17 +223,19 @@ public enum DataTypeEnum {
             return true;
         }
     }),
-    DECIMAL(9, BigDecimal.class, FieldType.nullable(new ArrowType.Decimal(60, 4, 64)), new ArrowOperator() {
+    DECIMAL(9, BigDecimal.class, FieldType.nullable(new ArrowType.Decimal(111, 17)), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof BigDecimal)) {
+            BigDecimal data = parseBigDecimal(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match BigDecimal value: {}!", value);
                 return false;
             }
+            data.setScale(17);
             if (value == null) {
                 ((DecimalVector)featureTable.getVector(col)).setNull(index);
             } else {
-                ((DecimalVector)featureTable.getVector(col)).setSafe(index, (BigDecimal)value);
+                ((DecimalVector)featureTable.getVector(col)).setSafe(index, data);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -238,14 +244,15 @@ public enum DataTypeEnum {
     FLOAT(10, Float.class, FieldType.nullable(new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            if (value != null && !(value instanceof Float)) {
+            Float data = parseFloat(value);
+            if (value != null && data == null) {
                 log.error("set featureTable fail! value type is not match Float value: {}!", value);
                 return false;
             }
             if (value == null) {
                 ((Float4Vector)featureTable.getVector(col)).setNull(index);
             } else {
-                ((Float4Vector)featureTable.getVector(col)).setSafe(index, (Float)value);
+                ((Float4Vector)featureTable.getVector(col)).setSafe(index, data);
             }
             featureTable.setRowCount(index+1);
             return true;

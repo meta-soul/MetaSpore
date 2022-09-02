@@ -20,6 +20,7 @@ import com.dmetasoul.metaspore.recommend.data.FieldData;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +34,7 @@ public class MinMaxFunction implements Function {
     private int max = 120;
 
     @Override
-    public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, Map<String, Object> options) {
+    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
         return true;
     }
 }

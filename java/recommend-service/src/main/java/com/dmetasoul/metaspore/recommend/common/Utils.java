@@ -26,6 +26,7 @@ import io.milvus.param.MetricType;
 import io.milvus.param.R;
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
@@ -41,7 +42,8 @@ import java.util.Set;
  * 工具类
  * Created by @author qinyy907 in 14:24 22/07/15.
  */
-@SuppressWarnings("rawtypes")
+
+@Slf4j
 public class Utils {
     public static String genResultKey(String name, String taskName) {
         return String.format("%s_%s", name, taskName);

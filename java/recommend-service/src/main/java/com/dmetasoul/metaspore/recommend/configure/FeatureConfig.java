@@ -19,13 +19,14 @@ import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.enums.JoinTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Queues;
+import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.common.util.set.Sets;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
@@ -193,7 +194,7 @@ public class FeatureConfig {
         }
 
         public String toString() {
-            return String.format("%s.%s", table, fieldName);
+            return fieldName;
         }
 
         @Override
@@ -397,67 +398,6 @@ public class FeatureConfig {
     }
 
     @Data
-    public static class FieldAction {
-        private List<String> names;
-        private List<String> types;
-        protected List<Field> fields;
-        protected List<String> input;
-        protected String func;
-        protected Map<String, Object> options;
-
-        public void setNames(List<String> names) {
-            if (CollectionUtils.isEmpty(names)) return;
-            this.names = names;
-        }
-
-        public void setName(String name) {
-            if (StringUtils.isEmpty(name)) return;
-            this.names = List.of(name);
-        }
-
-        public void setTypes(List<String> types) {
-            if (CollectionUtils.isEmpty(types)) return;
-            this.types = types;
-        }
-
-        public void setType(String type) {
-            if (StringUtils.isEmpty(type)) return;
-            this.types = List.of(type);
-        }
-        public void setFields(List<String> fields) {
-            if (CollectionUtils.isEmpty(fields)) return;
-            this.fields = Field.create(fields);
-        }
-
-        public void setField(String field) {
-            if (StringUtils.isEmpty(field)) return;
-            this.fields = List.of(Objects.requireNonNull(Field.create(field)));
-        }
-
-        public void setInput(List<String> input) {
-            if (CollectionUtils.isEmpty(input)) return;
-            this.input = input;
-        }
-
-        public void setInput(String input) {
-            if (StringUtils.isEmpty(input)) return;
-            this.input = List.of(input);
-        }
-
-        public boolean checkAndDefault() {
-            Assert.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
-                "AlgoTransform FieldAction config name and type must be equel!");
-            Assert.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
-                "fieldaction input and field must not be empty at the same time");
-            for (String type : types) {
-                Assert.isTrue(StringUtils.isNotEmpty(type) && DataTypes.getDataType(type) != null,
-                    "AlgoTransform FieldAction config type must be support! type:" + type);
-            }
-            return true;
-        }
-    }
-
-    @Data
     public static class AlgoTransform {
         private String name;
         private String taskName;
@@ -499,16 +439,17 @@ public class FeatureConfig {
             columnRel = Maps.newHashMap();
             actionList = Lists.newArrayList();
             Map<String, FieldAction> fieldActionMap = Maps.newHashMap();
-            Stack<FieldAction> stack = new Stack<>();
+            Queue<FieldAction> queue = Queues.newArrayDeque();
             Set<String> actionSet = Sets.newHashSet();
+            Set<String> doneSet = Sets.newHashSet();
             if (CollectionUtils.isNotEmpty(fieldActions)) {
                 for (FieldAction action : fieldActions) {
                     Assert.isTrue(action.checkAndDefault(), "field action check!");
-                    for (int i = 0; i < action.names.size(); ++i) {
-                        String name = action.names.get(i);
+                    for (int i = 0; i < action.getNames().size(); ++i) {
+                        String name = action.getNames().get(i);
                         fieldActionMap.put(name, action);
-                        columnMap.put(name, action.types.get(i));
-                        columnRel.put(name, action.names.get(0));
+                        columnMap.put(name, action.getTypes().get(i));
+                        columnRel.put(name, action.getNames().get(0));
                     }
                 }
             }
@@ -516,28 +457,33 @@ public class FeatureConfig {
                 if (actionSet.contains(col)) continue;
                 FieldAction action = fieldActionMap.get(col);
                 Assert.notNull(action, "output col must has Action colName:" + col);
-                stack.push(action);
-                actionSet.addAll(action.names);
+                queue.offer(action);
+                actionSet.addAll(action.getNames());
             }
             boolean flag;
-            while (!stack.empty()) {
-                FieldAction action = stack.peek();
+            while (!queue.isEmpty()) {
+                FieldAction action = queue.poll();
                 flag = true;
                 if (CollectionUtils.isNotEmpty(action.getInput())) {
                     for (String item : action.getInput()) {
+                        if (doneSet.contains(item)) {
+                            continue;
+                        }
+                        flag = false;
                         if (actionSet.contains(item)) {
                             continue;
                         }
                         FieldAction fieldAction = fieldActionMap.get(item);
                         Assert.notNull(fieldAction, "FieldAction.input item must has Action item:" + item);
-                        stack.push(fieldAction);
-                        actionSet.addAll(fieldAction.names);
-                        flag = false;
+                        queue.offer(fieldAction);
+                        actionSet.addAll(fieldAction.getNames());
                     }
                 }
                 if (flag) {
                     actionList.add(action);
-                    stack.pop();
+                    doneSet.addAll(action.getNames());
+                } else {
+                    queue.offer(action);
                 }
             }
             return true;

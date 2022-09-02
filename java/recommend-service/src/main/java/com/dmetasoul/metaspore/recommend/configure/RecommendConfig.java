@@ -15,16 +15,13 @@
 //
 package com.dmetasoul.metaspore.recommend.configure;
 
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.common.Strings;
-import org.elasticsearch.common.util.set.Sets;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.Configuration;
@@ -32,8 +29,6 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
 /**
  * 推荐服务配置类
  * Created by @author qinyy907 in 14:24 22/07/15.

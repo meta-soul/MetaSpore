@@ -7,8 +7,11 @@ services:
     # 也可以直接使用mvn package docker:build 之后生成的image
     build:
       context: .
-      dockerfile: DockerFile  # need mvn package first
-    image: dmetasoul/recommend-service-11:1.0
+      dockerfile: Dockerfile  # need mvn package first
+    image: dmetasoul/recommend-service-11:1.0-SNAPSHOT
+    command: java -jar recommend-service-1.0-SNAPSHOT.jar
+    environment:
+      CONSUL_HOST: consul
     ports:
       - "8080:8080"
     depends_on:
@@ -23,12 +26,14 @@ services:
     command: consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui
     ports:
       - "8500:8500"
+      - "8600:8600"
+      - "8300:8300"
 
   serving:
     container_name: standalone-serving
     restart: on-failure
     image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1
-    command: consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui
+    command: /opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port 50000 -init_load_path /data/models
     ports:
       - "50000:50000"
     volumes:

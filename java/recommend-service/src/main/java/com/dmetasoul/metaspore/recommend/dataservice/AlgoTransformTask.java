@@ -20,6 +20,7 @@ import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
+import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.*;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.functions.Function;
@@ -109,6 +110,23 @@ public class AlgoTransformTask extends DataService {
                 }
             }
             result.get(0).setIndexValue(res);
+            return true;
+        });
+        addFunction("multiFlatList", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(result), "input and result must not null");
+            Assert.isTrue(fields.size() == result.size(), "input and result must be same size");
+            for (int i = 0; i < fields.size(); ++i) {
+                List<IndexData> res = Lists.newArrayList();
+                List<IndexData> input = fields.get(i).getIndexValue();
+                for (IndexData item : input) {
+                    Assert.isInstanceOf(Collection.class, item.getVal());
+                    Collection<?> list = item.getVal();
+                    for (Object o : list) {
+                        res.add(FieldData.create(item.getIndex(), o));
+                    }
+                }
+                result.get(i).setIndexValue(res);
+            }
             return true;
         });
     }
@@ -274,7 +292,18 @@ public class AlgoTransformTask extends DataService {
         result.addAll(getDataResultByNames(algoTransform.getAlgoTransform(), context));
         FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
         Map<String, DataResult> dataResultMap = getDataResults(result);
-        for (FeatureConfig.FieldAction fieldAction : algoTransform.getActionList()) {
+        Map<String, Map<String, String>> columnMaps = Maps.newHashMap();
+        if (CollectionUtils.isNotEmpty(algoTransform.getFeature())) {
+            for (String name : algoTransform.getFeature()) {
+                columnMaps.put(name, taskFlowConfig.getFeatures().get(name).getColumnMap());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(algoTransform.getAlgoTransform())) {
+            for (String name : algoTransform.getAlgoTransform()) {
+                columnMaps.put(name, taskFlowConfig.getAlgoTransforms().get(name).getColumnMap());
+            }
+        }
+        for (FieldAction fieldAction : algoTransform.getActionList()) {
             List<FeatureConfig.Field> fields = fieldAction.getFields();
             List<String> input = fieldAction.getInput();
             List<FieldData> fieldDatas = Lists.newArrayList();
@@ -282,15 +311,14 @@ public class AlgoTransformTask extends DataService {
                 for (FeatureConfig.Field field : fields) {
                     DataResult dataResult = dataResultMap.get(field.getTable());
                     List<Object> itemData = dataResult.get(field.getFieldName());
-                    FeatureConfig.Feature feature = taskFlowConfig.getFeatures().get(field.getTable());
                     fieldDatas.add(FieldData.of(field.toString(),
-                            DataTypes.getDataType(feature.getColumnMap().get(field.getFieldName())), itemData));
+                            DataTypes.getDataType(columnMaps.get(field.getTable()).get(field.getFieldName())), itemData));
                 }
             }
             if (CollectionUtils.isNotEmpty(input)) {
                 for (String item : input) {
                     FieldData itemData = actionResult.get(item);
-                    Assert.notNull(itemData, "use flat function result, no found result at input: " + item);
+                    Assert.notNull(itemData, "use function result, no found result at input: " + item);
                     fieldDatas.add(itemData);
                 }
             }
@@ -312,7 +340,7 @@ public class AlgoTransformTask extends DataService {
                         throw new RuntimeException("function get fail at " + fieldAction.getFunc());
                     }
                 }
-                if (!function.process(getFieldDataList(fieldDatas), res, fieldAction.getOptions())) {
+                if (!function.process(getFieldDataList(fieldDatas), res, fieldAction)) {
                     throw new RuntimeException("the function process fail. func:" + fieldAction.getFunc());
                 }
             }
@@ -333,6 +361,20 @@ public class AlgoTransformTask extends DataService {
         if (!dataType.set(featureTable, col, data)) {
             log.error("set featureTable fail!");
         }
+    }
+
+    public FeatureTable convFeatureTable(String name, List<String> columns, List<FieldData> fields) {
+        Map<String, FieldData> fieldDatas = Maps.newHashMap();
+        List<FieldData> inputData = Lists.newArrayList();
+        for (FieldData fieldItem : fields) {
+            fieldDatas.put(fieldItem.getName(), fieldItem);
+        }
+        for (String col : columns) {
+            FieldData item = fieldDatas.get(col);
+            Assert.isTrue(item != null, "columns col must in fields, col: " + col);
+            inputData.add(item);
+        }
+        return convFeatureTable(name, inputData);
     }
 
     public FeatureTable convFeatureTable(String name, List<FieldData> fields) {

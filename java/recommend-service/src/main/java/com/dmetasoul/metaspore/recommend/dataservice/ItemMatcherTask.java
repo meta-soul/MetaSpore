@@ -98,11 +98,11 @@ public class ItemMatcherTask extends AlgoTransformTask {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
             Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),
-                    "toItemScore input[0] is recall userId string");
+                    "toItemScore2 input[0] is recall userId string");
             Assert.isTrue(fields.size() > 1 && fields.get(1).isMatch(DataTypeEnum.STRING),
-                    "toItemScore input[1] is recall itemId string");
+                    "toItemScore2 input[1] is recall itemId string");
             Assert.isTrue(fields.size() > 2 && fields.get(2).isMatch(DataTypeEnum.DOUBLE),
-                    "toItemScore input[2] is recall item weight double");
+                    "toItemScore2 input[2] is recall item score double");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<String> userIds = fields.get(0).getValue();
             List<String> recallItemData = fields.get(1).getValue();

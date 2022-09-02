@@ -19,13 +19,14 @@ import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import lombok.NonNull;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 @FunctionAnnotation("logscale")
 public class LogScaleFunction implements Function {
 
     @Override
-    public boolean process(@NonNull List<FieldData> fields, @NonNull List<FieldData> result, Map<String, Object> options) {
+    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
         return true;
     }
 }

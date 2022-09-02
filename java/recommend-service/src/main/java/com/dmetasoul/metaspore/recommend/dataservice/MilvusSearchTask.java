@@ -95,7 +95,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
         String searchParams = Utils.getField(options,"searchParams", "{\"nprobe\":128}");
         MetricType metricType = Utils.getMetricType(Utils.getField(options,"metricType", 2));
         SearchParam searchParam = SearchParam.newBuilder()
-                .withCollectionName(collectionName)
+                .withCollectionName(collection)
                 .withMetricType(metricType)
                 .withOutFields(names)
                 .withTopK(limit)
@@ -103,7 +103,6 @@ public class MilvusSearchTask extends AlgoTransformTask {
                 .withVectorFieldName(field)
                 .withExpr("")
                 .withParams(searchParams)
-                .withGuaranteeTimestamp(timeOut)
                 .build();
 
         R<SearchResults> response = milvusTemplate.search(searchParam);
@@ -113,6 +112,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
 
     protected boolean searchIdScore(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        boolean useStrId = Utils.getField(options,"useStrId", false);
         SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()), List.of(), options);
         for (int i = 0; i < embedding.size(); ++i) {
             Map<String, Double> idScores = Maps.newHashMap();
@@ -121,7 +121,11 @@ public class MilvusSearchTask extends AlgoTransformTask {
             List<SearchResultsWrapper.IDScore> iDScores = wrapper.getIDScore(i);
             iDScores.sort((o1, o2) -> Double.compare(o2.getScore(), o1.getScore()));
             iDScores.forEach(x->{
-                itemIds.add(String.valueOf(x.getLongID()));
+                if (useStrId) {
+                    itemIds.add(x.getStrID());
+                } else {
+                    itemIds.add(String.valueOf(x.getLongID()));
+                }
                 itemScores.add(x.getScore());
             });
             result.get(0).addIndexData(FieldData.create(embedding.get(i).getIndex(), itemIds));
@@ -133,13 +137,90 @@ public class MilvusSearchTask extends AlgoTransformTask {
     @SuppressWarnings("unchecked")
     protected boolean searchField(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        String scoreField = Utils.getField(options,"scoreField", "score");
+        String idField = Utils.getField(options,"idField", "");
+        boolean useStrId = Utils.getField(options,"useStrId", false);
+        boolean useOrder = Utils.getField(options,"useOrder", true);
+        boolean useFlat = Utils.getField(options,"useFlat", true);
+        List<FieldData> output = Lists.newArrayList();
+        FieldData score = null;
+        FieldData idData = null;
+        for (FieldData field : result) {
+            if (Objects.equals(field.getName(), scoreField)) {
+                score = field;
+            } else if (Objects.equals(field.getName(), idField)) {
+                idData = field;
+            } else {
+                output.add(field);
+            }
+        }
         SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()),
-                result.stream().map(FieldData::getName).collect(Collectors.toList()), options);
-        Map<String, List<Object>> res = Maps.newHashMap();
+                output.stream().map(FieldData::getName).collect(Collectors.toList()), options);
+        List<Object> scores = null;
+        List<Object> idlist = null;
         for (int i = 0; i < embedding.size(); ++i) {
+            List<Integer> ids = Lists.newArrayList();
+            if (score != null) {
+                List<SearchResultsWrapper.IDScore> iDScores = wrapper.getIDScore(i);
+                List<Object> itemScores = iDScores.stream().map(SearchResultsWrapper.IDScore::getScore).collect(Collectors.toList());
+                scores = itemScores;
+                if (idData != null) {
+                    idlist = iDScores.stream().map(x->{
+                        if (useStrId) {
+                            return x.getStrID();
+                        } else {
+                            return x.getLongID();
+                        }
+                    }).collect(Collectors.toList());
+                }
+                if (useOrder) {
+                    for (int j = 0; j < itemScores.size(); ++j) {
+                        ids.add(j);
+                    }
+                    ids.sort((o1, o2) -> {
+                        Object val1 = itemScores.get(o1);
+                        Object val2 = itemScores.get(o2);
+                        if (Objects.equals(val1, val2)) return 0;
+                        if (val1 == null) return -1;
+                        if (val2 == null) return 1;
+                        Assert.isInstanceOf(Comparable.class, val1, "itemScore col must be compareable");
+                        Comparable<Object> c = (Comparable<Object>) val2;
+                        return c.compareTo(val1);
+                    });
+                }
+            }
             for (FieldData field : result) {
-                List<Object> item = (List<Object>) wrapper.getFieldData(field.getName(), i);
-                field.addIndexData(FieldData.create(embedding.get(i).getIndex(), item));
+                List<Object> item;
+                if (Objects.equals(field.getName(), scoreField)) {
+                    item = scores;
+                } else if (Objects.equals(field.getName(), idField)) {
+                    item = idlist;
+                } else {
+                    item = (List<Object>) wrapper.getFieldData(field.getName(), i);
+                }
+                if (CollectionUtils.isEmpty(item)) continue;
+                if (CollectionUtils.isNotEmpty(ids) && useOrder) {
+                    List<Object> orderList = Lists.newArrayList();
+                    for (Integer id : ids) {
+                        Object obj = Utils.get(item, id, null);
+                        if (useFlat) {
+                            field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
+                            continue;
+                        }
+                        orderList.add(obj);
+                    }
+                    if (!useFlat) {
+                        field.addIndexData(FieldData.create(embedding.get(i).getIndex(), orderList));
+                    }
+                } else {
+                    if (!useFlat) {
+                        field.addIndexData(FieldData.create(embedding.get(i).getIndex(), item));
+                    } else {
+                        for (Object obj : item) {
+                            field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
+                        }
+                    }
+                }
             }
         }
         return true;
