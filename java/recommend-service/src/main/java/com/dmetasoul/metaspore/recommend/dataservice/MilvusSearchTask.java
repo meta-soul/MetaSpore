@@ -137,13 +137,73 @@ public class MilvusSearchTask extends AlgoTransformTask {
     @SuppressWarnings("unchecked")
     protected boolean searchField(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        String scoreField = Utils.getField(options,"scoreField", "score");
+        boolean useOrder = Utils.getField(options,"useOrder", true);
+        boolean useFlat = Utils.getField(options,"useFlat", true);
+        List<FieldData> output = Lists.newArrayList();
+        FieldData score = null;
+        for (FieldData field : result) {
+            if (Objects.equals(field.getName(), scoreField)) {
+                score = field;
+            } else {
+                output.add(field);
+            }
+        }
         SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()),
-                result.stream().map(FieldData::getName).collect(Collectors.toList()), options);
-        Map<String, List<Object>> res = Maps.newHashMap();
+                output.stream().map(FieldData::getName).collect(Collectors.toList()), options);
+        List<Object> scores = null;
         for (int i = 0; i < embedding.size(); ++i) {
+            List<Integer> ids = Lists.newArrayList();
+            if (score != null) {
+                List<SearchResultsWrapper.IDScore> iDScores = wrapper.getIDScore(i);
+                List<Object> itemScores = iDScores.stream().map(SearchResultsWrapper.IDScore::getScore).collect(Collectors.toList());
+                scores = itemScores;
+                if (useOrder) {
+                    for (int j = 0; j < itemScores.size(); ++j) {
+                        ids.add(j);
+                    }
+                    ids.sort((o1, o2) -> {
+                        Object val1 = itemScores.get(o1);
+                        Object val2 = itemScores.get(o2);
+                        if (Objects.equals(val1, val2)) return 0;
+                        if (val1 == null) return -1;
+                        if (val2 == null) return 1;
+                        Assert.isInstanceOf(Comparable.class, val1, "itemScore col must be compareable");
+                        Comparable<Object> c = (Comparable<Object>) val2;
+                        return c.compareTo(val1);
+                    });
+                }
+            }
             for (FieldData field : result) {
-                List<Object> item = (List<Object>) wrapper.getFieldData(field.getName(), i);
-                field.addIndexData(FieldData.create(embedding.get(i).getIndex(), item));
+                List<Object> item;
+                if (Objects.equals(field.getName(), scoreField)) {
+                    item = scores;
+                } else {
+                    item = (List<Object>) wrapper.getFieldData(field.getName(), i);
+                }
+                if (CollectionUtils.isEmpty(item)) continue;
+                if (CollectionUtils.isNotEmpty(ids) && useOrder) {
+                    List<Object> orderList = Lists.newArrayList();
+                    for (Integer id : ids) {
+                        Object obj = Utils.get(item, id, null);
+                        if (useFlat) {
+                            field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
+                            continue;
+                        }
+                        orderList.add(obj);
+                    }
+                    if (!useFlat) {
+                        field.addIndexData(FieldData.create(embedding.get(i).getIndex(), orderList));
+                    }
+                } else {
+                    if (!useFlat) {
+                        field.addIndexData(FieldData.create(embedding.get(i).getIndex(), item));
+                    } else {
+                        for (Object obj : item) {
+                            field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
+                        }
+                    }
+                }
             }
         }
         return true;
