@@ -16,8 +16,8 @@ item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/item.parquet
 ## model configuration
 two_tower_module_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingModule
 two_tower_agent_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingAgent
+two_tower_metric_class: metaspore.BasicModelMetric
 two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
-# two_tower_estimator_class: python.twotower.TwoTowerRetrievalEstimator
 
 user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema
 user_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema
@@ -31,21 +31,24 @@ model_version: '0.1'
 experiment_name: two_towers_dssm
 
 ## milvus
-milvus_description: 'ml_1m_dssm'
+milvus_collection_name: 'ml_1m_dssm'
 milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
-milvus_port: '19530'
-milvus_embedding_field: 'embedding_vector'
+milvus_port: 19530
+milvus_item_id_field_name: 'item_id'
+milvus_item_embedding_field_name: 'item_embedding'
 milvus_index_type: 'IVF_FLAT'
+milvus_index_params:
+    nlist: 1024
 milvus_metric_type: 'IP'
-milvus_nlist: 1024
-milvus_nprobe: 128
+milvus_search_params:
+    nprobe: 128
+milvus_extra_fields: ['genre']
 
 ## dataset
-input_label_column_index: 0
-input_item_id_column_index: 6 
-input_feature_column_num: 11
-input_item_probability_column_index: 11
-input_sample_weight_column_index: 12
+input_label_column_name: label
+input_item_id_column_name: movie_id
+input_item_probability_column_name: sampling_prob
+input_sample_weight_column_name: sample_weight
 
 ## model hyper params
 tau: 0.05
