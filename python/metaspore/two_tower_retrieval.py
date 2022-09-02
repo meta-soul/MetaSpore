@@ -342,6 +342,9 @@ class TwoTowerIndexBuilder(object):
         if self.have_item_ids_partition_files:
             self._close_item_ids_partition_output_stream()
 
+    def distribute_state(self):
+        pass
+
     def begin_querying_index(self):
         pass
 
@@ -429,7 +432,7 @@ class TwoTowerFaissIndexBuilder(TwoTowerIndexBuilder):
                 raise RuntimeError(message) from ex
         return id_ndarray
 
-    def output_item_embedding_batch(self, embeddings, id_ndarray):
+    def output_item_embedding_batch(self, minibatch, embeddings, id_ndarray):
         self._faiss_index.add_with_ids(embeddings, id_ndarray)
 
     def _load_faiss_index(self):
@@ -490,6 +493,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         self.milvus_index_params = getattr(agent, 'milvus_index_params', {'nlist': 1024})
         self.milvus_metric_type = getattr(agent, 'milvus_metric_type', 'IP')
         self.milvus_search_params = getattr(agent, 'milvus_search_params', {'nprobe': 128})
+        self.milvus_extra_fields = getattr(agent, 'milvus_extra_fields', None)
+        self.milvus_extra_string_max_length = getattr(agent, 'milvus_extra_string_max_length', 65535)
+        self.milvus_extra_array_multivalue_delimiter = getattr(agent, 'milvus_extra_array_multivalue_delimiter', '\001')
         if self.milvus_collection_name is None:
             raise RuntimeError("milvus_collection_name is required")
         if not isinstance(self.milvus_collection_name, str) or not self.milvus_collection_name:
@@ -512,6 +518,15 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             raise TypeError(f"milvus_metric_type must be non-empty string; {self.milvus_metric_type!r} is invalid")
         if not isinstance(self.milvus_search_params, dict):
             raise TypeError(f"milvus_search_params must be dict; {self.milvus_search_params!r} is invalid")
+        if self.milvus_extra_fields is not None and (
+            not isinstance(self.milvus_extra_fields, (list, tuple)) or
+            not all(isinstance(x, str) for x in self.milvus_extra_fields)):
+            raise TypeError(f"milvus_extra_fields must be list or tuple of strings; "
+                            f"{self.milvus_extra_fields!r} is invalid")
+        if not isinstance(self.milvus_extra_string_max_length, int) or not 1 <= self.milvus_extra_string_max_length <= 65535:
+            raise TypeError(f"milvus_extra_string_max_length must be integer between 1 and 65535; {self.milvus_extra_string_max_length!r} is invalid")
+        if not isinstance(self.milvus_extra_array_multivalue_delimiter, str) or not self.milvus_extra_array_multivalue_delimiter:
+            raise TypeError(f"milvus_extra_array_multivalue_delimiter must be non-empty string; {self.milvus_extra_array_multivalue_delimiter!r} is invalid")
 
     @staticmethod
     def _get_milvus_attributes():
@@ -526,6 +541,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
             'milvus_index_params',
             'milvus_metric_type',
             'milvus_search_params',
+            'milvus_extra_fields',
+            'milvus_extra_string_max_length',
+            'milvus_extra_array_multivalue_delimiter',
         )
         return milvus_attributes
 
@@ -553,6 +571,9 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         meta['milvus_index_params'] = self.milvus_index_params
         meta['milvus_metric_type'] = self.milvus_metric_type
         meta['milvus_search_params'] = self.milvus_search_params
+        meta['milvus_extra_fields'] = self.milvus_extra_fields
+        meta['milvus_extra_string_max_length'] = self.milvus_extra_string_max_length
+        meta['milvus_extra_array_multivalue_delimiter'] = self.milvus_extra_array_multivalue_delimiter
         return meta
 
     def _open_milvus_connection(self):
@@ -626,7 +647,116 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
                                              max_length=self.milvus_string_item_id_max_length))
         milvus_fields.append(FieldSchema(name=item_embedding_field_name, dtype=DataType.FLOAT_VECTOR,
                                          dim=item_embedding_size))
+        self._add_milvus_extra_fields(milvus_fields)
         return milvus_fields
+
+    def _add_milvus_extra_fields(self, milvus_fields):
+        from .schema_utils import is_data_type_supported
+        if not self.milvus_extra_fields:
+            return
+        item_dataset = self.agent.dataset
+        for field_name in self.milvus_extra_fields:
+            try:
+                field = item_dataset.schema[field_name]
+            except KeyError as ex:
+                message = f"field_name {field_name!r} in milvus_extra_fields is not found "
+                message += f"in the columns of item_dataset: {item_dataset.columns!r}"
+                raise RuntimeError(message) from ex
+            if not is_data_type_supported(field.dataType):
+                message = "data type of column %r is not supported" % field.name
+                raise RuntimeError(message)
+            milvus_field = self._map_spark_field(field)
+            milvus_fields.append(milvus_field)
+
+    def _map_spark_field(self, field):
+        from pymilvus import DataType
+        from pymilvus import FieldSchema
+        from pyspark.sql.types import StringType
+        from pyspark.sql.types import FloatType
+        from pyspark.sql.types import DoubleType
+        from pyspark.sql.types import IntegerType
+        from pyspark.sql.types import LongType
+        from pyspark.sql.types import BooleanType
+        from pyspark.sql.types import ArrayType
+        name = field.name
+        data_type = field.dataType
+        max_length = self.milvus_extra_string_max_length
+        types = (StringType, FloatType, DoubleType, IntegerType, LongType, BooleanType)
+        if isinstance(data_type, types):
+            if isinstance(data_type, StringType):
+                return FieldSchema(name=name, dtype=DataType.VARCHAR, max_length=max_length)
+            elif isinstance(data_type, FloatType):
+                return FieldSchema(name=name, dtype=DataType.FLOAT)
+            elif isinstance(data_type, DoubleType):
+                return FieldSchema(name=name, dtype=DataType.DOUBLE)
+            elif isinstance(data_type, IntegerType):
+                return FieldSchema(name=name, dtype=DataType.INT32)
+            elif isinstance(data_type, LongType):
+                return FieldSchema(name=name, dtype=DataType.INT64)
+            else:
+                assert isinstance(data_type, BooleanType)
+                return FieldSchema(name=name, dtype=DataType.BOOL)
+        else:
+            assert isinstance(data_type, ArrayType) and isinstance(data_type.elementType, types)
+            return FieldSchema(name=name, dtype=DataType.VARCHAR, max_length=max_length)
+
+    def _make_minibatch_processor(self):
+        from .schema_utils import is_data_type_supported
+        if not self.milvus_extra_fields:
+            return ()
+        item_dataset = self.agent.dataset
+        minibatch_processor = []
+        for field_name in self.milvus_extra_fields:
+            try:
+                field = item_dataset.schema[field_name]
+            except KeyError as ex:
+                message = f"field_name {field_name!r} in milvus_extra_fields is not found "
+                message += f"in the columns of item_dataset: {item_dataset.columns!r}"
+                raise RuntimeError(message) from ex
+            if not is_data_type_supported(field.dataType):
+                message = "data type of column %r is not supported" % field.name
+                raise RuntimeError(message)
+            column_processor = self._make_column_processor(field)
+            minibatch_processor.append(column_processor)
+        return tuple(minibatch_processor)
+
+    def _make_column_processor(self, field):
+        from pyspark.sql.types import StringType
+        from pyspark.sql.types import FloatType
+        from pyspark.sql.types import DoubleType
+        from pyspark.sql.types import IntegerType
+        from pyspark.sql.types import LongType
+        from pyspark.sql.types import BooleanType
+        from pyspark.sql.types import ArrayType
+        name = field.name
+        data_type = field.dataType
+        delimiter = self.milvus_extra_array_multivalue_delimiter
+        types = (StringType, FloatType, DoubleType, IntegerType, LongType, BooleanType)
+        if isinstance(data_type, types):
+            return lambda minibatch: minibatch[name].values
+        else:
+            assert isinstance(data_type, ArrayType) and isinstance(data_type.elementType, types)
+            if isinstance(data_type.elementType, StringType):
+                return lambda minibatch: numpy.array([delimiter.join(arr) for arr in minibatch[name]], dtype=object)
+            elif isinstance(data_type.elementType, BooleanType):
+                return lambda minibatch: numpy.array([delimiter.join(map(str, arr)).lower() for arr in minibatch[name]], dtype=object)
+            else:
+                return lambda minibatch: numpy.array([delimiter.join(map(str, arr)) for arr in minibatch[name]], dtype=object)
+
+    def distribute_minibatch_processor(self):
+        self.minibatch_processor = self._make_minibatch_processor()
+        processor = self.minibatch_processor
+        sc = self.agent.spark_context
+        worker_count = self.agent.worker_count
+        rdd = sc.parallelize(range(worker_count), worker_count)
+        rdd.barrier().mapPartitions(lambda _: __class__._distribute_minibatch_processor(processor, _)).collect()
+
+    @classmethod
+    def _distribute_minibatch_processor(cls, processor, _):
+        from .agent import Agent
+        self = Agent.get_instance().index_builder
+        self.minibatch_processor = processor
+        return _
 
     def _create_milvus_index(self):
         milvus_collection_name = self.milvus_collection_name
@@ -640,8 +770,15 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
         print("Creating milvus index %s" % milvus_collection_name)
         self._milvus_collection.create_index(field_name=item_embedding_field_name, index_params=index_params)
 
-    def output_item_embedding_batch(self, embeddings, id_ndarray):
-        self._milvus_collection.insert([id_ndarray, embeddings])
+    def output_item_embedding_batch(self, minibatch, embeddings, id_ndarray):
+        ndarrays = [id_ndarray, embeddings]
+        self._add_extra_numpy_ndarrays(minibatch, ndarrays)
+        self._milvus_collection.insert(ndarrays)
+
+    def _add_extra_numpy_ndarrays(self, minibatch, ndarrays):
+        processor = self.minibatch_processor
+        extra_ndarrays = [proc(minibatch) for proc in processor]
+        ndarrays += extra_ndarrays
 
     def search_item_embedding_batch(self, embeddings):
         k = self.agent.retrieval_item_count
@@ -681,6 +818,10 @@ class TwoTowerMilvusIndexBuilder(TwoTowerIndexBuilder):
     def end_creating_index_partition(self):
         self._close_milvus_connection()
         super().end_creating_index_partition()
+
+    def distribute_state(self):
+        super().distribute_state()
+        self.distribute_minibatch_processor()
 
     def begin_querying_index(self):
         super().begin_querying_index()
@@ -734,6 +875,7 @@ class TwoTowerIndexBuildingAgent(TwoTowerIndexBaseAgent):
         self.index_builder = self._create_index_builder()
         self.index_builder.begin_creating_index()
         super().start_workers()
+        self.index_builder.distribute_state()
 
     def stop_workers(self):
         super().stop_workers()
@@ -769,7 +911,7 @@ class TwoTowerIndexBuildingAgent(TwoTowerIndexBaseAgent):
         if self.index_builder.have_item_ids_partition_files:
             ids_data = self.index_builder.make_item_ids_mapping_batch(minibatch, embeddings, id_ndarray)
             self.index_builder.output_item_ids_mapping_batch(ids_data)
-        self.index_builder.output_item_embedding_batch(embeddings, id_ndarray)
+        self.index_builder.output_item_embedding_batch(minibatch, embeddings, id_ndarray)
         self.update_progress(batch_size=len(minibatch))
         return minibatch
 
