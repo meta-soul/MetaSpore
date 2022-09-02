@@ -81,7 +81,9 @@ def stop_spark(spark):
     spark.sparkContext.stop()
 
 def read_dataset(spark, train_path, test_path, item_path, **kwargs):
-    train_dataset = spark.read.parquet(train_path)
+    # TODO: cf: fix debug code
+    #train_dataset = spark.read.parquet(train_path)
+    train_dataset = spark.read.parquet(train_path).limit(20000)
     test_dataset = spark.read.parquet(test_path)
     item_dataset = spark.read.parquet(item_path)
     test_dataset = test_dataset.filter(test_dataset['label'] == '1')

@@ -1,6 +1,6 @@
 ## spark session
 app_name: 'TwoTower-DSSM'
-local: True
+local: False
 worker_count: 2
 server_count: 2
 batch_size: 256
@@ -9,9 +9,9 @@ server_memory: '10G'
 coordinator_memory: '10G'
 
 ## datasets
-train_path: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/negsample/prob/train.parquet
-test_path: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/negsample/num_negs_10/test.parquet
-item_path: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/negsample/prob/item.parquet
+train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/item.parquet
 
 ## model configuration
 two_tower_module_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingModule
@@ -19,31 +19,21 @@ two_tower_agent_class: python.algos.twotower.dssm.TwoTowerBatchNegativeSamplingA
 two_tower_metric_class: metaspore.BasicModelMetric
 two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
 
-user_column_name: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/schema/dssm/user_column_schema
-user_combine_schema: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/schema/dssm/user_combine_schema
-item_column_name: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/schema/dssm/item_column_schema
-item_combine_schema: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/schema/dssm/item_combine_schema
+user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_column_schema
+user_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/user_combine_schema
+item_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_column_schema
+item_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/dssm/item_combine_schema
 model_in_path: null
-model_out_path: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/model/dssm/model_out/
-model_export_path: s3://dmetasoul-bucket/codingfun2022/testing/twotower/movielens/1m/model/dssm/model_export/
-#model_export_path: null
+model_out_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_out/
+# model_export_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_export/
+model_export_path: null
 model_version: '0.1'
 experiment_name: two_towers_dssm
 
 ## milvus
-#milvus_collection_name: 'ml_1m_dssm'
-#milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
-#milvus_port: 19530
-
-#milvus_collection_name: 'ml_1m_dssm_testing_bak'
-#milvus_host: '192.168.31.121'
-#milvus_port: 32530
-
-# TODO: cf: fix debug code
-milvus_collection_name: 'ml_1m_dssm_cf_testing'
-milvus_host: 'localhost'
-milvus_port: 29530
-
+milvus_collection_name: 'ml_1m_dssm'
+milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
+milvus_port: 19530
 milvus_item_id_field_name: 'item_id'
 milvus_item_embedding_field_name: 'item_embedding'
 milvus_index_type: 'IVF_FLAT'
@@ -77,7 +67,5 @@ ftrl_learning_rate: 0.02
 ftrl_smothing_rate: 1.0
 ftrl_l1_regularization: 1.0
 ftrl_l2_regularization: 1.0
-# TODO: cf: fix debug code
-#training_epoches: 5
-training_epoches: 1
+training_epoches: 5
 shuffle_training_dataset: True
