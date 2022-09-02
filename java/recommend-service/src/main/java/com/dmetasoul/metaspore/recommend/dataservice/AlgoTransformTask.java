@@ -112,6 +112,23 @@ public class AlgoTransformTask extends DataService {
             result.get(0).setIndexValue(res);
             return true;
         });
+        addFunction("multiFlatList", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(result), "input and result must not null");
+            Assert.isTrue(fields.size() == result.size(), "input and result must be same size");
+            for (int i = 0; i < fields.size(); ++i) {
+                List<IndexData> res = Lists.newArrayList();
+                List<IndexData> input = fields.get(i).getIndexValue();
+                for (IndexData item : input) {
+                    Assert.isInstanceOf(Collection.class, item.getVal());
+                    Collection<?> list = item.getVal();
+                    for (Object o : list) {
+                        res.add(FieldData.create(item.getIndex(), o));
+                    }
+                }
+                result.get(i).setIndexValue(res);
+            }
+            return true;
+        });
     }
 
     public void addFunctions() {

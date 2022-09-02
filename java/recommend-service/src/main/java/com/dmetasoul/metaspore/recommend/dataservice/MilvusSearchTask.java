@@ -103,7 +103,6 @@ public class MilvusSearchTask extends AlgoTransformTask {
                 .withVectorFieldName(field)
                 .withExpr("")
                 .withParams(searchParams)
-                .withGuaranteeTimestamp(timeOut)
                 .build();
 
         R<SearchResults> response = milvusTemplate.search(searchParam);
@@ -113,6 +112,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
 
     protected boolean searchIdScore(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        boolean useStrId = Utils.getField(options,"useStrId", false);
         SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()), List.of(), options);
         for (int i = 0; i < embedding.size(); ++i) {
             Map<String, Double> idScores = Maps.newHashMap();
@@ -121,7 +121,11 @@ public class MilvusSearchTask extends AlgoTransformTask {
             List<SearchResultsWrapper.IDScore> iDScores = wrapper.getIDScore(i);
             iDScores.sort((o1, o2) -> Double.compare(o2.getScore(), o1.getScore()));
             iDScores.forEach(x->{
-                itemIds.add(String.valueOf(x.getLongID()));
+                if (useStrId) {
+                    itemIds.add(x.getStrID());
+                } else {
+                    itemIds.add(String.valueOf(x.getLongID()));
+                }
                 itemScores.add(x.getScore());
             });
             result.get(0).addIndexData(FieldData.create(embedding.get(i).getIndex(), itemIds));
