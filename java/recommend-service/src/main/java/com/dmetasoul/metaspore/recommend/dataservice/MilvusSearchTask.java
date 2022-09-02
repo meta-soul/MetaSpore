@@ -138,13 +138,18 @@ public class MilvusSearchTask extends AlgoTransformTask {
     protected boolean searchField(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
         String scoreField = Utils.getField(options,"scoreField", "score");
+        String idField = Utils.getField(options,"idField", "");
+        boolean useStrId = Utils.getField(options,"useStrId", false);
         boolean useOrder = Utils.getField(options,"useOrder", true);
         boolean useFlat = Utils.getField(options,"useFlat", true);
         List<FieldData> output = Lists.newArrayList();
         FieldData score = null;
+        FieldData idData = null;
         for (FieldData field : result) {
             if (Objects.equals(field.getName(), scoreField)) {
                 score = field;
+            } else if (Objects.equals(field.getName(), idField)) {
+                idData = field;
             } else {
                 output.add(field);
             }
@@ -152,12 +157,22 @@ public class MilvusSearchTask extends AlgoTransformTask {
         SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()),
                 output.stream().map(FieldData::getName).collect(Collectors.toList()), options);
         List<Object> scores = null;
+        List<Object> idlist = null;
         for (int i = 0; i < embedding.size(); ++i) {
             List<Integer> ids = Lists.newArrayList();
             if (score != null) {
                 List<SearchResultsWrapper.IDScore> iDScores = wrapper.getIDScore(i);
                 List<Object> itemScores = iDScores.stream().map(SearchResultsWrapper.IDScore::getScore).collect(Collectors.toList());
                 scores = itemScores;
+                if (idData != null) {
+                    idlist = iDScores.stream().map(x->{
+                        if (useStrId) {
+                            return x.getStrID();
+                        } else {
+                            return x.getLongID();
+                        }
+                    }).collect(Collectors.toList());
+                }
                 if (useOrder) {
                     for (int j = 0; j < itemScores.size(); ++j) {
                         ids.add(j);
@@ -178,6 +193,8 @@ public class MilvusSearchTask extends AlgoTransformTask {
                 List<Object> item;
                 if (Objects.equals(field.getName(), scoreField)) {
                     item = scores;
+                } else if (Objects.equals(field.getName(), idField)) {
+                    item = idlist;
                 } else {
                     item = (List<Object>) wrapper.getFieldData(field.getName(), i);
                 }
