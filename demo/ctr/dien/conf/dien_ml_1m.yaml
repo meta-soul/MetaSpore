@@ -24,10 +24,10 @@ model_in_path: null
 model_out_path: s3://dmetasoul-bucket/demo/movielens/model/dien/model_out/ml_1m/
 ## model_export_path: s3://dmetasoul-bucket/demo/movielens/model/din/model_export/ml_1m/
 model_version: '0.1'
-experiment_name: movie_lens_din_1m
+experiment_name: movie_lens_dien_1m
 metric_update_interval: 30
 shuffle_training_dataset: True
-training_epoches: 3
+training_epoches: 10
 
 ## model hyper params
 sparse_init_var: 0.01
@@ -40,7 +40,7 @@ pos_item_seq: [1]
 neg_item_seq: [2]
 target_item: [3]
 # dien
-dien_embedding_size: 30
+dien_embedding_size: 20
 dien_gru_num_layer: 1
 dien_aux_hidden_units: [128,32]
 dien_use_aux_bn: False
@@ -56,13 +56,13 @@ dien_dnn_dropout: 0.1
 dien_dnn_activation: 'Dice'
 dien_use_gru_bias: False
 dien_target_loss_weight: 1.0
-dien_auxilary_loss_weight: 0
+dien_auxilary_loss_weight: 0.1
 # deep
 deep_hidden_units: [128,32]
 deep_dropout: 0.1
 deep_activation: 'relu'
 use_deep_bn: True
 use_deep_bias: True
-deep_embedding_size: 30
+deep_embedding_size: 20
 # wide
-wide_embedding_size: 30
+wide_embedding_size: 20
