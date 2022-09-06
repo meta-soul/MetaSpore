@@ -138,7 +138,7 @@ class HRMItemModule(torch.nn.Module):
 
     def forward(self, x):
         x = self.sparse(x)
-        if self.user_dropout:
-            x = self.user_dropout(x)
+        if self.embedding_dropout:
+            x = self.embedding_dropout(x)
         x = F.normalize(x)
         return x
