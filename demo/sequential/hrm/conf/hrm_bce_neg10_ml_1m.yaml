@@ -1,12 +1,11 @@
 ## spark session
 app_name: 'TwoTower-DSSM'
 local: False
-worker_count: 4
-server_count: 4
-batch_size: 512
-worker_memory: '10G'
-server_memory: '10G'
-coordinator_memory: '10G'
+worker_count: 2
+server_count: 2
+worker_memory: '6G'
+server_memory: '6G'
+coordinator_memory: '4G'
 
 ## datasets
 train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/train.parquet
@@ -22,8 +21,8 @@ seq_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/seq_combine_schema
 item_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/column_schema
 item_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/item_combine_schema
 model_in_path: null
-model_out_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_out/
-# model_export_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_export/
+model_out_path: ${MY_S3_BUCKET}/movielens/1m/model/hrm/model_out/
+# model_export_path: ${MY_S3_BUCKET}/movielens/1m/model/hrm/model_export/
 model_export_path: null
 model_version: '0.1'
 experiment_name: two_towers_dssm
