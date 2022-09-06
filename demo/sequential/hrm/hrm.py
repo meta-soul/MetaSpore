@@ -56,6 +56,7 @@ def init_spark(local, app_name, batch_size, worker_count, server_count,
                worker_memory, server_memory, coordinator_memory, **kwargs):
     subprocess.run(['zip', '-r', os.getcwd() + '/python.zip', 'python'], cwd='../../../')
     spark_confs={
+        "spark.kubernetes.namespace":"sunkai",
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
         "spark.ui.showConsoleProgress": "true",
@@ -141,8 +142,6 @@ def train(spark, train_dataset, item_dataset, **model_params):
     estimator = estimator_class_(
         module=module,
         item_dataset=item_dataset,
-        item_ids_column_indices=model_params['item_ids_column_indices'],
-        retrieval_item_count=model_params['retrieval_item_count'],
         metric_update_interval=500,
         agent_class=agent_class_,
         **model_params
