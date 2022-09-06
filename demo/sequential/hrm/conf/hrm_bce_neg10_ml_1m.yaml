@@ -16,10 +16,10 @@ item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/item.parquet
 ## model configuration
 two_tower_module_class: metaspore.TwoTowerRetrievalModule
 two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
-user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/user_column_schema
+user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/column_schema
 user_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/user_combine_schema
 seq_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/seq_combine_schema
-item_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/item_column_schema
+item_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/column_schema
 item_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/hrm/item_combine_schema
 model_in_path: null
 model_out_path: ${MY_S3_BUCKET}/movielens/1m/model/dssm/model_out/
