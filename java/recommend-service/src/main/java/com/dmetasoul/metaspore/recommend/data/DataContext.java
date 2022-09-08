@@ -55,12 +55,7 @@ public class DataContext {
 
     public void setRequest(Object req) {
         if (req != null) {
-            try {
-                request = getObjectToMap(req);
-            } catch (IllegalAccessException e) {
-                log.error("req ObjectToMap fail!");
-                throw new RuntimeException(e);
-            }
+            request = getObjectToMap(req);
         }
     }
 

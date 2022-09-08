@@ -19,18 +19,17 @@ import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollEventLoopGroup;
-import io.grpc.netty.shaded.io.netty.channel.epoll.EpollSocketChannel;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -53,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 public class AlgoInferenceTask extends AlgoTransformTask {
     protected static final String DEFAULT_MODEL_NAME = "two_towers_simplex";
     protected static final String TARGET_KEY = "output";
-    public static final int DEFAULT_MAX_RESERVATION = 50;
+    public static final int DEFAULT_MAX_RESERVATION = 1000;
     protected static final int TARGET_INDEX = -1;
     protected String modelName;
     protected String targetKey;
@@ -67,8 +66,6 @@ public class AlgoInferenceTask extends AlgoTransformTask {
         modelName = getOptionOrDefault("modelName", DEFAULT_MODEL_NAME);
         targetKey = getOptionOrDefault("targetKey", TARGET_KEY);
         targetIndex = getOptionOrDefault("targetIndex", TARGET_INDEX);
-        log.info("initManagedChannel name: {} algoTransform: {}", name, algoTransform);
-        log.info("initManagedChannel name: {} option: {}", name, algoTransform.getOptions());
         channel = initManagedChannel(algoTransform.getOptions());
         client = PredictGrpc.newBlockingStub(channel);
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
@@ -90,87 +87,97 @@ public class AlgoInferenceTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("genEmbedding", new Function() {
-            @Override
-            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction fieldAction) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
-                List<FeatureTable> featureTables = Lists.newArrayList();
-                for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
-                    for (Map.Entry<String, List<String>> entry : item.entrySet()) {
-                        if (CollectionUtils.isEmpty(entry.getValue())) continue;
-                        List<String> columns = Lists.newArrayList();
-                        for (String name: entry.getValue()) {
-                            if (MapUtils.isNotEmpty(fieldAction.getAlgoFields()) && fieldAction.getAlgoFields().containsKey(name)) {
-                                FeatureConfig.Field field = fieldAction.getAlgoFields().get(name);
-                                columns.add(field.toString());
-                            } else {
-                                columns.add(name);
-                            }
+        addFunction("genEmbedding", (fields, result, fieldAction) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
+            List<FeatureTable> featureTables = Lists.newArrayList();
+            for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
+                for (Map.Entry<String, List<String>> entry : item.entrySet()) {
+                    if (CollectionUtils.isEmpty(entry.getValue())) continue;
+                    List<String> columns = Lists.newArrayList();
+                    for (String name: entry.getValue()) {
+                        if (MapUtils.isNotEmpty(fieldAction.getAlgoFields()) && fieldAction.getAlgoFields().containsKey(name)) {
+                            FieldInfo field = fieldAction.getAlgoFields().get(name);
+                            columns.add(field.toString());
+                        } else {
+                            columns.add(name);
                         }
-                        featureTables.add(convFeatureTable(entry.getKey(), columns, fields));
                     }
+                    FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fields);
+                    if (featureTable.getRowCount() == 0) {
+                        log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        return true;
+                    }
+                    featureTables.add(featureTable);
                 }
-                String targetName = Utils.getField(fieldAction.getOptions(), "targetKey", targetKey);
-                String model = Utils.getField(fieldAction.getOptions(), "modelName", modelName);
-                ArrowTensor arrowTensor = predict(featureTables, model, targetName);
-                List<Object> res = Lists.newArrayList();
-                res.addAll(getFromTensor(arrowTensor));
-                result.get(0).setValue(res, getFieldIndex(fields));
-                return true;
             }
-            @Override
-            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
-                return false;
-            }
+            String targetName = Utils.getField(fieldAction.getOptions(), "targetKey", targetKey);
+            String model = Utils.getField(fieldAction.getOptions(), "modelName", modelName);
+            ArrowTensor arrowTensor = predict(featureTables, model, targetName);
+            List<Object> res = Lists.newArrayList();
+            res.addAll(getFromTensor(arrowTensor));
+            result.get(0).setValue(res, getFieldIndex(fields));
+            return true;
         });
-        addFunction("predictScore", new Function() {
-            @Override
-            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction fieldAction) {
-                Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
-                List<FeatureTable> featureTables = Lists.newArrayList();
-                for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
-                    for (Map.Entry<String, List<String>> entry : item.entrySet()) {
-                        if (CollectionUtils.isEmpty(entry.getValue())) continue;
-                        List<String> columns = Lists.newArrayList();
-                        for (String name: entry.getValue()) {
-                            if (MapUtils.isNotEmpty(fieldAction.getAlgoFields()) && fieldAction.getAlgoFields().containsKey(name)) {
-                                FeatureConfig.Field field = fieldAction.getAlgoFields().get(name);
-                                columns.add(field.toString());
-                            } else {
-                                columns.add(name);
-                            }
+        addFunction("predictScore", (fields, result, fieldAction) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
+            List<FeatureTable> featureTables = Lists.newArrayList();
+            for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
+                for (Map.Entry<String, List<String>> entry : item.entrySet()) {
+                    if (CollectionUtils.isEmpty(entry.getValue())) continue;
+                    List<String> columns = Lists.newArrayList();
+                    for (String name: entry.getValue()) {
+                        if (MapUtils.isNotEmpty(fieldAction.getAlgoFields()) && fieldAction.getAlgoFields().containsKey(name)) {
+                            FieldInfo field = fieldAction.getAlgoFields().get(name);
+                            columns.add(field.toString());
+                        } else {
+                            columns.add(name);
                         }
-                        featureTables.add(convFeatureTable(entry.getKey(), columns, fields));
                     }
+                    FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fields);
+                    if (featureTable.getRowCount() == 0) {
+                        log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        return true;
+                    }
+                    featureTables.add(featureTable);
                 }
-                String targetName = Utils.getField(fieldAction.getOptions(), "targetKey", targetKey);
-                int index = Utils.getField(fieldAction.getOptions(), "targetIndex", targetIndex);
-                String model = Utils.getField(fieldAction.getOptions(), "modelName", modelName);
-                ArrowTensor arrowTensor = predict(featureTables, model, targetName);
-                List<Object> res = Lists.newArrayList();
-                res.addAll(getFromTensor(arrowTensor, index));
-                result.get(0).setValue(res, getFieldIndex(fields));
-                return true;
             }
-            @Override
-            public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
-                return false;
-            }
+            String targetName = Utils.getField(fieldAction.getOptions(), "targetKey", targetKey);
+            int index = Utils.getField(fieldAction.getOptions(), "targetIndex", targetIndex);
+            String model = Utils.getField(fieldAction.getOptions(), "modelName", modelName);
+            ArrowTensor arrowTensor = predict(featureTables, model, targetName);
+            List<Object> res = Lists.newArrayList();
+            res.addAll(getFromTensor(arrowTensor, index));
+            List<Integer> indexs = getFieldIndex(fields);
+            result.get(0).setValue(res, indexs);
+            return true;
         });
-        addFunction("rankCollectItem", (fields, result, options) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 2,
-                    "input fields must not empty");
-            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_STR),
-                    "rankCollectItem input[0] is itemId list<string>");
-            Assert.isTrue(fields.get(1).isMatch(DataTypeEnum.LIST_DOUBLE),
-                    "rankCollectItem input[1] is score list<double>");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+        addFunction("rankCollectItem", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
+            int field_num = 0;
+            if (CollectionUtils.isNotEmpty(config.getFields())) {
+                field_num = config.getFields().size();
+            }
+            Assert.isTrue(fields.size() > field_num && fields.get(field_num).isMatch(DataTypeEnum.STRING),
+                    "rankCollectItem input[0] is itemId string");
+            Assert.isTrue(fields.size() > (field_num + 1) && fields.get(field_num + 1).isMatch(DataTypeEnum.FLOAT),
+                    "rankCollectItem input[1] is score float");
             int limit = Utils.getField(options, "maxReservation", maxReservation);
-            List<IndexData> itemIds = fields.get(0).getIndexValue();
-            List<Double> scores = fields.get(1).getValue();
+            List<IndexData> itemIds = fields.get(field_num).getIndexValue();
+            List<Float> scores = fields.get(field_num + 1).getValue();
+            List<Map<String, Double>> originScores = null;
+            if (field_num > 0 && fields.size() > field_num && fields.get(0).isMatch(DataTypeEnum.MAP_STR_DOUBLE)) {
+                originScores = fields.get(0).getValue();
+            }
             for (int i = 0; i < itemIds.size() && i < limit; ++i) {
                 result.get(0).addIndexData(itemIds.get(i));
-                result.get(1).addIndexData(FieldData.create(itemIds.get(i).getIndex(), Map.of(algoName, Utils.get(scores, i, 0.0))));
+                float score = Utils.get(scores, i, 0.0F);
+                result.get(1).addIndexData(FieldData.create(itemIds.get(i).getIndex(), score));
+                if (result.size() > 2 && CollectionUtils.isNotEmpty(originScores)) {
+                    Map<String, Double> originScore = Utils.get(originScores, i, Maps.newHashMap());
+                    originScore.put(algoName, (double) score);
+                    result.get(2).addIndexData(FieldData.create(itemIds.get(i).getIndex(), originScore));
+                }
+
             }
             return true;
         });

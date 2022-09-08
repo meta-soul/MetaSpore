@@ -18,6 +18,7 @@ package com.dmetasoul.metaspore.recommend.functions;
 
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.google.common.collect.Lists;
@@ -47,7 +48,8 @@ public class BucketizeFunction implements Function {
     private List<Number> ranges = Lists.newArrayList();
 
     @Override
-    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, Map<String, Object> options) {
+    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config) {
+        Map<String, Object> options = config.getOptions();
         Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
         bins = Utils.getField(options, NAMEBINS, bins);
         min = Utils.getField(options, NAMEMIN, min);

@@ -52,7 +52,7 @@ public class TensorResult extends DataResult{
         return vectors;
     }
 
-    public <T> List<T> get(int targetIndex) {
+    public <T> List<T> getData(int targetIndex) {
         if (tensor == null) {
             throw new IllegalArgumentException("tensor or shape is null");
         }

@@ -15,12 +15,9 @@
 //
 package com.dmetasoul.metaspore.recommend.data;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -28,10 +25,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 /**
  * 用于保存服务结果
  * Created by @author qinyy907 in 14:24 22/07/15.
@@ -39,8 +33,11 @@ import java.util.Set;
 @Slf4j
 @Data
 public class ServiceRequest implements java.io.Serializable {
+    /**
+     * DataService 上一个调用服务名称， 默认为null
+     */
+    private String parent;
     private Map<String, Object> data;
-    private Map<String, DataResult> intermediate;
     private int limit = 100;
 
     public ServiceRequest(DataContext context) {
@@ -63,6 +60,12 @@ public class ServiceRequest implements java.io.Serializable {
             this.limit = (int) request.getOrDefault("limit", 100);
         }
         this.copy(req);
+    }
+
+    public void setParent(String parent) {
+        if (MapUtils.isEmpty(data)) {
+            this.parent = parent;
+        }
     }
 
     public String genRequestSign() {

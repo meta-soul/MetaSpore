@@ -50,10 +50,8 @@ public class Service extends Transform implements BaseService {
             resFields = Lists.newArrayList();
             dataTypes = Lists.newArrayList();
             for (String col : serviceConfig.getColumnNames()) {
-                String type = serviceConfig.getColumnMap().get(col);
-                DataTypeEnum dataType = DataTypes.getDataType(type);
-                resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
-                dataTypes.add(dataType);
+                resFields.add(serviceConfig.getFieldMap().get(col));
+                dataTypes.add(serviceConfig.getColumnMap().get(col));
             }
         }
         super.initTransform(name, taskPool);
@@ -72,7 +70,7 @@ public class Service extends Transform implements BaseService {
         return true;
     }
 
-    public String getFieldType(String key) {
+    public DataTypeEnum getFieldType(String key) {
         return serviceConfig.getColumnMap().get(key);
     }
 
@@ -122,14 +120,14 @@ public class Service extends Transform implements BaseService {
             if (CollectionUtils.isNotEmpty(dataResults)) {
                 result.addAll(dataResults);
             }
+            List<DataResult> list;
             try {
-                List<DataResult> list = executeTask(data, context).get(timeout, timeUnit);
-                result.addAll(list);
+                list = executeTask(result, context).get(timeout, timeUnit);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 log.error("service exception e: {}", e.getMessage());
                 throw new RuntimeException(e);
             }
-            return result;
+            return list;
         });
         if (CollectionUtils.isNotEmpty(serviceConfig.getTransforms())) {
             future = executeTransform(future, serviceConfig.getTransforms(), serviceConfig.getOptions(), context);

@@ -15,8 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.configure;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -51,16 +49,17 @@ public class RecommendConfig {
      * 接受到的DataResult merge后 缓存到context中， 参与后续的task计算
      */
     @Data
-    public static class Service {
+    public static class Service extends ColumnInfo {
         private String name;
         private String taskName;
         private List<String> tasks;
         private Map<String, Object> options;
-        private List<String> columnNames;
-        private Map<String, String> columnMap;
-        private List<Map<String, String>> columns;
         private List<TransformConfig> preTransforms;
         private List<TransformConfig> transforms;
+        public void setColumns(List<Map<String, Object>> columns) {
+            super.setColumns(columns);
+        }
+
 
         public void setTasks(List<String> tasks) {
             if (CollectionUtils.isEmpty(tasks)) return;
@@ -71,21 +70,11 @@ public class RecommendConfig {
             if (StringUtils.isEmpty(task)) return;
             this.tasks = List.of(task);
         }
-        public void setColumns(List<Map<String, String>> columns) {
-            if (CollectionUtils.isNotEmpty(columns)) {
-                this.columnNames = Lists.newArrayList();
-                this.columnMap = Maps.newHashMap();
-                columns.forEach(map -> map.forEach((x, y) -> {
-                    columnNames.add(x);
-                    this.columnMap.put(x, y);
-                }));
-                this.columns = columns;
-            }
-        }
+
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name)) {
                 log.error("Service config name must not be empty!");
-                return false;
+                throw new IllegalStateException("Service config name must not be empty!");
             }
             if (StringUtils.isEmpty(taskName)) {
                 taskName = "Service";
@@ -104,20 +93,19 @@ public class RecommendConfig {
         private String taskName;
         private List<Chain> chains;
         private Map<String, Object> options;
-
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name)) {
                 log.error("Experiment config name must not be empty!");
-                return false;
+                throw new IllegalStateException("Experiment config name must not be empty!");
             }
             if (CollectionUtils.isEmpty(chains)) {
                 log.error("Experiment config chains must not be empty!");
-                return false;
+                throw new IllegalStateException("Experiment config chains must not be empty!");
             }
             for (Chain chain : chains) {
                 if (!chain.checkAndDefault()) {
                     log.error("Experiment config chain must be right!");
-                    return false;
+                    throw new IllegalStateException("Experiment config chain must be right!");
                 }
             }
             if (StringUtils.isEmpty(taskName)) {
@@ -155,18 +143,18 @@ public class RecommendConfig {
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name)) {
                 log.error("Layer config name must not be empty!");
-                return false;
+                throw new IllegalStateException("Layer config name must not be empty!");
             }
             if (StringUtils.isEmpty(bucketizer)) {
                 bucketizer = "random";
             }
             if (CollectionUtils.isEmpty(experiments) || Sets.newHashSet(experiments).size() != experiments.size()) {
                 log.error("Layer config experiments must not be empty or has duplicate experiment!");
-                return false;
+                throw new IllegalStateException("Layer config experiments must not be empty or has duplicate experiment!");
             }
             if (Math.abs(sumRatio - 0.0) < 1e-6) {
                 log.error("Layer experiments ratio sum must not be 0.0!");
-                return false;
+                throw new IllegalStateException("Layer experiments ratio sum must not be 0.0!");
             }
             if (StringUtils.isEmpty(taskName)) {
                 taskName = "Layer";
@@ -179,25 +167,26 @@ public class RecommendConfig {
      * 执行layer组成的任务Dag， 任务上下游依赖
      */
     @Data
-    public static class Scene {
+    public static class Scene extends ColumnInfo {
         private String name;
         private String taskName;
         private List<Chain> chains;
 
         private Map<String, Object> options;
-        private List<String> columnNames;
-        private Map<String, String> columnMap;
-        private List<Map<String, String>> columns;
+
+        public void setColumns(List<Map<String, Object>> columns) {
+            super.setColumns(columns);
+        }
 
         public boolean checkAndDefault() {
             if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(chains)) {
                 log.error("Scene config name and chains must not be empty!");
-                return false;
+                throw new IllegalStateException("Scene config name and chains must not be empty!");
             }
             for (Chain chain : chains) {
                 if (!chain.checkAndDefault()) {
                     log.error("Scene config chain must be right!");
-                    return false;
+                    throw new IllegalStateException("Scene config chain must be right!");
                 }
             }
             if (StringUtils.isEmpty(taskName)) {
@@ -205,17 +194,6 @@ public class RecommendConfig {
             }
             Assert.notNull(columnNames, "scene must configure output columns! at " + name);
             return true;
-        }
-        public void setColumns(List<Map<String, String>> columns) {
-            if (CollectionUtils.isNotEmpty(columns)) {
-                this.columnNames = Lists.newArrayList();
-                this.columnMap = Maps.newHashMap();
-                columns.forEach(map -> map.forEach((x, y) -> {
-                    columnNames.add(x);
-                    this.columnMap.put(x, y);
-                }));
-                this.columns = columns;
-            }
         }
     }
 }

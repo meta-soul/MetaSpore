@@ -25,12 +25,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.util.JsonStringHashMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.Assert;
 
 import java.util.*;
+
+import static com.dmetasoul.metaspore.recommend.common.Utils.getObjectToMap;
 
 @Data
 @Slf4j
@@ -51,24 +54,61 @@ public class ItemMatcherTask extends AlgoTransformTask {
         return true;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
-        addFunction("toItemScore", (fields, result, options) -> {
+        addFunction("toItemScore", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
             Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),
                     "toItemScore input[0] is recall userId string");
-            Assert.isTrue(fields.size() > 1 && fields.get(1).isMatch(DataTypeEnum.LIST_STR),
-                    "toItemScore input[1] is recall itemId list<string>");
-            Assert.isTrue(fields.size() > 2 && fields.get(2).isMatch(DataTypeEnum.LIST_DOUBLE),
-                    "toItemScore input[2] is recall item weight list<double>");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<String> userIds = fields.get(0).getValue();
-            List<List<String>> recallItemData = fields.get(1).getValue();
-            List<List<Double>> recallWeights = fields.get(2).getValue();
+            List<List<String>> recallItemData = null;
+            List<List<Double>> recallWeights = null;
             List<Double> userProfileWeights = null;
-            if (fields.size() > 3 && fields.get(3).isMatch(DataTypeEnum.DOUBLE)) {
-                userProfileWeights = fields.get(3).getValue();
+            if (fields.size() > 2 && fields.get(1).isMatch(DataTypeEnum.LIST_STR) &&
+                    fields.get(2).isMatch(DataTypeEnum.LIST_DOUBLE)) {
+                recallItemData = fields.get(1).getValue();
+                recallWeights = fields.get(2).getValue();
+                if (fields.size() > 3 && fields.get(3).isMatch(DataTypeEnum.DOUBLE)) {
+                    userProfileWeights = fields.get(3).getValue();
+                }
+            } else if (fields.size() > 1 && fields.get(1).isMatch(DataTypeEnum.LIST_STRUCT)){
+                List<List<Object>> objData = fields.get(1).getValue();
+                recallItemData = Lists.newArrayList();
+                recallWeights = Lists.newArrayList();
+                Field field = fields.get(1).getField();
+                Assert.isTrue(field.getChildren().size() == 1, "list struct only has one struct children!");
+                List<Field> children = field.getChildren().get(0).getChildren();
+                Assert.isTrue(children != null && children.size() == 2, "itemscore must has 2 field!");
+                Field itemField = children.get(0);
+                Field scoreField = children.get(1);
+                if (CollectionUtils.isNotEmpty(objData)) {
+                    for (List<Object> itemData : objData) {
+                        List<String> itemArray = Lists.newArrayList();
+                        List<Double> scoreArray = Lists.newArrayList();
+                        recallItemData.add(itemArray);
+                        recallWeights.add(scoreArray);
+                        if (CollectionUtils.isEmpty(itemData)) {
+                            continue;
+                        }
+                        for (Object data : itemData) {
+                            if (data == null) {
+                                continue;
+                            }
+                            Map<String, Object> map;
+                            if (data instanceof Map) {
+                                map = (Map<String, Object>)data;
+                            } else {
+                                map = getObjectToMap(data);
+                            }
+                            itemArray.add((String) map.get(itemField.getName()));
+                            scoreArray.add((Double) map.get(scoreField.getName()));
+                        }
+                    }
+                }
             }
             Map<String, Map<String, Double>> UserItemScore = new HashMap<>();
             for (int i = 0; i< userIds.size(); ++i) {
@@ -94,7 +134,8 @@ public class ItemMatcherTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("toItemScore2", (fields, result, options) -> {
+        addFunction("toItemScore2", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
             Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),
@@ -128,7 +169,8 @@ public class ItemMatcherTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("recallCollectItem", (fields, result, options) -> {
+        addFunction("recallCollectItem", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
             Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),

@@ -67,7 +67,7 @@ public class Experiment extends TaskFlow<Service> {
     @SuppressWarnings("unchecked")
     @Override
     public void initFunctions() {
-        registerOperator("maxScore", (field, data, option) ->{
+        registerMergeOperator("maxScore", (field, data, option) ->{
             if (field instanceof Number && data instanceof Number) {
                 Number val1 = (Number) field;
                 Number val2 = (Number) data;
@@ -77,7 +77,7 @@ public class Experiment extends TaskFlow<Service> {
             }
             return field;
         });
-        registerOperator("mergeScoreInfo", (field, data, option) ->{
+        registerMergeOperator("mergeScoreInfo", (field, data, option) ->{
             if (field instanceof Map && data instanceof Map) {
                 Map<String, Object> val1 = (Map<String, Object>) field;
                 Map<String, Object> val2 = (Map<String, Object>) data;
@@ -85,6 +85,16 @@ public class Experiment extends TaskFlow<Service> {
                 return val1;
             }
             return field;
+        });
+        registerUpdateOperator("putOriginScores", (input, output, option) ->{
+            Assert.isTrue(input.size() == 2 && input.get(1) instanceof Map, "originScores is map");
+            Assert.isTrue(CollectionUtils.isNotEmpty(output), "output is not empty");
+            String label = Utils.getField(option, "label", name);
+            Map<String, Object> res = Maps.newHashMap();
+            Map<String, Object> map = (Map<String, Object>) input.get(1);
+            map.put(label, input.get(0));
+            res.put(output.get(0), map);
+            return res;
         });
     }
 }

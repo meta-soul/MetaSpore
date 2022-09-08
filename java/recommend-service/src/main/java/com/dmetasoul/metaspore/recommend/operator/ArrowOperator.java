@@ -96,6 +96,7 @@ public abstract class ArrowOperator {
         writer.endMap();
     }
 
+    @SuppressWarnings("unchecked")
     @SneakyThrows
     public <T> void writeStruct(BaseWriter.StructWriter writer, T data, List<Field> fields, BufferAllocator allocator) {
         Assert.notNull(writer, "list writer must not null");
@@ -103,19 +104,28 @@ public abstract class ArrowOperator {
         if (data == null) {
             writer.writeNull();
         } else {
-            Class<?> cla = data.getClass();
             Map<String, Field> fieldMap = Maps.newHashMap();
             for (Field field : fields) {
                 fieldMap.put(field.getName(), field);
             }
-            for (java.lang.reflect.Field field : cla.getDeclaredFields()) {
-                field.setAccessible(true);
-                String keyName = field.getName();
-                if (!fieldMap.containsKey(keyName)) {
-                    continue;
+            if (data instanceof Map) {
+                for (Map.Entry<String, Object> entry : ((Map<String, Object>) data).entrySet()) {
+                    Field field = fieldMap.get(entry.getKey());
+                    if (field == null) {
+                        continue;
+                    }
+                    writeField(writer, entry.getValue(), entry.getKey(), field, allocator);
                 }
-                Object value = field.get(data);
-                writeField(writer, value, keyName, fieldMap.get(keyName), allocator);
+            } else {
+                for (java.lang.reflect.Field field : data.getClass().getDeclaredFields()) {
+                    field.setAccessible(true);
+                    String keyName = field.getName();
+                    if (!fieldMap.containsKey(keyName)) {
+                        continue;
+                    }
+                    Object value = field.get(data);
+                    writeField(writer, value, keyName, fieldMap.get(keyName), allocator);
+                }
             }
         }
         writer.end();

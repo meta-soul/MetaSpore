@@ -8,6 +8,7 @@ import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mysql.cj.jdbc.Blob;
+import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.memory.BufferAllocator;
@@ -61,7 +62,7 @@ public class DataTypeTest {
                 new Blob(new byte[]{0x53, 0x03, (byte) 0xA0, (byte) 0xf9}, null)));
         datas.put(DataTypeEnum.DATE.getId(), List.of(LocalDateTime.of(2022, 8, 12, 17, 28, 5), LocalDateTime.of(2021, 8, 15, 0, 0, 0), LocalDateTime.of(2021, Calendar.SEPTEMBER, 15, 17, 15)));
         datas.put(DataTypeEnum.TIMESTAMP.getId(), List.of(LocalDateTime.of(2021, 8, 15, 17, 15, 20).atZone(UTC).toInstant().toEpochMilli(), 1L, System.currentTimeMillis()));
-        datas.put(DataTypeEnum.DECIMAL.getId(), List.of(new BigDecimal(BigInteger.valueOf(43858324658534L), 4), new BigDecimal(new BigInteger("2172467235734527343456214551342342"), 4), new BigDecimal(BigInteger.valueOf(-31467325736457637L), 4))
+        datas.put(DataTypeEnum.DECIMAL.getId(), List.of(new BigDecimal(BigInteger.valueOf(43858324658534L), 4), new BigDecimal(new BigInteger("5734527343456214551342342"), 4), new BigDecimal(BigInteger.valueOf(-31467325736457637L), 4))
                 .stream().map(x -> {
                     x.setScale(4);
                     return x;
@@ -98,7 +99,11 @@ public class DataTypeTest {
                         Assert.assertEquals(res[k], input[k]);
                     }
                 } else {
-                    Assert.assertEquals("type: " + type, Utils.get(list, i, null), result.get(field + type.getId(), i));
+                    Object resObj = result.get(field + type.getId(), i);
+                    if (type.equals(DataTypeEnum.DECIMAL)) {
+                        resObj = ((BigDecimal) resObj).setScale(4, 6);
+                    }
+                    Assert.assertEquals("type: " + type, Utils.get(list, i, null), resObj);
                 }
             }
         }
@@ -187,6 +192,12 @@ public class DataTypeTest {
         }
     }
 
+    @Data
+    public static class Entry {
+        private String key;
+        private Object value;
+    }
+
     @Test
     public void TestListPairInArrow() {
         DataTypeEnum type = DataTypeEnum.LIST_ENTRY_STR_DOUBLE;
@@ -205,9 +216,9 @@ public class DataTypeTest {
         for (int i = 0; i < featureTable.getRowCount(); ++i) {
             log.info("index:{}, data:{}", i, result.get(field, i));
         }
-        List<Object> res = ArrowConv.convValue(type, result.get(field, 0));
+        List<Object> res = result.get(field, 0);
         for (Object item : res) {
-            @SuppressWarnings("unchecked") Map.Entry<String, Object> entry = (Map.Entry<String, Object>) item;
+            @SuppressWarnings("unchecked") Entry entry =  Utils.getObjectFromMap((Map<String, Object>)item, Entry.class);
             log.info("get entry key: {}, value: {}", entry.getKey(), entry.getValue());
             Assert.assertEquals(entry.getValue(), scores.get(entry.getKey()));
         }

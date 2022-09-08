@@ -19,11 +19,14 @@ import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
+import com.dmetasoul.metaspore.recommend.recommend.interfaces.UpdateOperator;
+import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -32,6 +35,7 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.collections4.SetUtils;
 import org.springframework.util.Assert;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -49,10 +53,46 @@ public class DataResult {
     protected FeatureTable featureTable;
     protected List<DataTypeEnum> dataTypes;
 
+    public void setFeatureData(String name, List<Field> fields, List<DataTypeEnum> types, List<Map<String, Object>> data) {
+        this.setName(name);
+        featureTable = new FeatureTable(name, fields, ArrowAllocator.getAllocator());
+        dataTypes = types;
+        int row = 0;
+        for (Map<String, Object> itemData : data) {
+            if (MapUtils.isEmpty(itemData)) continue;
+            boolean empty = true;
+            for (int i = 0; i < fields.size(); ++i) {
+                String col = fields.get(i).getName();
+                Object item = itemData.get(col);
+                if (item != null) {
+                    empty = false;
+                }
+                if (!types.get(i).set(featureTable, col, row, item)) {
+                    log.error("set featureTable fail at DataResult： {} col:{}", name, col);
+                }
+            }
+            if (!empty) {
+                row += 1;
+            }
+        }
+        featureTable.finish();
+    }
+
     public List<Object> get(String field) {
         if (featureTable == null || featureTable.getVector(field) == null)
             throw new IllegalArgumentException("featureTable is null or field not exist");
         FieldVector vector = featureTable.getVector(field);
+        List<Object> values = Lists.newArrayList();
+        for (int i = 0; i < vector.getValueCount(); ++i) {
+            values.add(convValue(vector.getField(), vector.getObject(i)));
+        }
+        return values;
+    }
+
+    public List<Object> get(int index) {
+        if (featureTable == null || featureTable.getVector(index) == null)
+            throw new IllegalArgumentException("featureTable is null or field not exist");
+        FieldVector vector = featureTable.getVector(index);
         List<Object> values = Lists.newArrayList();
         for (int i = 0; i < vector.getValueCount(); ++i) {
             values.add(convValue(vector.getField(), vector.getObject(i)));
@@ -156,6 +196,23 @@ public class DataResult {
         }
     }
 
+    public void updateDataResult(@NonNull DataResult data, @NotEmpty List<String> input, @NotEmpty List<String> output,
+                                 UpdateOperator operator,
+                                 Map<String, List<Object>> updateFieldData,
+                                 Map<String, Object> option) {
+        if (this.isNull() || data.isNull() || CollectionUtils.isEmpty(data.dataTypes)) return;
+        for (int i = 0; i < data.getFeatureTable().getRowCount(); ++i) {
+            List<Object> inputData = Lists.newArrayList();
+            for (String field : input) {
+                inputData.add(data.get(field, i));
+            }
+            Assert.notNull(operator, "update operator must not null");
+            Map<String, Object> outputData = operator.update(inputData, output, option);
+            Assert.isTrue(outputData != null && outputData.size() == output.size(), "update output size is wrong");
+            outputData.forEach((k, v) -> updateFieldData.computeIfAbsent(k, key->Lists.newArrayList()).add(v));
+        }
+    }
+
     public void mergeDataResult(List<DataResult> data,
                                 List<String> dupFields,
                                 Map<String, MergeOperator> mergeOperatorMap,
@@ -167,6 +224,23 @@ public class DataResult {
         for (int k = 0; k < dataTypes.size(); ++k) {
             FieldVector vector = featureTable.getVector(k);
             dataTypes.get(k).set(featureTable, vector.getName(), mergeFieldData.get(vector.getName()));
+        }
+        featureTable.finish();
+    }
+    public void updateDataResult(DataResult data,
+                                 List<String> input,
+                                 List<String> output,
+                                 UpdateOperator updateOperator,
+                                 Map<String, Object> option) {
+        Map<String, List<Object>> updateFieldData = Maps.newHashMap();
+        updateDataResult(data, input, output, updateOperator, updateFieldData, option);
+        for (int k = 0; k < dataTypes.size(); ++k) {
+            FieldVector vector = featureTable.getVector(k);
+            if (updateFieldData.containsKey(vector.getName())) {
+                dataTypes.get(k).set(featureTable, vector.getName(), updateFieldData.get(vector.getName()));
+            } else {
+                dataTypes.get(k).set(featureTable, vector.getName(), data.get(k));
+            }
         }
         featureTable.finish();
     }

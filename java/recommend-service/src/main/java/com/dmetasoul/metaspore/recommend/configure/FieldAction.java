@@ -1,6 +1,5 @@
 package com.dmetasoul.metaspore.recommend.configure;
 
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -17,13 +16,13 @@ import java.util.Set;
 @Data
 public class FieldAction {
     private List<String> names;
-    private List<String> types;
-    private List<FeatureConfig.Field> fields;
+    private List<Object> types;
+    private List<FieldInfo> fields;
     private List<String> input;
     private String func;
     private Map<String, Object> options;
     private List<Map<String, List<String>>> algoColumns;
-    private Map<String, FeatureConfig.Field> algoFields;
+    private Map<String, FieldInfo> algoFields;
 
     public void setNames(List<String> names) {
         if (CollectionUtils.isEmpty(names)) return;
@@ -35,23 +34,23 @@ public class FieldAction {
         this.names = List.of(name);
     }
 
-    public void setTypes(List<String> types) {
+    public void setTypes(List<Object> types) {
         if (CollectionUtils.isEmpty(types)) return;
         this.types = types;
     }
 
-    public void setType(String type) {
-        if (StringUtils.isEmpty(type)) return;
+    public void setType(Object type) {
+        if (type == null) return;
         this.types = List.of(type);
     }
     public void setFields(List<String> fields) {
         if (CollectionUtils.isEmpty(fields)) return;
-        this.fields = FeatureConfig.Field.create(fields);
+        this.fields = FieldInfo.create(fields);
     }
 
     public void setField(String field) {
         if (StringUtils.isEmpty(field)) return;
-        this.fields = List.of(Objects.requireNonNull(FeatureConfig.Field.create(field)));
+        this.fields = List.of(Objects.requireNonNull(FieldInfo.create(field)));
     }
 
     public void processAlgoColumns(List<Map<String, List<String>>> data) {
@@ -66,7 +65,7 @@ public class FieldAction {
                 if (CollectionUtils.isEmpty(entry.getValue())) continue;
                 for (String col : entry.getValue()) {
                     if (inputSet.contains(col)) continue;
-                    FeatureConfig.Field field = FeatureConfig.Field.create(col);
+                    FieldInfo field = FieldInfo.create(col);
                     fields.add(field);
                     algoFields.put(col, field);
                 }
@@ -90,9 +89,11 @@ public class FieldAction {
         processAlgoColumns(algoColumns);
         Assert.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
                 "fieldaction input and field must not be empty at the same time");
-        for (String type : types) {
-            Assert.isTrue(StringUtils.isNotEmpty(type) && DataTypes.getDataType(type) != null,
-                    "AlgoTransform FieldAction config type must be support! type:" + type);
+        if (CollectionUtils.isNotEmpty(input)) {
+            Set<String> nameSet = Sets.newHashSet(names);
+            for (String key : input) {
+                Assert.isTrue(!nameSet.contains(key), "input field must not in names! key:" + key);
+            }
         }
         return true;
     }

@@ -28,6 +28,7 @@ import org.springframework.util.Assert;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Slf4j
@@ -45,11 +46,12 @@ public class UserProfileTask extends AlgoTransformTask {
     }
     @Override
     public void addFunctions() {
-        addFunction("splitRecentIds", (fields, result, options) -> {
+        addFunction("splitRecentIds", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FieldData fieldData = fields.get(0);
-            Assert.isTrue(fieldData.isMatch(DataTypeEnum.STRING), "split input must string!");
+            Assert.isTrue(fieldData.isMatch(DataTypeEnum.STRING), "split input must string and not empty!");
             String split = Utils.getField(options, "splitor", splitor);
             List<IndexData> input = fieldData.getIndexValue();
             for (IndexData o : input) {
@@ -59,7 +61,8 @@ public class UserProfileTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("recentWeight", (fields, result, options) -> {
+        addFunction("recentWeight", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input data is not null");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<IndexData> input = fields.get(0).getIndexValue();

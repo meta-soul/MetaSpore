@@ -50,17 +50,15 @@ public class Scene extends TaskFlow<Layer> {
         resFields = Lists.newArrayList();
         dataTypes = Lists.newArrayList();
         for (String col : scene.getColumnNames()) {
-            String type = scene.getColumnMap().get(col);
-            DataTypeEnum dataType = DataTypes.getDataType(type);
-            resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
-            dataTypes.add(dataType);
+            resFields.add(scene.getFieldMap().get(col));
+            dataTypes.add(scene.getColumnMap().get(col));
         }
     }
 
     @SneakyThrows
     public DataResult process(DataContext context) {
         TransformConfig transformConfig = new TransformConfig();
-        transformConfig.setName("summary");
+        transformConfig.setName("summaryBySchema");
         CompletableFuture<DataResult> future = execute(List.of(),
                 serviceRegister.getLayerMap(), List.of(transformConfig), scene.getOptions(),
                 context).thenApplyAsync(dataResults -> {

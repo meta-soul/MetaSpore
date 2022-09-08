@@ -33,6 +33,7 @@ import org.springframework.util.Assert;
 import org.apache.arrow.vector.types.pojo.Field;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.time.LocalDate;
@@ -226,12 +227,12 @@ public enum DataTypeEnum {
     DECIMAL(9, BigDecimal.class, FieldType.nullable(new ArrowType.Decimal(111, 17)), new ArrowOperator() {
         @Override
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
-            BigDecimal data = parseBigDecimal(value);
-            if (value != null && data == null) {
+            BigDecimal input = parseBigDecimal(value);
+            if (value != null && input == null) {
                 log.error("set featureTable fail! value type is not match BigDecimal value: {}!", value);
                 return false;
             }
-            data.setScale(17);
+            BigDecimal data = input.setScale(17, RoundingMode.valueOf(6));
             if (value == null) {
                 ((DecimalVector)featureTable.getVector(col)).setNull(index);
             } else {
@@ -325,7 +326,8 @@ public enum DataTypeEnum {
             new Field("entry", FieldType.notNullable(ArrowType.Struct.INSTANCE), List.of(
             Field.notNullable("key",ArrowType.Utf8.INSTANCE),
             Field.notNullable("value",new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE))
-    ))), new MapOperator<String, Float>());
+    ))), new MapOperator<String, Float>()),
+    LIST_STRUCT(24, List.class, FieldType.nullable(ArrowType.List.INSTANCE), List.of(new Field("object", FieldType.notNullable(ArrowType.Struct.INSTANCE), null)), new ListOperator<>());
 
     private final Integer id;
 
@@ -371,6 +373,9 @@ public enum DataTypeEnum {
 
     public boolean set(FeatureTable featureTable, String col, int index, Object data) {
         return this.op.set(featureTable, index, col, data);
+    }
+    public boolean needChildren() {
+        return this.equals(LIST_STRUCT);
     }
     public Class<?> getCls() {
         return cls;

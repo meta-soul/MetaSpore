@@ -2,13 +2,13 @@ spring:
   cloud:
     consul:
       host: ${CONSUL_HOST:localhost}
-      port: 8500
+      port: ${CONSUL_PORT:8500}
       config:
         enabled: true
-        prefix: config
-        defaultContext: recommend
-        data-key: data
-        format: YAML
+        prefix: ${CONSUL_PREFIX:config}
+        defaultContext: ${CONSUL_CONTEXT:recommend}
+        data-key: ${CONSUL_KEY:data}
+        format: ${CONSUL_FORMAT:yaml}
         watch:
           wait-time: 1
           delay: 1000

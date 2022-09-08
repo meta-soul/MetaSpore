@@ -21,17 +21,15 @@ import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
 import com.dmetasoul.metaspore.recommend.data.*;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Queues;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -41,6 +39,9 @@ import org.springframework.util.Assert;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+
+import static com.dmetasoul.metaspore.recommend.configure.ColumnInfo.getField;
+import static com.dmetasoul.metaspore.recommend.configure.ColumnInfo.getType;
 
 @Data
 @Slf4j
@@ -63,10 +64,8 @@ public class AlgoTransformTask extends DataService {
         this.taskPool = taskServiceRegister.getTaskPool();
         functionMap = taskServiceRegister.getFunctions();
         for (String col : algoTransform.getColumnNames()) {
-            String type = algoTransform.getColumnMap().get(col);
-            DataTypeEnum dataType = DataTypes.getDataType(type);
-            resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
-            dataTypes.add(dataType);
+            resFields.add(algoTransform.getFieldMap().get(col));
+            dataTypes.add(algoTransform.getColumnMap().get(col));
         }
         depend = new Chain();
         List<String> depends = Lists.newArrayList();
@@ -245,7 +244,7 @@ public class AlgoTransformTask extends DataService {
         if (CollectionUtils.isEmpty(fieldDatas)) return res;
         int maxIndex = -1;
         for (FieldData itemData : fieldDatas) {
-            res.add(FieldData.of(itemData.getName(), itemData.getType()));
+            res.add(FieldData.of(itemData.getName(), itemData.getType(), itemData.getField()));
             if (maxIndex < itemData.getMaxIndex()) maxIndex = itemData.getMaxIndex();
         }
         for (int index = 0; index <= maxIndex; ++index) {
@@ -292,27 +291,31 @@ public class AlgoTransformTask extends DataService {
         result.addAll(getDataResultByNames(algoTransform.getAlgoTransform(), context));
         FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
         Map<String, DataResult> dataResultMap = getDataResults(result);
-        Map<String, Map<String, String>> columnMaps = Maps.newHashMap();
+        Map<String, Map<String, DataTypeEnum>> columnMaps = Maps.newHashMap();
+        Map<String, Map<String, Field>> fieldMaps = Maps.newHashMap();
         if (CollectionUtils.isNotEmpty(algoTransform.getFeature())) {
             for (String name : algoTransform.getFeature()) {
                 columnMaps.put(name, taskFlowConfig.getFeatures().get(name).getColumnMap());
+                fieldMaps.put(name, taskFlowConfig.getFeatures().get(name).getFieldMap());
             }
         }
         if (CollectionUtils.isNotEmpty(algoTransform.getAlgoTransform())) {
             for (String name : algoTransform.getAlgoTransform()) {
                 columnMaps.put(name, taskFlowConfig.getAlgoTransforms().get(name).getColumnMap());
+                fieldMaps.put(name, taskFlowConfig.getAlgoTransforms().get(name).getFieldMap());
             }
         }
         for (FieldAction fieldAction : algoTransform.getActionList()) {
-            List<FeatureConfig.Field> fields = fieldAction.getFields();
+            List<FieldInfo> fields = fieldAction.getFields();
             List<String> input = fieldAction.getInput();
             List<FieldData> fieldDatas = Lists.newArrayList();
             if (CollectionUtils.isNotEmpty(fields)) {
-                for (FeatureConfig.Field field : fields) {
+                for (FieldInfo field : fields) {
                     DataResult dataResult = dataResultMap.get(field.getTable());
                     List<Object> itemData = dataResult.get(field.getFieldName());
                     fieldDatas.add(FieldData.of(field.toString(),
-                            DataTypes.getDataType(columnMaps.get(field.getTable()).get(field.getFieldName())), itemData));
+                            columnMaps.get(field.getTable()).get(field.getFieldName()),
+                            fieldMaps.get(field.getTable()).get(field.getFieldName()),itemData));
                 }
             }
             if (CollectionUtils.isNotEmpty(input)) {
@@ -324,7 +327,8 @@ public class AlgoTransformTask extends DataService {
             }
             List<FieldData> res = Lists.newArrayList();
             for (int i = 0; i < fieldAction.getNames().size(); ++i) {
-                res.add(FieldData.of(fieldAction.getNames().get(i), DataTypes.getDataType(fieldAction.getTypes().get(i))));
+                Field field = getField(fieldAction.getNames().get(i), fieldAction.getTypes().get(i));
+                res.add(FieldData.of(fieldAction.getNames().get(i), getType(fieldAction.getTypes().get(i)), field));
                 actionResult.put(fieldAction.getNames().get(i), res.get(i));
             }
             if (StringUtils.isEmpty(fieldAction.getFunc())) {

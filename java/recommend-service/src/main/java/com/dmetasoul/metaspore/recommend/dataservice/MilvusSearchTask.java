@@ -67,7 +67,8 @@ public class MilvusSearchTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("milvusIdScore", (fields, result, options) -> {
+        addFunction("milvusIdScore", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
             Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
@@ -76,7 +77,8 @@ public class MilvusSearchTask extends AlgoTransformTask {
             List<IndexData> embedding = fields.get(0).getIndexValue();
             return searchIdScore(embedding, result, options);
         });
-        addFunction("milvusField", (fields, result, options) -> {
+        addFunction("milvusField", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
             Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
@@ -90,7 +92,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
     protected SearchResultsWrapper requestMilvus(List<List<Float>> embedding, List<String> names, Map<String, Object> options) {
         String collection = Utils.getField(options, "collectionName", collectionName);
         int limit = Utils.getField(options, "maxReservation", maxReservation);
-        String field = Utils.getField(options, "field", "embedding_vector");
+        String field = Utils.getField(options, "vectorField", "embedding_vector");
         long timeOut = Utils.getField(options,"timeOut", 3000L);
         String searchParams = Utils.getField(options,"searchParams", "{\"nprobe\":128}");
         MetricType metricType = Utils.getMetricType(Utils.getField(options,"metricType", 2));

@@ -141,7 +141,8 @@ public class Utils {
         return scores;
     }
 
-    public static Map<String, Object> getObjectToMap(Object obj) throws IllegalAccessException {
+    @SneakyThrows
+    public static Map<String, Object> getObjectToMap(Object obj) {
         Map<String, Object> map = Maps.newHashMap();
         Class<?> cla = obj.getClass();
         Field[] fields = cla.getDeclaredFields();
@@ -153,6 +154,19 @@ public class Utils {
             }
         }
         return map;
+    }
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public static <T> T getObjectFromMap(Map<String, Object> data, Class<?> cls) {
+        Object obj = cls.getConstructor().newInstance();
+        Field[] fields = cls.getDeclaredFields();
+        for (Field field : fields) {
+            if (field.trySetAccessible() && data.containsKey(field.getName())) {
+                String keyName = field.getName();
+                field.set(obj, data.get(keyName));
+            }
+        }
+        return (T) obj;
     }
     public static <T> T get(List<T> list, int index, T value) {
         if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {

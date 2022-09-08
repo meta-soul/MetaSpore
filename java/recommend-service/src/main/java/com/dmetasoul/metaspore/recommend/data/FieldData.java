@@ -5,6 +5,7 @@ import com.dmetasoul.metaspore.recommend.operator.ArrowConv;
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
@@ -16,25 +17,27 @@ import java.util.stream.Collectors;
 public class FieldData {
     private String name;
     private DataTypeEnum type;
+    private Field field;
     private List<IndexData> indexValue;
 
     private int maxIndex = -1;
 
-    public static FieldData of(String name, DataTypeEnum type) {
+    public static FieldData of(String name, DataTypeEnum type, Field field) {
         FieldData fieldData = new FieldData();
         fieldData.setName(name);
         fieldData.setType(type);
+        fieldData.setField(field);
         return fieldData;
     }
 
-    public static FieldData of(String name, DataTypeEnum type, List<Object> value) {
-        FieldData fieldData = FieldData.of(name, type);
+    public static FieldData of(String name, DataTypeEnum type, Field field, List<Object> value) {
+        FieldData fieldData = FieldData.of(name, type, field);
         fieldData.setValue(value);
         return fieldData;
     }
 
-    public static FieldData of(String name, DataTypeEnum type, List<Object> value, List<Integer> index) {
-        FieldData fieldData = FieldData.of(name, type);
+    public static FieldData of(String name, DataTypeEnum type, Field field, List<Object> value, List<Integer> index) {
+        FieldData fieldData = FieldData.of(name, type, field);
         fieldData.setValue(value, index);
         return fieldData;
     }
@@ -47,7 +50,6 @@ public class FieldData {
         if (CollectionUtils.isNotEmpty(value)) {
             value.forEach(indexData -> {
                 if (maxIndex < indexData.getIndex()) maxIndex = indexData.getIndex();
-                indexData.setType(type);
             });
         }
         this.indexValue = value;
@@ -58,7 +60,6 @@ public class FieldData {
         List<IndexData> data = Lists.newArrayList();
         for (int i = 0; i < value.size(); ++i) {
             data.add(new IndexData(i, value.get(i)));
-            data.get(i).setType(type);
         }
         maxIndex = value.size() - 1;
         this.indexValue = data;
@@ -70,7 +71,6 @@ public class FieldData {
         Assert.isTrue(index != null && value.size() == index.size(), "index and value must has same size");
         for (int i = 0; i < value.size(); ++i) {
             data.add(new IndexData(index.get(i), value.get(i)));
-            data.get(i).setType(type);
             if (maxIndex < index.get(i)) maxIndex = index.get(i);
         }
         this.indexValue = data;
@@ -78,6 +78,7 @@ public class FieldData {
 
     @SuppressWarnings("unchecked")
     public <T> List<T> getValue() {
+        if (CollectionUtils.isEmpty(indexValue)) return List.of();
         return (List<T>) indexValue.stream().map(IndexData::getVal).collect(Collectors.toList());
     }
 
@@ -101,7 +102,6 @@ public class FieldData {
         if (item == null) return;
         if (indexValue == null) indexValue = Lists.newArrayList();
         if (maxIndex < item.getIndex()) maxIndex = item.getIndex();
-        item.setType(type);
         indexValue.add(item);
     }
 

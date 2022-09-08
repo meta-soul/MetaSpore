@@ -92,7 +92,8 @@ public class DataTypes {
         dataTypes.put("map_str_long", DataTypeEnum.MAP_STR_LONG);
         dataTypes.put("map_str_double", DataTypeEnum.MAP_STR_DOUBLE);
         dataTypes.put("map_str_float", DataTypeEnum.MAP_STR_FLOAT);
-        // value object only support string, int, long, float, double
         dataTypes.put("list_pair_str_double", DataTypeEnum.LIST_ENTRY_STR_DOUBLE);
+        // 使用时 确定struct具体类型
+        dataTypes.put("list_struct", DataTypeEnum.LIST_STRUCT);
     }
 }
