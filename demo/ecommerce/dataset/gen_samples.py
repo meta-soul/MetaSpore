@@ -27,6 +27,8 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, ArrayType
 
+sys.path.append('../../../') 
+from python.algos.feature.neg_sampler import negative_sampling
 
 def load_config(path):
     params = dict()
@@ -35,25 +37,27 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
-def init_spark(local, app_name, batch_size, worker_count, server_count,
-               worker_memory, server_memory, coordinator_memory, **kwargs):
-    subprocess.run(['zip', '-r', os.getcwd() + '/python.zip', 'python'], cwd='../../../')
-    spark_confs = {
-        "spark.network.timeout":"500",
-        "spark.submit.pyFiles":"python.zip",
-        "spark.ui.showConsoleProgress": "true",
-        "spark.kubernetes.executor.deleteOnTermination":"true",
-    }
+def init_spark(conf):
+    session_conf = conf['session_conf']
+    extended_conf = conf.get('extended_conf') or {}
+    if conf.get('pyzip'):
+        pyzip_conf = conf['pyzip']
+        cwd_path = pyzip_conf['cwd_path']
+        zip_file_path = pyzip_conf['zip_file_path']
+        subprocess.run(['zip', '-r', zip_file_path, 'python'], cwd=cwd_path)
+        extended_conf['spark.submit.pyFiles'] = 'python.zip'
     spark = ms.spark.get_session(
-        local=local,
-        app_name=app_name,
-        batch_size=batch_size,
-        worker_count=worker_count,
-        server_count=server_count,
-        worker_memory=worker_memory,
-        server_memory=server_memory,
-        coordinator_memory=coordinator_memory,
-        spark_confs=spark_confs)
+        local=session_conf['local'],
+        app_name=session_conf['app_name'] or 'metaspore',
+        batch_size=session_conf['batch_size'] or 100,
+        worker_count=session_conf['worker_count'] or 1,
+        server_count=session_conf['server_count'] or 1,
+        worker_cpu=session_conf.get('worker_cpu') or 1,
+        server_cpu=session_conf.get('server_cpu') or 1,
+        worker_memory=session_conf['worker_memory'] or '5G',
+        server_memory=session_conf['server_memory'] or '5G',
+        coordinator_memory=session_conf['coordinator_memory'] or '5G',
+        spark_confs=extended_conf)
     sc = spark.sparkContext
     print('Debug -- spark init')
     print('Debug -- version:', sc.version)   
@@ -61,42 +65,87 @@ def init_spark(local, app_name, batch_size, worker_count, server_count,
     print('Debug -- uiWebUrl:', sc.uiWebUrl)
     return spark
 
-def read_dataset(spark, user_path, item_path, interaction_path, fmt='parquet', **kwargs):
+def load_dataset(spark, conf, fmt='parquet'):
+    user_path = conf['user_path']
     user_dataset = spark.read.parquet(user_path)
     print('Debug -- user dataset count:', user_dataset.count())
+    
+    item_path = conf['item_path']
     item_dataset = spark.read.parquet(item_path)
     print('Debug -- item dataset count:', item_dataset.count())
+    
+    interaction_path = conf['interaction_path']
     interaction_dataset = spark.read.parquet(interaction_path)
     print('Debug -- interaction dataset count:', interaction_dataset.count())
+    
     return user_dataset, item_dataset, interaction_dataset
 
-def join_dataset(spark, user_dataset, item_dataset, interaction_dataset):
-    user_dataset.registerTempTable('user_dataset')
-    item_dataset.registerTempTable('item_dataset')
-    interaction_dataset.registerTempTable('interaction_dataset')
-    query ="""
-    select distinct
-        user.*, item.*, interact.timestamp
-    from
-        interaction_dataset interact
-    join
-        user_dataset user
-    on interact.user_id=user.user_id
-    join
-        item_dataset item
-    on interact.item_id=item.item_id
-    """
-    join_dataset = spark.sql(query)
-    return join_dataset
+def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
+    def join_dataset(user_dataset, item_dataset, interaction_dataset, 
+                     user_key_col, item_key_col, timestamp_col):
+        user_dataset.registerTempTable('user_dataset')
+        item_dataset.registerTempTable('item_dataset')
+        interaction_dataset.registerTempTable('interaction_dataset')
+        query ="""
+        select distinct
+            user.*, item.*, interact.{2}
+        from
+            interaction_dataset interact
+        join
+            user_dataset user
+        on interact.{0}=user.{0}
+        join
+            item_dataset item
+        on interact.{1}=item.{1}
+        """.format(
+            user_key_col, 
+            item_key_col, 
+            timestamp_col
+        )
+        join_dataset = spark.sql(query)
+        return join_dataset
 
-def reserve_cate_features(spark, join_dataset, array_join_sep=u'\u0001'):
-    str_cols = [f.name for f in join_dataset.schema.fields if isinstance(f.dataType, StringType)]
-    array_cols = [f.name for f in join_dataset.schema.fields if isinstance(f.dataType, ArrayType)]
-    for array_col in array_cols:
-        join_dataset = join_dataset.withColumn(array_col, F.concat_ws(array_join_sep, F.col(array_col)))
-    selected_cols = str_cols + array_cols
-    filter_dataset = join_dataset.select(selected_cols)
-    return filter_dataset
+    def reserve_only_cate_features(join_dataset, array_join_sep=u'\u0001'):
+        str_cols = [f.name for f in join_dataset.schema.fields if isinstance(f.dataType, StringType)]
+        array_cols = [f.name for f in join_dataset.schema.fields if isinstance(f.dataType, ArrayType)]
+        for array_col in array_cols:
+            join_dataset = join_dataset.withColumn(array_col, F.concat_ws(array_join_sep, F.col(array_col)))
+        selected_cols = str_cols + array_cols
+        filter_dataset = join_dataset.select(selected_cols)
+        return filter_dataset
+    
+    def negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio):
+        neg_sample_df = negative_sampling(
+            spark, 
+            dataset=interaction_dataset, 
+            user_column=user_key_col, 
+            item_column=item_key_col, 
+            time_column=timestamp_col, 
+            negative_item_column='neg_item_id', 
+            negative_sample=sample_ratio
+        )
+        return neg_sample_df
+    
+    user_key_col = conf['join_on']['user_key']
+    item_key_col = conf['join_on']['item_key']
+    timestamp_col = conf['join_on']['timestamp']
+    join_dataset = join_dataset(
+        user_dataset, item_dataset, interaction_dataset,
+        user_key_col, item_key_col, timestamp_col
+    )
+    print('Debug -- join dataset sample:')
+    join_dataset.show(10)
+    
+    if conf.get('reserve_only_cate_cols'):
+        join_dataset = reserve_only_cate_features(join_dataset)
+        print('Debug -- reserve cate features sample:')
+        join_dataset.show(10)
+    
+    if conf.get('negative_sample'):
+        sample_ratio = conf['negative_sample']['sample_ratio']
+        negsample = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
+        print('Debug -- negative smapling sample:')
+        negsample.show(10)    
 
 if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
@@ -105,22 +154,10 @@ if __name__=="__main__":
     args = parser.parse_args()
     print('Debug -- conf:', args.conf)
     params = load_config(args.conf)
-    
-    spark_params = params['spark']
-    spark = init_spark(**spark_params)
-    
-    dataset_params = params['dataset']
+    # init spark
+    spark = init_spark(params['init_spark'])
+    # load datasets
     user_dataset, item_dataset, interaction_dataset \
-        = read_dataset(spark, **dataset_params)
-    join_dataset = join_dataset(
-        spark, 
-        user_dataset, 
-        item_dataset, 
-        interaction_dataset
-    )
-    print('Debug -- join dataset sample:')
-    join_dataset.show(10)
+        = load_dataset(spark,  params['load_dataset'])
+    sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_sample'])
     
-    join_dataset = reserve_cate_features(spark, join_dataset)
-    print('Debug -- reserve cate features sample:')
-    join_dataset.show(10)

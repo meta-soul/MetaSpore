@@ -1,21 +1,42 @@
-## spark session
-spark:
-  app_name: 'Ecommerce Generating Samples'
-  local: True
-  worker_count: 1
-  worker_cpu: 2
-  server_count: 1
-  server_cpu: 2
-  batch_size: 256
-  worker_memory: '4G'
-  server_memory: '4G'
-  coordinator_memory: '2G'
+init_spark:
+  session_conf:
+    app_name: 'Ecommerce Generating Samples'
+    local: True
+    worker_count: 1
+    worker_cpu: 2
+    server_count: 1
+    server_cpu: 2
+    batch_size: 256
+    worker_memory: '4G'
+    server_memory: '4G'
+    coordinator_memory: '2G'
+  extended_conf:
+    spark.network.timeout: '500'
+    spark.ui.showConsoleProgress: 'true'
+    spark.kubernetes.executor.deleteOnTermination: 'true'
+  pyzip:
+    cwd_path: '/home/jovyan/workspace/saas/MetaSpore/'
+    zip_file_path: '/home/jovyan/workspace/saas/MetaSpore/demo/ecommerce/dataset/python.zip'
 
-## dataset
-dataset: 
+load_dataset: 
   user_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/dataset/amazon_fashion_user.parquet
   item_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/dataset/amazon_fashion_item.parquet
   interaction_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/dataset/amazon_fashion_interaction.parquet
+  fmt: parquet
 
-
+join_sample:
+  join_on: 
+    user_key: user_id
+    item_key: item_id
+    timestamp: timestamp
+  reserve_only_cate_cols: True
+  user_bhv_seq:
+    - bhv_seq: user_bhv_item_seq
+      by: item_id
+    - bhv_seq: user_bhv_cate_seq
+      by: category
+  negative_sample:
+    sample_ratio: 3
+  
+gen_features:
   
