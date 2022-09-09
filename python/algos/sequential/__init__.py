@@ -21,3 +21,4 @@ from .dien.dien_agent import DIENAgent
 
 from .hrm.hrm_net import HRMUserModule, HRMItemModule, HRMSimilarityModule
 from .gru4rec.gru4rec_net import GRU4RecUserModule, GRU4RecItemModule, GRU4RecSimilarityModule
+from .gru4rec.gru4rec_agent import GRU4RecBatchNegativeSamplingModule, GRU4RecBatchNegativeSamplingAgent

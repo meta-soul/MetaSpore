@@ -17,6 +17,7 @@
 import metaspore as ms
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 class GRU4RecBatchNegativeSamplingModule(ms.TwoTowerRetrievalModule):
     def __init__(self, user_module, item_module, similarity_module):
@@ -51,10 +52,10 @@ class GRU4RecBatchNegativeSamplingModule(ms.TwoTowerRetrievalModule):
         predictions = F.softmax(scores, dim=1).diag()
         return predictions, scores, targets
 
-class GRU4RecBatchNegativeSamplingModule(ms.PyTorchAgent):
+class GRU4RecBatchNegativeSamplingAgent(ms.PyTorchAgent):
     def __init__(self,
                  tau = 1.0,
-                 loss_type='bpr', # loss_type in ['bpr', 'top1']
+                 loss_type='top1', # loss_type in ['bpr', 'top1']
                 ):
         super().__init__()
         self.tau = tau
@@ -73,12 +74,20 @@ class GRU4RecBatchNegativeSamplingModule(ms.PyTorchAgent):
         prob = torch.sigmoid(pairwise_scores).mean()
         reg = torch.sigmoid(scores**2-scores.diag()**2).mean()
         return prob + reg
-
+    
+    def preprocess_minibatch(self, minibatch):
+        ndarrays = [col.values for col in minibatch]
+        # exclude sampling probability and sample weight
+        if self.input_feature_column_num is not None:
+            ndarrays = ndarrays[:self.input_feature_column_num]
+        labels = minibatch[self.input_label_column_index].values.astype(np.float32)
+        return ndarrays, labels
+    
     def train_minibatch(self, minibatch):
         # prepare the training process
         self.model.train()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
-        predictions, scores, labels = self.model(ndarrays)
+        predictions, scores, targets = self.model(ndarrays)
         # temperature control
         if self.tau is not None and self.tau > 1e-6:
             scores = scores/self.tau
