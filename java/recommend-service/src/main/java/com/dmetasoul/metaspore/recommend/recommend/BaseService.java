@@ -1,4 +1,4 @@
-package com.dmetasoul.metaspore.recommend.recommend.interfaces;
+package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;

@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
@@ -61,25 +62,25 @@ public class ItemMatcherTask extends AlgoTransformTask {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),
+            Assert.isTrue(fields.size() > 0 && DataTypeEnum.STRING.isMatch(fields.get(0)),
                     "toItemScore input[0] is recall userId string");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<String> userIds = fields.get(0).getValue();
             List<List<String>> recallItemData = null;
             List<List<Double>> recallWeights = null;
             List<Double> userProfileWeights = null;
-            if (fields.size() > 2 && fields.get(1).isMatch(DataTypeEnum.LIST_STR) &&
-                    fields.get(2).isMatch(DataTypeEnum.LIST_DOUBLE)) {
+            if (fields.size() > 2 && DataTypeEnum.LIST_STR.isMatch(fields.get(1)) &&
+                    DataTypeEnum.LIST_DOUBLE.isMatch(fields.get(2))) {
                 recallItemData = fields.get(1).getValue();
                 recallWeights = fields.get(2).getValue();
-                if (fields.size() > 3 && fields.get(3).isMatch(DataTypeEnum.DOUBLE)) {
+                if (fields.size() > 3 && DataTypeEnum.DOUBLE.isMatch(fields.get(3))) {
                     userProfileWeights = fields.get(3).getValue();
                 }
-            } else if (fields.size() > 1 && fields.get(1).isMatch(DataTypeEnum.LIST_STRUCT)){
+            } else if (fields.size() > 1 && DataTypeEnum.LIST_STRUCT.isMatch(fields.get(1))){
                 List<List<Object>> objData = fields.get(1).getValue();
                 recallItemData = Lists.newArrayList();
                 recallWeights = Lists.newArrayList();
-                Field field = fields.get(1).getField();
+                Field field = ((FieldData)fields.get(1)).getField();
                 Assert.isTrue(field.getChildren().size() == 1, "list struct only has one struct children!");
                 List<Field> children = field.getChildren().get(0).getChildren();
                 Assert.isTrue(children != null && children.size() == 2, "itemscore must has 2 field!");
@@ -138,18 +139,18 @@ public class ItemMatcherTask extends AlgoTransformTask {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),
+            Assert.isTrue(fields.size() > 0 && DataTypeEnum.STRING.isMatch(fields.get(0)),
                     "toItemScore2 input[0] is recall userId string");
-            Assert.isTrue(fields.size() > 1 && fields.get(1).isMatch(DataTypeEnum.STRING),
+            Assert.isTrue(fields.size() > 1 && DataTypeEnum.STRING.isMatch(fields.get(1)),
                     "toItemScore2 input[1] is recall itemId string");
-            Assert.isTrue(fields.size() > 2 && fields.get(2).isMatch(DataTypeEnum.DOUBLE),
+            Assert.isTrue(fields.size() > 2 && DataTypeEnum.DOUBLE.isMatch(fields.get(2)),
                     "toItemScore2 input[2] is recall item score double");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<String> userIds = fields.get(0).getValue();
             List<String> recallItemData = fields.get(1).getValue();
             List<Double> recallWeights = fields.get(2).getValue();
             List<Double> userProfileWeights = null;
-            if (fields.size() > 3 && fields.get(3).isMatch(DataTypeEnum.DOUBLE)) {
+            if (fields.size() > 3 && DataTypeEnum.DOUBLE.isMatch(fields.get(3))) {
                 userProfileWeights = fields.get(3).getValue();
             }
             Map<String, Map<String, Double>> UserItemScore = new HashMap<>();
@@ -173,9 +174,9 @@ public class ItemMatcherTask extends AlgoTransformTask {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.size() > 0 && fields.get(0).isMatch(DataTypeEnum.STRING),
+            Assert.isTrue(fields.size() > 0 && DataTypeEnum.STRING.isMatch(fields.get(0)),
                     "recallCollectItem input[0] is recall userId string");
-            Assert.isTrue(fields.get(1).isMatch(DataTypeEnum.MAP_STR_DOUBLE),
+            Assert.isTrue(DataTypeEnum.MAP_STR_DOUBLE.isMatch(fields.get(1)),
                     "recallCollectItem input[1] is userprofileWeight map<string, double>>");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             int limit = Utils.getField(options, "maxReservation", maxReservation);

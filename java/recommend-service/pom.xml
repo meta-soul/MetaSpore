@@ -159,7 +159,6 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
@@ -244,29 +243,6 @@
                                 <env>
                                     <MONGO_INITDB_ROOT_USERNAME>root</MONGO_INITDB_ROOT_USERNAME>
                                     <MONGO_INITDB_ROOT_PASSWORD>example</MONGO_INITDB_ROOT_PASSWORD>
-                                </env>
-                            </run>
-                        </image>
-                        <image>
-                            <alias>redis</alias>
-                            <name>redis:7.0.4</name>
-                            <run>
-                                <restartPolicy><name>always</name></restartPolicy>
-                                <ports>
-                                    <port>6379:6379</port>
-                                </ports>
-                            </run>
-                        </image>
-                        <image>
-                            <alias>mysql</alias>
-                            <name>mysql:8.0.30</name>
-                            <run>
-                                <restartPolicy><name>always</name></restartPolicy>
-                                <ports>
-                                    <port>3306:3306</port>
-                                </ports>
-                                <env>
-                                    <MYSQL_ROOT_PASSWORD>root</MYSQL_ROOT_PASSWORD>
                                 </env>
                             </run>
                         </image>

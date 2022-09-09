@@ -1,9 +1,7 @@
 package com.dmetasoul.metaspore.recommend.data;
 
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.operator.ArrowConv;
 import com.google.common.collect.Lists;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,7 +17,6 @@ public class FieldData {
     private DataTypeEnum type;
     private Field field;
     private List<IndexData> indexValue;
-
     private int maxIndex = -1;
 
     public static FieldData of(String name, DataTypeEnum type, Field field) {
@@ -75,7 +72,6 @@ public class FieldData {
         }
         this.indexValue = data;
     }
-
     @SuppressWarnings("unchecked")
     public <T> List<T> getValue() {
         if (CollectionUtils.isEmpty(indexValue)) return List.of();

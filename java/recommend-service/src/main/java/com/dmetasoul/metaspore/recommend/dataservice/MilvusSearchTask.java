@@ -20,7 +20,6 @@ import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.client.MilvusServiceClient;
@@ -71,7 +70,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
+            Assert.isTrue(DataTypeEnum.LIST_FLOAT.isMatch(fields.get(0)),
                     "milvusSearch input[0] embedding is list float");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<IndexData> embedding = fields.get(0).getIndexValue();
@@ -81,7 +80,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
+            Assert.isTrue(DataTypeEnum.LIST_FLOAT.isMatch(fields.get(0)),
                     "milvusSearch input[0] embedding is list float");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<IndexData> embedding = fields.get(0).getIndexValue();

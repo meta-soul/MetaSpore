@@ -1,5 +1,6 @@
 package com.dmetasoul.metaspore.recommend.recommend;
 
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -13,6 +14,7 @@ import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
@@ -34,6 +36,7 @@ import static com.dmetasoul.metaspore.recommend.configure.ColumnInfo.getType;
 public abstract class Transform {
     private String name;
     private ExecutorService taskPool;
+    private TaskServiceRegister serviceRegister;
     protected Map<String, TransformFunction> transformFunctions;
     protected Map<String, MergeOperator> mergeOperators;
     protected Map<String, UpdateOperator> updateOperators;
@@ -43,9 +46,10 @@ public abstract class Transform {
 
     public static final int DEFAULT_MAX_RESERVATION = 50;
 
-    public void initTransform(String name, ExecutorService taskPool) {
+    public void initTransform(String name, ExecutorService taskPool, TaskServiceRegister serviceRegister) {
         this.name = name;
         this.taskPool = taskPool;
+        this.serviceRegister = serviceRegister;
         this.transformFunctions = Maps.newHashMap();
         this.mergeOperators = Maps.newHashMap();
         this.updateOperators = Maps.newHashMap();
@@ -184,12 +188,20 @@ public abstract class Transform {
         return dupFields;
     }
 
+    private <T> T getOperatorOrFunction(@NonNull Map<String, T> beans, @NonNull String name, Class<?> cls) {
+        T bean = beans.get(name);
+        if (bean == null) {
+            return serviceRegister.getUDFBean(name, cls);
+        }
+        return bean;
+    }
+
     public Map<String, MergeOperator> getMergeOperators(Map<String, Object> option) {
         Map<String, MergeOperator> mergeOperatorMap = Maps.newHashMap();
         Map<String, String> mergeFieldOperator = Utils.getField(option, "mergeOperator", Map.of());
         if (MapUtils.isNotEmpty(mergeFieldOperator)) {
             for (Map.Entry<String, String> entry : mergeFieldOperator.entrySet()) {
-                MergeOperator operator = mergeOperators.get(entry.getValue());
+                MergeOperator operator = getOperatorOrFunction(mergeOperators, entry.getValue(), MergeOperator.class);
                 if (operator == null) {
                     log.error("merge operator no found config fail col: {}, operator: {}", entry.getKey(), entry.getValue());
                     continue;
@@ -202,7 +214,7 @@ public abstract class Transform {
 
     public UpdateOperator getUpdateOperator(Map<String, Object> option) {
         String updateFieldOperator = Utils.getField(option, "updateOperator", "");
-        return updateOperators.get(updateFieldOperator);
+        return getOperatorOrFunction(updateOperators, updateFieldOperator, UpdateOperator.class);
     }
 
     public CompletableFuture<List<DataResult>> executeTransform(CompletableFuture<List<DataResult>> future,
@@ -211,7 +223,7 @@ public abstract class Transform {
                                                                 DataContext context) {
         if (future == null || CollectionUtils.isEmpty(transforms)) return null;
         for (TransformConfig item : transforms) {
-            TransformFunction function = transformFunctions.get(item.getName());
+            TransformFunction function = getOperatorOrFunction(transformFunctions, item.getName(), TransformFunction.class);
             if (function == null) {
                 log.error("the service：{} function: {} is not exist!", name, item.getName());
                 continue;

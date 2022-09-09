@@ -17,20 +17,26 @@
 package com.dmetasoul.metaspore.recommend.bucketizer;
 
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+import com.dmetasoul.metaspore.recommend.configure.ExperimentItem;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
-@BucketizerAnnotation("random")
-public class RandomLayerBucketizer implements LayerBucketizer{
-    protected AliasSampler sampler;
-    private List<RecommendConfig.ExperimentItem> experiments;
+import java.util.Map;
 
-    public void init(RecommendConfig.Layer layer) {
-        experiments = layer.getExperiments();
+@Slf4j
+@BucketizerAnnotation("random")
+public class RandomLayerBucketizer implements LayerBucketizer {
+    protected AliasSampler sampler;
+    private List<ExperimentItem> experiments;
+    @Override
+    public void init(List<ExperimentItem> experiments, Map<String, Object> options) {
+        if (CollectionUtils.isEmpty(experiments)) return;
+        this.experiments = experiments;
         double[] prob = new double[experiments.size()];
         for (int i = 0; i < experiments.size(); i++) {
-            RecommendConfig.ExperimentItem experimentItem = experiments.get(i);
+            ExperimentItem experimentItem = experiments.get(i);
             double ratio = experimentItem.getRatio();
             prob[i] = ratio;
         }

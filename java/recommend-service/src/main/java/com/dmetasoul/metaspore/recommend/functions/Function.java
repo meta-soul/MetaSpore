@@ -21,8 +21,7 @@ import lombok.NonNull;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
-import java.util.Map;
 
 public interface Function {
-    boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull  FieldAction config);
+    boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config);
 }

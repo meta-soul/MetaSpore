@@ -17,8 +17,6 @@ package com.dmetasoul.metaspore.recommend.recommend.interfaces;
 
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.serving.FeatureTable;
 
 import java.util.List;
 import java.util.Map;

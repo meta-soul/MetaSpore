@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
@@ -51,7 +52,7 @@ public class UserProfileTask extends AlgoTransformTask {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FieldData fieldData = fields.get(0);
-            Assert.isTrue(fieldData.isMatch(DataTypeEnum.STRING), "split input must string and not empty!");
+            Assert.isTrue(DataTypeEnum.STRING.isMatch(fieldData), "split input must string and not empty!");
             String split = Utils.getField(options, "splitor", splitor);
             List<IndexData> input = fieldData.getIndexValue();
             for (IndexData o : input) {

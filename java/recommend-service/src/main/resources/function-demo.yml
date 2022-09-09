@@ -1,0 +1,15 @@
+function-config:
+  path: .
+  jars:
+    - name: xxx.jar
+      fieldFunction:
+        - enum: com.dmetasoul.metaspore.recommend.functions.EnumFunction
+        - scale: com.dmetasoul.metaspore.recommend.functions.ScaleFunction
+      transformFunction:
+        - name: className
+      transformMergeOperator:
+        - name: className
+      transformUpdateOperator:
+        - name: className
+      layerBucketizer:
+        - name: className

@@ -16,13 +16,17 @@
 
 package com.dmetasoul.metaspore.recommend.bucketizer;
 
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+
+import com.dmetasoul.metaspore.recommend.configure.ExperimentItem;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
+
+import java.util.List;
+import java.util.Map;
 
 public interface LayerBucketizer {
     public String toBucket(DataContext context);
 
-    public void init(RecommendConfig.Layer layer);
+    public void init(List<ExperimentItem> experiments, Map<String, Object> options);
 
     public default double[] normalize(double[] prob) {
         double total = 0;

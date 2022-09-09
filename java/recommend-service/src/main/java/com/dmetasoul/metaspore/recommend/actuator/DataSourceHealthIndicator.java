@@ -1,6 +1,6 @@
 package com.dmetasoul.metaspore.recommend.actuator;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
 import com.google.common.collect.Maps;
 import lombok.Data;

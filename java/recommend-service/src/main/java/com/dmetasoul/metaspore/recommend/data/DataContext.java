@@ -19,13 +19,10 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.dmetasoul.metaspore.recommend.common.Utils.genResultKey;

@@ -157,15 +157,15 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             if (CollectionUtils.isNotEmpty(config.getFields())) {
                 field_num = config.getFields().size();
             }
-            Assert.isTrue(fields.size() > field_num && fields.get(field_num).isMatch(DataTypeEnum.STRING),
+            Assert.isTrue(fields.size() > field_num && DataTypeEnum.STRING.isMatch(fields.get(field_num)),
                     "rankCollectItem input[0] is itemId string");
-            Assert.isTrue(fields.size() > (field_num + 1) && fields.get(field_num + 1).isMatch(DataTypeEnum.FLOAT),
+            Assert.isTrue(fields.size() > (field_num + 1) && DataTypeEnum.FLOAT.isMatch(fields.get(field_num + 1)),
                     "rankCollectItem input[1] is score float");
             int limit = Utils.getField(options, "maxReservation", maxReservation);
             List<IndexData> itemIds = fields.get(field_num).getIndexValue();
             List<Float> scores = fields.get(field_num + 1).getValue();
             List<Map<String, Double>> originScores = null;
-            if (field_num > 0 && fields.size() > field_num && fields.get(0).isMatch(DataTypeEnum.MAP_STR_DOUBLE)) {
+            if (field_num > 0 && fields.size() > field_num && DataTypeEnum.MAP_STR_DOUBLE.isMatch(fields.get(0))) {
                 originScores = fields.get(0).getValue();
             }
             for (int i = 0; i < itemIds.size() && i < limit; ++i) {

@@ -14,11 +14,9 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.recommend;
+package com.dmetasoul.metaspore.recommend.baseservice;
 
-import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
-import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
 import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
@@ -40,7 +38,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
-import org.springframework.util.Assert;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -67,6 +64,8 @@ public class TaskServiceRegister {
      */
     @Autowired
     private SpringBeanUtil springBeanUtil;
+    @Autowired
+    private UserDefineFunctionLoader userDefineFunctionLoader;
     @Autowired
     private ExecutorService sourcePool;
     @Autowired
@@ -108,6 +107,7 @@ public class TaskServiceRegister {
     @SneakyThrows
     @PostConstruct
     public void initServices() {
+        userDefineFunctionLoader.init();
         initDataSources();
         initFunctions();
         initDataService();
@@ -130,6 +130,25 @@ public class TaskServiceRegister {
         sceneMap.forEach((name,service)->service.close());
     }
 
+    @SuppressWarnings("unchecked")
+    public <T> T getBean(String name, Class<?> cls) {
+        T bean = (T) SpringBeanUtil.getBean(name);
+        if (bean == null) {
+            bean = userDefineFunctionLoader.getBean(name, cls);
+            if (bean != null) {
+                log.info("load bean:{} from udf", name);
+            }
+            return bean;
+        }
+        log.info("load bean:{} from spring", name);
+        return bean;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getBean(String name) {
+        return (T) SpringBeanUtil.getBean(name);
+    }
+
     /**
      * 根据最新的配置初始化DataSources
      */
@@ -141,10 +160,10 @@ public class TaskServiceRegister {
             for (Map.Entry<String, FeatureConfig.Source> entry : sources.entrySet()) {
                 String name = entry.getKey();
                 String kind = entry.getValue().getKind();
-                DataSource bean = (DataSource) SpringBeanUtil.getBean(kind);
-                if (bean == null || !bean.getClass().isAnnotationPresent(ServiceAnnotation.class)) {
-                    log.error("the datasource kind:{} load fail!", kind);
-                    throw new RuntimeException(String.format("the datasource kind:%s load fail!", kind));
+                DataSource bean = getBean(kind);
+                if (bean == null) {
+                    log.error("the DataSource:{} load fail!", name);
+                    throw new RuntimeException(String.format("the DataSource:%s load fail!", name));
                 }
                 dataSources.put(name, bean);
                 dataSources.get(name).init(name, taskFlowConfig, sourcePool);
@@ -159,6 +178,18 @@ public class TaskServiceRegister {
     public DataService getDataService(String name) {
         return dataServices.get(name);
     }
+
+    public Function getFunction(String name) {
+        Function function = userDefineFunctionLoader.getBean(name, Function.class);
+        if (function == null) {
+            return functions.get(name);
+        }
+        return function;
+    }
+
+    public <T> T getUDFBean(String name, Class<?> cls) {
+        return userDefineFunctionLoader.getBean(name, cls);
+    }
     /**
      * 根据最新的配置初始化DataService
      */
@@ -167,7 +198,7 @@ public class TaskServiceRegister {
         if (taskFlowConfig == null) return;
         if (MapUtils.isNotEmpty(taskFlowConfig.getSourceTables())) {
             taskFlowConfig.getSourceTables().forEach((name, config) -> {
-                SourceTableTask task = (SourceTableTask) SpringBeanUtil.getBean(config.getTaskName());
+                SourceTableTask task = getBean(config.getTaskName());
                 if (task == null) {
                     task = (SourceTableTask) SpringBeanUtil.getBean("SourceTable");
                 }
@@ -198,10 +229,10 @@ public class TaskServiceRegister {
         }
         if (MapUtils.isNotEmpty(taskFlowConfig.getAlgoTransforms())) {
             taskFlowConfig.getAlgoTransforms().forEach((name, config) -> {
-                AlgoTransformTask task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getName());
+                AlgoTransformTask task = getBean(config.getName());
                 if (task == null) {
                     if (StringUtils.isNotEmpty(config.getTaskName())) {
-                        task = (AlgoTransformTask) SpringBeanUtil.getBean(config.getTaskName());
+                        task = getBean(config.getTaskName());
                     }
                     if (task == null) {
                         log.error("the AlgoTransformTask:{} load fail!", name);
@@ -243,9 +274,9 @@ public class TaskServiceRegister {
         if (taskFlowConfig == null) return;
         if (MapUtils.isNotEmpty(taskFlowConfig.getServices())) {
             taskFlowConfig.getServices().forEach((name, service) -> {
-                Service recommendService = (Service) SpringBeanUtil.getBean(service.getName());
+                Service recommendService = getBean(service.getName());
                 if (recommendService == null) {
-                    recommendService = (Service) SpringBeanUtil.getBean(service.getTaskName());
+                    recommendService = getBean(service.getTaskName());
                     if (recommendService == null) {
                         log.error("the RecommendService:{} load fail!", service.getName());
                         throw new RuntimeException(String.format("the RecommendService:%s load fail!", service.getName()));
@@ -266,9 +297,9 @@ public class TaskServiceRegister {
         if (taskFlowConfig == null) return;
         if (MapUtils.isNotEmpty(taskFlowConfig.getExperiments())) {
             taskFlowConfig.getExperiments().forEach((name, experiment) -> {
-                Experiment experimentService = (Experiment) SpringBeanUtil.getBean(experiment.getName());
+                Experiment experimentService = getBean(experiment.getName());
                 if (experimentService == null) {
-                    experimentService = (Experiment) SpringBeanUtil.getBean(experiment.getTaskName());
+                    experimentService = getBean(experiment.getTaskName());
                     if (experimentService == null) {
                         log.error("the RecommendService:{} load fail!", experiment.getName());
                         throw new RuntimeException(String.format("the RecommendService:%s load fail!", experiment.getName()));
@@ -287,9 +318,9 @@ public class TaskServiceRegister {
         if (taskFlowConfig == null) return;
         if (MapUtils.isNotEmpty(taskFlowConfig.getLayers())) {
             taskFlowConfig.getLayers().forEach((name, layer) -> {
-                Layer layerService = (Layer) SpringBeanUtil.getBean(layer.getName());
+                Layer layerService = getBean(layer.getName());
                 if (layerService == null) {
-                    layerService = (Layer) SpringBeanUtil.getBean(layer.getTaskName());
+                    layerService = getBean(layer.getTaskName());
                     if (layerService == null) {
                         log.error("the RecommendService:{} load fail!", layer.getName());
                         throw new RuntimeException(String.format("the RecommendService:%s load fail!", layer.getName()));
@@ -308,9 +339,9 @@ public class TaskServiceRegister {
         if (taskFlowConfig == null) return;
         if (MapUtils.isNotEmpty(taskFlowConfig.getScenes())) {
             taskFlowConfig.getScenes().forEach((name, scene) -> {
-                Scene sceneService = (Scene) SpringBeanUtil.getBean(scene.getName());
+                Scene sceneService = getBean(scene.getName());
                 if (sceneService == null) {
-                    sceneService = (Scene) SpringBeanUtil.getBean(scene.getTaskName());
+                    sceneService = getBean(scene.getTaskName());
                     if (sceneService == null) {
                         log.error("the RecommendService:{} load fail!", scene.getName());
                         throw new RuntimeException(String.format("the RecommendService:%s load fail!", scene.getName()));
@@ -320,15 +351,5 @@ public class TaskServiceRegister {
                 sceneMap.put(scene.getName(), sceneService);
             });
         }
-    }
-
-    public LayerBucketizer getLayerBucketizer(RecommendConfig.Layer layer) {
-        LayerBucketizer layerBucketizer = (LayerBucketizer) SpringBeanUtil.getBean(layer.getBucketizer());
-        if (layerBucketizer == null || !layerBucketizer.getClass().isAnnotationPresent(BucketizerAnnotation.class)) {
-            log.error("the layer.getBucketizer:{} load fail!", layer.getBucketizer());
-            throw new RuntimeException(String.format("the layer.getBucketizer:%s load fail!", layer.getBucketizer()));
-        }
-        layerBucketizer.init(layer);
-        return layerBucketizer;
     }
 }

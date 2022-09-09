@@ -145,7 +145,7 @@ public class TaskFlowConfig {
         }
         if (CollectionUtils.isNotEmpty(recommendConfig.getLayers())) {
             for (RecommendConfig.Layer item : recommendConfig.getLayers()) {
-                for (RecommendConfig.ExperimentItem experimentItem : item.getExperiments()) {
+                for (ExperimentItem experimentItem : item.getExperiments()) {
                     if (!experiments.containsKey(experimentItem.getName())) {
                         log.error("Layer: {} depend {} is not config!", item.getName(), experimentItem.getName());
                         throw new RuntimeException("Layer check fail!");

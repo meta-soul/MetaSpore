@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 
-package com.dmetasoul.metaspore.recommend;
+package com.dmetasoul.metaspore.recommend.baseservice;
 
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.ThreadPoolConfig;

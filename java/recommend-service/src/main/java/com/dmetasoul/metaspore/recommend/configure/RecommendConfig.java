@@ -120,11 +120,6 @@ public class RecommendConfig {
      *  不改变data schema
      */
     @Data
-    public static class ExperimentItem {
-        private String name;
-        private double ratio;
-    }
-    @Data
     public static class Layer {
         private String name;
         private String taskName;
@@ -135,7 +130,7 @@ public class RecommendConfig {
 
         public void setExperiments(List<ExperimentItem> list) {
             list.forEach(x-> {
-                sumRatio += x.ratio;
+                sumRatio += x.getRatio();
             });
             experiments = list;
         }

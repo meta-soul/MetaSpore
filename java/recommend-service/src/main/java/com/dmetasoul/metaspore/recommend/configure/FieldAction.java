@@ -82,7 +82,6 @@ public class FieldAction {
         if (StringUtils.isEmpty(input)) return;
         this.input = List.of(input);
     }
-
     public boolean checkAndDefault() {
         Assert.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
                 "AlgoTransform FieldAction config name and type must be equel!");

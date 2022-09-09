@@ -49,7 +49,6 @@ import static com.dmetasoul.metaspore.recommend.configure.ColumnInfo.getType;
 public class AlgoTransformTask extends DataService {
     protected ExecutorService taskPool;
     protected FeatureConfig.AlgoTransform algoTransform;
-    protected Map<String, Function> functionMap;
     protected Map<String, Function> additionFunctions;
     protected Map<String, FieldData> actionResult;
     protected Map<String, String> actionTypes;
@@ -62,7 +61,6 @@ public class AlgoTransformTask extends DataService {
     public boolean initService() {
         algoTransform = taskFlowConfig.getAlgoTransforms().get(name);
         this.taskPool = taskServiceRegister.getTaskPool();
-        functionMap = taskServiceRegister.getFunctions();
         for (String col : algoTransform.getColumnNames()) {
             resFields.add(algoTransform.getFieldMap().get(col));
             dataTypes.add(algoTransform.getColumnMap().get(col));
@@ -339,7 +337,7 @@ public class AlgoTransformTask extends DataService {
             } else {
                 Function function = additionFunctions.get(fieldAction.getFunc());
                 if (function == null) {
-                    function = functionMap.get(fieldAction.getFunc());
+                    function = taskServiceRegister.getFunction(fieldAction.getFunc());
                     if (function == null) {
                         throw new RuntimeException("function get fail at " + fieldAction.getFunc());
                     }

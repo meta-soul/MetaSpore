@@ -15,7 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.data;
 
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
@@ -32,12 +31,10 @@ import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.collections4.SetUtils;
 import org.springframework.util.Assert;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static com.dmetasoul.metaspore.recommend.operator.ArrowConv.convValue;
 
@@ -88,7 +85,6 @@ public class DataResult {
         }
         return values;
     }
-
     public List<Object> get(int index) {
         if (featureTable == null || featureTable.getVector(index) == null)
             throw new IllegalArgumentException("featureTable is null or field not exist");
@@ -109,7 +105,6 @@ public class DataResult {
         }
         return null;
     }
-
     @SuppressWarnings("unchecked")
     public <T> T get(int field, int index) {
         if (featureTable == null || featureTable.getVector(field) == null) return null;
@@ -130,7 +125,6 @@ public class DataResult {
             throw new IllegalArgumentException("featureTable is null or field not exist");
         return featureTable.getVector(field);
     }
-
     public boolean isNull() {
         return featureTable == null;
     }
@@ -212,7 +206,6 @@ public class DataResult {
             outputData.forEach((k, v) -> updateFieldData.computeIfAbsent(k, key->Lists.newArrayList()).add(v));
         }
     }
-
     public void mergeDataResult(List<DataResult> data,
                                 List<String> dupFields,
                                 Map<String, MergeOperator> mergeOperatorMap,
@@ -297,7 +290,6 @@ public class DataResult {
             index += 1;
         }
     }
-
     public List<Map<String, Object>> output(List<String> columnNames) {
         List<Map<String, Object>> data = Lists.newArrayList();
         if (CollectionUtils.isEmpty(columnNames)) return data;

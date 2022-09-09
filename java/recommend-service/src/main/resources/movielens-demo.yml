@@ -148,72 +148,6 @@ feature-service:
         - item_id
         - score
         - origin_scores
-    - name: algotransform_twotower_user_embedding
-      taskName: AlgoInference
-      options:
-        host: localhost
-        port: 50000
-      feature: feature_user
-      fieldActions:
-        - name: user_embedding
-          type: list_float
-          func: genEmbedding
-          input: user_id
-          algoColumns:
-            - sparse: [user_id, last_movie, recent_movie_ids]
-          options:
-            modelName: two_towers_dssm
-            targetKey: output
-        - name: user_id
-          type: str
-          func: typeTransform
-          fields: user_id
-      output:
-        - user_id
-        - user_embedding
-    - name: algotransform_twotower_milvus
-      taskName: MilvusSearch
-      options:
-        host: localhost
-        port: 19530
-      algoTransform: algotransform_twotower_user_embedding
-      fieldActions:
-        - name: user_id
-          type: str
-          fields: user_id
-        - names: [ item_id, item_score]
-          types: [ str, double]
-          fields: user_embedding
-          func: milvusField
-          options:
-            collectionName: ml_1m_dssm_testing_bak
-            vectorField: item_embedding
-            scoreField: item_score
-            useOrder: true
-            useFlat: true
-      output:
-        - user_id
-        - item_id
-        - item_score
-    - name: algotransform_twotower_match
-      taskName: ItemMatcher
-      algoTransform: algotransform_twotower_milvus
-      options:
-        algo-name: "twotower"
-      fieldActions:
-        - names: [toItemScore2.user_id, itemScore]
-          types: [str, map_str_double]
-          fields: [user_id, item_id, item_score]
-          func: toItemScore2
-        - names: [user_id, item_id, score, origin_scores]
-          types: [str, str, double, map_str_double]
-          input: [toItemScore2.user_id, itemScore]
-          func: recallCollectItem
-      output:
-        - user_id
-        - item_id
-        - score
-        - origin_scores
     - name: algotransform_widedeep
       taskName: AlgoInference
       options:
@@ -259,13 +193,6 @@ recommend-service:
       options:
         algoLevel: 3
         maxReservation: 200
-    - name: match_twotower
-      tasks: algotransform_twotower_match
-      options:
-        milvusCollectionName: ml_1m_dssm_testing_bak
-        twoTowersSimpleXModelName: two_towers_dssm
-        twoTowersSimpleXAlgoLevel: 3
-        twoTowersSimpleXMaxReservation: 200
     - name: rank_widedeep
       tasks: algotransform_widedeep
       options:
@@ -296,7 +223,7 @@ recommend-service:
       options:
         maxReservation: 10
       chains:
-        - when: [match_itemcf, match_swing, match_twotower]
+        - when: [match_itemcf, match_swing]
           transforms:
             - name: summaryBySchema
               option: {dupFields: [ user_id, item_id ], mergeOperator: {score: maxScore, origin_scores: mergeScoreInfo}}
