@@ -133,6 +133,7 @@ class TwoTowerIndexBuilder(object):
         item_ids_value_delimiter = self.agent.item_ids_value_delimiter
         enable_item_id_mapping = self.agent.enable_item_id_mapping
         output_item_embeddings = self.agent.output_item_embeddings
+        retrieval_item_count = self.agent.retrieval_item_count
         have_item_ids_partition_files = self.have_item_ids_partition_files
         item_id_column_type = self.item_id_column_type
         meta = {
@@ -144,6 +145,7 @@ class TwoTowerIndexBuilder(object):
             'item_ids_value_delimiter' : item_ids_value_delimiter,
             'enable_item_id_mapping': enable_item_id_mapping,
             'output_item_embeddings' : output_item_embeddings,
+            'retrieval_item_count' : retrieval_item_count,
             'have_item_ids_partition_files' : have_item_ids_partition_files,
             'item_id_column_type' : item_id_column_type,
         }
