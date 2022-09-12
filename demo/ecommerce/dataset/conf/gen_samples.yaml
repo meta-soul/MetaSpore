@@ -15,8 +15,7 @@ init_spark:
     spark.ui.showConsoleProgress: 'true'
     spark.kubernetes.executor.deleteOnTermination: 'true'
   pyzip:
-    cwd_path: '/home/jovyan/workspace/saas/MetaSpore/'
-    zip_file_path: '/home/jovyan/workspace/saas/MetaSpore/demo/ecommerce/dataset/python.zip'
+    cwd_path: '/saas/MetaSpore/'
 
 load_dataset: 
   user_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/dataset/amazon_fashion_user.parquet

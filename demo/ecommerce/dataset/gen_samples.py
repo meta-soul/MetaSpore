@@ -43,7 +43,7 @@ def init_spark(conf):
     if conf.get('pyzip'):
         pyzip_conf = conf['pyzip']
         cwd_path = pyzip_conf['cwd_path']
-        zip_file_path = pyzip_conf['zip_file_path']
+        zip_file_path = os.getcwd() + '/python.zip'
         subprocess.run(['zip', '-r', zip_file_path, 'python'], cwd=cwd_path)
         extended_conf['spark.submit.pyFiles'] = 'python.zip'
     spark = ms.spark.get_session(
