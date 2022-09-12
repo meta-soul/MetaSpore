@@ -81,6 +81,36 @@ def load_dataset(spark, conf, fmt='parquet'):
     return user_dataset, item_dataset, interaction_dataset
 
 def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
+    def negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio):
+        neg_sample_df = negative_sampling(
+            spark, 
+            dataset=interaction_dataset, 
+            user_column=user_key_col, 
+            item_column=item_key_col, 
+            time_column=timestamp_col, 
+            negative_item_column='neg_item_id', 
+            negative_sample=sample_ratio
+        )
+        return neg_sample_df
+
+    def merge_negsample(interaction_dataset, negsample_datasst, 
+                        user_key_col, item_key_col, timstamp_col):
+        negsample_datasst.registerTempTable('negsample_datasst')
+        interaction_dataset.registerTempTable('interaction_dataset')
+        query = '''
+        select '1' as label, {0}, {1}, {2}
+        from interaction_dataset
+        union all
+        select '0' as label, {0}, {1}, 0 as {2}
+        from interaction_dataset
+        '''.format(
+            user_key_col,
+            item_key_col,
+            timestamp_col
+        )
+        merge_dataset = spark.sql(query)
+        return merge_dataset
+
     def join_dataset(user_dataset, item_dataset, interaction_dataset, 
                      user_key_col, item_key_col, timestamp_col):
         user_dataset.registerTempTable('user_dataset')
@@ -111,24 +141,22 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
         for array_col in array_cols:
             join_dataset = join_dataset.withColumn(array_col, F.concat_ws(array_join_sep, F.col(array_col)))
         selected_cols = str_cols + array_cols
+        print('Debug -- reserve selected cols:', selected_cols)
         filter_dataset = join_dataset.select(selected_cols)
         return filter_dataset
-    
-    def negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio):
-        neg_sample_df = negative_sampling(
-            spark, 
-            dataset=interaction_dataset, 
-            user_column=user_key_col, 
-            item_column=item_key_col, 
-            time_column=timestamp_col, 
-            negative_item_column='neg_item_id', 
-            negative_sample=sample_ratio
-        )
-        return neg_sample_df
     
     user_key_col = conf['join_on']['user_key']
     item_key_col = conf['join_on']['item_key']
     timestamp_col = conf['join_on']['timestamp']
+    if conf.get('negative_sample'):
+        sample_ratio = conf['negative_sample']['sample_ratio']
+        negsample = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
+        print('Debug -- negative smapling sample result:')
+        negsample.show(10) 
+        interaction_dataset = merge_negsample(interaction_dataset, negsample, user_key_col, item_key_col, timestamp_col)
+        print('Debug -- merge negative sampling result:')
+        interaction_dataset.show(20)
+
     join_dataset = join_dataset(
         user_dataset, item_dataset, interaction_dataset,
         user_key_col, item_key_col, timestamp_col
@@ -139,13 +167,7 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
     if conf.get('reserve_only_cate_cols'):
         join_dataset = reserve_only_cate_features(join_dataset)
         print('Debug -- reserve cate features sample:')
-        join_dataset.show(10)
-    
-    if conf.get('negative_sample'):
-        sample_ratio = conf['negative_sample']['sample_ratio']
-        negsample = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
-        print('Debug -- negative smapling sample:')
-        negsample.show(10)    
+        join_dataset.show(10)   
 
 if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
