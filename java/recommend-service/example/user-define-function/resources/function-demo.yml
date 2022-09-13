@@ -1,5 +1,5 @@
 function-config:
-  path: ../user-define-function/target
+  path: ./example/user-define-function/target
   jars:
     - name: user-define-function-1.0.0.jar
       fieldFunction:
