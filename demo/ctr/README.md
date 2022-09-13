@@ -34,6 +34,8 @@ We are continuously adding models:
 |  xDeepFM  | Train AUC:  `0.7541` <br /> Test AUC:  `0.7300` | Train AUC:  `0.8892` <br /> Test AUC:  `0.8641` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8367` |
 |   FwFM    | Train AUC:  `0.7517` <br /> Test AUC:  `0.7298` | Train AUC:  `0.8911` <br /> Test AUC:  `0.8660` | Train AUC:  `0.8918` <br /> Test AUC:  `0.8376` |
 |   FFM     | Train AUC:  `0.7517` <br /> Test AUC:  `0.7285` | Train AUC:  `0.8936` <br /> Test AUC:  `0.8698` | Train AUC:  `0.8912` <br /> Test AUC:  `0.8368` |
+|   DIN     | `-` | Train AUC:  `0.8994` <br /> Test AUC:  `0.8755` | `-` |
+|   DIEN    | `-` | Train AUC:  `0.9143` <br /> Test AUC:  `0.8828` | `-` |
 
 ## How to run
 
