@@ -118,7 +118,7 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
         interaction_dataset.registerTempTable('interaction_dataset')
         query ="""
         select distinct
-            user.*, item.*, interact.{2}
+            label, user.*, item.*, interact.{2}
         from
             interaction_dataset interact
         join

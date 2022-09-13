@@ -24,11 +24,6 @@ load_dataset:
   fmt: parquet
 
 join_sample:
-  join_on: 
-    user_key: user_id
-    item_key: item_id
-    timestamp: timestamp
-  reserve_only_cate_cols: True
   user_bhv_seq:
     - bhv_seq: user_bhv_item_seq
       by: item_id
@@ -36,6 +31,34 @@ join_sample:
       by: category
   negative_sample:
     sample_ratio: 3
+  join_on: 
+    user_key: user_id
+    item_key: item_id
+    timestamp: timestamp
+  reserve_only_cate_cols: True
   
-gen_features:
-  
+gen_samples:
+  - model_type: ctr_nn
+    split_test: 0.15
+    shuffle: True
+    train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/nn/train.parquet
+    test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/nn/test.parquet
+
+  - model_type: ctr_gbm
+    split_test: 0.15
+    use_shuffle: True
+    train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/train.parquet
+    test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/test.parquet
+
+  - model_type: match_nn
+    split_test: 0.15
+    shuffle: True
+    train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/nn/train.parquet
+    test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/nn/test.parquet
+
+  - model_type: match_icf
+    split_test: 0.15
+    shuffle: True
+    train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/train.parquet
+    test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/test.parquet
+
