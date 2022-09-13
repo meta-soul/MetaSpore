@@ -1,7 +1,6 @@
 # 时序模型
 
-In this project, we will implement and benchmark the algorithms of sequential model, such as [HRM](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.827.9692&rep=rep1&type=pdf), [GRU4Rec](https://arxiv.org/abs/2109.12613). It should be noted that some algorithms have not yet been implemented, and we have not sufficiently tuned the parameters of the model. We will continue to enrich our algorithm package and provide experimental results.
-在这个项目中，我们会对时序算法，比如[HRM](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.827.9692&rep=rep1&type=pdf), [GRU4Rec](https://arxiv.org/abs/2109.12613)等经典时序模型，在MovieLens数据集上进行对比。需要说明对是，有些经典的算法还没实现，我们也并没有对模型进行充分调参，我们会持续丰富我们算法包和对比实验结果。
+在这个项目中，我们会对序列推荐算法，比如[HRM](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.827.9692&rep=rep1&type=pdf), [GRU4Rec](https://arxiv.org/abs/2109.12613)等经典模型，在MovieLens数据集上进行对比。我们会持续丰富我们算法包和对比实验结果。
 
 ## 模型列表
 
@@ -16,8 +15,8 @@ In this project, we will implement and benchmark the algorithms of sequential mo
 
 | Model | Dataset | Precision@20 | Recall@20 | MAP@20 | NDCG@20 | 
 |:--------------:|:--------------|:-------------------------------:|:-------------------------------:|:-------------------------------:|:-------------------------------:|
-| HRM | MovieLens-1M | 0.007319 | 0.146393 | 0.026403 | 0.051770 |
-| GRU4Rec | MovieLens-1M | 0.007686 | 0.153733 | 0.033994 | 0.059516 |
+| HRM     | MovieLens-1M NegSample-10 | 0.007319 | 0.146393 | 0.026403 | 0.051770 |
+| GRU4Rec | MovieLens-1M              | 0.007686 | 0.153733 | 0.033994 | 0.059516 |
 
 对于基于神经网络的时序模型，我们给出了它们各自实验结果。实验结果并未进行充分调参，后续相关实验结果会进行更新。
 

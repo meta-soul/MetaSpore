@@ -1,6 +1,6 @@
 ## [中文介绍](README-CN.md)
 
-In this project, we will implement and benchmark the algorithms of sequential model, such as [HRM](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.827.9692&rep=rep1&type=pdf), [GRU4Rec](https://arxiv.org/abs/2109.12613). It should be noted that some algorithms have not yet been implemented, and we have not sufficiently tuned the parameters of the model. We will continue to enrich our algorithm package and provide experimental results.
+In this project, we will implement and benchmark the algorithms of sequential models, such as [HRM](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.827.9692&rep=rep1&type=pdf), [GRU4Rec](https://arxiv.org/abs/2109.12613). We will continue to enrich our algorithm package and provide new experimental results.
 
 ## Model List
  
@@ -15,8 +15,8 @@ We are continuously adding new models.
 
 | Model | Dataset | Precision@20 | Recall@20 | MAP@20 | NDCG@20 | 
 |:--------------:|:--------------|:-------------------------------:|:-------------------------------:|:-------------------------------:|:-------------------------------:|
-| HRM | MovieLens-1M | 0.007319 | 0.146393 | 0.026403 | 0.051770 |
-| GRU4Rec | MovieLens-1M | 0.007686 | 0.153733 | 0.033994 | 0.059516 |
+| HRM     | MovieLens-1M NegSample-10 | 0.007319 | 0.146393 | 0.026403 | 0.051770 |
+| GRU4Rec | MovieLens-1M              | 0.007686 | 0.153733 | 0.033994 | 0.059516 |
 
 For the sequential model based on neural network, we give the respective experimental results based on different loss functions and different negative sampling ratio. As our models and experiments are tuned, this experiment results may be updated in the future.
 
@@ -45,6 +45,6 @@ Now, We can run the training scripts. For example, to train and test a `HRM` mod
 
 ```shell
 cd hrm
-python hrm.py --conf conf/hrm_neg10_ml_1m.yaml.dev > log/hrm_bce_neg10_ml_1m.log 2>&1 &
+python hrm.py --conf conf/hrm_bce_neg10_ml_1m.yaml.dev > log/hrm_bce_neg10_ml_1m.log 2>&1 &
 ```
 
