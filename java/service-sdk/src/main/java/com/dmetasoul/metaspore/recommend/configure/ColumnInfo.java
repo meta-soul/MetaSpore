@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.util.Assert;
+import org.apache.commons.lang3.Validate;
 
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class ColumnInfo {
             columns.forEach(map -> map.forEach((x, y) -> {
                 columnNames.add(x);
                 DataTypeEnum type = getType(y);
-                Assert.notNull(type, "config columns type must be support, type：" + y);
+                Validate.notNull(type, "config columns type must be support, type：" + y);
                 this.columnMap.put(x, type);
                 this.fieldMap.put(x, getField(x, y));
             }));
@@ -42,7 +42,7 @@ public class ColumnInfo {
             return DataTypes.getDataType((String) info);
         } else if (info instanceof Map){
             Map<String, Object> map = (Map<String, Object>) info;
-            Assert.isTrue(map.size() == 1, "one column one type");
+            Validate.isTrue(map.size() == 1, "one column one type");
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 String key = entry.getKey();
                 return DataTypes.getDataType(key);
@@ -55,18 +55,18 @@ public class ColumnInfo {
     public static Field getField(String name, Object info) {
         if (info instanceof String) {
             DataTypeEnum typeEnum = DataTypes.getDataType((String) info);
-            Assert.notNull(typeEnum, "config columns type must be support, type：" + info);
-            Assert.isTrue(!typeEnum.needChildren(), "type need children!");
+            Validate.notNull(typeEnum, "config columns type must be support, type：" + info);
+            Validate.isTrue(!typeEnum.needChildren(), "type need children!");
             return new Field(name, typeEnum.getType(), typeEnum.getChildFields());
         } else if (info instanceof Map){
             Map<String, Object> map = (Map<String, Object>) info;
-            Assert.isTrue(map.size() == 1, "one column one type");
+            Validate.isTrue(map.size() == 1, "one column one type");
             for (Map.Entry<String, Object> entry : map.entrySet()) {
                 String key = entry.getKey();
                 DataTypeEnum typeEnum = DataTypes.getDataType(key);
-                Assert.notNull(typeEnum, "config columns type must be support, type：" + info);
-                Assert.isTrue(typeEnum.needChildren(), "column info type config wrong!");
-                Assert.isInstanceOf(Map.class, entry.getValue(), "struct children is map");
+                Validate.notNull(typeEnum, "config columns type must be support, type：" + info);
+                Validate.isTrue(typeEnum.needChildren(), "column info type config wrong!");
+                Validate.isInstanceOf(Map.class, entry.getValue(), "struct children is map");
                 List<Field> children = Lists.newArrayList();
                 for (Map.Entry<String, Object> entryItem : ((Map<String, Object>)entry.getValue()).entrySet()) {
                     children.add(getField(entryItem.getKey(), entryItem.getValue()));
@@ -79,14 +79,14 @@ public class ColumnInfo {
                     for (Field field : typeEnum.getChildFields()) {
                         Types.MinorType minorType = Types.getMinorTypeForArrowType(field.getType());
                         if (minorType == Types.MinorType.STRUCT && CollectionUtils.isEmpty(field.getChildren())) {
-                            Assert.isTrue(!onlyOne, "has already empty struct field!");
+                            Validate.isTrue(!onlyOne, "has already empty struct field!");
                             sons.add(new Field(field.getName(), field.getFieldType(), children));
                             onlyOne = true;
                         } else {
                             sons.add(field);
                         }
                     }
-                    Assert.isTrue(onlyOne, "must has empty struct field!");
+                    Validate.isTrue(onlyOne, "must has empty struct field!");
                     return new Field(name, typeEnum.getType(), sons);
                 }
             }

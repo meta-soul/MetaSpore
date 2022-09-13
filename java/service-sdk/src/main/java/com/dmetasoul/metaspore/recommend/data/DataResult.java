@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.data;
 
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.UpdateOperator;
@@ -31,7 +31,8 @@ import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.springframework.util.Assert;
+import org.apache.commons.lang3.Validate;
+
 
 import javax.validation.constraints.NotEmpty;
 import java.util.*;
@@ -159,7 +160,7 @@ public class DataResult {
                     doDup = true;
                     for (String col : dupFields) {
                         List<Object> colData = mergeFieldData.computeIfAbsent(col, key->Lists.newArrayList());
-                        Object val1 = Utils.get(colData, j, null);
+                        Object val1 = CommonUtils.get(colData, j, null);
                         Object val2 = data.get(col, i);
                         if (!Objects.equals(val1, val2)) {
                             doDup = false;
@@ -181,7 +182,7 @@ public class DataResult {
             if (doDup && MapUtils.isNotEmpty(mergeOperatorMap)) {
                 for (Map.Entry<String, MergeOperator> entry : mergeOperatorMap.entrySet()) {
                     MergeOperator operator = entry.getValue();
-                    Assert.notNull(operator, "merge operator must not null at col:" + entry.getKey());
+                    Validate.notNull(operator, "merge operator must not null at col:" + entry.getKey());
                     List<Object> colData = mergeFieldData.get(entry.getKey());
                     Object value = operator.merge(colData.get(index), data.get(entry.getKey(), i), option);
                     colData.set(index, value);
@@ -200,9 +201,9 @@ public class DataResult {
             for (String field : input) {
                 inputData.add(data.get(field, i));
             }
-            Assert.notNull(operator, "update operator must not null");
+            Validate.notNull(operator, "update operator must not null");
             Map<String, Object> outputData = operator.update(inputData, output, option);
-            Assert.isTrue(outputData != null && outputData.size() == output.size(), "update output size is wrong");
+            Validate.isTrue(outputData != null && outputData.size() == output.size(), "update output size is wrong");
             outputData.forEach((k, v) -> updateFieldData.computeIfAbsent(k, key->Lists.newArrayList()).add(v));
         }
     }
@@ -248,7 +249,7 @@ public class DataResult {
             for (int k = 0; k < dataTypes.size(); ++k) {
                 FieldVector fieldVector = featureTable.getVector(k);
                 FieldVector dataVector = data.getFeatureTable().getVector(k);
-                Assert.isTrue(fieldVector.getField().equals(dataVector.getField()), "schema must same!");
+                Validate.isTrue(fieldVector.getField().equals(dataVector.getField()), "schema must same!");
                 dataTypes.get(k).set(featureTable, fieldVector.getName(), i, data.get(k, i));
             }
         }
@@ -272,7 +273,7 @@ public class DataResult {
                 }
                 if (val1 == null) return -1;
                 if (val2 == null) return 1;
-                Assert.isInstanceOf(Comparable.class, val1, "orderBy col must compareable col:" + col);
+                Validate.isInstanceOf(Comparable.class, val1, "orderBy col must compareable col:" + col);
                 @SuppressWarnings("unchecked") Comparable<Object> c = (Comparable<Object>) val2;
                 return c.compareTo(val1);
             }

@@ -63,6 +63,8 @@ public class TaskFlowConfig {
 
     @PostConstruct
     public void checkAndInit() {
+        log.info("featureConfig: {}", featureConfig);
+        log.info("recommendConfig: {}", recommendConfig);
         featureCheckAndInit();
         recommendCheckAndInit();
         checkFeatureAndInit();

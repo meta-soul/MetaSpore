@@ -17,7 +17,7 @@ package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -45,7 +45,7 @@ public class Experiment extends TaskFlow<Service> {
         super.init(name, taskFlowConfig, serviceRegister);
         experiment = taskFlowConfig.getExperiments().get(name);
         chains = experiment.getChains();
-        timeout = Utils.getField(experiment.getOptions(), "timeout", timeout);
+        timeout = CommonUtils.getField(experiment.getOptions(), "timeout", timeout);
     }
 
     public CompletableFuture<List<DataResult>> process(List<DataResult> data, DataContext context) {
@@ -53,8 +53,8 @@ public class Experiment extends TaskFlow<Service> {
     }
 
     public DataResult mergeRecall(List<DataResult> data, DataResult result, Map<String, Object> option) {
-        String scoreField = Utils.getField(option, "score", null);
-        String scoreInfoField = Utils.getField(option, "scoreInfo", null);
+        String scoreField = CommonUtils.getField(option, "score", null);
+        String scoreInfoField = CommonUtils.getField(option, "scoreInfo", null);
         Assert.notNull(scoreField, "score");
         return result;
     }
@@ -84,7 +84,7 @@ public class Experiment extends TaskFlow<Service> {
         registerUpdateOperator("putOriginScores", (input, output, option) ->{
             Assert.isTrue(input.size() == 2 && input.get(1) instanceof Map, "originScores is map");
             Assert.isTrue(CollectionUtils.isNotEmpty(output), "output is not empty");
-            String label = Utils.getField(option, "label", name);
+            String label = CommonUtils.getField(option, "label", name);
             Map<String, Object> res = Maps.newHashMap();
             Map<String, Object> map = (Map<String, Object>) input.get(1);
             map.put(label, input.get(0));

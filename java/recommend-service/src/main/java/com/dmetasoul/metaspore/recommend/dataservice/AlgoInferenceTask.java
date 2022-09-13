@@ -16,14 +16,11 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
-import com.dmetasoul.metaspore.recommend.configure.FieldAction;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,7 +28,6 @@ import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import lombok.Data;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -39,7 +35,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.bouncycastle.util.Strings;
 import org.springframework.util.Assert;
 
-import javax.validation.constraints.NotEmpty;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -74,8 +69,8 @@ public class AlgoInferenceTask extends AlgoTransformTask {
     }
 
     public ManagedChannel initManagedChannel(Map<String, Object> option) {
-        String host = Utils.getField(option, "host", "127.0.0.1");
-        int port = Utils.getField(option, "port", 50000);
+        String host = CommonUtils.getField(option, "host", "127.0.0.1");
+        int port = CommonUtils.getField(option, "port", 50000);
         NegotiationType negotiationType = NegotiationType.valueOf(Strings.toUpperCase((String) option.getOrDefault("negotiationType", "plaintext")));
         NettyChannelBuilder channelBuilder = NettyChannelBuilder.forAddress(host, port)
                 .keepAliveWithoutCalls((Boolean) option.getOrDefault("enableKeepAliveWithoutCalls", false))
@@ -110,8 +105,8 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     featureTables.add(featureTable);
                 }
             }
-            String targetName = Utils.getField(fieldAction.getOptions(), "targetKey", targetKey);
-            String model = Utils.getField(fieldAction.getOptions(), "modelName", modelName);
+            String targetName = CommonUtils.getField(fieldAction.getOptions(), "targetKey", targetKey);
+            String model = CommonUtils.getField(fieldAction.getOptions(), "modelName", modelName);
             ArrowTensor arrowTensor = predict(featureTables, model, targetName);
             List<Object> res = Lists.newArrayList();
             res.addAll(getFromTensor(arrowTensor));
@@ -141,9 +136,9 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     featureTables.add(featureTable);
                 }
             }
-            String targetName = Utils.getField(fieldAction.getOptions(), "targetKey", targetKey);
-            int index = Utils.getField(fieldAction.getOptions(), "targetIndex", targetIndex);
-            String model = Utils.getField(fieldAction.getOptions(), "modelName", modelName);
+            String targetName = CommonUtils.getField(fieldAction.getOptions(), "targetKey", targetKey);
+            int index = CommonUtils.getField(fieldAction.getOptions(), "targetIndex", targetIndex);
+            String model = CommonUtils.getField(fieldAction.getOptions(), "modelName", modelName);
             ArrowTensor arrowTensor = predict(featureTables, model, targetName);
             List<Object> res = Lists.newArrayList();
             res.addAll(getFromTensor(arrowTensor, index));
@@ -161,7 +156,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     "rankCollectItem input[0] is itemId string");
             Assert.isTrue(fields.size() > (field_num + 1) && DataTypeEnum.FLOAT.isMatch(fields.get(field_num + 1)),
                     "rankCollectItem input[1] is score float");
-            int limit = Utils.getField(options, "maxReservation", maxReservation);
+            int limit = CommonUtils.getField(options, "maxReservation", maxReservation);
             List<IndexData> itemIds = fields.get(field_num).getIndexValue();
             List<Float> scores = fields.get(field_num + 1).getValue();
             List<Map<String, Double>> originScores = null;
@@ -170,10 +165,10 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             }
             for (int i = 0; i < itemIds.size() && i < limit; ++i) {
                 result.get(0).addIndexData(itemIds.get(i));
-                float score = Utils.get(scores, i, 0.0F);
+                float score = CommonUtils.get(scores, i, 0.0F);
                 result.get(1).addIndexData(FieldData.create(itemIds.get(i).getIndex(), score));
                 if (result.size() > 2 && CollectionUtils.isNotEmpty(originScores)) {
-                    Map<String, Double> originScore = Utils.get(originScores, i, Maps.newHashMap());
+                    Map<String, Double> originScore = CommonUtils.get(originScores, i, Maps.newHashMap());
                     originScore.put(algoName, (double) score);
                     result.get(2).addIndexData(FieldData.create(itemIds.get(i).getIndex(), originScore));
                 }

@@ -6,7 +6,7 @@ import lombok.Data;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.Assert;
+import org.apache.commons.lang3.Validate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,7 +65,7 @@ public class FieldData {
     public void setValue(List<Object> value, List<Integer> index) {
         if (CollectionUtils.isEmpty(value)) return;
         List<IndexData> data = Lists.newArrayList();
-        Assert.isTrue(index != null && value.size() == index.size(), "index and value must has same size");
+        Validate.isTrue(index != null && value.size() == index.size(), "index and value must has same size");
         for (int i = 0; i < value.size(); ++i) {
             data.add(new IndexData(index.get(i), value.get(i)));
             if (maxIndex < index.get(i)) maxIndex = index.get(i);

@@ -16,7 +16,7 @@
 package com.dmetasoul.metaspore.recommend.datasource;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -85,20 +85,20 @@ public class RedisSource extends DataSource {
     }
 
     public GenericObjectPoolConfig genericObjectPoolConfig() {
-        Map<String, Object> lettucePoolInfo = Utils.getField(source.getOptions(), "lettuce-pool", Maps.newHashMap());
+        Map<String, Object> lettucePoolInfo = CommonUtils.getField(source.getOptions(), "lettuce-pool", Maps.newHashMap());
         //连接池配置
         GenericObjectPoolConfig genericObjectPoolConfig =
                 new GenericObjectPoolConfig();
-        genericObjectPoolConfig.setMaxIdle(Utils.getField(lettucePoolInfo, "max-idle", 10));
-        genericObjectPoolConfig.setMinIdle(Utils.getField(lettucePoolInfo, "min-idle", 1));
-        genericObjectPoolConfig.setMaxTotal(Utils.getField(lettucePoolInfo, "max-active", 10));
-        genericObjectPoolConfig.setMaxWaitMillis(Utils.getField(lettucePoolInfo, "max-wait", 10000));
+        genericObjectPoolConfig.setMaxIdle(CommonUtils.getField(lettucePoolInfo, "max-idle", 10));
+        genericObjectPoolConfig.setMinIdle(CommonUtils.getField(lettucePoolInfo, "min-idle", 1));
+        genericObjectPoolConfig.setMaxTotal(CommonUtils.getField(lettucePoolInfo, "max-active", 10));
+        genericObjectPoolConfig.setMaxWaitMillis(CommonUtils.getField(lettucePoolInfo, "max-wait", 10000));
         return genericObjectPoolConfig;
     }
     public RedisStandaloneConfiguration getRedisStandaloneConfiguration(GenericObjectPoolConfig genericObjectPoolConfig, Map<String, Object> redisConfig) {
-        String host = Utils.getField(redisConfig,"host", "localhost");
-        int port = Utils.getField(redisConfig,"port", 6379);
-        String password = Utils.getField(redisConfig,"password", "");
+        String host = CommonUtils.getField(redisConfig,"host", "localhost");
+        int port = CommonUtils.getField(redisConfig,"port", 6379);
+        String password = CommonUtils.getField(redisConfig,"password", "");
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration(host,port);
         if (StringUtils.isNotEmpty(password)) {
             redisStandaloneConfiguration.setPassword(password);
@@ -107,9 +107,9 @@ public class RedisSource extends DataSource {
     }
 
     public RedisClusterConfiguration getRedisClusterConfiguration(GenericObjectPoolConfig genericObjectPoolConfig, Map<String, Object> redisConfig) {
-        String nodes = Utils.getField(redisConfig,"nodes", "localhost:6379");
-        int maxRedirects = Utils.getField(redisConfig,"max-redirect", 1);
-        String password = Utils.getField(redisConfig,"password", "");
+        String nodes = CommonUtils.getField(redisConfig,"nodes", "localhost:6379");
+        int maxRedirects = CommonUtils.getField(redisConfig,"max-redirect", 1);
+        String password = CommonUtils.getField(redisConfig,"password", "");
         Set<RedisNode> clusterNodes = Arrays.stream(nodes.split(",")).map(RedisSource::readHostAndPortFromString).collect(Collectors.toSet());
         RedisClusterConfiguration configuration = new RedisClusterConfiguration();
         configuration.setClusterNodes(clusterNodes);
@@ -121,9 +121,9 @@ public class RedisSource extends DataSource {
     }
 
     public RedisSentinelConfiguration getRedisSentinelConfiguration(GenericObjectPoolConfig genericObjectPoolConfig, Map<String, Object> redisConfig) {
-        String master = Utils.getField(redisConfig,"master", "myMaster");
-        String nodes = Utils.getField(redisConfig,"nodes", "localhost:6379");
-        String password = Utils.getField(redisConfig,"password", "");
+        String master = CommonUtils.getField(redisConfig,"master", "myMaster");
+        String nodes = CommonUtils.getField(redisConfig,"nodes", "localhost:6379");
+        String password = CommonUtils.getField(redisConfig,"password", "");
         Set<String> clusterNodes = Arrays.stream(nodes.split(",")).collect(Collectors.toSet());
         RedisSentinelConfiguration redisSentinelConfiguration = new RedisSentinelConfiguration(master, clusterNodes);
         if (StringUtils.isNotEmpty(password)) {
@@ -141,24 +141,24 @@ public class RedisSource extends DataSource {
         }
         GenericObjectPoolConfig genericObjectPoolConfig = genericObjectPoolConfig();
         LettuceClientConfiguration clientConfig = LettucePoolingClientConfiguration.builder()
-                .commandTimeout(Duration.ofMillis(Utils.getField(source.getOptions(), "timeout", 10000)))
+                .commandTimeout(Duration.ofMillis(CommonUtils.getField(source.getOptions(), "timeout", 10000)))
                 .poolConfig(genericObjectPoolConfig)
                 .build();
 
-        Map<String, Object> redisConfig = Utils.getField(source.getOptions(), "standalone", Maps.newHashMap());
+        Map<String, Object> redisConfig = CommonUtils.getField(source.getOptions(), "standalone", Maps.newHashMap());
         if (MapUtils.isNotEmpty(redisConfig)) {
             RedisStandaloneConfiguration configuration = getRedisStandaloneConfiguration(genericObjectPoolConfig, redisConfig);
             factory = new LettuceConnectionFactory(configuration, clientConfig);
         }
         if (factory == null) {
-            redisConfig = Utils.getField(source.getOptions(), "sentinel", Maps.newHashMap());
+            redisConfig = CommonUtils.getField(source.getOptions(), "sentinel", Maps.newHashMap());
             if (MapUtils.isNotEmpty(redisConfig)) {
                 RedisSentinelConfiguration configuration = getRedisSentinelConfiguration(genericObjectPoolConfig, redisConfig);
                 factory = new LettuceConnectionFactory(configuration, clientConfig);
             }
         }
         if (factory == null) {
-            redisConfig = Utils.getField(source.getOptions(), "cluster", Maps.newHashMap());
+            redisConfig = CommonUtils.getField(source.getOptions(), "cluster", Maps.newHashMap());
             if (MapUtils.isNotEmpty(redisConfig)) {
                 RedisClusterConfiguration configuration = getRedisClusterConfiguration(genericObjectPoolConfig, redisConfig);
                 factory = new LettuceConnectionFactory(configuration, clientConfig);

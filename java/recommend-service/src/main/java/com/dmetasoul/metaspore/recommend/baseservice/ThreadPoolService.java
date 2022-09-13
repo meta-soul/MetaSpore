@@ -16,7 +16,7 @@
 
 package com.dmetasoul.metaspore.recommend.baseservice;
 
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.ThreadPoolConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -85,26 +85,26 @@ public class ThreadPoolService {
 
     private int getCorePoolSize(ThreadPoolConfig.ThreadPool threadPool) {
         if (threadPool == null) return DEFAULT_CORE_POOL_SIZE;
-        return Utils.nullThenValue(threadPool.getCorePoolSize(), DEFAULT_CORE_POOL_SIZE);
+        return CommonUtils.nullThenValue(threadPool.getCorePoolSize(), DEFAULT_CORE_POOL_SIZE);
     }
 
     private int getMaximumPoolSize(ThreadPoolConfig.ThreadPool threadPool) {
         if (threadPool == null) return DEFAULT_MAX_POOL_SIZE;
-        return Utils.nullThenValue(threadPool.getMaximumPoolSize(), DEFAULT_MAX_POOL_SIZE);
+        return CommonUtils.nullThenValue(threadPool.getMaximumPoolSize(), DEFAULT_MAX_POOL_SIZE);
     }
 
     private int getKeepAliveTime(ThreadPoolConfig.ThreadPool threadPool) {
         if (threadPool == null) return DEFAULT_KEEP_ALIVE_TIME;
-        return Utils.nullThenValue(threadPool.getKeepAliveTime(), DEFAULT_KEEP_ALIVE_TIME);
+        return CommonUtils.nullThenValue(threadPool.getKeepAliveTime(), DEFAULT_KEEP_ALIVE_TIME);
     }
 
     private TimeUnit getTimeunit(ThreadPoolConfig.ThreadPool threadPool) {
         if (threadPool == null) return DEFAULT_TIME_UNIT;
-        return Utils.nullThenValue(threadPool.getTimeunit(), DEFAULT_TIME_UNIT);
+        return CommonUtils.nullThenValue(threadPool.getTimeunit(), DEFAULT_TIME_UNIT);
     }
 
     private int getCapacity(ThreadPoolConfig.ThreadPool threadPool) {
         if (threadPool == null) return DEFAULT_CAPACITY;
-        return Utils.nullThenValue(threadPool.getCapacity(), DEFAULT_CAPACITY);
+        return CommonUtils.nullThenValue(threadPool.getCapacity(), DEFAULT_CAPACITY);
     }
 }

@@ -16,8 +16,7 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
@@ -54,7 +53,7 @@ public class AlgoTransformTask extends DataService {
     protected Map<String, String> actionTypes;
 
     public <T> T getOptionOrDefault(String key, T value) {
-        return Utils.getField(algoTransform.getOptions(), key, value);
+        return CommonUtils.getField(algoTransform.getOptions(), key, value);
     }
 
     @Override
@@ -178,7 +177,7 @@ public class AlgoTransformTask extends DataService {
         for (int i = 0; i < maxIndexs.get(0); ++i) {
             Map<Integer, IndexData> resItem = Maps.newHashMap();
             for (Map.Entry<Integer, List<IndexData>> entry : dataList.get(0).entrySet()) {
-                resItem.put(entry.getKey(), Utils.get(entry.getValue(), i, null));
+                resItem.put(entry.getKey(), CommonUtils.get(entry.getValue(), i, null));
             }
             queue.add(resItem);
         }
@@ -197,7 +196,7 @@ public class AlgoTransformTask extends DataService {
                     Map<Integer, IndexData> newItem = Maps.newHashMap();
                     newItem.putAll(resItem);
                     for (Map.Entry<Integer, List<IndexData>> entry : dataList.get(nextNum).entrySet()) {
-                        newItem.put(entry.getKey(), Utils.get(entry.getValue(), i, null));
+                        newItem.put(entry.getKey(), CommonUtils.get(entry.getValue(), i, null));
                     }
                     queue.add(newItem);
                 }
@@ -226,7 +225,7 @@ public class AlgoTransformTask extends DataService {
         }
         for (int index = 0; index <= maxIndex; ++index) {
             for (FieldData itemData : fieldDatas) {
-                IndexData item = Utils.get(itemData.getIndexValue(), index, null);
+                IndexData item = CommonUtils.get(itemData.getIndexValue(), index, null);
                 if (item == null) {
                     continue;
                 }

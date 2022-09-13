@@ -16,12 +16,11 @@
 package com.dmetasoul.metaspore.recommend.datasource;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.IncorrectResultSetColumnCountException;
@@ -68,7 +67,7 @@ public class JDBCSource extends DataSource {
         dataSource.setPassword(password);
         jdbcTemplate = new JdbcTemplate(dataSource);
         namedTemplate = new NamedParameterJdbcTemplate(dataSource);
-        validationQuery = Utils.getField(source.getOptions(), "checkSql");
+        validationQuery = CommonUtils.getField(source.getOptions(), "checkSql");
         return true;
     }
 

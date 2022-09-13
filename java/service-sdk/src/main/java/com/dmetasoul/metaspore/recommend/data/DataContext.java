@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.dmetasoul.metaspore.recommend.common.Utils.genResultKey;
-import static com.dmetasoul.metaspore.recommend.common.Utils.getObjectToMap;
+import static com.dmetasoul.metaspore.recommend.common.CommonUtils.genResultKey;
+import static com.dmetasoul.metaspore.recommend.common.CommonUtils.getObjectToMap;
 /**
  * 用于服务请求中的上下文数据
  * Created by @author qinyy907 in 14:24 22/07/15.

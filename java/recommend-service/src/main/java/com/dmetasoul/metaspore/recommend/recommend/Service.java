@@ -2,7 +2,7 @@ package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -56,7 +56,7 @@ public class Service extends Transform implements BaseService {
     }
 
     protected boolean initService() {
-        timeout = Utils.getField(serviceConfig.getOptions(), "timeout", timeout);
+        timeout = CommonUtils.getField(serviceConfig.getOptions(), "timeout", timeout);
         tasks = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(serviceConfig.getTasks())) {
             for (String item : serviceConfig.getTasks()) {

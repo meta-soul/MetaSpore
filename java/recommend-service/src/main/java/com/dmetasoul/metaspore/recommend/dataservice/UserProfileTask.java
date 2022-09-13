@@ -16,18 +16,15 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.FieldAction;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +50,7 @@ public class UserProfileTask extends AlgoTransformTask {
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FieldData fieldData = fields.get(0);
             Assert.isTrue(DataTypeEnum.STRING.isMatch(fieldData), "split input must string and not empty!");
-            String split = Utils.getField(options, "splitor", splitor);
+            String split = CommonUtils.getField(options, "splitor", splitor);
             List<IndexData> input = fieldData.getIndexValue();
             for (IndexData o : input) {
                 Assert.isTrue(o.getVal() instanceof String, "value must string! value:" + o.getVal());

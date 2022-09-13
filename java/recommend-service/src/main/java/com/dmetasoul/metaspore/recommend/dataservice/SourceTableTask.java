@@ -16,7 +16,7 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -59,7 +59,7 @@ public class SourceTableTask extends DataService {
     }
 
     public <T> T getOptionOrDefault(String key, T value) {
-        return Utils.getField(sourceTable.getOptions(), key, value);
+        return CommonUtils.getField(sourceTable.getOptions(), key, value);
     }
 
     @Override

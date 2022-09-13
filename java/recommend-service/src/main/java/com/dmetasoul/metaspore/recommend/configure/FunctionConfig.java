@@ -44,9 +44,5 @@ public class FunctionConfig {
         private List<Map<String, String>> transformMergeOperator;
         private List<Map<String, String>> transformUpdateOperator;
         private List<Map<String, String>> layerBucketizer;
-        private List<Map<String, String>> sourceTableTask;
-        private List<Map<String, String>> algoTransformTask;
-        private List<Map<String, String>> recommendService;
-        private List<Map<String, String>> dataSource;
     }
 }

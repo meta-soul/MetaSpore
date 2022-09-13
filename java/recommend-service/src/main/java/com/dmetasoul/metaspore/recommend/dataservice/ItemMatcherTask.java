@@ -16,25 +16,21 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
-import org.apache.arrow.vector.util.JsonStringHashMap;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.Assert;
 
 import java.util.*;
-
-import static com.dmetasoul.metaspore.recommend.common.Utils.getObjectToMap;
 
 @Data
 @Slf4j
@@ -103,7 +99,7 @@ public class ItemMatcherTask extends AlgoTransformTask {
                             if (data instanceof Map) {
                                 map = (Map<String, Object>)data;
                             } else {
-                                map = getObjectToMap(data);
+                                map = CommonUtils.getObjectToMap(data);
                             }
                             itemArray.add((String) map.get(itemField.getName()));
                             scoreArray.add((Double) map.get(scoreField.getName()));
@@ -117,11 +113,11 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 List<String> recallItem = recallItemData.get(i);
                 if (CollectionUtils.isEmpty(recallItem)) continue;
                 List<Double> recallWeight = recallWeights.get(i);
-                Double userProfileWeight = Utils.get(userProfileWeights, i, 1.0);
+                Double userProfileWeight = CommonUtils.get(userProfileWeights, i, 1.0);
                 if (userProfileWeight == null) userProfileWeight = 1.0;
                 for (int j = 0; j < recallItem.size(); ++j) {
                     String itemId = recallItem.get(j);
-                    Double itemScore = Utils.get(recallWeight, j, 1.0) * userProfileWeight;
+                    Double itemScore = CommonUtils.get(recallWeight, j, 1.0) * userProfileWeight;
                     if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
                         itemToItemScore.put(itemId, itemScore);
                     }
@@ -157,7 +153,7 @@ public class ItemMatcherTask extends AlgoTransformTask {
             for (int i = 0; i< userIds.size(); ++i) {
                 Map<String, Double> itemToItemScore = UserItemScore.computeIfAbsent(userIds.get(i), key->Maps.newHashMap());
                 String itemId = recallItemData.get(i);
-                Double itemScore = recallWeights.get(i) * Utils.get(userProfileWeights, i, 1.0);
+                Double itemScore = recallWeights.get(i) * CommonUtils.get(userProfileWeights, i, 1.0);
                 if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
                     itemToItemScore.put(itemId, itemScore);
                 }
@@ -179,8 +175,8 @@ public class ItemMatcherTask extends AlgoTransformTask {
             Assert.isTrue(DataTypeEnum.MAP_STR_DOUBLE.isMatch(fields.get(1)),
                     "recallCollectItem input[1] is userprofileWeight map<string, double>>");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            int limit = Utils.getField(options, "maxReservation", maxReservation);
-            int finalAlgoLevel = Utils.getField(options, "algoLevel", algoLevel);
+            int limit = CommonUtils.getField(options, "maxReservation", maxReservation);
+            int finalAlgoLevel = CommonUtils.getField(options, "algoLevel", algoLevel);
             List<IndexData> userIds = fields.get(0).getIndexValue();
             List<Map<String, Double>> itemScores = fields.get(1).getValue();
             for (int i = 0; i < userIds.size(); ++i) {

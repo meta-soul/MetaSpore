@@ -15,12 +15,12 @@
 //
 package com.dmetasoul.metaspore.recommend.controll;
 
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.*;
-import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.Experiment;
@@ -155,7 +155,7 @@ public class ServiceController {
     @RequestMapping(value = "/recommend/{task}", method = POST, produces = "application/json")
     public ServiceResult getRecommendResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
         DataContext context = new DataContext(req);
-        List<String> preTasks = Utils.getField(req, "preTasks", List.of());
+        List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
         List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
         log.info("recommend result : {}", result);
         if (CollectionUtils.isEmpty(result)) {

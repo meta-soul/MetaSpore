@@ -17,7 +17,7 @@ package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
@@ -43,7 +43,7 @@ public class Scene extends TaskFlow<Layer> {
         super.init(name, taskFlowConfig, serviceRegister);
         scene = taskFlowConfig.getScenes().get(name);
         chains = scene.getChains();
-        timeout = Utils.getField(scene.getOptions(), "timeout", timeout);
+        timeout = CommonUtils.getField(scene.getOptions(), "timeout", timeout);
         resFields = Lists.newArrayList();
         dataTypes = Lists.newArrayList();
         for (String col : scene.getColumnNames()) {

@@ -17,26 +17,20 @@
 package com.dmetasoul.metaspore.recommend.common;
 
 
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.serving.ArrowTensor;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.param.MetricType;
 import io.milvus.param.R;
-import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.collections4.SetUtils;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * 工具类
@@ -45,68 +39,21 @@ import java.util.Set;
 
 @Slf4j
 public class Utils {
-    public static String genResultKey(String name, String taskName) {
-        return String.format("%s_%s", name, taskName);
-    }
     public static MetricType getMetricType(int index) {
         if (index < 0 || index >= MetricType.values().length) {
             index = 0;
         }
         return MetricType.values()[index];
     }
-    public static <T> T nullThenValue(T value, T defaultValue) {
-        return value == null ? defaultValue : value;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T> T getField(Map<String, Object> data, String field, T value) {
-        if (MapUtils.isNotEmpty(data) && data.containsKey(field)) return (T) data.getOrDefault(field, value);
-        return value;
-    }
-
-    public static <T> T getField(Map<String, Object> data, String field) {
-        return getField(data, field, null);
-    }
-
-    public Object getObject(Map map, String key) {
-        if (MapUtils.isNotEmpty(map) && map.containsKey(key)) {
-            return map.get(key);
-        }
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static boolean setFieldFail(Map map, List<String> columnName, int index, Object value) {
-        if (index < 0 || columnName == null || map == null || index >= columnName.size()) {
-            return true;
-        }
-        map.put(columnName.get(index), value);
-        return false;
-    }
-
-    public static int parseIntFromString(String str, int defaultValue) {
-        //noinspection deprecation
-        if (StringUtils.isEmpty(str)) {
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(str);
-        } catch (Exception e) {
-            return defaultValue;
-        }
-    }
-
     public static void handleResponseStatus(R<?> r) {
         if (r.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(r.getMessage());
         }
     }
-
     public static double getFinalRetrievalScore(Double originalScore, Double maxScore, int algoLevel) {
         double EPSILON = 0.001;
         return originalScore / (maxScore + EPSILON) + algoLevel;
     }
-
     public static List<List<Float>> getVectorsFromNpsResult(Map<String, ArrowTensor> nspResultMap, String targetKey) {
         ArrowTensor tensor = nspResultMap.get(targetKey);
         ArrowTensor.FloatTensorAccessor accessor = tensor.getFloatData();
@@ -125,7 +72,6 @@ public class Utils {
 
         return vectors;
     }
-
     public static List<Float> getScoresFromNpsResult(Map<String, ArrowTensor> nspResultMap, String targetKey, int targetIndex) {
         ArrowTensor tensor = nspResultMap.get(targetKey);
         ArrowTensor.FloatTensorAccessor accessor = tensor.getFloatData();
@@ -139,46 +85,5 @@ public class Utils {
         }
 
         return scores;
-    }
-
-    @SneakyThrows
-    public static Map<String, Object> getObjectToMap(Object obj) {
-        Map<String, Object> map = Maps.newHashMap();
-        Class<?> cla = obj.getClass();
-        Field[] fields = cla.getDeclaredFields();
-        for (Field field : fields) {
-            if (field.trySetAccessible()) {
-                String keyName = field.getName();
-                Object value = field.get(obj);
-                map.put(keyName, value);
-            }
-        }
-        return map;
-    }
-    @SneakyThrows
-    @SuppressWarnings("unchecked")
-    public static <T> T getObjectFromMap(Map<String, Object> data, Class<?> cls) {
-        Object obj = cls.getConstructor().newInstance();
-        Field[] fields = cls.getDeclaredFields();
-        for (Field field : fields) {
-            if (field.trySetAccessible() && data.containsKey(field.getName())) {
-                String keyName = field.getName();
-                field.set(obj, data.get(keyName));
-            }
-        }
-        return (T) obj;
-    }
-    public static <T> T get(List<T> list, int index, T value) {
-        if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {
-            return list.get(index);
-        }
-        return value;
-    }
-    @SuppressWarnings("unchecked")
-    public static <T> T getObject(List<Object> list, int index, T value) {
-        if (CollectionUtils.isNotEmpty(list) && index >= 0 && index < list.size()) {
-            return (T) list.get(index);
-        }
-        return value;
     }
 }

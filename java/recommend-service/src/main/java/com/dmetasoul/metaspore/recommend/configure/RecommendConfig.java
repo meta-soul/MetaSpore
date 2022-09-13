@@ -15,6 +15,10 @@
 //
 package com.dmetasoul.metaspore.recommend.configure;
 
+import com.dmetasoul.metaspore.recommend.configure.Chain;
+import com.dmetasoul.metaspore.recommend.configure.ColumnInfo;
+import com.dmetasoul.metaspore.recommend.configure.ExperimentItem;
+import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.google.common.collect.Sets;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

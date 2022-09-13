@@ -1,7 +1,7 @@
 package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
@@ -94,7 +94,7 @@ public abstract class Transform {
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
                     List<String> orderFields = getOptionFields("orderFields", option);
-                    int limit = Utils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
+                    int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
                     result.orderAndLimit(item, orderFields, limit);
                     featureTable.finish();
                     results.add(result);
@@ -109,7 +109,7 @@ public abstract class Transform {
                     FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields(), ArrowAllocator.getAllocator());
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
-                    int limit = Utils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
+                    int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
                     result.copyDataResult(item, 0, limit);
                     featureTable.finish();
                     results.add(result);
@@ -198,7 +198,7 @@ public abstract class Transform {
 
     public Map<String, MergeOperator> getMergeOperators(Map<String, Object> option) {
         Map<String, MergeOperator> mergeOperatorMap = Maps.newHashMap();
-        Map<String, String> mergeFieldOperator = Utils.getField(option, "mergeOperator", Map.of());
+        Map<String, String> mergeFieldOperator = CommonUtils.getField(option, "mergeOperator", Map.of());
         if (MapUtils.isNotEmpty(mergeFieldOperator)) {
             for (Map.Entry<String, String> entry : mergeFieldOperator.entrySet()) {
                 MergeOperator operator = getOperatorOrFunction(mergeOperators, entry.getValue(), MergeOperator.class);
@@ -213,7 +213,7 @@ public abstract class Transform {
     }
 
     public UpdateOperator getUpdateOperator(Map<String, Object> option) {
-        String updateFieldOperator = Utils.getField(option, "updateOperator", "");
+        String updateFieldOperator = CommonUtils.getField(option, "updateOperator", "");
         return getOperatorOrFunction(updateOperators, updateFieldOperator, UpdateOperator.class);
     }
 

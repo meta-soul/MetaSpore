@@ -6,7 +6,7 @@ import com.google.common.collect.Sets;
 import lombok.Data;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.util.Assert;
+import org.apache.commons.lang3.Validate;
 
 import java.util.List;
 import java.util.Map;
@@ -83,15 +83,15 @@ public class FieldAction {
         this.input = List.of(input);
     }
     public boolean checkAndDefault() {
-        Assert.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
+        Validate.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
                 "AlgoTransform FieldAction config name and type must be equel!");
         processAlgoColumns(algoColumns);
-        Assert.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
+        Validate.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
                 "fieldaction input and field must not be empty at the same time");
         if (CollectionUtils.isNotEmpty(input)) {
             Set<String> nameSet = Sets.newHashSet(names);
             for (String key : input) {
-                Assert.isTrue(!nameSet.contains(key), "input field must not in names! key:" + key);
+                Validate.isTrue(!nameSet.contains(key), "input field must not in names! key:" + key);
             }
         }
         return true;
