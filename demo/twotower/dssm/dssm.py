@@ -129,14 +129,18 @@ def train(spark, train_dataset, item_dataset, **model_params):
     ## init agent class
     agent_class_ = init_class_with_desc(model_params['two_tower_agent_class']) \
                    if 'two_tower_agent_class' in model_params else None
+    ## init metric class
+    metric_class_ = init_class_with_desc(model_params['two_tower_metric_class']) \
+                    if 'two_tower_metric_class' in model_params else None
     ## init estimator class
     estimator_class_ = init_class_with_desc(model_params['two_tower_estimator_class'])
     estimator = estimator_class_(module = module,
                                 item_dataset = item_dataset,
-                                item_ids_column_indices = [6],
+                                item_ids_column_names = ['movie_id'],
                                 retrieval_item_count = 20,
                                 metric_update_interval = 500,
                                 agent_class = agent_class_,
+                                metric_class = metric_class_,
                                 **model_params)
     ## dnn learning rate
     estimator.updater = ms.AdamTensorUpdater(model_params['adam_learning_rate'])
@@ -163,7 +167,8 @@ def evaluate(spark, test_result, test_user=100):
     
     ## evaluation
     prediction_label_rdd = test_result.rdd.map(lambda x:(\
-                                            [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
+                                            # convert to str to match type of ``x.movie_id``
+                                            [str(xx.name) for xx in x.rec_info] if x.rec_info is not None else [], \
                                              [x.movie_id]))
     return RankingMetrics(prediction_label_rdd)
 

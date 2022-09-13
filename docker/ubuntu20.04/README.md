@@ -24,12 +24,12 @@ export REPOSITORY=...
         Use `--build-arg ENABLE_GPU=ON` to build Serving service with GPU support. Default is CPU only.
         1. Serving Release image: Generate a releasable image based on the Serving Build image, strip the Debug section to reduce the image size: `Dockerfile_serving_release`
             ```bash
-            DOCKER_BUILDKIT=1 docker build --network host --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f docker/ubuntu20.04/Dockerfile_serving_release --build-arg BUILD_IMAGE=$REPOSITORY/metaspore-serving-build:v1.0.0 -t $REPOSITORY/metaspore-serving-release:v1 .0.0 --target serving_release .
+            DOCKER_BUILDKIT=1 docker build --network host --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f docker/ubuntu20.04/Dockerfile_serving_release --build-arg BUILD_IMAGE=$REPOSITORY/metaspore-serving-build:v1.0.0 -t $REPOSITORY/metaspore-serving-release:v1.0.0 --target serving_release .
             ````
             Use `--build-arg RUNTIME=gpu` to build Serving release image with GPU support. Default is CPU only.
         1. Serving Debug image: Based on the Serving Build image, generate Debug Info and an image carrying the GDB environment: `Dockerfile_serving_release`
             ```bash
-            DOCKER_BUILDKIT=1 docker build --network host --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f docker/ubuntu20.04/Dockerfile_serving_release --build-arg BUILD_IMAGE=$REPOSITORY/metaspore-serving-build:v1.0.0 -t $REPOSITORY/metaspore-serving-debug:v1 .0.0 --target serving_debug .
+            DOCKER_BUILDKIT=1 docker build --network host --build-arg http_proxy=${http_proxy} --build-arg https_proxy=${https_proxy} -f docker/ubuntu20.04/Dockerfile_serving_release --build-arg BUILD_IMAGE=$REPOSITORY/metaspore-serving-build:v1.0.0 -t $REPOSITORY/metaspore-serving-debug:v1.0.0 --target serving_debug .
             ````
 
     1. Training Build image, generate Training Wheel installation package based on Dev image: `Dockerfile_training_build`

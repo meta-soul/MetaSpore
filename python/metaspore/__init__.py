@@ -89,12 +89,17 @@ else:
 try:
     import pyspark
     import faiss
+    import pymilvus
 except ImportError:
     pass
 else:
     from .two_tower_retrieval import TwoTowerRetrievalModule
-    from .two_tower_retrieval import FaissIndexBuildingAgent
-    from .two_tower_retrieval import FaissIndexRetrievalAgent
+    from .two_tower_retrieval import TwoTowerIndexBuilder
+    from .two_tower_retrieval import TwoTowerFaissIndexBuilder
+    from .two_tower_retrieval import TwoTowerMilvusIndexBuilder
+    from .two_tower_retrieval import TwoTowerIndexBuildingAgent
+    from .two_tower_retrieval import TwoTowerIndexRetrievalAgent
+    from .two_tower_retrieval import TwoTowerRetrievalLauncher
     from .two_tower_retrieval import TwoTowerRetrievalModel
     from .two_tower_retrieval import TwoTowerRetrievalEstimator
 
