@@ -433,7 +433,7 @@ class PyTorchAgent(Agent):
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
         self.trainer.train(loss)
-        self.update_progress(batch_size=len(labels), batch_loss=loss,
+        self.update_progress(batch_size=len(minibatch), batch_loss=loss,
                              predictions=predictions, labels=labels)
 
     def validate_minibatch(self, minibatch):
@@ -451,7 +451,7 @@ class PyTorchAgent(Agent):
         predictions = self.model(minibatch)
         labels = torch.from_numpy(labels).reshape(-1, 1)
         loss = self.compute_loss(predictions, labels)
-        self.update_progress(batch_size=len(labels), batch_loss=loss,
+        self.update_progress(batch_size=len(minibatch), batch_loss=loss,
                              predictions=predictions, labels=labels)
         return self._make_validation_result(minibatch, labels, predictions)
 
@@ -626,8 +626,8 @@ class PyTorchHelperMixin(object):
                  stop_workers_hook=None,
                  worker_start_hook=None,
                  worker_stop_hook=None,
-                 worker_count=100,
-                 server_count=100,
+                 worker_count=1,
+                 server_count=1,
                  agent_class=None,
                  model_in_path=None,
                  model_out_path=None,
@@ -954,11 +954,10 @@ class PyTorchEstimator(PyTorchHelperMixin, pyspark.ml.base.Estimator):
             raise RuntimeError("model_out_path of estimator must be specified")
 
     def _clear_output(self):
-        import os
         if self.model_out_path is not None:
-            delete_dir(os.path.join(self.model_out_path, self.experiment_name))
+            delete_dir(self.model_out_path)
         if self.model_export_path is not None:
-            delete_dir(os.path.join(self.model_export_path, self.experiment_name))
+            delete_dir(self.model_export_path)
 
     def _fit(self, dataset):
         self._clear_output()

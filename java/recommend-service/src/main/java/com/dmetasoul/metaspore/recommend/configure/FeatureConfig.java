@@ -15,10 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.configure;
 
-import com.dmetasoul.metaspore.recommend.configure.ColumnInfo;
-import com.dmetasoul.metaspore.recommend.configure.Condition;
-import com.dmetasoul.metaspore.recommend.configure.FieldAction;
-import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Queues;

@@ -18,6 +18,7 @@ package com.dmetasoul.metaspore.recommend.recommend.interfaces;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 

@@ -13,3 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+from .din.din_net import DIN
+
+from .dien.dien_net import DIEN
+from .dien.dien_agent import DIENAgent

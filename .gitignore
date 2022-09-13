@@ -12,6 +12,7 @@
 /java/.idea
 .ipynb_checkpoints/
 __pycache__
+python.zip
 /metaspore.egg-info/
 /wheelhouse/
 *.iml

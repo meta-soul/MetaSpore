@@ -15,8 +15,10 @@
 #
 
 import torch
+import torch.nn.functional as F
 import metaspore as ms
-
+import math
+from torch.nn.utils.rnn import pack_sequence, pack_padded_sequence, pad_packed_sequence
 
 # Logistic regression layer
 class LRLayer(torch.nn.Module):
@@ -31,6 +33,21 @@ class LRLayer(torch.nn.Module):
         out = torch.sum(inputs, dim=1, keepdim=True)
         return out
 
+# This code is adapted from github repository: https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
+class Dice(torch.nn.Module):
+
+    def __init__(self, hidden_size):
+        super(Dice, self).__init__()
+
+        self.sigmoid = torch.nn.Sigmoid()
+        self.alpha = torch.nn.Parameter(torch.zeros((hidden_size,)))
+
+    def forward(self, score):
+        self.alpha = self.alpha.to(score.device)
+        score_p = self.sigmoid(score)
+
+        return self.alpha * (1 - score_p) * score + score_p * score
+    
 
 # Fully connected layers
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/layers/deep.py
@@ -41,7 +58,7 @@ class MLPLayer(torch.nn.Module):
                  hidden_units=[], 
                  hidden_activations="ReLU",
                  final_activation=None, 
-                 dropout_rates=[], 
+                 dropout_rates=0, 
                  batch_norm=False, 
                  use_bias=True,
                  input_norm=False):
@@ -51,7 +68,7 @@ class MLPLayer(torch.nn.Module):
             dropout_rates = [dropout_rates] * len(hidden_units)
         if not isinstance(hidden_activations, list):
             hidden_activations = [hidden_activations] * len(hidden_units)        
-        hidden_activations = [self.set_activation(x) for x in hidden_activations]
+        hidden_activations = [self.set_activation(x, hidden_size) for x, hidden_size in zip(hidden_activations, hidden_units)]
         hidden_units = [input_dim] + hidden_units
         
         if input_norm:
@@ -73,7 +90,7 @@ class MLPLayer(torch.nn.Module):
             dense_layers.append(torch.nn.Linear(hidden_units[-1], output_dim, bias=use_bias))
         ## final activation
         if final_activation is not None:
-            dense_layers.append(self.set_activation(final_activation))
+            dense_layers.append(self.set_activation(final_activation, output_dim))
         ## all in one
         self.dnn = torch.nn.Sequential(*dense_layers)
 
@@ -81,7 +98,7 @@ class MLPLayer(torch.nn.Module):
         return self.dnn(inputs)
     
     @staticmethod
-    def set_activation(activation):
+    def set_activation(activation, hidden_size):
         if isinstance(activation, str):
             if activation.lower() == "relu":
                 return torch.nn.ReLU()
@@ -89,12 +106,13 @@ class MLPLayer(torch.nn.Module):
                 return torch.nn.Sigmoid()
             elif activation.lower() == "tanh":
                 return torch.nn.Tanh()
+            elif activation.lower() == "dice":
+                return Dice(hidden_size)
             else:
                 return torch.nn.ReLU() ## defalut relu
         else:
             return torch.nn.ReLU() ## defalut relu
-
-
+    
 # Factorization machine layer
 class FMLayer(torch.nn.Module):
     def __init__(self,
@@ -397,6 +415,122 @@ class CompressedInteractionNet(torch.nn.Module):
         concate_vec = torch.cat(pooling_outputs, dim=-1)
         output = self.fc(concate_vec)
         return output
+
+# Sequence Attention Layer
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py 
+class DIEN_DIN_AttLayer(torch.nn.Module):
+    def __init__(self, input_dim, att_hidden_size, att_activation, att_dropout, use_att_bn):
+        super(DIEN_DIN_AttLayer, self).__init__()
+        self.att_mlp_layers = MLPLayer(input_dim=input_dim*4, output_dim=1, hidden_units=att_hidden_size, hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
+        
+    def forward(self, query, keys, keys_length):
+        batch_size, max_length, dim = keys.size()
+        mask_mat = torch.arange(max_length).view(1, -1)
+        query = query.unsqueeze(1).expand(batch_size, max_length, dim)
+        input_tensor = torch.cat([query, keys, query-keys, query*keys], dim=-1)
+        input_tensor = input_tensor.view(batch_size * max_length, -1) # [B*T 4*H]
+        output = self.att_mlp_layers(input_tensor).view(batch_size, max_length) #[B T]
+        mask = mask_mat.expand(output.shape[0], -1)
+        mask = (mask >= keys_length.unsqueeze(1))
+        mask_value = 0.0
+        output = output.masked_fill(mask=mask, value=torch.tensor(mask_value))
+        output = output.unsqueeze(1)
+        output = output / (keys.shape[-1] ** 0.5)
+        output = torch.nn.functional.softmax(output, dim=-1)
+        output = torch.matmul(output, keys) 
+        return output
+        
+# Interest Evolving Layer
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py     
+class InterestEvolvingLayer(torch.nn.Module):
+    def __init__(
+        self,
+        embedding_size,
+        gru_hidden_size,
+        gru_num_layers,
+        use_gru_bias,
+        att_input_dim,
+        att_hidden_units,
+        att_activation,
+        att_dropout,
+        use_att_bn,
+    ):
+        super(InterestEvolvingLayer, self).__init__()
+        self.attention_layer = DIEN_DIN_AttLayer(input_dim = att_input_dim, 
+                                                 att_hidden_size = att_hidden_units, 
+                                                 att_activation = att_activation, 
+                                                 att_dropout = att_dropout, 
+                                                 use_att_bn = use_att_bn)
+        self.dynamic_rnn = torch.nn.GRU(
+            input_size = embedding_size,
+            hidden_size = gru_hidden_size,
+            num_layers = gru_num_layers,
+            bias = use_gru_bias,
+            batch_first = True,
+        )
+        
+    def forward(self, target_item, interest):
+        packed_rnn_outputs,_= self.dynamic_rnn(interest)
+        rnn_outputs,rnn_length = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
+        att_outputs = self.attention_layer(target_item, rnn_outputs, rnn_length)
+        outputs = att_outputs.squeeze(1)
+        return outputs
+    
+# Interest Extractor Network
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py 
+class InterestExtractorNetwork(torch.nn.Module):
+    def __init__(self, 
+                 embedding_size, 
+                 gru_hidden_size, 
+                 gru_num_layers,
+                 use_gru_bias,
+                 aux_input_dim, 
+                 aux_hidden_units,  
+                 aux_activation, 
+                 aux_dropout, 
+                 use_aux_bn):
+        super(InterestExtractorNetwork, self).__init__()
+        self.gru_layers = torch.nn.GRU(
+            input_size = embedding_size,
+            hidden_size = gru_hidden_size,
+            num_layers = gru_num_layers,
+            bias = use_gru_bias,
+            batch_first = True,
+        )
+        self.auxiliary_net = MLPLayer(input_dim = aux_input_dim, 
+                                      output_dim = 1, 
+                                      hidden_units = aux_hidden_units, 
+                                      hidden_activations = aux_activation, 
+                                      final_activation = aux_activation, 
+                                      dropout_rates = aux_dropout,
+                                      batch_norm = use_aux_bn)
+        
+    def forward(self, item_seq_pack, neg_item_seq_pack=None):
+        packed_rnn_outputs,_=self.gru_layers(item_seq_pack)
+        
+        # padding all sequence
+        rnn_outputs, _ = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
+        item_seq, _ = pad_packed_sequence(item_seq_pack, batch_first=True)
+        neg_item_seq, _ = pad_packed_sequence(neg_item_seq_pack, batch_first=True)
+        aux_loss = self.auxiliary_loss(rnn_outputs[:,:-1,:], item_seq[:,1:,:], neg_item_seq[:,1:,:])
+        return packed_rnn_outputs, aux_loss
+    
+    def auxiliary_loss(self, h_states, click_seq, noclick_seq):
+        click_input = torch.cat([h_states, click_seq], dim=-1)
+        noclick_input = torch.cat([h_states, noclick_seq], dim=-1)
+        
+        click_prop = self.auxiliary_net(click_input.view(h_states.shape[0]*h_states.shape[1], -1)).view(-1, 1)
+        click_target = torch.ones(click_prop.shape, device=click_input.device)
+        
+        noclick_prop = self.auxiliary_net(noclick_input.view(h_states.shape[0]*h_states.shape[1], -1)).view(-1, 1)
+        noclick_target = torch.zeros(noclick_prop.shape, device=noclick_input.device)
+        
+        loss = F.binary_cross_entropy(
+            torch.cat([click_prop, noclick_prop], dim=0),torch.cat([click_target, noclick_target],dim=0)
+        )
+        
+        return loss
+
     
 # Field-weighted factorization machine layer
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/models/FwFM.py
