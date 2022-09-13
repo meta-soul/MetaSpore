@@ -1,15 +1,8 @@
 function-config:
-  path: .
+  path: ../user-define-function/target
   jars:
-    - name: xxx.jar
+    - name: user-define-function-1.0.0.jar
       fieldFunction:
-        - enum: com.dmetasoul.metaspore.recommend.functions.EnumFunction
-        - scale: com.dmetasoul.metaspore.recommend.functions.ScaleFunction
+        - example: com.dmetasoul.metaspore.udf.example.FieldFunction
       transformFunction:
-        - name: className
-      transformMergeOperator:
-        - name: className
-      transformUpdateOperator:
-        - name: className
-      layerBucketizer:
-        - name: className
+        - example: com.dmetasoul.metaspore.udf.example.DataResultFunction

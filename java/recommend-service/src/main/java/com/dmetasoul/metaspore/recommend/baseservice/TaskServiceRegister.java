@@ -129,6 +129,7 @@ public class TaskServiceRegister {
         experimentMap.forEach((name,service)->service.close());
         layerMap.forEach((name,service)->service.close());
         sceneMap.forEach((name,service)->service.close());
+        userDefineFunctionLoader.close();
     }
 
     @SuppressWarnings("unchecked")
