@@ -55,7 +55,7 @@ class GRU4RecBatchNegativeSamplingModule(ms.TwoTowerRetrievalModule):
 class GRU4RecBatchNegativeSamplingAgent(ms.PyTorchAgent):
     def __init__(self,
                  tau = 1.0,
-                 loss_type='top1', # loss_type in ['bpr', 'top1']
+                 loss_type='bpr', # loss_type in ['bpr', 'top1']
                 ):
         super().__init__()
         self.tau = tau
@@ -94,6 +94,7 @@ class GRU4RecBatchNegativeSamplingAgent(ms.PyTorchAgent):
         loss = self.loss_fct(scores)
         # backward the loss
         self.trainer.train(loss)
+        # print(loss)
         # update trainning progress
         labels = torch.from_numpy(labels).reshape(-1, 1)
         self.update_progress(predictions, labels)
