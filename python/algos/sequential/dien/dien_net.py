@@ -160,11 +160,11 @@ class DIEN(torch.nn.Module):
         seq_length = [seq.shape[0] for seq in x[self.pos_item_seq_index[0]::self.total_feature_count]]
         
         # split feature      
-        non_seq_feature = self.get_feature_concat(x, self.target_item_index)
+        non_seq_feature = self.get_feature_concat(x, self.non_seq_index)
         target_item = self.get_feature_concat(x, self.target_item_index)
         pos_item_seq = self.get_feature_concat(x, self.pos_item_seq_index)
         neg_item_seq = self.get_feature_concat(x, self.neg_item_seq_index)
-        
+
         # pack sequential feature
         pos_item_seq_pack = torch.nn.utils.rnn.pack_padded_sequence(input = pos_item_seq, 
                                                                      lengths = seq_length , 
@@ -174,7 +174,6 @@ class DIEN(torch.nn.Module):
                                                                     lengths = seq_length , 
                                                                     batch_first = True, 
                                                                     enforce_sorted = False)
-        
         
         interest, aux_loss = self.intereset_extractor(pos_item_seq_pack, neg_item_seq_pack)
         evolution = self.interest_evolution(target_item, interest)
