@@ -15,13 +15,14 @@
 //
 package com.dmetasoul.metaspore.recommend.controll;
 
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
+import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
-import com.dmetasoul.metaspore.recommend.data.ServiceResult;
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.data.*;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
+import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.Experiment;
 import com.dmetasoul.metaspore.recommend.recommend.Layer;
 import com.dmetasoul.metaspore.recommend.recommend.Scene;
@@ -29,6 +30,7 @@ import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Lists;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,14 +66,43 @@ public class ServiceController {
      * @return ServiceResult 包含状态码，错误信息以及数据结果
      * Created by @author qinyy907 in 14:24 22/07/15.
      */
+    @SuppressWarnings("unchecked")
     @RequestMapping(value = "/get/{task}", method = POST, produces = "application/json")
     public ServiceResult getDataServiceResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
         DataService taskService = taskServiceRegister.getDataService(task);
         if (taskService == null) {
             return ServiceResult.of(-1, "taskService is not exist!");
         }
-        DataResult result;
         DataContext context = new DataContext(req);
+        List<String> services = null;
+        if (taskFlowConfig.getFeatures().containsKey(task) && taskFlowConfig.getFeatureRelyServices().containsKey(task)) {
+            services = taskFlowConfig.getFeatureRelyServices().get(task);
+        }
+        if (taskFlowConfig.getAlgoTransforms().containsKey(task)) {
+            FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(task);
+            services = getRelyServiceList(algoTransform);
+        }
+        if (CollectionUtils.isNotEmpty(services)) {
+            for (String item : services) {
+                if (!req.containsKey(item) || !(req.get(item) instanceof List)) {
+                    return ServiceResult.of(-1, "taskService need depend data: " + item);
+                }
+                List<Map<String, Object>> data = (List<Map<String, Object>>) req.get(item);
+                RecommendConfig.Service serviceConfig = taskFlowConfig.getServices().get(item);
+                List<Field> fields = Lists.newArrayList();
+                List<DataTypeEnum> types = Lists.newArrayList();
+                if (CollectionUtils.isNotEmpty(serviceConfig.getColumnNames())) {
+                    for (String col : serviceConfig.getColumnNames()) {
+                        fields.add(serviceConfig.getFieldMap().get(col));
+                        types.add(serviceConfig.getColumnMap().get(col));
+                    }
+                    DataResult resultItem = new DataResult();
+                    resultItem.setFeatureData(item, fields, types, data);
+                    taskService.setDataResultByName(item, resultItem, context);
+                }
+            }
+        }
+        DataResult result;
         result = taskService.execute(new ServiceRequest(req), context);
         if (result == null) {
             return ServiceResult.of(-1, "taskService execute fail!");
@@ -79,26 +110,53 @@ public class ServiceController {
         return ServiceResult.of(result.output());
     }
 
+    private List<String> getRelyServiceList(FeatureConfig.AlgoTransform algoTransform) {
+        List<String> services = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(algoTransform.getFeature())) {
+            for (String table : algoTransform.getFeature()) {
+                if (taskFlowConfig.getFeatureRelyServices().containsKey(table)) {
+                    services.addAll(taskFlowConfig.getFeatureRelyServices().get(table));
+                }
+            }
+        }
+        if (CollectionUtils.isNotEmpty(algoTransform.getAlgoTransform())) {
+            for (String table : algoTransform.getAlgoTransform()) {
+                FeatureConfig.AlgoTransform algo = taskFlowConfig.getAlgoTransforms().get(table);
+                services.addAll(getRelyServiceList(algo));
+            }
+        }
+        return services;
+    }
+
+    @SneakyThrows
+    private List<DataResult> executeTasks(List<DataResult> input, List<String> tasks, DataContext context) {
+        List<DataResult> result = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(tasks)) {
+            for (String task : tasks) {
+                if (taskServiceRegister.getRecommendServices().containsKey(task)) {
+                    Service taskService = taskServiceRegister.getRecommendService(task);
+                    result.addAll(taskService.execute(input, context).get());
+                } else if (taskServiceRegister.getExperimentMap().containsKey(task)) {
+                    Experiment taskService = taskServiceRegister.getExperiment(task);
+                    result.addAll(taskService.process(input, context).get());
+                } else if (taskServiceRegister.getLayerMap().containsKey(task)) {
+                    Layer taskService = taskServiceRegister.getLayer(task);
+                    result.addAll(taskService.execute(input, context).get());
+                } else if (taskServiceRegister.getSceneMap().containsKey(task)) {
+                    Scene taskService = taskServiceRegister.getScene(task);
+                    result.add(taskService.process(context));
+                }
+            }
+        }
+        return result;
+    }
+
     @SneakyThrows
     @RequestMapping(value = "/recommend/{task}", method = POST, produces = "application/json")
     public ServiceResult getRecommendResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
         DataContext context = new DataContext(req);
-        List<DataResult> result;
-        if (taskServiceRegister.getRecommendServices().containsKey(task)) {
-            Service taskService = taskServiceRegister.getRecommendService(task);
-            result = taskService.execute(context).get();
-        } else if (taskServiceRegister.getExperimentMap().containsKey(task)) {
-            Experiment taskService = taskServiceRegister.getExperiment(task);
-            result = taskService.process(null, context).get();
-        } else if (taskServiceRegister.getLayerMap().containsKey(task)) {
-            Layer taskService = taskServiceRegister.getLayer(task);
-            result = taskService.execute(context).get();
-        } else if (taskServiceRegister.getSceneMap().containsKey(task)) {
-            Scene taskService = taskServiceRegister.getScene(task);
-            result = List.of(taskService.process(context));
-        } else {
-            return ServiceResult.of(-1, "recommend component is not exist! at:" + task);
-        }
+        List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
+        List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
         log.info("recommend result : {}", result);
         if (CollectionUtils.isEmpty(result)) {
             return ServiceResult.of(-1, "taskService execute fail!");

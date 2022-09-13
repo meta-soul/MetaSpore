@@ -15,7 +15,7 @@
 //
 package com.dmetasoul.metaspore.recommend.dataservice;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -26,8 +26,6 @@ import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -127,11 +125,16 @@ public abstract class DataService {
      * 这里认为同一个DataService在执行同一个请求的过程中，多次执行依赖任务taskName，获取的都是相同的数据结果
      */
     public DataResult getDataResultByName(String taskName, DataContext context) {
+        return getDataResultByName(name, taskName, context);
+    }
+
+    public DataResult getDataResultByName(String parent, String taskName, DataContext context) {
+        if (StringUtils.isEmpty(parent)) parent = name;
         DataResult result;
-        if (name.equals(taskName)) {
-            result = context.getResult(name);
+        if (parent.equals(taskName)) {
+            result = context.getResult(parent);
         } else {
-            result = context.getResult(name, taskName);
+            result = context.getResult(parent, taskName);
         }
         if (!checkResult(result)) {
             return null;
@@ -328,6 +331,13 @@ public abstract class DataService {
         if (result != null) {
             return result;
         }
+        if (StringUtils.isNotEmpty(request.getParent())) {
+            result = getDataResultByName(request.getParent(), taskName, context);
+            if (result != null) {
+                context.setResult(name, taskName, result);
+                return result;
+            }
+        }
         DataService dataService = taskServiceRegister.getDataService(taskName);
         if (dataService == null) {
             log.error("task:{} depend:{} service init fail!", name, taskName);
@@ -338,6 +348,7 @@ public abstract class DataService {
         if (taskRequest == null) {
             return null;
         }
+        taskRequest.setParent(name);
         result = dataService.execute(taskRequest, context);
         if (checkResult(result)) {
             context.setResult(name, taskName, result);

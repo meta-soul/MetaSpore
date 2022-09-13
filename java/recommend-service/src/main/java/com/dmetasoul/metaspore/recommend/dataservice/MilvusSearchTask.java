@@ -16,11 +16,11 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.milvus.client.MilvusServiceClient;
@@ -67,19 +67,21 @@ public class MilvusSearchTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("milvusIdScore", (fields, result, options) -> {
+        addFunction("milvusIdScore", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
+            Assert.isTrue(DataTypeEnum.LIST_FLOAT.isMatch(fields.get(0)),
                     "milvusSearch input[0] embedding is list float");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<IndexData> embedding = fields.get(0).getIndexValue();
             return searchIdScore(embedding, result, options);
         });
-        addFunction("milvusField", (fields, result, options) -> {
+        addFunction("milvusField", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
-            Assert.isTrue(fields.get(0).isMatch(DataTypeEnum.LIST_FLOAT),
+            Assert.isTrue(DataTypeEnum.LIST_FLOAT.isMatch(fields.get(0)),
                     "milvusSearch input[0] embedding is list float");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<IndexData> embedding = fields.get(0).getIndexValue();
@@ -88,12 +90,12 @@ public class MilvusSearchTask extends AlgoTransformTask {
     }
 
     protected SearchResultsWrapper requestMilvus(List<List<Float>> embedding, List<String> names, Map<String, Object> options) {
-        String collection = Utils.getField(options, "collectionName", collectionName);
-        int limit = Utils.getField(options, "maxReservation", maxReservation);
-        String field = Utils.getField(options, "field", "embedding_vector");
-        long timeOut = Utils.getField(options,"timeOut", 3000L);
-        String searchParams = Utils.getField(options,"searchParams", "{\"nprobe\":128}");
-        MetricType metricType = Utils.getMetricType(Utils.getField(options,"metricType", 2));
+        String collection = CommonUtils.getField(options, "collectionName", collectionName);
+        int limit = CommonUtils.getField(options, "maxReservation", maxReservation);
+        String field = CommonUtils.getField(options, "vectorField", "embedding_vector");
+        long timeOut = CommonUtils.getField(options,"timeOut", 3000L);
+        String searchParams = CommonUtils.getField(options,"searchParams", "{\"nprobe\":128}");
+        MetricType metricType = Utils.getMetricType(CommonUtils.getField(options,"metricType", 2));
         SearchParam searchParam = SearchParam.newBuilder()
                 .withCollectionName(collection)
                 .withMetricType(metricType)
@@ -112,7 +114,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
 
     protected boolean searchIdScore(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-        boolean useStrId = Utils.getField(options,"useStrId", false);
+        boolean useStrId = CommonUtils.getField(options,"useStrId", false);
         SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()), List.of(), options);
         for (int i = 0; i < embedding.size(); ++i) {
             Map<String, Double> idScores = Maps.newHashMap();
@@ -137,11 +139,11 @@ public class MilvusSearchTask extends AlgoTransformTask {
     @SuppressWarnings("unchecked")
     protected boolean searchField(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
         Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-        String scoreField = Utils.getField(options,"scoreField", "score");
-        String idField = Utils.getField(options,"idField", "");
-        boolean useStrId = Utils.getField(options,"useStrId", false);
-        boolean useOrder = Utils.getField(options,"useOrder", true);
-        boolean useFlat = Utils.getField(options,"useFlat", true);
+        String scoreField = CommonUtils.getField(options,"scoreField", "score");
+        String idField = CommonUtils.getField(options,"idField", "");
+        boolean useStrId = CommonUtils.getField(options,"useStrId", false);
+        boolean useOrder = CommonUtils.getField(options,"useOrder", true);
+        boolean useFlat = CommonUtils.getField(options,"useFlat", true);
         List<FieldData> output = Lists.newArrayList();
         FieldData score = null;
         FieldData idData = null;
@@ -202,7 +204,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
                 if (CollectionUtils.isNotEmpty(ids) && useOrder) {
                     List<Object> orderList = Lists.newArrayList();
                     for (Integer id : ids) {
-                        Object obj = Utils.get(item, id, null);
+                        Object obj = CommonUtils.get(item, id, null);
                         if (useFlat) {
                             field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
                             continue;

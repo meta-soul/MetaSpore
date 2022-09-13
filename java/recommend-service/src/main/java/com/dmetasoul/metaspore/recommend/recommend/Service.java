@@ -1,21 +1,18 @@
 package com.dmetasoul.metaspore.recommend.recommend;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.recommend.recommend.interfaces.BaseService;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
@@ -50,18 +47,16 @@ public class Service extends Transform implements BaseService {
             resFields = Lists.newArrayList();
             dataTypes = Lists.newArrayList();
             for (String col : serviceConfig.getColumnNames()) {
-                String type = serviceConfig.getColumnMap().get(col);
-                DataTypeEnum dataType = DataTypes.getDataType(type);
-                resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
-                dataTypes.add(dataType);
+                resFields.add(serviceConfig.getFieldMap().get(col));
+                dataTypes.add(serviceConfig.getColumnMap().get(col));
             }
         }
-        super.initTransform(name, taskPool);
+        super.initTransform(name, taskPool, serviceRegister);
         return initService();
     }
 
     protected boolean initService() {
-        timeout = Utils.getField(serviceConfig.getOptions(), "timeout", timeout);
+        timeout = CommonUtils.getField(serviceConfig.getOptions(), "timeout", timeout);
         tasks = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(serviceConfig.getTasks())) {
             for (String item : serviceConfig.getTasks()) {
@@ -72,7 +67,7 @@ public class Service extends Transform implements BaseService {
         return true;
     }
 
-    public String getFieldType(String key) {
+    public DataTypeEnum getFieldType(String key) {
         return serviceConfig.getColumnMap().get(key);
     }
 
@@ -122,14 +117,14 @@ public class Service extends Transform implements BaseService {
             if (CollectionUtils.isNotEmpty(dataResults)) {
                 result.addAll(dataResults);
             }
+            List<DataResult> list;
             try {
-                List<DataResult> list = executeTask(data, context).get(timeout, timeUnit);
-                result.addAll(list);
+                list = executeTask(result, context).get(timeout, timeUnit);
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 log.error("service exception e: {}", e.getMessage());
                 throw new RuntimeException(e);
             }
-            return result;
+            return list;
         });
         if (CollectionUtils.isNotEmpty(serviceConfig.getTransforms())) {
             future = executeTransform(future, serviceConfig.getTransforms(), serviceConfig.getOptions(), context);

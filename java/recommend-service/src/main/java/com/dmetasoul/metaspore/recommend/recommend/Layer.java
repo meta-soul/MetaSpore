@@ -15,16 +15,13 @@
 //
 package com.dmetasoul.metaspore.recommend.recommend;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
-import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.SpringBeanUtil;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.bucketizer.LayerBucketizer;
-import com.dmetasoul.metaspore.recommend.recommend.interfaces.BaseService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -57,12 +54,12 @@ public class Layer implements BaseService {
         }
     }
     public LayerBucketizer getLayerBucketizer(RecommendConfig.Layer layer) {
-        LayerBucketizer layerBucketizer = (LayerBucketizer) SpringBeanUtil.getBeanByName(layer.getBucketizer());
-        if (layerBucketizer == null || !layerBucketizer.getClass().isAnnotationPresent(BucketizerAnnotation.class)) {
+        LayerBucketizer layerBucketizer = serviceRegister.getBean(layer.getBucketizer(), LayerBucketizer.class);
+        if (layerBucketizer == null) {
             log.error("the layer.getBucketizer:{} load fail!", layer.getBucketizer());
-            return null;
+            throw new RuntimeException(String.format("the layer.getBucketizer:%s load fail!", layer.getBucketizer()));
         }
-        layerBucketizer.init(layer);
+        layerBucketizer.init(layer.getExperiments(), layer.getOptions());
         return layerBucketizer;
     }
 

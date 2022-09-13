@@ -15,13 +15,12 @@
 //
 package com.dmetasoul.metaspore.recommend.recommend;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.recommend.interfaces.BaseService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
@@ -55,17 +54,17 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
         this.taskFlowConfig = taskFlowConfig;
         this.serviceRegister = serviceRegister;
         this.taskPool = serviceRegister.getTaskPool();
-        super.initTransform(name, taskPool);
+        super.initTransform(name, taskPool, serviceRegister);
     }
 
     public void close() {}
 
     @SneakyThrows
     public CompletableFuture<List<DataResult>> execute(List<DataResult> data,
-                                                       Map<String, Service> serviceMap,
-                                                       List<TransformConfig> transforms,
-                                                       Map<String, Object> option,
-                                                       DataContext context) {
+                                                           Map<String, Service> serviceMap,
+                                                           List<TransformConfig> transforms,
+                                                           Map<String, Object> option,
+                                                           DataContext context) {
         CompletableFuture<List<DataResult>> future = CompletableFuture.supplyAsync(() -> data);
         for (Chain chain : chains) {
             if (CollectionUtils.isNotEmpty(chain.getThen())) {

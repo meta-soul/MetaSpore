@@ -16,18 +16,17 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Slf4j
@@ -45,12 +44,13 @@ public class UserProfileTask extends AlgoTransformTask {
     }
     @Override
     public void addFunctions() {
-        addFunction("splitRecentIds", (fields, result, options) -> {
+        addFunction("splitRecentIds", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             FieldData fieldData = fields.get(0);
-            Assert.isTrue(fieldData.isMatch(DataTypeEnum.STRING), "split input must string!");
-            String split = Utils.getField(options, "splitor", splitor);
+            Assert.isTrue(DataTypeEnum.STRING.isMatch(fieldData), "split input must string and not empty!");
+            String split = CommonUtils.getField(options, "splitor", splitor);
             List<IndexData> input = fieldData.getIndexValue();
             for (IndexData o : input) {
                 Assert.isTrue(o.getVal() instanceof String, "value must string! value:" + o.getVal());
@@ -59,7 +59,8 @@ public class UserProfileTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("recentWeight", (fields, result, options) -> {
+        addFunction("recentWeight", (fields, result, config) -> {
+            Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input data is not null");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             List<IndexData> input = fields.get(0).getIndexValue();

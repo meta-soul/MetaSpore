@@ -15,21 +15,18 @@
 //
 package com.dmetasoul.metaspore.recommend.recommend;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
@@ -46,21 +43,19 @@ public class Scene extends TaskFlow<Layer> {
         super.init(name, taskFlowConfig, serviceRegister);
         scene = taskFlowConfig.getScenes().get(name);
         chains = scene.getChains();
-        timeout = Utils.getField(scene.getOptions(), "timeout", timeout);
+        timeout = CommonUtils.getField(scene.getOptions(), "timeout", timeout);
         resFields = Lists.newArrayList();
         dataTypes = Lists.newArrayList();
         for (String col : scene.getColumnNames()) {
-            String type = scene.getColumnMap().get(col);
-            DataTypeEnum dataType = DataTypes.getDataType(type);
-            resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
-            dataTypes.add(dataType);
+            resFields.add(scene.getFieldMap().get(col));
+            dataTypes.add(scene.getColumnMap().get(col));
         }
     }
 
     @SneakyThrows
     public DataResult process(DataContext context) {
         TransformConfig transformConfig = new TransformConfig();
-        transformConfig.setName("summary");
+        transformConfig.setName("summaryBySchema");
         CompletableFuture<DataResult> future = execute(List.of(),
                 serviceRegister.getLayerMap(), List.of(transformConfig), scene.getOptions(),
                 context).thenApplyAsync(dataResults -> {

@@ -15,18 +15,14 @@
 //
 package com.dmetasoul.metaspore.recommend.recommend;
 
-import com.dmetasoul.metaspore.recommend.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.dmetasoul.metaspore.serving.ArrowAllocator;
-import com.dmetasoul.metaspore.serving.FeatureTable;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +32,6 @@ import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 @Data
 @Slf4j
@@ -50,7 +45,7 @@ public class Experiment extends TaskFlow<Service> {
         super.init(name, taskFlowConfig, serviceRegister);
         experiment = taskFlowConfig.getExperiments().get(name);
         chains = experiment.getChains();
-        timeout = Utils.getField(experiment.getOptions(), "timeout", timeout);
+        timeout = CommonUtils.getField(experiment.getOptions(), "timeout", timeout);
     }
 
     public CompletableFuture<List<DataResult>> process(List<DataResult> data, DataContext context) {
@@ -58,8 +53,8 @@ public class Experiment extends TaskFlow<Service> {
     }
 
     public DataResult mergeRecall(List<DataResult> data, DataResult result, Map<String, Object> option) {
-        String scoreField = Utils.getField(option, "score", null);
-        String scoreInfoField = Utils.getField(option, "scoreInfo", null);
+        String scoreField = CommonUtils.getField(option, "score", null);
+        String scoreInfoField = CommonUtils.getField(option, "scoreInfo", null);
         Assert.notNull(scoreField, "score");
         return result;
     }
@@ -67,7 +62,7 @@ public class Experiment extends TaskFlow<Service> {
     @SuppressWarnings("unchecked")
     @Override
     public void initFunctions() {
-        registerOperator("maxScore", (field, data, option) ->{
+        registerMergeOperator("maxScore", (field, data, option) ->{
             if (field instanceof Number && data instanceof Number) {
                 Number val1 = (Number) field;
                 Number val2 = (Number) data;
@@ -77,7 +72,7 @@ public class Experiment extends TaskFlow<Service> {
             }
             return field;
         });
-        registerOperator("mergeScoreInfo", (field, data, option) ->{
+        registerMergeOperator("mergeScoreInfo", (field, data, option) ->{
             if (field instanceof Map && data instanceof Map) {
                 Map<String, Object> val1 = (Map<String, Object>) field;
                 Map<String, Object> val2 = (Map<String, Object>) data;
@@ -85,6 +80,16 @@ public class Experiment extends TaskFlow<Service> {
                 return val1;
             }
             return field;
+        });
+        registerUpdateOperator("putOriginScores", (input, output, option) ->{
+            Assert.isTrue(input.size() == 2 && input.get(1) instanceof Map, "originScores is map");
+            Assert.isTrue(CollectionUtils.isNotEmpty(output), "output is not empty");
+            String label = CommonUtils.getField(option, "label", name);
+            Map<String, Object> res = Maps.newHashMap();
+            Map<String, Object> map = (Map<String, Object>) input.get(1);
+            map.put(label, input.get(0));
+            res.put(output.get(0), map);
+            return res;
         });
     }
 }

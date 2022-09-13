@@ -17,14 +17,16 @@
 package com.dmetasoul.metaspore.recommend.bucketizer;
 
 import com.dmetasoul.metaspore.recommend.annotation.BucketizerAnnotation;
-import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
+import com.dmetasoul.metaspore.recommend.configure.ExperimentItem;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.List;
+import java.util.Map;
 
 // References:
 // * https://mojito.mx/docs/example-hash-function-split-test-assignment
@@ -34,13 +36,15 @@ import java.util.List;
 public class SHA256LayerBucketizer implements LayerBucketizer {
     protected ArraySampler sampler;
 
-    private List<RecommendConfig.ExperimentItem> experiments;
+    private List<ExperimentItem> experiments;
 
-    public void init(RecommendConfig.Layer layer) {
-        experiments = layer.getExperiments();
+    @Override
+    public void init(List<ExperimentItem> experiments, Map<String, Object> options) {
+        if (CollectionUtils.isEmpty(experiments)) return;
+        this.experiments = experiments;
         double[] prob = new double[experiments.size()];
         for (int i = 0; i < experiments.size(); i++) {
-            RecommendConfig.ExperimentItem experimentItem = experiments.get(i);
+            ExperimentItem experimentItem = experiments.get(i);
             double ratio = experimentItem.getRatio();
             prob[i] = ratio;
         }

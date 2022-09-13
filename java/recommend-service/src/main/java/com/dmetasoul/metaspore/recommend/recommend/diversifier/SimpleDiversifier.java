@@ -16,9 +16,9 @@
 
 package com.dmetasoul.metaspore.recommend.recommend.diversifier;
 
-import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.recommend.Service;
+import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -36,10 +36,10 @@ public class SimpleDiversifier extends Service {
 
     @Override
     protected boolean initService() {
-        this.useDiversify = Utils.getField(serviceConfig.getOptions(), "useDiversify", true);
-        this.window = Utils.getField(serviceConfig.getOptions(),"window", 4);
-        this.tolerance = Utils.getField(serviceConfig.getOptions(),"tolerance", 4);
-        this.groupType = Utils.getField(serviceConfig.getOptions(),"groupType", "");
+        this.useDiversify = CommonUtils.getField(serviceConfig.getOptions(), "useDiversify", true);
+        this.window = CommonUtils.getField(serviceConfig.getOptions(),"window", 4);
+        this.tolerance = CommonUtils.getField(serviceConfig.getOptions(),"tolerance", 4);
+        this.groupType = CommonUtils.getField(serviceConfig.getOptions(),"groupType", "");
         return true;
     }
 

@@ -50,12 +50,16 @@ public class SpringBeanUtil implements ApplicationContextAware {
 
     //通过name获取 Bean. 默认首字母大写
     public static Object getBean(String name) {
+        Object bean = null;
         try {
-            return getApplicationContext().getBean(StringUtils.capitalize(name));
+            bean = getApplicationContext().getBean(StringUtils.capitalize(name));
         } catch (BeansException ex) {
             // log.warn("spring get bean by name {} fail", name);
-            return null;
         }
+        if (bean == null) {
+            return getBeanByName(name);
+        }
+        return bean;
     }
     public static Object getBeanByName(String name) {
         try {

@@ -16,18 +16,13 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
-import com.dmetasoul.metaspore.recommend.common.DataTypes;
-import com.dmetasoul.metaspore.recommend.common.Utils;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
-import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
-import org.apache.arrow.vector.types.pojo.Field;
 
 import java.util.List;
 import java.util.Map;
@@ -53,9 +48,8 @@ public class SourceTableTask extends DataService {
         dataSource = taskServiceRegister.getDataSources().get(sourceTable.getSource());
         source = taskFlowConfig.getSources().get(sourceTable.getSource());
         for (String col: sourceTable.getColumnNames()) {
-            DataTypeEnum dataType = DataTypes.getDataType(sourceTable.getColumnMap().get(col));
-            resFields.add(new Field(col, dataType.getType(), dataType.getChildFields()));
-            dataTypes.add(dataType);
+            resFields.add(sourceTable.getFieldMap().get(col));
+            dataTypes.add(sourceTable.getColumnMap().get(col));
         }
         return true;
     }
@@ -65,7 +59,7 @@ public class SourceTableTask extends DataService {
     }
 
     public <T> T getOptionOrDefault(String key, T value) {
-        return Utils.getField(sourceTable.getOptions(), key, value);
+        return CommonUtils.getField(sourceTable.getOptions(), key, value);
     }
 
     @Override
