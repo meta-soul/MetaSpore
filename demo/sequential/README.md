@@ -7,7 +7,7 @@ In this project, we will implement and benchmark the algorithms of sequential mo
 |    Model   |                Training                 |                              Implementation                            |            Paper              |
 |:----------:|:---------------------------------------:|:----------------------------------------------------------------------:|:------------------------------|
 |     HRM    |            [hrm.py](hrm/hrm.py)         |   [hrm_net.py](../../python/algos/sequential/hrm/hrm_net.py)           | [Learning Hierarchical Representation Model for Next Basket Recommendation](https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.827.9692&rep=rep1&type=pdf)     |
-|   GRU4Rec  |    [item_cf.py](gru4rec/gru4rec.py)     |   [gru4rec_net.py](../../python/algos/sequential/hrm/gru4rec_net.py)   | [SESSION-BASED RECOMMENDATIONS WITH RECURRENT NEURAL NETWORKS](https://arxiv.org/pdf/1511.06939)     |
+|   GRU4Rec  |    [gru4rec.py](gru4rec/gru4rec.py)     |   [gru4rec_net.py](../../python/algos/sequential/hrm/gru4rec_net.py)   | [SESSION-BASED RECOMMENDATIONS WITH RECURRENT NEURAL NETWORKS](https://arxiv.org/pdf/1511.06939)     |
 
 We are continuously adding new models.
 
