@@ -169,6 +169,34 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
         print('Debug -- reserve cate features sample:')
         join_dataset.show(10)   
 
+def gen_model_samples(spark, raw_samples, conf_list):
+    def train_test_split(df, conf):
+        pass
+
+    def gen_ctr_nn_samples(raw_samples, conf):
+        pass
+
+    def gen_ctr_gbm_samples(raw_samples, conf):
+        pass
+
+    def gen_match_icf_samples(raw_samples, conf):
+        pass
+
+    def gen_match_nn_samples(raw_samples, conf):
+        pass 
+
+    for conf in conf_list:
+        if conf['model_type'] == 'ctr_nn':
+            gen_ctr_nn_samples(raw_samples, conf)
+        elif conf['model_type'] == 'ctr_gbm':
+            gen_ctr_gbm_samples(raw_samples, conf)    
+        elif conf['model_type'] == 'match_icf':
+            gen_match_icf_samples(raw_samples, conf)
+        elif conf['model_type'] == 'match_nn':
+            gen_match_nn_samples(raw_samples, conf)
+        else:
+            raise ValueError(f"model_type must be one of: 'ctr_nn', 'ctr_gbm', 'match_icf', 'match_nn'; {conf['model_type']!r} is invalid")
+
 if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
     parser = argparse.ArgumentParser()
@@ -181,5 +209,5 @@ if __name__=="__main__":
     # load datasets
     user_dataset, item_dataset, interaction_dataset \
         = load_dataset(spark,  params['load_dataset'])
-    sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_sample'])
-    
+    raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_sample'])
+    gen_model_samples(spark, raw_samples, params['gen_samples'])
