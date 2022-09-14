@@ -56,7 +56,6 @@ def init_spark(local, app_name, batch_size, worker_count, server_count,
                worker_memory, server_memory, coordinator_memory, **kwargs):
     subprocess.run(['zip', '-r', os.getcwd() + '/python.zip', 'python'], cwd='../../../')
     spark_confs={
-        "spark.kubernetes.namespace":"sunkai",
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
         "spark.ui.showConsoleProgress": "true",

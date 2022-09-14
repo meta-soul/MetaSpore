@@ -13,10 +13,10 @@ We are continuously adding new models.
 
 ## Benchmark Result
 
-| Model | Dataset | Precision@20 | Recall@20 | MAP@20 | NDCG@20 | 
-|:--------------:|:--------------|:-------------------------------:|:-------------------------------:|:-------------------------------:|:-------------------------------:|
-| HRM     | MovieLens-1M NegSample-10 | 0.007319 | 0.146393 | 0.026403 | 0.051770 |
-| GRU4Rec | MovieLens-1M              | 0.007686 | 0.153733 | 0.033994 | 0.059516 |
+|  Model  |           Dataset         | Precision@20 | Recall@20 |  MAP@20  |  NDCG@20 | 
+|:-- ----:|:--------------------------|:------------:|:---------:|:--------:|:--------:|
+| HRM     | MovieLens-1M NegSample-10 |   0.010479   | 0.209581  | 0.041875 | 0.077521 |
+| GRU4Rec | MovieLens-1M              |   0.008594   | 0.171882  | 0.034879 | 0.063995 |
 
 For the sequential model based on neural network, we give the respective experimental results based on different loss functions and different negative sampling ratio. As our models and experiments are tuned, this experiment results may be updated in the future.
 
