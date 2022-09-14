@@ -17,6 +17,7 @@ from .data_loader import DataLoaderModule, DataLoaderConfig
 from .init_spark import InitSparkModule, InitSparkConfig
 from .i2i_retrieval import I2IRetrievalModule, I2IRetrievalConfig
 from .i2i_retrieval import SwingEstimatorConfig, ItemCFEstimatorConfig
+from .popular_retrieval import PopularsRetrievalConfig, PopularRetrievalModule
 # from .deep_ctr import DeepCTRModule, DeepCTRConfig
 from .mongodb_dumper import DumpToMongoDBConfig, DumpToMongoDBModule
 '''
