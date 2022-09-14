@@ -289,4 +289,4 @@ if __name__=="__main__":
     fg_samples = gen_features(spark, raw_samples, params['gen_feature'])
     gen_model_samples(spark, fg_samples, params['gen_sample'])
     dump_feature_mongo(spark, fg_samples, params['dump_feature'])
-    
+    spark.stop()
