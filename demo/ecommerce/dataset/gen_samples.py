@@ -167,35 +167,93 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
     if conf.get('reserve_only_cate_cols'):
         join_dataset = reserve_only_cate_features(join_dataset)
         print('Debug -- reserve cate features sample:')
-        join_dataset.show(10)   
+        join_dataset.show(10)  
 
-def gen_model_samples(spark, raw_samples, conf_list):
-    def train_test_split(df, conf):
-        pass
+    return join_dataset 
 
-    def gen_ctr_nn_samples(raw_samples, conf):
-        pass
+def gen_model_samples(spark, dataset, conf_list):
+    def train_test_split(dataset, conf):
+        test_ratio = conf.get('split_test') or 0.1
+        dataset = dataset.withColumn('is_test', F.when(F.rand(seed=2022) < test_ratio , 1).otherwise(0))
+        train_dataset = dataset.filter(dataset['is_test']==0).drop('is_test')
+        test_dataset = dataset.filter(dataset['is_test']==1).drop('is_test')
+        return train_dataset, test_dataset
 
-    def gen_ctr_gbm_samples(raw_samples, conf):
-        pass
+    def gen_ctr_nn_samples(dataset, conf):
+        dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+        train_path = conf['train_path']
+        test_path = conf.get('test_path')
+        if conf.get('split_test'):
+            train_dataset, test_dataset = train_test_split(dataset, conf)
+        else:
+            train_dataset = dataset
+        if conf.get('shuffle'):
+            train_dataset = train_dataset\
+                .withColumn('rnd', F.rand(seed=2022))\
+                .orderBy('rnd')\
+                .drop('rnd')
+        train_dataset.write.parquet(train_path, mode='overwrite')
+        if test_path and test_dataset:
+            test_dataset.write.parquet(test_path, mode='overwrite')
+        return train_dataset, test_dataset 
 
-    def gen_match_icf_samples(raw_samples, conf):
-        pass
+    def gen_ctr_gbm_samples(dataset, conf):
+        dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+        train_path = conf['train_path']
+        test_path = conf.get('test_path')
+        if conf.get('split_test'):
+            train_dataset, test_dataset = train_test_split(dataset, conf)
+        else:
+            train_dataset = dataset
+        if conf.get('shuffle'):
+            train_dataset = train_dataset\
+                .withColumn('rnd', F.rand(seed=2022))\
+                .orderBy('rnd')\
+                .drop('rnd')
+        train_dataset.write.parquet(train_path, mode='overwrite')
+        if test_path and test_dataset:
+            test_dataset.write.parquet(test_path, mode='overwrite')
+        return train_dataset, test_dataset 
 
-    def gen_match_nn_samples(raw_samples, conf):
-        pass 
+    def gen_match_icf_samples(dataset, conf):
+        dataset = dataset.filter(dataset['label']==1)
+        dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+        train_path = conf['train_path']
+        test_path = conf.get('test_path')
+        if conf.get('split_test'):
+            train_dataset, test_dataset = train_test_split(dataset, conf)
+        else:
+            train_dataset = dataset
+        if conf.get('shuffle'):
+            train_dataset = train_dataset\
+                .withColumn('rnd', F.rand(seed=2022))\
+                .orderBy('rnd')\
+                .drop('rnd')
+        train_dataset.write.parquet(train_path, mode='overwrite')
+        if test_path and test_dataset:
+            test_dataset.write.parquet(test_path, mode='overwrite')
+        return train_dataset, test_dataset 
+
+    def gen_match_nn_samples(dataset, conf):
+        return None, None 
 
     for conf in conf_list:
         if conf['model_type'] == 'ctr_nn':
-            gen_ctr_nn_samples(raw_samples, conf)
+            train_dataset, test_dataset = gen_ctr_nn_samples(dataset, conf)
         elif conf['model_type'] == 'ctr_gbm':
-            gen_ctr_gbm_samples(raw_samples, conf)    
+            train_dataset, test_dataset = gen_ctr_gbm_samples(dataset, conf)    
         elif conf['model_type'] == 'match_icf':
-            gen_match_icf_samples(raw_samples, conf)
+            train_dataset, test_dataset = gen_match_icf_samples(dataset, conf)
         elif conf['model_type'] == 'match_nn':
-            gen_match_nn_samples(raw_samples, conf)
+            train_dataset, test_dataset = gen_match_nn_samples(dataset, conf)
         else:
             raise ValueError(f"model_type must be one of: 'ctr_nn', 'ctr_gbm', 'match_icf', 'match_nn'; {conf['model_type']!r} is invalid")
+        if train_dataset:
+            print('Debug -- generate train samples for {}:'.format(conf['model_type']))
+            train_dataset.show(20)
+        if test_dataset:
+            print('Debug -- generate test samples for {}:'.format(conf['model_type']))
+            test_dataset.show(20)
 
 if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
