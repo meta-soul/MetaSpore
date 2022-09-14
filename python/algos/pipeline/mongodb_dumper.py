@@ -30,15 +30,20 @@ class DumpToMongoDBConfig:
     uri = attrs.field(validator=attrs.validators.matches_re('^mongodb://.+$'))
     database = attrs.field(validator=attrs.validators.instance_of(str))
     index_fields = attrs.field(default=[], validator=attrs.validators.instance_of(List))
-    index_unique = attrs.field(default=None, validator=attrs.validators.instance_of((type(None), bool)))
+    index_unique = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(bool)))
+    collection = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(str)))
     
 class DumpToMongoDBModule:
     def __init__(self, conf: DumpToMongoDBConfig):
         self.conf = conf
     
-    def run(self, df_to_mongodb, mongo_collection) -> None:
+    def run(self, df_to_mongodb, mongo_collection=None) -> None:
         if not isinstance(df_to_mongodb, DataFrame):
             raise ValueError("Type of df_to_mongodb must be DataFrame.")
+        if mongo_collection is None:
+            mongo_collection = self.conf.collection
+        if mongo_collection is None:
+            raise ValueError("mongo collection name should not be None.")
         
         logger.info('Dump to MongoDB: start')
         df_to_mongodb.write \

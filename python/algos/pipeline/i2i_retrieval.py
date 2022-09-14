@@ -71,6 +71,7 @@ class ItemCFEstimatorConfig:
 @attrs.frozen(kw_only=True)
 class I2IRetrievalConfig:
     i2i_estimator_class = attrs.field()
+    i2i_estimator_config_class = attrs.field()
     model_out_path = attrs.field(default=None, validator=optional(instance_of(str)))
     estimator_params = attrs.field()
 
@@ -88,21 +89,21 @@ class I2IRetrievalModule:
     @staticmethod
     def convert(conf: dict) -> I2IRetrievalConfig:
         if not 'i2i_estimator_class' in conf:
-            raise ValueError("Dict of DeepCTRModule must have key 'deep_ctr_model_class' !")
+            raise ValueError("Dict of I2IRetrievalModule must have key 'i2i_estimator_class' !")
         if not 'estimator_params' in conf:
-            raise ValueError("Dict of DeepCTRModule must have key 'estimator_params' !")
+            raise ValueError("Dict of I2IRetrievalModule must have key 'estimator_params' !")
         
         conf = conf.copy()
         
         i2i_estimator_class = get_class(conf['i2i_estimator_class'])
-        estimator_config_class = get_class(conf['estimator_config_class'])
+        i2i_estimator_config_class = get_class(conf['i2i_estimator_config_class'])
         
         conventional_param_dict = {'user_id_column_name': USER_ID_COLUMN_NAME,
                                    'item_id_column_name': ITEM_ID_COLUMN_NAME,
                                    'behavior_column_name': BEHAVIOR_COLUMN_NAME,
                                    'behavior_filter_value': BEHAVIOR_FILTER_VALUE}
         conf['estimator_params'].update(conventional_param_dict)
-        estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
+        estimator_params = cattrs.structure(conf['estimator_params'], i2i_estimator_config_class)
         
         conf['i2i_estimator_class'] = i2i_estimator_class
         conf['estimator_params'] = estimator_params
@@ -155,18 +156,16 @@ class I2IRetrievalModule:
     def run(self, train_dataset: DataFrame, test_dataset: DataFrame) -> Tuple[DataFrame, Dict[str, float]]:
         if not isinstance(train_dataset, DataFrame):
             raise ValueError("Type of train_dataset must be DataFrame.")
-        if not isinstance(test_dataset, DataFrame):
-            raise ValueError("Type of test_dataset must be DataFrame.")
-        
         # 1. create estimator and fit model
         self.train(train_dataset)
-        
-        # 2. transform test data using self.model
-        test_result = self.predict(test_dataset)
-        
-        # 3. get metric dictionary (metric name -> metric value)
-        metric_dict = self.evaluate(test_result)
-        
+        metric_dict = {}
+        if test_dataset:
+            if not isinstance(test_dataset, DataFrame):
+                raise ValueError("Type of test_dataset must be DataFrame.")
+            # 2. transform test data using self.model
+            test_result = self.predict(test_dataset)
+            # 3. get metric dictionary (metric name -> metric value)
+            metric_dict = self.evaluate(test_result)
         # 4. save model.df to storage if needed.
         if self.conf.model_out_path:
             self.model.df.write.parquet(self.conf.model_out_path, mode="overwrite")
