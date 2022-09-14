@@ -79,8 +79,6 @@ def load_dataset(spark, conf, fmt='parquet'):
     
     interaction_path = conf['interaction_path']
     interaction_dataset = spark.read.parquet(interaction_path)
-    # debug mode
-    interaction_dataset.limit(1000)
     print('Debug -- interaction dataset count:', interaction_dataset.count())
     
     return user_dataset, item_dataset, interaction_dataset
