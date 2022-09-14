@@ -1,3 +1,6 @@
+logging:
+  loglevel: debug
+
 init_spark:
   session_conf:
     app_name: 'Ecommerce Generating Samples'
@@ -14,6 +17,7 @@ init_spark:
     spark.network.timeout: '500'
     spark.ui.showConsoleProgress: 'true'
     spark.kubernetes.executor.deleteOnTermination: 'true'
+    spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
   pyzip:
     cwd_path: '/saas/MetaSpore/'
 
@@ -23,21 +27,24 @@ load_dataset:
   interaction_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/dataset/amazon_fashion_interaction.parquet
   fmt: parquet
 
-join_sample:
-  user_bhv_seq:
-    - bhv_seq: user_bhv_item_seq
-      by: item_id
-    - bhv_seq: user_bhv_cate_seq
-      by: category
+gen_bhv_seq:
+  - bhv_seq: user_bhv_item_seq
+    by: item_id
+  - bhv_seq: user_bhv_cate_seq
+    by: category
+
+join_dataset:
   negative_sample:
     sample_ratio: 3
   join_on: 
     user_key: user_id
     item_key: item_id
     timestamp: timestamp
-  reserve_only_cate_cols: True
   
-gen_samples:
+gen_feature:
+  reserve_only_cate_cols: True
+
+gen_sample:
   - model_type: ctr_nn
     split_test: 0.15
     shuffle: True
@@ -66,4 +73,28 @@ gen_samples:
     fmt: parquet
     train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/train.parquet
     test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/test.parquet
-
+ 
+dump_feature:
+  mongodb:
+    uri: mongodb://localhost:27017/
+    database: jpa
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+  tables:
+    - feature_column: 
+        - user_id
+      mongo_collection: amazonfashion_user_feature
+    - feature_column: 
+        - item_id
+        - category
+      mongo_collection: amazonfashion_item_feature
+    - feature_column: 
+        - item_id
+        - category
+        - title
+        - description
+        - image
+        - url
+        - price
+      mongo_collection: amazonfashion_item_summary

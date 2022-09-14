@@ -21,6 +21,7 @@ import time
 import argparse
 import subprocess
 import metaspore as ms
+import cattrs
 
 from functools import reduce
 from pyspark.sql import SparkSession
@@ -28,7 +29,9 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, ArrayType
 
 sys.path.append('../../../') 
-from python.algos.feature.neg_sampler import negative_sampling
+from python.algos.feature import negative_sampling
+from python.algos.pipeline import DumpToMongoDBConfig, DumpToMongoDBModule
+from python.algos.pipeline import setup_logging
 
 def load_config(path):
     params = dict()
@@ -76,6 +79,8 @@ def load_dataset(spark, conf, fmt='parquet'):
     
     interaction_path = conf['interaction_path']
     interaction_dataset = spark.read.parquet(interaction_path)
+    # debug mode
+    interaction_dataset.limit(1000)
     print('Debug -- interaction dataset count:', interaction_dataset.count())
     
     return user_dataset, item_dataset, interaction_dataset
@@ -134,16 +139,6 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
         )
         join_dataset = spark.sql(query)
         return join_dataset
-
-    def reserve_only_cate_features(join_dataset, array_join_sep=u'\u0001'):
-        str_cols = [f.name for f in join_dataset.schema.fields if isinstance(f.dataType, StringType)]
-        array_cols = [f.name for f in join_dataset.schema.fields if isinstance(f.dataType, ArrayType)]
-        for array_col in array_cols:
-            join_dataset = join_dataset.withColumn(array_col, F.concat_ws(array_join_sep, F.col(array_col)))
-        selected_cols = str_cols + array_cols
-        print('Debug -- reserve selected cols:', selected_cols)
-        filter_dataset = join_dataset.select(selected_cols)
-        return filter_dataset
     
     user_key_col = conf['join_on']['user_key']
     item_key_col = conf['join_on']['item_key']
@@ -163,13 +158,26 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
     )
     print('Debug -- join dataset sample:')
     join_dataset.show(10)
-    
-    if conf.get('reserve_only_cate_cols'):
-        join_dataset = reserve_only_cate_features(join_dataset)
-        print('Debug -- reserve cate features sample:')
-        join_dataset.show(10)  
-
+    join_dataset = join_dataset
     return join_dataset 
+
+def gen_features(spark, dataset, conf):
+    def reserve_only_cate_features(dataset, array_join_sep=u'\u0001'):
+        str_cols = [f.name for f in dataset.schema.fields if isinstance(f.dataType, StringType)]
+        array_cols = [f.name for f in dataset.schema.fields if isinstance(f.dataType, ArrayType)]
+        for array_col in array_cols:
+            dataset = dataset.withColumn(array_col, F.concat_ws(array_join_sep, F.col(array_col)))
+        selected_cols = str_cols + array_cols
+        print('Debug -- reserve selected cols:', selected_cols)
+        filter_dataset = dataset.select(selected_cols)
+        return filter_dataset 
+    if conf.get('reserve_only_cate_cols'):
+        dataset = reserve_only_cate_features(dataset)
+        print('Debug -- reserve cate features sample:')
+        dataset.show(10) 
+    # convert to all columns to string
+    dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+    return dataset
 
 def gen_model_samples(spark, dataset, conf_list):
     def train_test_split(dataset, conf):
@@ -180,7 +188,6 @@ def gen_model_samples(spark, dataset, conf_list):
         return train_dataset, test_dataset
 
     def gen_ctr_nn_samples(dataset, conf):
-        dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
         train_path = conf['train_path']
         test_path = conf.get('test_path')
         if conf.get('split_test'):
@@ -198,7 +205,6 @@ def gen_model_samples(spark, dataset, conf_list):
         return train_dataset, test_dataset 
 
     def gen_ctr_gbm_samples(dataset, conf):
-        dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
         train_path = conf['train_path']
         test_path = conf.get('test_path')
         if conf.get('split_test'):
@@ -216,8 +222,7 @@ def gen_model_samples(spark, dataset, conf_list):
         return train_dataset, test_dataset 
 
     def gen_match_icf_samples(dataset, conf):
-        dataset = dataset.filter(dataset['label']==1)
-        dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+        dataset = dataset.filter(dataset['label']=='1')
         train_path = conf['train_path']
         test_path = conf.get('test_path')
         if conf.get('split_test'):
@@ -255,6 +260,19 @@ def gen_model_samples(spark, dataset, conf_list):
             print('Debug -- generate test samples for {}:'.format(conf['model_type']))
             test_dataset.show(20)
 
+def dump_feature_mongo(spark, fg_samples, conf):
+    if not conf.get('mongodb'):
+        raise ValueError(f"mongodb should not be None")
+    if not conf.get('tables'):
+        raise ValueError(f"feature table list should not be None")
+    mongo_conf = conf['mongodb']
+    feature_table_conf_list = conf['tables']
+    dumper = DumpToMongoDBModule(cattrs.structure(mongo_conf, DumpToMongoDBConfig))
+    for table_conf in feature_table_conf_list:
+        df_to_mongo = fg_samples.select(table_conf['feature_column'])
+        mongo_collection = table_conf['mongo_collection']
+        dumper.run(df_to_mongo, mongo_collection)
+
 if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
     parser = argparse.ArgumentParser()
@@ -262,10 +280,15 @@ if __name__=="__main__":
     args = parser.parse_args()
     print('Debug -- conf:', args.conf)
     params = load_config(args.conf)
+    # init logging
+    setup_logging(**params['logging'])
     # init spark
     spark = init_spark(params['init_spark'])
     # load datasets
     user_dataset, item_dataset, interaction_dataset \
         = load_dataset(spark,  params['load_dataset'])
-    raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_sample'])
-    gen_model_samples(spark, raw_samples, params['gen_samples'])
+    raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_dataset'])
+    fg_samples = gen_features(spark, raw_samples, params['gen_feature'])
+    gen_model_samples(spark, fg_samples, params['gen_sample'])
+    dump_feature_mongo(spark, fg_samples, params['dump_feature'])
+    
