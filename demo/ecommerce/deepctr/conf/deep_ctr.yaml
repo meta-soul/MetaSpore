@@ -12,9 +12,9 @@ spec:
     session_confs:
       app_name: Ecommerce Deep CTR Pipeline
       local: True
-      worker_count: 2
+      worker_count: 1
       worker_cpu: 1
-      server_count: 2
+      server_count: 1
       server_cpu: 1
       batch_size: 128
       worker_memory: '4G'
@@ -50,7 +50,7 @@ spec:
       ftrl_alpha: 1.0
       ftrl_beta: 1.0
       dnn_hidden_units: [256, 256, 256]
-      sparse_init_var: 0.0001
+      sparse_init_var: 0.01
       dnn_hidden_activations: ReLU
       use_bias: True
       batch_norm: True
@@ -65,7 +65,7 @@ spec:
       experiment_name: amazonfashion_deepfm
       input_label_column_index: 0
       metric_update_interval: 100
-      adam_learning_rate: 0.1
+      adam_learning_rate: 0.0001
       training_epoches: 1
       shuffle_training_dataset: True
 
