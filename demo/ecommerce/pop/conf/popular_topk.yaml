@@ -10,7 +10,7 @@ spec:
   
   spark:
     session_confs:
-      app_name: Popular Pipeline Demo
+      app_name: 'Ecommerce Popular Pipeline Demo'
       local: false
       worker_count: 1
       worker_cpu: 4

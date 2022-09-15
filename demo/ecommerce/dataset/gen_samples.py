@@ -81,6 +81,8 @@ def load_dataset(spark, conf, fmt='parquet'):
     interaction_dataset = spark.read.parquet(interaction_path)
     print('Debug -- interaction dataset count:', interaction_dataset.count())
     
+    # debug mode
+    interaction_dataset = interaction_dataset.limit(100000)
     return user_dataset, item_dataset, interaction_dataset
 
 def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
@@ -96,16 +98,16 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
         )
         return neg_sample_df
 
-    def merge_negsample(interaction_dataset, negsample_datasst, 
+    def merge_negsample(interaction_dataset, negsample_dataset, 
                         user_key_col, item_key_col, timstamp_col):
-        negsample_datasst.registerTempTable('negsample_datasst')
+        negsample_dataset.registerTempTable('negsample_dataset')
         interaction_dataset.registerTempTable('interaction_dataset')
         query = '''
         select '1' as label, {0}, {1}, {2}
         from interaction_dataset
         union all
         select '0' as label, {0}, {1}, 0 as {2}
-        from interaction_dataset
+        from negsample_dataset
         '''.format(
             user_key_col,
             item_key_col,
@@ -143,12 +145,12 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
     timestamp_col = conf['join_on']['timestamp']
     if conf.get('negative_sample'):
         sample_ratio = conf['negative_sample']['sample_ratio']
-        negsample = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
-        print('Debug -- negative smapling sample result:')
-        negsample.show(10) 
-        interaction_dataset = merge_negsample(interaction_dataset, negsample, user_key_col, item_key_col, timestamp_col)
-        print('Debug -- merge negative sampling result:')
-        interaction_dataset.show(20)
+        negsample_df = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
+        # print('Debug -- negative smapling sample result:', negsample_df.count())
+        # negsample_df.show(10) 
+        interaction_dataset = merge_negsample(interaction_dataset, negsample_df, user_key_col, item_key_col, timestamp_col)
+        # print('Debug -- merge negative sampling result:')
+        # interaction_dataset.show(20)
 
     join_dataset = join_dataset(
         user_dataset, item_dataset, interaction_dataset,
@@ -171,10 +173,10 @@ def gen_features(spark, dataset, conf):
         return filter_dataset 
     if conf.get('reserve_only_cate_cols'):
         dataset = reserve_only_cate_features(dataset)
-        print('Debug -- reserve cate features sample:')
-        dataset.show(10) 
+        # print('Debug -- reserve cate features sample:')
+        # dataset.show(10) 
     # convert to all columns to string
-    dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+    # dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
     return dataset
 
 def gen_model_samples(spark, dataset, conf_list):
@@ -251,12 +253,12 @@ def gen_model_samples(spark, dataset, conf_list):
             train_dataset, test_dataset = gen_match_nn_samples(dataset, conf)
         else:
             raise ValueError(f"model_type must be one of: 'ctr_nn', 'ctr_gbm', 'match_icf', 'match_nn'; {conf['model_type']!r} is invalid")
-        if train_dataset:
-            print('Debug -- generate train samples for {}:'.format(conf['model_type']))
-            train_dataset.show(20)
-        if test_dataset:
-            print('Debug -- generate test samples for {}:'.format(conf['model_type']))
-            test_dataset.show(20)
+        # if train_dataset:
+        #     print('Debug -- generate train samples for {}:'.format(conf['model_type']))
+        #     train_dataset.show(20)
+        # if test_dataset:
+        #     print('Debug -- generate test samples for {}:'.format(conf['model_type']))
+        #     test_dataset.show(20)
 
 def dump_feature_mongo(spark, fg_samples, conf):
     if not conf.get('mongodb'):

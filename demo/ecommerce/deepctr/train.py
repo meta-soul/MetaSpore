@@ -13,3 +13,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+import sys
+import logging
+import argparse
+import yaml
+import cattrs
+
+sys.path.append('../../../')
+from python.algos.pipeline import InitSparkModule, InitSparkConfig
+from python.algos.pipeline import DataLoaderModule, DataLoaderConfig
+from python.algos.pipeline import DeepCTRModule
+from python.algos.pipeline import setup_logging
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--conf', type=str, required=True)
+    args = parser.parse_args()
+    
+    spec = dict()
+    with open(args.conf, 'r') as stream:
+        yaml_dict = yaml.load(stream, Loader=yaml.FullLoader)
+        spec = yaml_dict['spec']
+
+    setup_logging(**spec['logging'])
+    
+    # 1. init spark
+    initSparkModule = InitSparkModule(cattrs.structure(spec['spark'], InitSparkConfig))
+    spark, worker_count, server_count = initSparkModule.run()
+    
+    # 2. load dataset
+    dataLoaderModule = DataLoaderModule(cattrs.structure(spec['dataset'], DataLoaderConfig), spark)
+    dataset_dict = dataLoaderModule.run()
+    
+    # 3. train, predict and evaluate
+    deepCTRModule = DeepCTRModule(spec['training'])
+    metric_dict = deepCTRModule.run(dataset_dict['train'], dataset_dict.get('test'), worker_count, server_count)
+    
+    # 5. stop spark session
+    spark.stop()
