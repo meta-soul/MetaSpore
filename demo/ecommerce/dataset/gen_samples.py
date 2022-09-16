@@ -40,6 +40,12 @@ def load_config(path):
         print('Debug -- load config: ', params)
     return params
 
+def boolean_string(string):
+    low_string = string.lower()
+    if low_string not in {'false', 'true'}:
+        raise ValueError('Not a valid boolean string')
+    return low_string == 'true'
+
 def init_spark(conf):
     session_conf = conf['session_conf']
     extended_conf = conf.get('extended_conf') or {}
@@ -68,7 +74,7 @@ def init_spark(conf):
     print('Debug -- uiWebUrl:', sc.uiWebUrl)
     return spark
 
-def load_dataset(spark, conf, fmt='parquet'):
+def load_dataset(spark, conf, fmt='parquet', verbose=False):
     user_path = conf['user_path']
     user_dataset = spark.read.parquet(user_path)
     print('Debug -- user dataset count:', user_dataset.count())
@@ -81,11 +87,9 @@ def load_dataset(spark, conf, fmt='parquet'):
     interaction_dataset = spark.read.parquet(interaction_path)
     print('Debug -- interaction dataset count:', interaction_dataset.count())
     
-    # debug mode
-    interaction_dataset = interaction_dataset.limit(100000)
     return user_dataset, item_dataset, interaction_dataset
 
-def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
+def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf, verbose=False):
     def negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio):
         neg_sample_df = negative_sampling(
             spark, 
@@ -146,22 +150,24 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf):
     if conf.get('negative_sample'):
         sample_ratio = conf['negative_sample']['sample_ratio']
         negsample_df = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
-        # print('Debug -- negative smapling sample result:', negsample_df.count())
-        # negsample_df.show(10) 
         interaction_dataset = merge_negsample(interaction_dataset, negsample_df, user_key_col, item_key_col, timestamp_col)
-        # print('Debug -- merge negative sampling result:')
-        # interaction_dataset.show(20)
+        if verbose:
+            print('Debug -- negative smapling sample result:', negsample_df.count())
+            negsample_df.show(10) 
+            print('Debug -- merge negative sampling result:')
+            interaction_dataset.show(20)
 
     join_dataset = join_dataset(
         user_dataset, item_dataset, interaction_dataset,
         user_key_col, item_key_col, timestamp_col
     )
-    print('Debug -- join dataset sample:')
-    join_dataset.show(10)
+    if verbose:
+        print('Debug -- join dataset sample:')
+        join_dataset.show(10)
     join_dataset = join_dataset
     return join_dataset 
 
-def gen_features(spark, dataset, conf):
+def gen_features(spark, dataset, conf, verbose=False):
     def reserve_only_cate_features(dataset, array_join_sep=u'\u0001'):
         str_cols = [f.name for f in dataset.schema.fields if isinstance(f.dataType, StringType)]
         array_cols = [f.name for f in dataset.schema.fields if isinstance(f.dataType, ArrayType)]
@@ -171,15 +177,19 @@ def gen_features(spark, dataset, conf):
         print('Debug -- reserve selected cols:', selected_cols)
         filter_dataset = dataset.select(selected_cols)
         return filter_dataset 
+    
     if conf.get('reserve_only_cate_cols'):
-        dataset = reserve_only_cate_features(dataset)
-        # print('Debug -- reserve cate features sample:')
-        # dataset.show(10) 
+        dataset = reserve_only_cate_features(dataset)    
+    
     # convert to all columns to string
     # dataset = dataset.select(*(F.col(c).cast('string').alias(c) for c in dataset.columns))
+    
+    if verbose:
+        print('Debug -- reserve cate features sample:')
+        dataset.show(10) 
     return dataset
 
-def gen_model_samples(spark, dataset, conf_list):
+def gen_model_samples(spark, dataset, conf_list, verbose=False):
     def train_test_split(dataset, conf):
         test_ratio = conf.get('split_test') or 0.1
         dataset = dataset.withColumn('is_test', F.when(F.rand(seed=2022) < test_ratio , 1).otherwise(0))
@@ -253,14 +263,14 @@ def gen_model_samples(spark, dataset, conf_list):
             train_dataset, test_dataset = gen_match_nn_samples(dataset, conf)
         else:
             raise ValueError(f"model_type must be one of: 'ctr_nn', 'ctr_gbm', 'match_icf', 'match_nn'; {conf['model_type']!r} is invalid")
-        # if train_dataset:
-        #     print('Debug -- generate train samples for {}:'.format(conf['model_type']))
-        #     train_dataset.show(20)
-        # if test_dataset:
-        #     print('Debug -- generate test samples for {}:'.format(conf['model_type']))
-        #     test_dataset.show(20)
+        if verbose and train_dataset:
+            print('Debug -- generate train samples for {}:'.format(conf['model_type']))
+            train_dataset.show(20)
+        if verbose and test_dataset:
+            print('Debug -- generate test samples for {}:'.format(conf['model_type']))
+            test_dataset.show(20)
 
-def dump_feature_mongo(spark, fg_samples, conf):
+def dump_feature_mongo(spark, fg_samples, conf, verbose=False):
     if not conf.get('mongodb'):
         raise ValueError(f"mongodb should not be None")
     if not conf.get('tables'):
@@ -277,8 +287,10 @@ if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
+    parser.add_argument('--verbose', type=boolean_string, default=False, help='whether to print more debug info, default to False.')
     args = parser.parse_args()
     print('Debug -- conf:', args.conf)
+    print('Debug -- verbose:', args.verbose)
     params = load_config(args.conf)
     # init logging
     setup_logging(**params['logging'])
@@ -286,9 +298,9 @@ if __name__=="__main__":
     spark = init_spark(params['init_spark'])
     # load datasets
     user_dataset, item_dataset, interaction_dataset \
-        = load_dataset(spark,  params['load_dataset'])
-    raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_dataset'])
-    fg_samples = gen_features(spark, raw_samples, params['gen_feature'])
-    gen_model_samples(spark, fg_samples, params['gen_sample'])
-    dump_feature_mongo(spark, fg_samples, params['dump_feature'])
+        = load_dataset(spark,  params['load_dataset'], verbose=args.verbose)
+    raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_dataset'], verbose=args.verbose)
+    fg_samples = gen_features(spark, raw_samples, params['gen_feature'], verbose=args.verbose)
+    gen_model_samples(spark, fg_samples, params['gen_sample'], verbose=args.verbose)
+    dump_feature_mongo(spark, fg_samples, params['dump_feature'], verbose=args.verbose)
     spark.stop()
