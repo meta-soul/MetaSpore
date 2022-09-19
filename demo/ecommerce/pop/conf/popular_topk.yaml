@@ -1,0 +1,49 @@
+apiVersion: metaspore/v1
+kind: Trainingjob
+metadata:
+  name: Popular
+  category: Match/Popular
+
+spec:
+  logging:
+    loglevel: debug
+  
+  spark:
+    session_confs:
+      app_name: 'Ecommerce Popular Pipeline Demo'
+      local: false
+      worker_count: 1
+      worker_cpu: 4
+      server_count: 1
+      server_cpu: 4
+      batch_size: 128
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '2G'
+    extended_confs:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
+    pyzip:
+      cwd_path: '/saas/MetaSpore/'
+            
+  dataset:
+    train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/train.parquet
+    # test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/test.parquet
+    fmt: parquet
+        
+  training: 
+    estimator_params:
+      max_recommendation_count: 20
+      group_nums: 10
+      model_out_path: null
+
+  mongodb:
+    uri: mongodb://localhost:27017/
+    database: jpa
+    collection: amazonfashion_pop
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+  
