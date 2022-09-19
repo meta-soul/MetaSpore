@@ -27,20 +27,16 @@ load_dataset:
   interaction_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/dataset/amazon_fashion_interaction.parquet
   fmt: parquet
 
-gen_bhv_seq:
-  - bhv_seq: user_bhv_item_seq
-    by: item_id
-  - bhv_seq: user_bhv_cate_seq
-    by: category
-
 join_dataset:
-  negative_sample:
-    sample_ratio: 3
   join_on: 
     user_key: user_id
     item_key: item_id
     timestamp: timestamp
-  
+  user_bhv_seq:
+    max_len: 10
+  negative_sample:
+    sample_ratio: 3
+
 gen_feature:
   reserve_only_cate_cols: True
 

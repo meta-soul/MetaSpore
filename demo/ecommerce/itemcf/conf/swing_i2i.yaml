@@ -30,7 +30,7 @@ spec:
   
   dataset:
     train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/train.parquet
-    # test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/test.parquet
+    test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/test.parquet
     fmt: parquet
 
   training:

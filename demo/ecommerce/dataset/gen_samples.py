@@ -29,7 +29,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, ArrayType
 
 sys.path.append('../../../') 
-from python.algos.feature import negative_sampling
+from python.algos.feature import negative_sampling, gen_user_bhv_seq
 from python.algos.pipeline import DumpToMongoDBConfig, DumpToMongoDBModule
 from python.algos.pipeline import setup_logging
 
@@ -74,7 +74,7 @@ def init_spark(conf):
     print('Debug -- uiWebUrl:', sc.uiWebUrl)
     return spark
 
-def load_dataset(spark, conf, fmt='parquet', verbose=False):
+def load_dataset(spark, conf, fmt='parquet', debug=False, verbose=False):
     user_path = conf['user_path']
     user_dataset = spark.read.parquet(user_path)
     print('Debug -- user dataset count:', user_dataset.count())
@@ -86,7 +86,9 @@ def load_dataset(spark, conf, fmt='parquet', verbose=False):
     interaction_path = conf['interaction_path']
     interaction_dataset = spark.read.parquet(interaction_path)
     print('Debug -- interaction dataset count:', interaction_dataset.count())
-    
+    if debug:
+        print('Debug -- open debug mode, interaction_dataset will be limited to 1000')
+        interaction_dataset = interaction_dataset.limit(1000)
     return user_dataset, item_dataset, interaction_dataset
 
 def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf, verbose=False):
@@ -98,19 +100,20 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf, ve
             item_column=item_key_col, 
             time_column=timestamp_col, 
             negative_item_column='neg_item_id', 
-            negative_sample=sample_ratio
+            negative_sample=sample_ratio,
+            reserve_other_columns= ['user_bhv_item_seq', 'user_bhv_last_item']
         )
         return neg_sample_df
 
     def merge_negsample(interaction_dataset, negsample_dataset, 
-                        user_key_col, item_key_col, timstamp_col):
+                        user_key_col, item_key_col, timestamp_col):
         negsample_dataset.registerTempTable('negsample_dataset')
         interaction_dataset.registerTempTable('interaction_dataset')
         query = '''
-        select '1' as label, {0}, {1}, {2}
+        select '1' as label, {0}, {1}, {2}, user_bhv_item_seq, user_bhv_last_item
         from interaction_dataset
         union all
-        select '0' as label, {0}, {1}, 0 as {2}
+        select '0' as label, {0}, {1}, 0 as {2}, user_bhv_item_seq, user_bhv_last_item
         from negsample_dataset
         '''.format(
             user_key_col,
@@ -127,7 +130,8 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf, ve
         interaction_dataset.registerTempTable('interaction_dataset')
         query ="""
         select distinct
-            label, user.*, item.*, interact.{2}
+            label, user.*, item.*, interact.{2}, 
+            interact.user_bhv_item_seq, interact.user_bhv_last_item
         from
             interaction_dataset interact
         join
@@ -147,6 +151,22 @@ def sample_join(spark, user_dataset, item_dataset, interaction_dataset, conf, ve
     user_key_col = conf['join_on']['user_key']
     item_key_col = conf['join_on']['item_key']
     timestamp_col = conf['join_on']['timestamp']
+    if conf.get('user_bhv_seq'):
+        bhv_max_len = conf['user_bhv_seq']['max_len']
+        interaction_dataset = gen_user_bhv_seq(
+            spark, 
+            interaction_dataset, 
+            user_key_col, 
+            item_key_col, 
+            timestamp_col, 
+            'user_bhv_item_seq', 
+            'user_bhv_last_item', 
+            bhv_max_len
+        )
+        if verbose:
+            print('Debug -- generated user_bhv_seq result:')
+            interaction_dataset.show(10) 
+
     if conf.get('negative_sample'):
         sample_ratio = conf['negative_sample']['sample_ratio']
         negsample_df = negsample(interaction_dataset, user_key_col, item_key_col, timestamp_col, sample_ratio)
@@ -174,8 +194,9 @@ def gen_features(spark, dataset, conf, verbose=False):
         for array_col in array_cols:
             dataset = dataset.withColumn(array_col, F.concat_ws(array_join_sep, F.col(array_col)))
         selected_cols = str_cols + array_cols
+        selected_cols = [f.name for f in dataset.schema.fields if f.name in selected_cols]
         print('Debug -- reserve selected cols:', selected_cols)
-        filter_dataset = dataset.select(selected_cols)
+        filter_dataset = dataset.select(selected_cols) 
         return filter_dataset 
     
     if conf.get('reserve_only_cate_cols'):
@@ -287,6 +308,7 @@ if __name__=="__main__":
     print('Debug -- Ecommerce Samples Preprocessing')
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
+    parser.add_argument('--debug', type=boolean_string, default=False, help='whether to open debug mode')
     parser.add_argument('--verbose', type=boolean_string, default=False, help='whether to print more debug info, default to False.')
     args = parser.parse_args()
     print('Debug -- conf:', args.conf)
@@ -298,7 +320,7 @@ if __name__=="__main__":
     spark = init_spark(params['init_spark'])
     # load datasets
     user_dataset, item_dataset, interaction_dataset \
-        = load_dataset(spark,  params['load_dataset'], verbose=args.verbose)
+        = load_dataset(spark,  params['load_dataset'], debug=args.debug, verbose=args.verbose)
     raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_dataset'], verbose=args.verbose)
     fg_samples = gen_features(spark, raw_samples, params['gen_feature'], verbose=args.verbose)
     gen_model_samples(spark, fg_samples, params['gen_sample'], verbose=args.verbose)

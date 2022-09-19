@@ -57,7 +57,14 @@ def sample(user_id, user_item_list, item_list, dist_list, negative_sample):
                                     replace=True).tolist()    
     return list(zip(trigger_list, candidate_list))
 
-def negative_sampling(spark, dataset, user_column, item_column, time_column, negative_item_column, negative_sample=3):
+def negative_sampling(spark, 
+                      dataset, 
+                      user_column, 
+                      item_column, 
+                      time_column, 
+                      negative_item_column, 
+                      negative_sample=3,
+                      reserve_other_columns=[]):
     ''' negative sampling on original dataset
 
     Args
@@ -87,12 +94,21 @@ def negative_sampling(spark, dataset, user_column, item_column, time_column, neg
     dist_list_br = spark.sparkContext.broadcast(dist_list)
     # generate sampling dataframe
     start = time.time()
-    sampling_df = dataset.rdd\
-                         .map(lambda x: (x[user_column], [x[item_column]]))\
-                         .reduceByKey(lambda x, y: x + y)\
-                         .map(lambda x: (x[0], sample(x[0], x[1], item_list_br.value, dist_list_br.value, negative_sample)))\
-                         .flatMapValues(lambda x: x)\
-                         .map(lambda x: (x[0], x[1][0], x[1][1]))\
-                         .toDF([user_column, negative_item_column, item_column])
+    sampling_df = dataset.select(user_column, item_column).distinct().rdd\
+        .map(lambda x: (x[user_column], [x[item_column]]))\
+        .reduceByKey(lambda x, y: x + y)\
+        .map(lambda x: (x[0], sample(x[0], x[1], item_list_br.value, dist_list_br.value, negative_sample)))\
+        .flatMapValues(lambda x: x)\
+        .map(lambda x: (x[0], x[1][0], x[1][1]))\
+        .toDF([user_column, negative_item_column, item_column])
+    # generate timestamp by table join
+    user_join_cond = col('t1.{}'.format(user_column))==col('t2.{}'.format(user_column))
+    item_join_cond = col('t1.{}'.format(negative_item_column))==col('t2.{}'.format(item_column))
+    result_df = sampling_df.alias('t1').\
+        join(dataset.alias('t2'), user_join_cond & item_join_cond, how='inner').\
+        select(
+          ['t1.{}'.format(user_column), 't1.{}'.format(negative_item_column), 't1.{}'.format(item_column)] +
+          ['t2.{}'.format(column_name) for column_name in [time_column] + reserve_other_columns]
+        )
     print('Debug -- negative_sampling.negative_sampling sampling map-reduce cost time:', time.time() - start)
-    return sampling_df
+    return result_df
