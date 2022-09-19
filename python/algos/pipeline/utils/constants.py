@@ -16,6 +16,7 @@
 
 USER_ID_COLUMN_NAME = 'user_id'
 ITEM_ID_COLUMN_NAME = 'item_id'
+BHV_ITEM_SEQ_COLUMN_NAME = 'user_bhv_item_seq'
 LAST_ITEM_ID_COLUMN_NAME = 'user_bhv_last_item'
 BEHAVIOR_COLUMN_NAME = 'label'
 BEHAVIOR_FILTER_VALUE = '1'
