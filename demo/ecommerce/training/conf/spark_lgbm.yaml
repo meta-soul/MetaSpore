@@ -1,0 +1,38 @@
+## spark session
+app_name: eCommerce LightGBM
+executor_memory: '2G'
+executor_instances: '1'
+executor_cores: '1'
+default_parallelism: '400'
+
+## input dataset configuration
+train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/train_fg.parquet
+test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/test.parquet
+
+## output dataset configuration
+eval_out_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/eval_test_dataset.parquet
+
+## label_col & feature_cols
+label_col: label
+
+## lightgbm hyper params
+model_params:
+  boostingType: gbdt
+  objective: binary
+  metric: auc
+  numLeaves: 7
+  maxDepth: 4
+  minDataInLeaf: 100
+  maxBin: 100
+  minGainToSplit: 0.0
+  featureFraction: 0.7
+  baggingFraction: 0.9
+  baggingFreq: 1
+  learningRate: 0.01
+  numIterations: 500
+  earlyStoppingRound: 100
+  verbosity: 1
+  numThreads: 16
+
+## model export
+model_onnx_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/onnx_out/lightgbm.onnx

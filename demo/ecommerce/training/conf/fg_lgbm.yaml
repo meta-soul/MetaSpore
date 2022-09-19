@@ -1,0 +1,19 @@
+## spark session
+app_name: eCommerce LightGBM
+executor_memory: '2G'
+executor_instances: '1'
+executor_cores: '1'
+default_parallelism: '400'
+
+## input dataset configuration
+train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/train.parquet
+test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/test.parquet
+
+## output dataset configuration
+train_out_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/train_fg.parquet
+test_out_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/test_fg.parquet
+
+
+## label_col & feature_cols
+label_col: label
+categorical_cols: [user_id, item_id, category]
