@@ -9,9 +9,6 @@ default_parallelism: '400'
 train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/train_fg.parquet
 test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/test.parquet
 
-## output dataset configuration
-eval_out_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/eval_test_dataset.parquet
-
 ## label_col & feature_cols
 label_col: label
 
