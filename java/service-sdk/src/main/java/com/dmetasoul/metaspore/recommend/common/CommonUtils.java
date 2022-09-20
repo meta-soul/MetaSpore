@@ -49,11 +49,21 @@ public class CommonUtils {
         return value;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T getField(Map<String, Object> data, String field, T value, Class<?> cls) {
+        if (MapUtils.isNotEmpty(data) && data.containsKey(field)) {
+            Object obj = data.getOrDefault(field, value);
+            if (cls.isInstance(obj)) return (T)obj;
+            return ConvTools.parseObject(obj, cls);
+        }
+        return value;
+    }
+
     public static <T> T getField(Map<String, Object> data, String field) {
         return getField(data, field, null);
     }
 
-    public Object getObject(Map map, String key) {
+    public static Object getObject(Map map, String key) {
         if (MapUtils.isNotEmpty(map) && map.containsKey(key)) {
             return map.get(key);
         }

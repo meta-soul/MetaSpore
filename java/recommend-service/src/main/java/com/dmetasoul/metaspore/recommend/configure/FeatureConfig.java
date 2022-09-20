@@ -49,7 +49,7 @@ public class FeatureConfig {
     @Data
     public static class Source {
         private String name;
-        private String format;
+        // private String format;
         private String kind;
         private Map<String, Object> options;
 

@@ -8,7 +8,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile  # need mvn package first
-    image: dmetasoul/recommend-service-11:1.0-SNAPSHOT
+    image: dmetasoul/recommend-service-11:1.0
     command: java -jar recommend-service-1.0-SNAPSHOT.jar
     environment:
       CONSUL_HOST: consul
@@ -30,7 +30,7 @@ services:
       - "8300:8300"
 
   serving:
-    container_name: standalone-serving
+    container_name: model-serving
     restart: on-failure
     image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1
     command: /opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port 50000 -init_load_path /data/models
@@ -40,7 +40,7 @@ services:
       - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/serving_models:/data/models
 
   mongo:
-    container_name: mongodb-standalone
+    container_name: mongodb-service
     restart: always
     image: mongo:6.0.1
     environment:
@@ -50,14 +50,14 @@ services:
       - "27017:27017"
 
   redis:
-    container_name: redis-standalone
+    container_name: redis-service
     restart: always
     image: redis:7.0.4
     ports:
       - "6379:6379"
 
   mysql:
-    container_name: mysql-standalone
+    container_name: mysql-service
     restart: always
     image: mysql:8.0.30
     environment:
@@ -92,7 +92,7 @@ services:
       retries: 3
 
   milvus:
-    container_name: milvus-standalone
+    container_name: milvus-service
     image: milvusdb/milvus:v2.0.1
     command: ["milvus", "run", "standalone"]
     environment:

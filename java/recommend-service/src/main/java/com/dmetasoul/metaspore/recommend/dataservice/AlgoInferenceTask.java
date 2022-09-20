@@ -70,7 +70,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
 
     public ManagedChannel initManagedChannel(Map<String, Object> option) {
         String host = CommonUtils.getField(option, "host", "127.0.0.1");
-        int port = CommonUtils.getField(option, "port", 50000);
+        int port = CommonUtils.getField(option, "port", 50000, Integer.class);
         NegotiationType negotiationType = NegotiationType.valueOf(Strings.toUpperCase((String) option.getOrDefault("negotiationType", "plaintext")));
         NettyChannelBuilder channelBuilder = NettyChannelBuilder.forAddress(host, port)
                 .keepAliveWithoutCalls((Boolean) option.getOrDefault("enableKeepAliveWithoutCalls", false))

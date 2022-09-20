@@ -14,6 +14,43 @@ import static java.time.ZoneOffset.UTC;
 
 public class ConvTools {
     public final static ZoneId zoneCN = ZoneId.of("Asia/Shanghai");
+
+    @SuppressWarnings("unchecked")
+    public static <T> T parseObject(Object value, Class<?> cls) {
+        if (value == null) return null;
+        if (cls.isInstance(value) || cls.isAssignableFrom(value.getClass())) return (T) value;
+        if (cls.equals(Timestamp.class)) {
+            return (T) parseTimestamp(value);
+        }
+        if (cls.equals(LocalDateTime.class)) {
+            return (T) parseLocalDateTime(value);
+        }
+        if (cls.equals(LocalTime.class)) {
+            return (T) parseLocalTime(value);
+        }
+        if (cls.equals(BigDecimal.class)) {
+            return (T) parseBigDecimal(value);
+        }
+        if (cls.equals(String.class)) {
+            return (T) parseString(value);
+        }
+        if (cls.equals(Integer.class)) {
+            return (T) parseInteger(value);
+        }
+        if (cls.equals(Long.class)) {
+            return (T) parseLong(value);
+        }
+        if (cls.equals(Double.class)) {
+            return (T) parseDouble(value);
+        }
+        if (cls.equals(Float.class)) {
+            return (T) parseFloat(value);
+        }
+        if (cls.equals(Boolean.class)) {
+            return (T) parseBoolean(value);
+        }
+        return null;
+    }
     public static Timestamp parseTimestamp(Object value) {
         if (value == null) return null;
         if (value instanceof Timestamp) {

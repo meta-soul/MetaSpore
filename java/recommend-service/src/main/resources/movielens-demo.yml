@@ -196,12 +196,7 @@ recommend-service:
     - name: rank_widedeep
       tasks: algotransform_widedeep
       options:
-        modelName: movie_lens_wdl
-        ranker: WideAndDeepRanker
         maxReservation: 100
-        sortStrategyType: USE_RANK_MULTIPLY_MATCH
-        sortStrategyAlpha: 0.4
-        sortStrategyBeta: 0.6
       preTransforms:
         - name: summary
       columns:
