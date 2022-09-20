@@ -17,3 +17,4 @@
 from .woe_encoder import WoeEncoder
 from .neg_sampler import negative_sampling
 from .sequential_encoder import gen_user_bhv_seq
+from .target_encoder import gen_numerical_features

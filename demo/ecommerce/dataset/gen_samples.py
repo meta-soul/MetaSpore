@@ -29,7 +29,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, ArrayType
 
 sys.path.append('../../../') 
-from python.algos.feature import negative_sampling, gen_user_bhv_seq
+from python.algos.feature import negative_sampling, gen_user_bhv_seq, gen_numerical_features
 from python.algos.pipeline import DumpToMongoDBConfig, DumpToMongoDBModule
 from python.algos.pipeline import setup_logging
 
@@ -224,7 +224,7 @@ def gen_model_samples(spark, dataset, conf_list, verbose=False):
         if conf.get('split_test'):
             train_dataset, test_dataset = train_test_split(dataset, conf)
         else:
-            train_dataset = dataset
+            train_dataset, test_dataset = dataset, None
         if conf.get('shuffle'):
             train_dataset = train_dataset\
                 .withColumn('rnd', F.rand(seed=2022))\
@@ -233,15 +233,28 @@ def gen_model_samples(spark, dataset, conf_list, verbose=False):
         train_dataset.write.parquet(train_path, mode='overwrite')
         if test_path and test_dataset:
             test_dataset.write.parquet(test_path, mode='overwrite')
-        return train_dataset, test_dataset 
+        return {'train_dataset': train_dataset, 'test_dataset': test_dataset} 
 
     def gen_ctr_gbm_samples(dataset, conf):
         train_path = conf['train_path']
         test_path = conf.get('test_path')
+        # TODO split before feature transformation
+        user_cols = conf['combine_schema']['user_cols']
+        item_cols = conf['combine_schema']['item_cols']
+        # result like: [user_id, user_pv, user_cr, ..., item_id, item_pv, item_cr, ...]
+        dataset, feature_list = gen_numerical_features(
+            dataset, 
+            label_col='label',
+            cate_cols_list= [user_cols, item_cols]
+        )
+        user_gen_cols = feature_list[0]
+        item_gen_cols = feature_list[1]
+        print('Debug -- gbm user cols:', user_gen_cols)
+        print('Debug -- gbm item cols:', item_gen_cols)
         if conf.get('split_test'):
             train_dataset, test_dataset = train_test_split(dataset, conf)
         else:
-            train_dataset = dataset
+            train_dataset, test_dataset = dataset, None
         if conf.get('shuffle'):
             train_dataset = train_dataset\
                 .withColumn('rnd', F.rand(seed=2022))\
@@ -250,7 +263,7 @@ def gen_model_samples(spark, dataset, conf_list, verbose=False):
         train_dataset.write.parquet(train_path, mode='overwrite')
         if test_path and test_dataset:
             test_dataset.write.parquet(test_path, mode='overwrite')
-        return train_dataset, test_dataset 
+        return {'train_dataset': train_dataset, 'test_dataset': test_dataset, 'user_cols': user_gen_cols, 'item_cols': item_gen_cols}
 
     def gen_match_icf_samples(dataset, conf):
         dataset = dataset.filter(dataset['label']=='1')
@@ -259,7 +272,7 @@ def gen_model_samples(spark, dataset, conf_list, verbose=False):
         if conf.get('split_test'):
             train_dataset, test_dataset = train_test_split(dataset, conf)
         else:
-            train_dataset = dataset
+            train_dataset, test_dataset = dataset, None
         if conf.get('shuffle'):
             train_dataset = train_dataset\
                 .withColumn('rnd', F.rand(seed=2022))\
@@ -268,30 +281,36 @@ def gen_model_samples(spark, dataset, conf_list, verbose=False):
         train_dataset.write.parquet(train_path, mode='overwrite')
         if test_path and test_dataset:
             test_dataset.write.parquet(test_path, mode='overwrite')
-        return train_dataset, test_dataset 
+        return {'train_dataset': train_dataset, 'test_dataset': test_dataset} 
 
     def gen_match_nn_samples(dataset, conf):
-        return None, None 
-
+        return {'train_dataset': None, 'test_dataset': None} 
+    
+    model_samples = {}
     for conf in conf_list:
         if conf['model_type'] == 'ctr_nn':
-            train_dataset, test_dataset = gen_ctr_nn_samples(dataset, conf)
+            result = gen_ctr_nn_samples(dataset, conf)
+            model_samples['ctr_nn'] = result
         elif conf['model_type'] == 'ctr_gbm':
-            train_dataset, test_dataset = gen_ctr_gbm_samples(dataset, conf)    
+            result = gen_ctr_gbm_samples(dataset, conf)    
+            model_samples['ctr_gbm'] = result
         elif conf['model_type'] == 'match_icf':
-            train_dataset, test_dataset = gen_match_icf_samples(dataset, conf)
+            result = gen_match_icf_samples(dataset, conf)
+            model_samples['match_icf'] = result
         elif conf['model_type'] == 'match_nn':
-            train_dataset, test_dataset = gen_match_nn_samples(dataset, conf)
+            result = gen_match_nn_samples(dataset, conf)
+            model_samples['match_nn'] = result
         else:
             raise ValueError(f"model_type must be one of: 'ctr_nn', 'ctr_gbm', 'match_icf', 'match_nn'; {conf['model_type']!r} is invalid")
-        if verbose and train_dataset:
+        if verbose and result['train_dataset']:
             print('Debug -- generate train samples for {}:'.format(conf['model_type']))
-            train_dataset.show(20)
-        if verbose and test_dataset:
+            result['train_dataset'].show(20)
+        if verbose and result['test_dataset']:
             print('Debug -- generate test samples for {}:'.format(conf['model_type']))
-            test_dataset.show(20)
+            result['test_dataset'].show(20)
+    return model_samples
 
-def dump_feature_mongo(spark, fg_samples, conf, verbose=False):
+def dump_nn_feature_table(spark, dataset, conf, verbose=False):
     if not conf.get('mongodb'):
         raise ValueError(f"mongodb should not be None")
     if not conf.get('tables'):
@@ -299,8 +318,24 @@ def dump_feature_mongo(spark, fg_samples, conf, verbose=False):
     mongo_conf = conf['mongodb']
     feature_table_conf_list = conf['tables']
     dumper = DumpToMongoDBModule(cattrs.structure(mongo_conf, DumpToMongoDBConfig))
+    # TODO unqiue features
     for table_conf in feature_table_conf_list:
-        df_to_mongo = fg_samples.select(table_conf['feature_column'])
+        df_to_mongo = dataset.select(table_conf['feature_column'])
+        mongo_collection = table_conf['mongo_collection']
+        dumper.run(df_to_mongo, mongo_collection)
+
+def dump_lgbm_feature_table(spark, dataset, conf, verbose=False):
+    if not conf.get('mongodb'):
+        raise ValueError(f"mongodb should not be None")
+    if not conf.get('tables'):
+        raise ValueError(f"feature table list should not be None")
+    mongo_conf = conf['mongodb']
+    feature_table_conf_list = conf['tables']
+    dumper = DumpToMongoDBModule(cattrs.structure(mongo_conf, DumpToMongoDBConfig))
+    # TODO unqiue features
+    train_dataset = dataset['train_dataset']
+    for table_conf in feature_table_conf_list:
+        df_to_mongo = train_dataset.select(dataset[table_conf['feature_column']])
         mongo_collection = table_conf['mongo_collection']
         dumper.run(df_to_mongo, mongo_collection)
 
@@ -323,6 +358,7 @@ if __name__=="__main__":
         = load_dataset(spark,  params['load_dataset'], debug=args.debug, verbose=args.verbose)
     raw_samples = sample_join(spark, user_dataset, item_dataset, interaction_dataset, params['join_dataset'], verbose=args.verbose)
     fg_samples = gen_features(spark, raw_samples, params['gen_feature'], verbose=args.verbose)
-    gen_model_samples(spark, fg_samples, params['gen_sample'], verbose=args.verbose)
-    dump_feature_mongo(spark, fg_samples, params['dump_feature'], verbose=args.verbose)
+    model_samples = gen_model_samples(spark, fg_samples, params['gen_sample'], verbose=args.verbose)
+    dump_nn_feature_table(spark, fg_samples, params['dump_nn_feature'], verbose=args.verbose)
+    dump_lgbm_feature_table(spark, model_samples['ctr_gbm'], params['dump_lgb_feaure'], verbose=args.verbose)
     spark.stop()

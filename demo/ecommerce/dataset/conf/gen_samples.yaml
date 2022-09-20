@@ -52,6 +52,10 @@ gen_sample:
     split_test: 0.15
     use_shuffle: True
     fmt: parquet
+    combine_schema:
+      user_cols: [user_id]
+      item_cols: [item_id, category]
+      combine_cols: []
     train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/train.parquet
     test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/gbm/test.parquet
 
@@ -69,8 +73,8 @@ gen_sample:
     fmt: parquet
     train_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/train.parquet
     test_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/match/icf/test.parquet
- 
-dump_feature:
+
+dump_nn_feature:
   mongodb:
     uri: mongodb://localhost:27017/
     database: jpa
@@ -80,6 +84,7 @@ dump_feature:
   tables:
     - feature_column: 
         - user_id
+        - user_bhv_item_seq
       mongo_collection: amazonfashion_user_feature
     - feature_column: 
         - item_id
@@ -94,3 +99,17 @@ dump_feature:
         - url
         - price
       mongo_collection: amazonfashion_item_summary
+
+dump_lgb_feaure:
+  mongodb:
+    uri: mongodb://localhost:27017/
+    database: jpa
+    write_mode: overwrite
+    index_fields: []
+    index_unique: False
+  tables:
+    - feature_column: user_cols
+      mongo_collection: amazonfashion_user_lgb_feature
+    - feature_column: item_cols
+      mongo_collection: amazonfashion_item_lgb_feature
+  
