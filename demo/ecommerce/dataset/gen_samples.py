@@ -37,6 +37,7 @@ def load_config(path):
     params = dict()
     with open(path, 'r') as stream:
         params = yaml.load(stream, Loader=yaml.FullLoader)
+        params = params['spec']
         print('Debug -- load config: ', params)
     return params
 
