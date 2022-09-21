@@ -233,10 +233,10 @@ public enum DataTypeEnum {
                 log.error("set featureTable fail! value type is not match BigDecimal value: {}!", value);
                 return false;
             }
-            BigDecimal data = input.setScale(17, RoundingMode.valueOf(6));
             if (value == null) {
                 ((DecimalVector)featureTable.getVector(col)).setNull(index);
             } else {
+                BigDecimal data = input.setScale(17, RoundingMode.valueOf(6));
                 ((DecimalVector)featureTable.getVector(col)).setSafe(index, data);
             }
             featureTable.setRowCount(index+1);
