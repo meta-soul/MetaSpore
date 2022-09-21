@@ -23,5 +23,5 @@ import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 public interface Function {
-    boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config);
+    boolean process(List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config);
 }
