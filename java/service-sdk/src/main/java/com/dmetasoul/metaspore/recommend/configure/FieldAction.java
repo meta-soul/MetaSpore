@@ -86,8 +86,6 @@ public class FieldAction {
         Validate.isTrue(CollectionUtils.isNotEmpty(names) && CollectionUtils.isNotEmpty(types) && names.size() == types.size(),
                 "AlgoTransform FieldAction config name and type must be equel!");
         processAlgoColumns(algoColumns);
-        Validate.isTrue(CollectionUtils.isNotEmpty(input) || CollectionUtils.isNotEmpty(fields),
-                "fieldaction input and field must not be empty at the same time");
         if (CollectionUtils.isNotEmpty(input)) {
             Set<String> nameSet = Sets.newHashSet(names);
             for (String key : input) {
