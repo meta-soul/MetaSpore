@@ -245,7 +245,7 @@ public class DataResult {
     public void copyDataResult(DataResult data, int from, int to) {
         if (data == null || Objects.requireNonNull(data).isNull() ||
                 isNull() || CollectionUtils.isEmpty(dataTypes)) return;
-        for (int i = from; i < to; ++i) {
+        for (int i = from; i < to && i < data.getFeatureTable().getRowCount(); ++i) {
             for (int k = 0; k < dataTypes.size(); ++k) {
                 FieldVector fieldVector = featureTable.getVector(k);
                 FieldVector dataVector = data.getFeatureTable().getVector(k);

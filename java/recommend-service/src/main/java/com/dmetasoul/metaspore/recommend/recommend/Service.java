@@ -5,6 +5,7 @@ import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
+import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
@@ -129,6 +130,13 @@ public class Service extends Transform implements BaseService {
         if (CollectionUtils.isNotEmpty(serviceConfig.getTransforms())) {
             future = executeTransform(future, serviceConfig.getTransforms(), serviceConfig.getOptions(), context);
             Assert.notNull(future, "Service execute transform function fail at " + name);
+        }
+        if (!hasSomeTransform(serviceConfig.getTransforms(), "cutOff")
+                && serviceConfig.getOptions().containsKey("maxReservation")) {
+            TransformConfig transformConfig = new TransformConfig();
+            transformConfig.setName("cutOff");
+            future = executeTransform(future, List.of(transformConfig), serviceConfig.getOptions(), context);
+            Assert.notNull(future, "Service execute transform function fail in cutoff at " + name);
         }
         return future;
     }

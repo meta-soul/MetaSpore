@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
@@ -157,6 +158,16 @@ public abstract class Transform {
             }
             return true;
         });
+    }
+
+    public boolean hasSomeTransform(List<TransformConfig> transforms, String name) {
+        if (CollectionUtils.isEmpty(transforms) || StringUtils.isEmpty(name)) return false;
+        for (TransformConfig config: transforms) {
+            if (config.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public abstract void initFunctions();

@@ -37,7 +37,7 @@ import java.util.*;
 @ServiceAnnotation("ItemMatcher")
 public class ItemMatcherTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
-    public static final int DEFAULT_MAX_RESERVATION = 50;
+    public static final int DEFAULT_MAX_RESERVATION = 200;
 
     private int algoLevel;
     private int maxReservation;
