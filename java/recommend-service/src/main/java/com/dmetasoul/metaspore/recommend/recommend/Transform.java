@@ -5,6 +5,7 @@ import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
+import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.TransformFunction;
@@ -20,6 +21,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
@@ -45,7 +47,8 @@ public abstract class Transform {
     protected List<Field> resFields;
     protected List<DataTypeEnum> dataTypes;
 
-    public static final int DEFAULT_MAX_RESERVATION = 50;
+    public static final int DEFAULT_MAX_RESERVATION = 200;
+    public static final int DEFAULT_MIN_REQUEST = 50;
 
     public void initTransform(String name, ExecutorService taskPool, TaskServiceRegister serviceRegister) {
         this.name = name;
@@ -154,6 +157,36 @@ public abstract class Transform {
                     result.updateDataResult(item, inputFields, outputFields, getUpdateOperator(option), option);
                     featureTable.finish();
                     results.add(result);
+                }
+            }
+            return true;
+        });
+        addFunction("additionalRecall", (data, results, context, option) -> {
+            int currentNum = 0;
+            if (CollectionUtils.isNotEmpty(data)) {
+                for (DataResult item : data) {
+                    currentNum += item.getFeatureTable().getRowCount();
+                    results.add(item);
+                }
+            }
+            int min_request = CommonUtils.getField(option, "min_request", DEFAULT_MIN_REQUEST);
+            if (currentNum < min_request) {
+                List<String> recall_list = getOptionFields("recall_list", option);
+                if (CollectionUtils.isNotEmpty(recall_list)) {
+                    for (String item : recall_list) {
+                        DataService task = serviceRegister.getDataService(item);
+                        Validate.isTrue(task != null, "additionalRecall recall must be exist! " + item);
+                        DataResult dataResult = task.execute(context);
+                        if (dataResult == null) {
+                            log.error("the additionalRecall recall exec fail at:" + item);
+                            continue;
+                        }
+                        results.add(dataResult);
+                        currentNum += dataResult.getFeatureTable().getRowCount();
+                        if (currentNum >= min_request) {
+                            break;
+                        }
+                    }
                 }
             }
             return true;
