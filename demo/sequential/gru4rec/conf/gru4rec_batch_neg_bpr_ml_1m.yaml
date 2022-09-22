@@ -1,0 +1,61 @@
+## spark session
+app_name: 'TwoTower-GRU4Rec'
+local: False
+worker_count: 4
+server_count: 4
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+
+## datasets
+train_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/1m/negsample/num_negs_10/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/1m/negsample/prob/item.parquet
+## model configuration
+two_tower_module_class: python.algos.sequential.GRU4RecBatchNegativeSamplingModule
+two_tower_agent_class: python.algos.sequential.GRU4RecBatchNegativeSamplingAgent
+two_tower_estimator_class: metaspore.TwoTowerRetrievalEstimator
+user_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/gru4rec/column_schema
+user_combine_schema_path: ${MY_S3_BUCKET}/movielens/1m/schema/gru4rec/user_combine_schema
+seq_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/gru4rec/seq_combine_schema
+item_column_name: ${MY_S3_BUCKET}/movielens/1m/schema/gru4rec/column_schema
+item_combine_schema: ${MY_S3_BUCKET}/movielens/1m/schema/gru4rec/item_combine_schema
+model_out_path: ${MY_S3_BUCKET}/movielens/1m/schema/gru4rec/model_out/
+model_export_path: null
+model_version: '0.1'
+experiment_name: gru4rec
+input_label_column_index: 0
+item_ids_column_indices: [6]
+retrieval_item_count: 20
+
+## milvus
+milvus_description: 'ml_1m_gru4rec'
+milvus_host: 'my-milvus-release.milvus.svc.cluster.local'
+milvus_port: '19530'
+milvus_embedding_field: 'embedding_vector'
+milvus_index_type: 'IVF_FLAT'
+milvus_metric_type: 'IP'
+milvus_nlist: 1024
+milvus_nprobe: 128
+
+## dataset
+input_label_column_index: 0
+input_item_id_column_index: 6 
+input_feature_column_num: 11
+
+## model hyper params
+gru_hidden_dim: 64
+gru_num_layers: 2
+tau: 0.05
+sparse_init_var: 0.0001
+net_dropout: 0.3
+batch_size: 128
+vector_embedding_size: 64
+item_embedding_size: 64
+adam_learning_rate: 0.001
+ftrl_learning_rate: 0.001
+ftrl_smothing_rate: 1.0
+ftrl_l1_regularization: 1.0
+ftrl_l2_regularization: 120.0
+training_epoches: 20
+shuffle_training_dataset: False

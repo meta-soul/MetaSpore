@@ -6,13 +6,11 @@ import com.dmetasoul.metaspore.recommend.functions.Function;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.TransformFunction;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.UpdateOperator;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.ClassLoaderUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -66,7 +64,6 @@ public class UserDefineFunctionLoader {
             classLoader.close();
         }
     }
-
     @SuppressWarnings("unchecked")
     public <T> T getBean(String name, Class<?> cls) {
         if (cls.equals(Function.class) && fieldFunctions.containsKey(name)) {
