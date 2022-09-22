@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.ConvTools;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
@@ -94,6 +95,17 @@ public class AlgoTransformTask extends DataService {
     }
 
     public void initFunctions() {
+        addFunction("setValue", (fields, result, options) -> {
+            Assert.isTrue(CollectionUtils.isNotEmpty(result), "result must not null");
+            Object object = CommonUtils.getObject(options.getOptions(), "value");
+            Class<?> cls = result.get(0).getType().getCls();
+            Object value = ConvTools.parseObject(object, cls);
+            if (value != null) {
+                Assert.isInstanceOf(cls, value, "setValue config value type wrong");
+            }
+            result.get(0).addIndexData(FieldData.create(0, value));
+            return true;
+        });
         addFunction("flatList", (fields, result, options) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(result), "input and result must not null");
             List<IndexData> res = Lists.newArrayList();

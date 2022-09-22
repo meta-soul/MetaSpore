@@ -150,6 +150,7 @@ public class FeatureConfig {
         private List<String> from;
         private List<FieldInfo> fields;
         private List<String> select;
+
         private List<Condition> condition;
 
         private List<String> immediateFrom;

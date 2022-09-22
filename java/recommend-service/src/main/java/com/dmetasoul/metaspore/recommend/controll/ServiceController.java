@@ -190,4 +190,27 @@ public class ServiceController {
         List<Map<String, Object>> data = sceneService.output(context);
         return ServiceResult.of(data, id);
     }
+
+    // add cache later
+    @RequestMapping(value = "/itemSummary/{item_key}/{id}", method = POST, produces = "application/json")
+    public ServiceResult itemSummary(@PathVariable String item_key, @PathVariable String id, @RequestBody Map<String, Object> req) {
+        DataService taskService = taskServiceRegister.getDataService("feature_item_summary");
+        if (taskService == null) {
+            return ServiceResult.of(-1, "itemSummary is not support in configure!");
+        }
+        if (StringUtils.isEmpty(item_key)) {
+            item_key = "item_id";
+        }
+        if (StringUtils.isEmpty(id)) {
+            return ServiceResult.of(-1, "itemSummary need itemId!");
+        }
+        req.put(item_key, id);
+        DataContext context = new DataContext(req);
+        DataResult result;
+        result = taskService.execute(new ServiceRequest(req), context);
+        if (result == null) {
+            return ServiceResult.of(-1, "itemSummary execute fail!");
+        }
+        return ServiceResult.of(result.output());
+    }
 }
