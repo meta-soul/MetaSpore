@@ -97,7 +97,7 @@ public enum DataTypeEnum {
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             Integer data = parseInteger(value);
             if (value != null && data == null) {
-                log.error("set featureTable fail! value type is not match Integer value:{}!", value);
+                log.error("set featureTable fail! value type is not match Integer value:{}, class:{}!", value, value.getClass());
                 return false;
             }
             if (value == null) {
