@@ -2,6 +2,7 @@ package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
@@ -23,11 +24,9 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.springframework.util.Assert;
+import org.springframework.util.StopWatch;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -285,8 +284,15 @@ public abstract class Transform {
                     log.error("the service：{} function: {} input is empty!", name, item.getName());
                     return resultList;
                 }
-                if (!function.transform(dataResults, resultList, context, option)) {
-                    log.error("the service：{} function: {} execute fail!", name, item.getName());
+                StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+                try {
+                    timeRecorder.start(String.format("%s_transform_func_%s", name, item.getName()));
+                    if (!function.transform(dataResults, resultList, context, option)) {
+                        log.error("the service：{} function: {} execute fail!", name, item.getName());
+                    }
+                } finally {
+                    timeRecorder.stop();
+                    context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
                 }
                 return resultList;
             }, taskPool);

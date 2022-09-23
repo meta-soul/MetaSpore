@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.controll;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
@@ -34,6 +35,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StopWatch;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -103,11 +106,15 @@ public class ServiceController {
             }
         }
         DataResult result;
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        timeRecorder.start(String.format("task_%s_total", task));
         result = taskService.execute(new ServiceRequest(req), context);
+        timeRecorder.stop();
+        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
         if (result == null) {
             return ServiceResult.of(-1, "taskService execute fail!");
         }
-        return ServiceResult.of(result.output());
+        return ServiceResult.of(result.output()).addTimeRecord(context.getTimeRecords());
     }
 
     private List<String> getRelyServiceList(FeatureConfig.AlgoTransform algoTransform) {
@@ -155,17 +162,22 @@ public class ServiceController {
     @RequestMapping(value = "/recommend/{task}", method = POST, produces = "application/json")
     public ServiceResult getRecommendResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
         DataContext context = new DataContext(req);
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        timeRecorder.start(String.format("task_%s_total", task));
         List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
         List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
         log.info("recommend result : {}", result);
         if (CollectionUtils.isEmpty(result)) {
+            timeRecorder.stop();
             return ServiceResult.of(-1, "taskService execute fail!");
         }
         List<Map<String, Object>> output = Lists.newArrayList();
         for (DataResult item : result) {
             output.addAll(item.output());
         }
-        return ServiceResult.of(output);
+        timeRecorder.stop();
+        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+        return ServiceResult.of(output).addTimeRecord(context.getTimeRecords());
     }
     /**
      * 用于实现restfull接口 /service/recommend/{scene}/{id}
@@ -187,8 +199,12 @@ public class ServiceController {
             return ServiceResult.of(-1, String.format("scene:%s recommend need id, eg:userId!", scene));
         }
         context.setId(id);
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        timeRecorder.start(String.format("scene_%s_total", scene));
         List<Map<String, Object>> data = sceneService.output(context);
-        return ServiceResult.of(data, id);
+        timeRecorder.stop();
+        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+        return ServiceResult.of(data, id).addTimeRecord(context.getTimeRecords());
     }
 
     // add cache later
@@ -207,10 +223,14 @@ public class ServiceController {
         req.put(item_key, id);
         DataContext context = new DataContext(req);
         DataResult result;
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        timeRecorder.start("itemSummary_total");
         result = taskService.execute(new ServiceRequest(req), context);
+        timeRecorder.stop();
+        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
         if (result == null) {
             return ServiceResult.of(-1, "itemSummary execute fail!");
         }
-        return ServiceResult.of(result.output());
+        return ServiceResult.of(result.output()).addTimeRecord(context.getTimeRecords());
     }
 }

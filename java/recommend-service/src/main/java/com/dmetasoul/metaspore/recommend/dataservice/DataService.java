@@ -16,6 +16,7 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
@@ -30,9 +31,11 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.util.StopWatch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.*;
 
 /**
@@ -68,6 +71,7 @@ public abstract class DataService {
      * 对于某些依赖任务执行比较确定的DataService，初始化过程中确定的依赖任务执行流程chain。
      */
     protected Chain depend;
+
     protected List<Field> resFields;
     protected List<DataTypeEnum> dataTypes;
     /**
@@ -258,62 +262,69 @@ public abstract class DataService {
      * 执行DataService所依赖的任务执行流chain
      */
     public Chain executeChain(Chain chain, ServiceRequest request, DataContext context) {
-        // lastChain 用于记录未执行成功的task
-        Chain lastChain = new Chain();
-        List<String> then = chain.getThen();
-        // 顺序执行任务then
-        if (CollectionUtils.isNotEmpty(then)) {
-            int i = 0;
-            for (; i < then.size(); ++i) {
-                String taskName = then.get(i);
-                if (execute(taskName, request, context) == null) {
-                    log.warn("task:{} depend:{} exec fail!", name, taskName);
-                    break;
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        try {
+            timeRecorder.start(String.format("%s_executeChain", name));
+            // lastChain 用于记录未执行成功的task
+            Chain lastChain = new Chain();
+            List<String> then = chain.getThen();
+            // 顺序执行任务then
+            if (CollectionUtils.isNotEmpty(then)) {
+                int i = 0;
+                for (; i < then.size(); ++i) {
+                    String taskName = then.get(i);
+                    if (execute(taskName, request, context) == null) {
+                        log.warn("task:{} depend:{} exec fail!", name, taskName);
+                        break;
+                    }
+                }
+                lastChain.setThen(then.subList(i, then.size()));
+            }
+            // 并行执行任务when
+            if (CollectionUtils.isNotEmpty(chain.getWhen())) {
+                List<CompletableFuture<?>> whenList = Lists.newArrayList();
+                for (String taskName : chain.getWhen()) {
+                    whenList.add(CompletableFuture.supplyAsync(() -> execute(taskName, request, context), workFlowPool)
+                            .whenComplete(((dataResult, throwable) -> {
+                                if (!checkResult(dataResult)) {
+                                    log.error("task:{} depend:{} exec fail!", name, taskName);
+                                }
+                                if (throwable != null) {
+                                    log.error("exception:{}", throwable.getMessage());
+                                }
+                            }))
+                    );
+                }
+                CompletableFuture<?> resultFuture;
+                // 设置any or all
+                if (chain.isAny()) {
+                    resultFuture = CompletableFuture.anyOf(whenList.toArray(new CompletableFuture[]{}));
+                } else {
+                    resultFuture = CompletableFuture.allOf(whenList.toArray(new CompletableFuture[]{}));
+                }
+                // 获取并发执行结果
+                try {
+                    resultFuture.get(chain.getTimeOut(), chain.getTimeOutUnit());
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    log.error("there was an error when executing the CompletableFuture", e);
+                }
+                // 记录未执行成功的when任务
+                List<String> noExecuteTasks = Lists.newArrayList();
+                for (String taskName : chain.getWhen()) {
+                    if (getDataResultByName(taskName, context) == null) {
+                        noExecuteTasks.add(taskName);
+                    }
+                }
+                if (chain.isAny() && noExecuteTasks.size() == chain.getWhen().size() || !chain.isAny() && !noExecuteTasks.isEmpty()) {
+                    lastChain.setWhen(noExecuteTasks);
+                    lastChain.setAny(chain.isAny());
                 }
             }
-            lastChain.setThen(then.subList(i, then.size()));
+            return lastChain;
+        } finally {
+            timeRecorder.stop();
+            context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
         }
-        // 并行执行任务when
-        if (CollectionUtils.isNotEmpty(chain.getWhen())) {
-            List<CompletableFuture<?>> whenList = Lists.newArrayList();
-            for (String taskName : chain.getWhen()) {
-                whenList.add(CompletableFuture.supplyAsync(() -> execute(taskName, request, context), workFlowPool)
-                        .whenComplete(((dataResult, throwable) -> {
-                            if (!checkResult(dataResult)) {
-                                log.error("task:{} depend:{} exec fail!", name, taskName);
-                            }
-                            if (throwable != null) {
-                                log.error("exception:{}", throwable.getMessage());
-                            }
-                        }))
-                );
-            }
-            CompletableFuture<?> resultFuture;
-            // 设置any or all
-            if (chain.isAny()) {
-                resultFuture = CompletableFuture.anyOf(whenList.toArray(new CompletableFuture[]{}));
-            } else {
-                resultFuture = CompletableFuture.allOf(whenList.toArray(new CompletableFuture[]{}));
-            }
-            // 获取并发执行结果
-            try {
-                resultFuture.get(chain.getTimeOut(), chain.getTimeOutUnit());
-            } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                log.error("there was an error when executing the CompletableFuture", e);
-            }
-            // 记录未执行成功的when任务
-            List<String> noExecuteTasks = Lists.newArrayList();
-            for (String taskName : chain.getWhen()) {
-                if (getDataResultByName(taskName, context) == null) {
-                    noExecuteTasks.add(taskName);
-                }
-            }
-            if (chain.isAny() && noExecuteTasks.size() == chain.getWhen().size() || !chain.isAny() && !noExecuteTasks.isEmpty()) {
-                lastChain.setWhen(noExecuteTasks);
-                lastChain.setAny(chain.isAny());
-            }
-        }
-        return lastChain;
     }
 
     /**
@@ -326,37 +337,44 @@ public abstract class DataService {
      * 执行DataService所依赖的任务taskName
      */
     public DataResult execute(String taskName, ServiceRequest request, DataContext context) {
-        // 如果任务已经被执行过，则直接获取结果
-        DataResult result = getDataResultByName(taskName, context);
-        if (result != null) {
-            return result;
-        }
-        if (StringUtils.isNotEmpty(request.getParent())) {
-            result = getDataResultByName(request.getParent(), taskName, context);
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        try {
+            timeRecorder.start(String.format("%s_execute", name));
+            // 如果任务已经被执行过，则直接获取结果
+            DataResult result = getDataResultByName(taskName, context);
             if (result != null) {
-                context.setResult(name, taskName, result);
                 return result;
             }
-        }
-        DataService dataService = taskServiceRegister.getDataService(taskName);
-        if (dataService == null) {
-            log.error("task:{} depend:{} service init fail!", name, taskName);
+            if (StringUtils.isNotEmpty(request.getParent())) {
+                result = getDataResultByName(request.getParent(), taskName, context);
+                if (result != null) {
+                    context.setResult(name, taskName, result);
+                    return result;
+                }
+            }
+            DataService dataService = taskServiceRegister.getDataService(taskName);
+            if (dataService == null) {
+                log.error("task:{} depend:{} service init fail!", name, taskName);
+                return null;
+            }
+            // 调用服务为被调用任务构建请求数据
+            ServiceRequest taskRequest = makeRequest(taskName, request, context);
+            if (taskRequest == null) {
+                return null;
+            }
+            taskRequest.setParent(name);
+            result = dataService.execute(taskRequest, context);
+            if (checkResult(result)) {
+                context.setResult(name, taskName, result);
+                // 根据需要，执行taskName执行完毕后的处理逻辑
+                afterProcess(taskName, request, context);
+                return result;
+            }
             return null;
+        } finally {
+            timeRecorder.stop();
+            context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
         }
-        // 调用服务为被调用任务构建请求数据
-        ServiceRequest taskRequest = makeRequest(taskName, request, context);
-        if (taskRequest == null) {
-            return null;
-        }
-        taskRequest.setParent(name);
-        result = dataService.execute(taskRequest, context);
-        if (checkResult(result)) {
-            context.setResult(name, taskName, result);
-            // 根据需要，执行taskName执行完毕后的处理逻辑
-            afterProcess(taskName, request, context);
-            return result;
-        }
-        return null;
     }
 
     /**
@@ -378,6 +396,8 @@ public abstract class DataService {
         if (result != null && result.getReqSign().equals(reqSign)) {
             return result;
         }
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        timeRecorder.start(String.format("%s_execute_pre_depend", name));
         // 1, 执行depend任务前预处理
         preCondition(request, context);
         // 2, 执行chain，计算依赖depend服务结果
@@ -396,17 +416,25 @@ public abstract class DataService {
             }
             chain = taskFlow.poll();
         }
+        timeRecorder.stop();
         if (chain == null || chain.isEmpty()) {
-            // 3, 执行服务处理函数
-            result = process(request, context);
-            if (checkResult(result)) {
-                result.setReqSign(reqSign);
-                result.setName(name);
-                // 缓存结果， 相同的请求不重复计算
-                context.setResult(name, result);
-                return result;
+            try {
+                timeRecorder.start(String.format("%s_process", name));
+                // 3, 执行服务处理函数
+                result = process(request, context);
+                if (checkResult(result)) {
+                    result.setReqSign(reqSign);
+                    result.setName(name);
+                    // 缓存结果， 相同的请求不重复计算
+                    context.setResult(name, result);
+                    return result;
+                }
+            } finally {
+                timeRecorder.stop();
+                context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
             }
         }
+        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
         throw new RuntimeException(String.format("task:%s exec fail!", name));
     }
 

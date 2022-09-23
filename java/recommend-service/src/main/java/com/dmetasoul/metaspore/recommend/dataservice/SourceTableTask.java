@@ -17,15 +17,18 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
 import com.dmetasoul.metaspore.recommend.datasource.DataSource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.StopWatch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.*;
 /**
  * SourceTable的DataService的实现类
@@ -55,7 +58,14 @@ public class SourceTableTask extends DataService {
     }
 
     protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
-        return dataSource.process(request, context);
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        try {
+            timeRecorder.start(String.format("%s_processRequest", name));
+            return dataSource.process(request, context);
+        } finally {
+            timeRecorder.stop();
+            context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+        }
     }
 
     public <T> T getOptionOrDefault(String key, T value) {

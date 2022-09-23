@@ -18,6 +18,7 @@ package com.dmetasoul.metaspore.recommend.recommend;
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.RecommendConfig;
 import com.dmetasoul.metaspore.recommend.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
@@ -28,9 +29,11 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.util.StopWatch;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @Data
@@ -54,15 +57,22 @@ public class Scene extends TaskFlow<Layer> {
 
     @SneakyThrows
     public DataResult process(DataContext context) {
-        TransformConfig transformConfig = new TransformConfig();
-        transformConfig.setName("summaryBySchema");
-        CompletableFuture<DataResult> future = execute(List.of(),
-                serviceRegister.getLayerMap(), List.of(transformConfig), scene.getOptions(),
-                context).thenApplyAsync(dataResults -> {
-            if (CollectionUtils.isEmpty(dataResults)) return null;
-            return dataResults.get(0);
-        }, taskPool);
-        return future.get(timeout, timeUnit);
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+        try {
+            timeRecorder.start(String.format("scene_%s_process", name));
+            TransformConfig transformConfig = new TransformConfig();
+            transformConfig.setName("summaryBySchema");
+            CompletableFuture<DataResult> future = execute(List.of(),
+                    serviceRegister.getLayerMap(), List.of(transformConfig), scene.getOptions(),
+                    context).thenApplyAsync(dataResults -> {
+                if (CollectionUtils.isEmpty(dataResults)) return null;
+                return dataResults.get(0);
+            }, taskPool);
+            return future.get(timeout, timeUnit);
+        } finally {
+            timeRecorder.stop();
+            context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+        }
     }
 
     public List<Map<String, Object>> output(DataContext context) {

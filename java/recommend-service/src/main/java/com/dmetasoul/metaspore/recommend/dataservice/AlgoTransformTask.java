@@ -18,6 +18,7 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.common.ConvTools;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.Chain;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
@@ -35,6 +36,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
+import org.springframework.util.StopWatch;
 
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -314,6 +316,7 @@ public class AlgoTransformTask extends DataService {
                 fieldMaps.put(name, taskFlowConfig.getAlgoTransforms().get(name).getFieldMap());
             }
         }
+        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
         for (FieldAction fieldAction : algoTransform.getActionList()) {
             List<FieldInfo> fields = fieldAction.getFields();
             List<String> input = fieldAction.getInput();
@@ -353,11 +356,17 @@ public class AlgoTransformTask extends DataService {
                         throw new RuntimeException("function get fail at " + fieldAction.getFunc());
                     }
                 }
-                if (!function.process(getFieldDataList(fieldDatas), res, fieldAction)) {
-                    throw new RuntimeException("the function process fail. func:" + fieldAction.getFunc());
+                try {
+                    timeRecorder.start(String.format("%s_fieldAction_func_%s", name, fieldAction.getFunc()));
+                    if (!function.process(getFieldDataList(fieldDatas), res, fieldAction)) {
+                        throw new RuntimeException("the function process fail. func:" + fieldAction.getFunc());
+                    }
+                } finally {
+                    timeRecorder.stop();
                 }
             }
         }
+        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
         setTableData(algoTransform.getColumnNames(), actionResult, featureTable);
         featureTable.finish();
         return transform(featureTable, context);

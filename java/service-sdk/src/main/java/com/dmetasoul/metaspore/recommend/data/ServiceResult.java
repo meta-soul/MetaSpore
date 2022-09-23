@@ -29,7 +29,14 @@ public class ServiceResult {
     private ServiceStatus code;
     private String msg;
     private List<Map<String, Object>> data;
+    private Map<String, Long> timeRecords;
     private String id;
+    public ServiceResult addTimeRecord(Map<String, Long> timeRecords) {
+        if (timeRecords != null) {
+            this.timeRecords = timeRecords;
+        }
+        return this;
+    }
 
     public enum ServiceStatus {
         UNKNOWN(-10,"unknown"),
