@@ -1,0 +1,47 @@
+apiVersion: metaspore/v1
+kind: TrainingJob
+metadata:
+  name: Setup
+  category: Setup
+
+spec:
+  logging:
+    loglevel: debug
+
+  init_spark:
+    session_conf:
+      app_name: 'Ecommerce Setup'
+      local: True
+      worker_count: 1
+      worker_cpu: 2
+      server_count: 1
+      server_cpu: 2
+      batch_size: 256
+      worker_memory: '4G'
+      server_memory: '4G'
+      coordinator_memory: '2G'
+    extended_conf:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.jars.packages: 'mysql:mysql-connector-java:5.1.49'
+    pyzip:
+      cwd_path: '/home/jovyan/workspace/MetaSpore/'
+      
+  load_dataset:
+    format: jdbc
+    driver: com.mysql.jdbc.Driver
+    host: ""
+    database: dmetasoul
+    user_table: user
+    item_table: team
+    interaction_table: nodes
+    user: root
+    password: ""
+
+  save_dataset: 
+    user_path: ./data/amazon_fashion_user.parquet
+    item_path: ./data/amazon_fashion_item.parquet
+    interaction_path: ./data/amazon_fashion_interaction.parquet
+
+  
