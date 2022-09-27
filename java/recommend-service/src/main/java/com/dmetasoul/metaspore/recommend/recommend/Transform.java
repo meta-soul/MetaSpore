@@ -64,7 +64,7 @@ public abstract class Transform {
         addFunction("summary", (data, results, context, option) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(resFields), "summary need configure columns info!");
             DataResult result = new DataResult();
-            FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+            FeatureTable featureTable = new FeatureTable(name, resFields);
             result.setFeatureTable(featureTable);
             result.setDataTypes(dataTypes);
             result.setName(name);
@@ -72,6 +72,9 @@ public abstract class Transform {
             result.mergeDataResult(data, dupFields, getMergeOperators(option), option);
             featureTable.finish();
             results.add(result);
+            if (data != null) {
+                data.forEach(DataResult::close);
+            }
             return true;
         });
         addFunction("summaryBySchema", (data, results, context, option) -> {
@@ -79,13 +82,14 @@ public abstract class Transform {
                 DataResult item = data.get(0);
                 DataResult result = new DataResult();
                 result.setName(name);
-                FeatureTable featureTable = new FeatureTable(String.format("%s.summaryBySchema", name), item.getFields(), ArrowAllocator.getAllocator());
+                FeatureTable featureTable = new FeatureTable(String.format("%s.summaryBySchema", name), item.getFields());
                 result.setFeatureTable(featureTable);
                 result.setDataTypes(item.getDataTypes());
                 List<String> dupFields = getOptionFields("dupFields", option);
                 result.mergeDataResult(data, dupFields, getMergeOperators(option), option);
                 featureTable.finish();
                 results.add(result);
+                data.forEach(DataResult::close);
             }
             return true;
         });
@@ -93,7 +97,7 @@ public abstract class Transform {
             if (CollectionUtils.isNotEmpty(data)) {
                 for (DataResult item : data) {
                     DataResult result = new DataResult();
-                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields(), ArrowAllocator.getAllocator());
+                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields());
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
                     List<String> orderFields = getOptionFields("orderFields", option);
@@ -101,6 +105,7 @@ public abstract class Transform {
                     result.orderAndLimit(item, orderFields, limit);
                     featureTable.finish();
                     results.add(result);
+                    item.close();
                 }
             }
             return true;
@@ -109,13 +114,14 @@ public abstract class Transform {
             if (CollectionUtils.isNotEmpty(data)) {
                 for (DataResult item : data) {
                     DataResult result = new DataResult();
-                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields(), ArrowAllocator.getAllocator());
+                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields());
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
                     int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
                     result.copyDataResult(item, 0, limit);
                     featureTable.finish();
                     results.add(result);
+                    item.close();
                 }
             }
             return true;
@@ -149,13 +155,14 @@ public abstract class Transform {
                             dataTypes.add(getType(outputTypes.get(i)));
                         }
                     }
-                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), fields, ArrowAllocator.getAllocator());
+                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), fields);
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(dataTypes);
 
                     result.updateDataResult(item, inputFields, outputFields, getUpdateOperator(option), option);
                     featureTable.finish();
                     results.add(result);
+                    item.close();
                 }
             }
             return true;

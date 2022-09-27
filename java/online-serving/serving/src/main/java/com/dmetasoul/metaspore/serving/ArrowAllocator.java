@@ -16,12 +16,58 @@
 
 package com.dmetasoul.metaspore.serving;
 
+import com.google.common.collect.Lists;
+import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.memory.RootAllocator;
 
-public class ArrowAllocator {
-    private static final RootAllocator allocator = new RootAllocator();
+import java.util.List;
 
+public class ArrowAllocator implements AutoCloseable {
+    private static final RootAllocator allocator = new RootAllocator();
+    private final BufferAllocator alloc;
+    private List<ArrowBuf> buffers;
+
+    public ArrowAllocator(long limit) {
+        this.alloc = new RootAllocator(limit);
+        this.buffers = Lists.newArrayList();
+    }
+
+    public ArrowAllocator(BufferAllocator alloc) {
+        this.alloc = alloc;
+        this.buffers = Lists.newArrayList();
+    }
+
+    public BufferAllocator getAlloc() {
+        return this.alloc;
+    }
+
+    public void addBuffer(ArrowBuf buf) {
+        if (buf != null) {
+            if (this.buffers == null) {
+                this.buffers = Lists.newArrayList();
+            }
+            this.buffers.add(buf);
+        }
+    }
+
+    @Deprecated
     public static RootAllocator getAllocator() {
         return ArrowAllocator.allocator;
+    }
+
+    @Override
+    public void close() {
+        if (alloc != null) {
+            if (buffers != null) {
+                buffers.forEach(item->{
+                    item.clear();
+                    item.close();
+                });
+                buffers.clear();
+            }
+            allocator.getChildAllocators().forEach(BufferAllocator::close);
+            allocator.close();
+        }
     }
 }

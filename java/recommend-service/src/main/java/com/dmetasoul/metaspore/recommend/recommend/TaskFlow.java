@@ -65,7 +65,7 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
                                                            List<TransformConfig> transforms,
                                                            Map<String, Object> option,
                                                            DataContext context) {
-        CompletableFuture<List<DataResult>> future = CompletableFuture.supplyAsync(() -> data);
+            CompletableFuture<List<DataResult>> future = CompletableFuture.supplyAsync(() -> data);
         for (Chain chain : chains) {
             if (CollectionUtils.isNotEmpty(chain.getThen())) {
                 for (String taskName : chain.getThen()) {
@@ -75,6 +75,9 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
                         try {
                             return service.execute(dataResult, context).get(timeout, timeUnit);
                         } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                            if (CollectionUtils.isNotEmpty(dataResult)) {
+                                dataResult.forEach(DataResult::close);
+                            }
                             throw new RuntimeException(e);
                         }
                     }, taskPool);
@@ -89,6 +92,9 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
                         try {
                             return service.execute(dataResult, context).get(timeout, timeUnit);
                         } catch (InterruptedException | TimeoutException | ExecutionException e) {
+                            if (CollectionUtils.isNotEmpty(dataResult)) {
+                                dataResult.forEach(DataResult::close);
+                            }
                             throw new RuntimeException(e);
                         }
                     }, taskPool));

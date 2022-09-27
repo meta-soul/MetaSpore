@@ -54,7 +54,7 @@ public class ItemMatcherTask extends AlgoTransformTask {
     @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
-        addFunction("toItemScore", (fields, result, config) -> {
+        addFunction("toItemScore", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
@@ -131,7 +131,7 @@ public class ItemMatcherTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("toItemScore2", (fields, result, config) -> {
+        addFunction("toItemScore2", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
@@ -166,7 +166,7 @@ public class ItemMatcherTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("recallCollectItem", (fields, result, config) -> {
+        addFunction("recallCollectItem", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");

@@ -57,7 +57,7 @@ public class ServingClientDemo {
 
         // predict and get result tensor
         Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, "movielens_wide_and_deep",
-                Arrays.asList(userTable, itemTable), Collections.emptyMap());
+                Arrays.asList(userTable, itemTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
         ArrowTensor.FloatTensorAccessor score = result.get("score").getFloatData();
         return "";
     }

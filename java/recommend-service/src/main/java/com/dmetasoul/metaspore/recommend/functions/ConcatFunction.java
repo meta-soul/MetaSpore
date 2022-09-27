@@ -20,6 +20,7 @@ import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.common.ConvTools;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.google.common.collect.Lists;
 import lombok.NonNull;
@@ -31,6 +32,9 @@ import org.springframework.util.Assert;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
 
@@ -38,28 +42,35 @@ import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
 @FunctionAnnotation("concatField")
 public class ConcatFunction implements Function {
     @Override
-    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config) {
+    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result,
+                           @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
         Map<String, Object> options = config.getOptions();
         Assert.isTrue(1 == result.size() && result.get(0).getType().equals(DataTypeEnum.STRING),
                 "output must be one str!");
         String joinStr = CommonUtils.getField(config.getOptions(), "join", "#");
         FieldData output = result.get(0);
-        List<List<String>> array = Lists.newArrayList();
+        List<List<Object>> array = Lists.newArrayList();
         for (FieldData input : fields) {
             for (int i = 0; i < input.getValue().size(); ++i) {
                 if (array.size() <= i) {
                     array.add(Lists.newArrayList());
                 }
                 Object value = input.getValue().get(i);
-                String str = ConvTools.parseString(value);
-                if (str == null) str = "";
-                array.get(i).add(str);
+                array.get(i).add(value);
             }
         }
-        for (int i = 0; i < array.size(); ++i) {
-            List<String> list = array.get(i);
-            Object data = StringUtils.join(list, joinStr);
-            output.addIndexData(FieldData.create(i, data));
+        List<CompletableFuture<Object>> valueList = Lists.newArrayList();
+        for (List<Object> list : array) {
+            valueList.add(CompletableFuture.supplyAsync(() -> StringUtils.join(list, joinStr), taskPool));
+        }
+        CompletableFuture<?> resultFuture = CompletableFuture.allOf(valueList.toArray(new CompletableFuture[]{}));
+        for (int i = 0; i < valueList.size(); ++i) {
+            CompletableFuture<Object> fieldFuture = valueList.get(i);
+            try {
+                output.addIndexData(FieldData.create(i, fieldFuture.get()));
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
         }
         return true;
     }

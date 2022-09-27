@@ -221,20 +221,6 @@
                                 </volumes>
                             </run>
                         </image>
-                        <image>
-                            <alias>mongo</alias>
-                            <name>mongo:6.0.1</name>
-                            <run>
-                                <restartPolicy><name>always</name></restartPolicy>
-                                <ports>
-                                    <port>27017:27017</port>
-                                </ports>
-                                <env>
-                                    <MONGO_INITDB_ROOT_USERNAME>root</MONGO_INITDB_ROOT_USERNAME>
-                                    <MONGO_INITDB_ROOT_PASSWORD>example</MONGO_INITDB_ROOT_PASSWORD>
-                                </env>
-                            </run>
-                        </image>
                     </images>
                 </configuration>
             </plugin>

@@ -42,9 +42,8 @@ public class FeatureTableSerDe {
         writer.close();
     }
 
-    public static FeatureTable deserializeFrom(String name, ByteString bytes) throws IOException {
-        BufferAllocator allocator = ArrowAllocator.getAllocator();
-        ArrowStreamReader reader = new ArrowStreamReader(bytes.newInput(), allocator);
+    public static FeatureTable deserializeFrom(String name, ByteString bytes, ArrowAllocator alloc) throws IOException {
+        ArrowStreamReader reader = new ArrowStreamReader(bytes.newInput(), alloc.getAlloc());
         if (!reader.loadNextBatch()) {
             throw new IOException("Empty record batch received");
         }

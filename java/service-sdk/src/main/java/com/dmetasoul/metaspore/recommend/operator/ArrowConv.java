@@ -10,6 +10,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -53,7 +54,7 @@ public class ArrowConv {
         } else if (minorType == Types.MinorType.STRUCT) {
             if (value == null) return null;
             Map<String, Object> result = Maps.newHashMap();
-            JsonStringHashMap<String, Object> obj = (JsonStringHashMap<String, Object>) value;
+            Map<String, Object> obj = (HashMap<String, Object>) value;
             for (Field f : field.getChildren()) {
                 result.put(f.getName(), convValue(f, obj.get(f.getName())));
             }

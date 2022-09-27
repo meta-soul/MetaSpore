@@ -82,6 +82,8 @@ public class Service extends Transform implements BaseService {
                 for (DataResult item : data) {
                     if (StringUtils.isNotEmpty(item.getName())) {
                         task.setDataResultByName(item.getName(), item, context);
+                    } else {
+                        item.close();
                     }
                 }
             }

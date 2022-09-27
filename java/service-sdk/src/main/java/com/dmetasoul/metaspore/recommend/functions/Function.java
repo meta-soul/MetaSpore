@@ -21,7 +21,9 @@ import lombok.NonNull;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 
 public interface Function {
-    boolean process(List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config);
+    boolean process(List<FieldData> fields, @NotEmpty List<FieldData> result,
+                    @NonNull FieldAction config, @NonNull ExecutorService taskPool);
 }

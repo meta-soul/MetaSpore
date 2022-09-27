@@ -59,7 +59,7 @@ public class WDLController {
         // predict and get result tensor
         String modelName = "wide_and_deep";
         Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, modelName,
-                List.of(lrLayerTable, sparseLayerTable), Collections.emptyMap());
+                List.of(lrLayerTable, sparseLayerTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
 
         // parse the result tensor
         Map<String, Object> toJson = new TreeMap<>();

@@ -30,6 +30,8 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.bouncycastle.util.Strings;
@@ -82,7 +84,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("genEmbedding", (fields, result, fieldAction) -> {
+        addFunction("genEmbedding", (fields, result, fieldAction, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
             List<FeatureTable> featureTables = Lists.newArrayList();
             for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
@@ -107,13 +109,18 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             }
             String targetName = CommonUtils.getField(fieldAction.getOptions(), "targetKey", targetKey);
             String model = CommonUtils.getField(fieldAction.getOptions(), "modelName", modelName);
-            ArrowTensor arrowTensor = predict(featureTables, model, targetName);
-            List<Object> res = Lists.newArrayList();
-            res.addAll(getFromTensor(arrowTensor));
-            result.get(0).setValue(res, getFieldIndex(fields));
-            return true;
+            try(ArrowAllocator allocator = new ArrowAllocator(Integer.MAX_VALUE)) {
+                ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
+                List<Object> res = Lists.newArrayList();
+                res.addAll(getFromTensor(arrowTensor));
+                result.get(0).setValue(res, getFieldIndex(fields));
+                for (FeatureTable featureTable: featureTables) {
+                    featureTable.close();
+                }
+                return true;
+            }
         });
-        addFunction("predictScore", (fields, result, fieldAction) -> {
+        addFunction("predictScore", (fields, result, fieldAction, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
             List<FeatureTable> featureTables = Lists.newArrayList();
             for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
@@ -139,14 +146,19 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             String targetName = CommonUtils.getField(fieldAction.getOptions(), "targetKey", targetKey);
             int index = CommonUtils.getField(fieldAction.getOptions(), "targetIndex", targetIndex);
             String model = CommonUtils.getField(fieldAction.getOptions(), "modelName", modelName);
-            ArrowTensor arrowTensor = predict(featureTables, model, targetName);
-            List<Object> res = Lists.newArrayList();
-            res.addAll(getFromTensor(arrowTensor, index));
-            List<Integer> indexs = getFieldIndex(fields);
-            result.get(0).setValue(res, indexs);
-            return true;
+            try(ArrowAllocator allocator = new ArrowAllocator(Integer.MAX_VALUE)) {
+                ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
+                List<Object> res = Lists.newArrayList();
+                res.addAll(getFromTensor(arrowTensor, index));
+                List<Integer> indexs = getFieldIndex(fields);
+                result.get(0).setValue(res, indexs);
+                for (FeatureTable featureTable: featureTables) {
+                    featureTable.close();
+                }
+                return true;
+            }
         });
-        addFunction("rankCollectItem", (fields, result, config) -> {
+        addFunction("rankCollectItem", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             int field_num = 0;
             if (CollectionUtils.isNotEmpty(config.getFields())) {
@@ -185,10 +197,12 @@ public class AlgoInferenceTask extends AlgoTransformTask {
         channel.shutdown().awaitTermination(1, TimeUnit.SECONDS);
     }
 
-    protected ArrowTensor predict(List<FeatureTable> featureTables, String modelName, String targetKey) {
+    protected ArrowTensor predict(List<FeatureTable> featureTables, ArrowAllocator allocator,
+                                  String modelName, String targetKey) {
         Map<String, ArrowTensor> npsResultMap;
         try {
-            npsResultMap = ServingClient.predictBlocking(client, modelName, featureTables, Collections.emptyMap());
+            npsResultMap = ServingClient.predictBlocking(client, modelName,
+                    featureTables, allocator, Collections.emptyMap());
         } catch (IOException e) {
             log.error("TwoTower request nps fail!");
             throw new RuntimeException(e);

@@ -32,6 +32,7 @@ import org.springframework.util.NumberUtils;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 @Slf4j
 @FunctionAnnotation("bucketize")
@@ -48,7 +49,8 @@ public class BucketizeFunction implements Function {
     private List<Number> ranges = Lists.newArrayList();
 
     @Override
-    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config) {
+    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result,
+                           @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
         Map<String, Object> options = config.getOptions();
         Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
         bins = CommonUtils.getField(options, NAMEBINS, bins);

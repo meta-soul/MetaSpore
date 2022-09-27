@@ -175,7 +175,7 @@ public abstract class DataService {
             return null;
         }
         DataResult result = new DataResult();
-        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable(name, resFields);
         result.setFeatureTable(featureTable);
         result.setDataTypes(dataTypes);
         if (CollectionUtils.isEmpty(res)) {
@@ -201,7 +201,7 @@ public abstract class DataService {
             return null;
         }
         DataResult result = new DataResult();
-        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable(name, resFields);
         result.setFeatureTable(featureTable);
         result.setDataTypes(dataTypes);
         if (MapUtils.isEmpty(res)) {

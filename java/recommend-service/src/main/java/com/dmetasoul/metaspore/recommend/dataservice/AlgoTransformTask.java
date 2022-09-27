@@ -97,7 +97,7 @@ public class AlgoTransformTask extends DataService {
     }
 
     public void initFunctions() {
-        addFunction("setValue", (fields, result, options) -> {
+        addFunction("setValue", (fields, result, options, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "result must not null");
             Object object = CommonUtils.getObject(options.getOptions(), "value");
             Class<?> cls = result.get(0).getType().getCls();
@@ -108,7 +108,7 @@ public class AlgoTransformTask extends DataService {
             result.get(0).addIndexData(FieldData.create(0, value));
             return true;
         });
-        addFunction("flatList", (fields, result, options) -> {
+        addFunction("flatList", (fields, result, options, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(result), "input and result must not null");
             List<IndexData> res = Lists.newArrayList();
             List<IndexData> input = fields.get(0).getIndexValue();
@@ -122,7 +122,7 @@ public class AlgoTransformTask extends DataService {
             result.get(0).setIndexValue(res);
             return true;
         });
-        addFunction("multiFlatList", (fields, result, options) -> {
+        addFunction("multiFlatList", (fields, result, options, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(result), "input and result must not null");
             Assert.isTrue(fields.size() == result.size(), "input and result must be same size");
             for (int i = 0; i < fields.size(); ++i) {
@@ -300,7 +300,7 @@ public class AlgoTransformTask extends DataService {
     public DataResult process(ServiceRequest request, DataContext context) {
         List<DataResult> result = getDataResultByNames(algoTransform.getFeature(), context);
         result.addAll(getDataResultByNames(algoTransform.getAlgoTransform(), context));
-        FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable(name, resFields);
         Map<String, DataResult> dataResultMap = getDataResults(result);
         Map<String, Map<String, DataTypeEnum>> columnMaps = Maps.newHashMap();
         Map<String, Map<String, Field>> fieldMaps = Maps.newHashMap();
@@ -358,7 +358,7 @@ public class AlgoTransformTask extends DataService {
                 }
                 try {
                     timeRecorder.start(String.format("%s_fieldAction_func_%s", name, fieldAction.getFunc()));
-                    if (!function.process(getFieldDataList(fieldDatas), res, fieldAction)) {
+                    if (!function.process(getFieldDataList(fieldDatas), res, fieldAction, taskPool)) {
                         throw new RuntimeException("the function process fail. func:" + fieldAction.getFunc());
                     }
                 } finally {
@@ -402,7 +402,7 @@ public class AlgoTransformTask extends DataService {
     public FeatureTable convFeatureTable(String name, List<FieldData> fields) {
         List<Field> inferenceFields = fields.stream().map(x -> new Field(x.getName(), x.getType().getType(), x.getType().getChildFields()))
                 .collect(Collectors.toList());
-        FeatureTable featureTable = new FeatureTable(name, inferenceFields, ArrowAllocator.getAllocator());
+        FeatureTable featureTable = new FeatureTable(name, inferenceFields);
         for (FieldData fieldData : fields) {
             if (!fieldData.getType().set(featureTable, fieldData.getName(), fieldData.getValue())) {
                 log.error("set featureTable fail! convFeatureTable at {}", name);

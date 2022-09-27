@@ -76,45 +76,46 @@ public class ServiceController {
         if (taskService == null) {
             return ServiceResult.of(-1, "taskService is not exist!");
         }
-        DataContext context = new DataContext(req);
-        List<String> services = null;
-        if (taskFlowConfig.getFeatures().containsKey(task) && taskFlowConfig.getFeatureRelyServices().containsKey(task)) {
-            services = taskFlowConfig.getFeatureRelyServices().get(task);
-        }
-        if (taskFlowConfig.getAlgoTransforms().containsKey(task)) {
-            FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(task);
-            services = getRelyServiceList(algoTransform);
-        }
-        if (CollectionUtils.isNotEmpty(services)) {
-            for (String item : services) {
-                if (!req.containsKey(item) || !(req.get(item) instanceof List)) {
-                    return ServiceResult.of(-1, "taskService need depend data: " + item);
-                }
-                List<Map<String, Object>> data = (List<Map<String, Object>>) req.get(item);
-                RecommendConfig.Service serviceConfig = taskFlowConfig.getServices().get(item);
-                List<Field> fields = Lists.newArrayList();
-                List<DataTypeEnum> types = Lists.newArrayList();
-                if (CollectionUtils.isNotEmpty(serviceConfig.getColumnNames())) {
-                    for (String col : serviceConfig.getColumnNames()) {
-                        fields.add(serviceConfig.getFieldMap().get(col));
-                        types.add(serviceConfig.getColumnMap().get(col));
+        try(DataContext context = new DataContext(req)) {
+            List<String> services = null;
+            if (taskFlowConfig.getFeatures().containsKey(task) && taskFlowConfig.getFeatureRelyServices().containsKey(task)) {
+                services = taskFlowConfig.getFeatureRelyServices().get(task);
+            }
+            if (taskFlowConfig.getAlgoTransforms().containsKey(task)) {
+                FeatureConfig.AlgoTransform algoTransform = taskFlowConfig.getAlgoTransforms().get(task);
+                services = getRelyServiceList(algoTransform);
+            }
+            if (CollectionUtils.isNotEmpty(services)) {
+                for (String item : services) {
+                    if (!req.containsKey(item) || !(req.get(item) instanceof List)) {
+                        return ServiceResult.of(-1, "taskService need depend data: " + item);
                     }
-                    DataResult resultItem = new DataResult();
-                    resultItem.setFeatureData(item, fields, types, data);
-                    taskService.setDataResultByName(item, resultItem, context);
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) req.get(item);
+                    RecommendConfig.Service serviceConfig = taskFlowConfig.getServices().get(item);
+                    List<Field> fields = Lists.newArrayList();
+                    List<DataTypeEnum> types = Lists.newArrayList();
+                    if (CollectionUtils.isNotEmpty(serviceConfig.getColumnNames())) {
+                        for (String col : serviceConfig.getColumnNames()) {
+                            fields.add(serviceConfig.getFieldMap().get(col));
+                            types.add(serviceConfig.getColumnMap().get(col));
+                        }
+                        DataResult resultItem = new DataResult();
+                        resultItem.setFeatureData(item, fields, types, data);
+                        taskService.setDataResultByName(item, resultItem, context);
+                    }
                 }
             }
+            StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+            timeRecorder.start(String.format("task_%s_total", task));
+            try(DataResult result = taskService.execute(new ServiceRequest(req), context)) {
+                timeRecorder.stop();
+                context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+                if (result == null) {
+                    return ServiceResult.of(-1, "taskService execute fail!");
+                }
+                return ServiceResult.of(result.output()).addTimeRecord(context.getTimeRecords());
+            }
         }
-        DataResult result;
-        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
-        timeRecorder.start(String.format("task_%s_total", task));
-        result = taskService.execute(new ServiceRequest(req), context);
-        timeRecorder.stop();
-        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
-        if (result == null) {
-            return ServiceResult.of(-1, "taskService execute fail!");
-        }
-        return ServiceResult.of(result.output()).addTimeRecord(context.getTimeRecords());
     }
 
     private List<String> getRelyServiceList(FeatureConfig.AlgoTransform algoTransform) {
@@ -161,23 +162,25 @@ public class ServiceController {
     @SneakyThrows
     @RequestMapping(value = "/recommend/{task}", method = POST, produces = "application/json")
     public ServiceResult getRecommendResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
-        DataContext context = new DataContext(req);
-        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
-        timeRecorder.start(String.format("task_%s_total", task));
-        List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
-        List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
-        log.info("recommend result : {}", result);
-        if (CollectionUtils.isEmpty(result)) {
+        try (DataContext context = new DataContext(req)) {
+            StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+            timeRecorder.start(String.format("task_%s_total", task));
+            List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
+            List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
+            log.info("recommend result : {}", result);
+            if (CollectionUtils.isEmpty(result)) {
+                timeRecorder.stop();
+                return ServiceResult.of(-1, "taskService execute fail!");
+            }
+            List<Map<String, Object>> output = Lists.newArrayList();
+            for (DataResult item : result) {
+                output.addAll(item.output());
+                item.close();
+            }
             timeRecorder.stop();
-            return ServiceResult.of(-1, "taskService execute fail!");
+            context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+            return ServiceResult.of(output).addTimeRecord(context.getTimeRecords());
         }
-        List<Map<String, Object>> output = Lists.newArrayList();
-        for (DataResult item : result) {
-            output.addAll(item.output());
-        }
-        timeRecorder.stop();
-        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
-        return ServiceResult.of(output).addTimeRecord(context.getTimeRecords());
     }
     /**
      * 用于实现restfull接口 /service/recommend/{scene}/{id}
@@ -194,17 +197,18 @@ public class ServiceController {
         if (sceneService == null) {
             return ServiceResult.of(-1, String.format("scene:%s is not support!", scene));
         }
-        DataContext context = new DataContext(req);
-        if (StringUtils.isEmpty(id)) {
-            return ServiceResult.of(-1, String.format("scene:%s recommend need id, eg:userId!", scene));
+        try(DataContext context = new DataContext(req)) {
+            if (StringUtils.isEmpty(id)) {
+                return ServiceResult.of(-1, String.format("scene:%s recommend need id, eg:userId!", scene));
+            }
+            context.setId(id);
+            StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+            timeRecorder.start(String.format("scene_%s_total", scene));
+            List<Map<String, Object>> data = sceneService.output(context);
+            timeRecorder.stop();
+            context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
+            return ServiceResult.of(data, id).addTimeRecord(context.getTimeRecords());
         }
-        context.setId(id);
-        StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
-        timeRecorder.start(String.format("scene_%s_total", scene));
-        List<Map<String, Object>> data = sceneService.output(context);
-        timeRecorder.stop();
-        context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
-        return ServiceResult.of(data, id).addTimeRecord(context.getTimeRecords());
     }
 
     // add cache later

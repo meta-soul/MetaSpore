@@ -76,9 +76,10 @@ public class Scene extends TaskFlow<Layer> {
     }
 
     public List<Map<String, Object>> output(DataContext context) {
-        DataResult result = process(context);
-        if (result == null || result.isNull()) return Lists.newArrayList();
-        return result.output(scene.getColumnNames());
+        try(DataResult result = process(context)) {
+            if (result == null || result.isNull()) return Lists.newArrayList();
+            return result.output(scene.getColumnNames());
+        }
     }
 
     @Override

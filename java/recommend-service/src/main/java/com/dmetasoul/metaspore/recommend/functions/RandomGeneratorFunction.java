@@ -29,6 +29,7 @@ import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ExecutorService;
 
 import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
 
@@ -36,7 +37,8 @@ import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
 @FunctionAnnotation("randomGenerator")
 public class RandomGeneratorFunction implements Function {
     @Override
-    public boolean process(List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config) {
+    public boolean process(List<FieldData> fields, @NotEmpty List<FieldData> result,
+                           @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
         Map<String, Object> options = config.getOptions();
         if (CollectionUtils.isNotEmpty(result)) {
             FieldData output = result.get(0);

@@ -18,7 +18,9 @@ package com.dmetasoul.metaspore.recommend.functions;
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
 import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.google.common.collect.Lists;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.Assert;
@@ -26,22 +28,46 @@ import org.springframework.util.Assert;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
 @Slf4j
 @FunctionAnnotation("typeTransform")
 public class TypeFunction implements Function {
     @Override
-    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result, @NonNull FieldAction config) {
+    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result,
+                           @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
         Map<String, Object> options = config.getOptions();
         Assert.isTrue(fields.size() == result.size(), "input and output has same size!");
+        List<CompletableFuture<List<IndexData>>> fieldList = Lists.newArrayList();
         for (int k = 0; k < fields.size(); ++k) {
             FieldData input = fields.get(k);
             FieldData output = result.get(k);
             DataTypeEnum outType = output.getType();
             Assert.notNull(outType, "output type should be configure!");
-            for (int i = 0; i < input.getValue().size(); ++i) {
-                Object value = input.getValue().get(i);
+            fieldList.add(processField(input, outType, taskPool));
+        }
+        CompletableFuture<?> resultFuture = CompletableFuture.allOf(fieldList.toArray(new CompletableFuture[]{}));
+        for (int k = 0; k < fields.size(); ++k) {
+            FieldData output = result.get(k);
+            CompletableFuture<List<IndexData>> fieldFuture = fieldList.get(k);
+            try {
+                output.setIndexValue(fieldFuture.get());
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return true;
+    }
+
+    private CompletableFuture<List<IndexData>> processField(FieldData input, DataTypeEnum outType,
+                                                            ExecutorService taskPool) {
+        List<CompletableFuture<Object>> valueList = Lists.newArrayList();
+        for (int i = 0; i < input.getValue().size(); ++i) {
+            Object value = input.getValue().get(i);
+            valueList.add(CompletableFuture.supplyAsync(() -> {
                 Object data = null;
                 if (outType.equals(input.getType())) {
                     data = value;
@@ -69,9 +95,21 @@ public class TypeFunction implements Function {
                 if (value != null && data == null) {
                     log.error("typeTransform type not match, transform fail, output null at inType: {}, outType: {}, value: {}", input.getType(), outType, value);
                 }
-                output.addIndexData(FieldData.create(i, data));
-            }
+                return data;
+            }, taskPool));
         }
-        return true;
+        CompletableFuture<?> resultFuture = CompletableFuture.allOf(valueList.toArray(new CompletableFuture[]{}));
+        return resultFuture.thenApplyAsync(x->{
+            List<IndexData> result = Lists.newArrayList();
+            for (int i = 0; i < valueList.size(); ++i) {
+                CompletableFuture<Object> fieldFuture = valueList.get(i);
+                try {
+                    result.add(FieldData.create(i, fieldFuture.get()));
+                } catch (InterruptedException | ExecutionException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return result;
+        }, taskPool);
     }
 }

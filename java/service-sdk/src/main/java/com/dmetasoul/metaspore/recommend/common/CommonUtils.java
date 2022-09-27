@@ -25,7 +25,6 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,6 +35,19 @@ import java.util.Map;
 
 @Slf4j
 public class CommonUtils {
+    private final static Runtime runtime = Runtime.getRuntime();
+    public static long usedMemory() {
+        return runtime.totalMemory() - runtime.freeMemory();
+    }
+
+    public static double useMemoryRatio() {
+        return (usedMemory() * 1.0) / runtime.totalMemory();
+    }
+
+    public static long freeMemory() {
+        return runtime.freeMemory();
+    }
+
     public static String genResultKey(String name, String taskName) {
         return String.format("%s_%s", name, taskName);
     }

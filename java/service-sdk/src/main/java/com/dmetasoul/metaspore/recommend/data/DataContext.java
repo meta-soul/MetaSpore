@@ -34,11 +34,16 @@ import static com.dmetasoul.metaspore.recommend.common.CommonUtils.getObjectToMa
  */
 @Slf4j
 @Data
-public class DataContext {
+public class DataContext implements AutoCloseable {
     private String id;
     private Map<String, Object> request;
     private Map<String, Long> timeRecords = Maps.newConcurrentMap();
     private ConcurrentMap<String, DataResult> results = Maps.newConcurrentMap();
+
+    @Override
+    public void close() {
+        results.forEach((key, value)-> value.close());
+    }
 
     public DataContext() {
         this.id = UUID.randomUUID().toString().replaceAll("-", "");

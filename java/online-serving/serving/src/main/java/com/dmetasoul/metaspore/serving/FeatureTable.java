@@ -16,10 +16,12 @@
 
 package com.dmetasoul.metaspore.serving;
 
+import com.google.common.collect.Lists;
+import org.apache.arrow.memory.ArrowBuf;
 import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.*;
 import org.apache.arrow.vector.complex.ListVector;
-import org.apache.arrow.vector.complex.MapVector;
 import org.apache.arrow.vector.complex.impl.UnionListWriter;
 import org.apache.arrow.vector.holders.VarCharHolder;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -27,13 +29,35 @@ import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.arrow.vector.util.Text;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
-public class FeatureTable {
+public class FeatureTable implements AutoCloseable {
 
     public FeatureTable(String name, Iterable<Field> fields, BufferAllocator allocator) {
         this.name = name;
+        this.allocator = new ArrowAllocator(allocator);
         Schema schema = new Schema(fields);
-        root = VectorSchemaRoot.create(schema, allocator);
+        root = VectorSchemaRoot.create(schema, this.allocator.getAlloc());
+    }
+
+    public FeatureTable(String name, Iterable<Field> fields) {
+        this.name = name;
+        this.allocator = new ArrowAllocator(Integer.MAX_VALUE);
+        Schema schema = new Schema(fields);
+        root = VectorSchemaRoot.create(schema, allocator.getAlloc());
+    }
+    @Override
+    public void close() {
+        if (root != null && allocator != null) {
+            root.clear();
+            allocator.close();
+        }
+    }
+
+    public void addBuffer(ArrowBuf buf) {
+        if (buf != null) {
+            this.allocator.addBuffer(buf);
+        }
     }
 
     public FeatureTable(String name, VectorSchemaRoot root) {
@@ -107,6 +131,7 @@ public class FeatureTable {
             vch.end = b.length;
             vch.buffer = v.getAllocator().buffer(b.length);
             vch.buffer.setBytes(0, b);
+            this.allocator.addBuffer(vch.buffer);
             writer.write(vch);
         }
         writer.endList();
@@ -208,6 +233,6 @@ public class FeatureTable {
     private int rowCount = 0;
 
     private VectorSchemaRoot root;
-
+    private ArrowAllocator allocator;
     private String name;
 }

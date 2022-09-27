@@ -67,7 +67,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
 
     @Override
     public void addFunctions() {
-        addFunction("milvusIdScore", (fields, result, config) -> {
+        addFunction("milvusIdScore", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");
@@ -77,7 +77,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
             List<IndexData> embedding = fields.get(0).getIndexValue();
             return searchIdScore(embedding, result, options);
         });
-        addFunction("milvusField", (fields, result, config) -> {
+        addFunction("milvusField", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields),
                     "input fields must not null");

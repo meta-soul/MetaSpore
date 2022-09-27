@@ -44,7 +44,7 @@ public class UserProfileTask extends AlgoTransformTask {
     }
     @Override
     public void addFunctions() {
-        addFunction("splitRecentIds", (fields, result, config) -> {
+        addFunction("splitRecentIds", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
@@ -59,7 +59,7 @@ public class UserProfileTask extends AlgoTransformTask {
             }
             return true;
         });
-        addFunction("recentWeight", (fields, result, config) -> {
+        addFunction("recentWeight", (fields, result, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input data is not null");
             Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");

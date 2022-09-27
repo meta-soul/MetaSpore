@@ -70,6 +70,7 @@ public enum DataTypeEnum {
                 vch.buffer = vector.getAllocator().buffer(b.length);
                 vch.buffer.setBytes(0, b);
                 vector.setSafe(index, vch);
+                featureTable.addBuffer(vch.buffer);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -144,6 +145,7 @@ public enum DataTypeEnum {
                 binHolder.buffer = vector.getAllocator().buffer(data.length);
                 binHolder.buffer.setBytes(0, data);
                 vector.setSafe(index, binHolder);
+                featureTable.addBuffer(binHolder.buffer);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -186,6 +188,7 @@ public enum DataTypeEnum {
                 binHolder.buffer = vector.getAllocator().buffer(blob.length());
                 binHolder.buffer.setBytes(0, blob.getBytes(1L, (int) blob.length()));
                 vector.setSafe(index, binHolder);
+                featureTable.addBuffer(binHolder.buffer);
             }
             featureTable.setRowCount(index+1);
             return true;
