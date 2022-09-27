@@ -127,7 +127,7 @@ class DIN(torch.nn.Module):
         all_column_embedding = []
         for column_index in non_seq_column_index_list:
             column_embedding = x_reshape[column_index::column_nums]
-            column_embedding = torch.stack(column_embedding).squeeze()
+            column_embedding = torch.stack(column_embedding).squeeze(1)
             all_column_embedding.append(column_embedding)
         all_column_embedding = torch.cat(all_column_embedding, dim=1) 
         return all_column_embedding
@@ -153,7 +153,7 @@ class DIN(torch.nn.Module):
         target_embedding = self.get_non_seq_column_embedding(self.target_column_index_list, x_reshape, column_nums)  
         seq_embedding = self.get_seq_column_embedding(self.seq_column_index_list, x_reshape, column_nums)
         item_seq_length = self.get_seq_length(self.seq_column_index_list, x, offset, column_nums)
-        all_sum_pooling = self.DIN_attention(target_embedding, seq_embedding, item_seq_length).squeeze()
+        all_sum_pooling = self.DIN_attention(target_embedding, seq_embedding, item_seq_length).squeeze(1)
         emb_concat = torch.cat((other_embedding, all_sum_pooling, target_embedding), dim=1)     
         din_out = self.mlp(emb_concat) 
         if self.use_wide:

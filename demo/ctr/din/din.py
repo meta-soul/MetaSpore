@@ -113,7 +113,8 @@ def train(spark, trian_dataset, **model_params):
                                   model_version=model_version,
                                   experiment_name=experiment_name,
                                   input_label_column_index=input_label_column_index,
-                                  metric_update_interval=metric_update_interval) #100
+                                  metric_update_interval=metric_update_interval,
+                                  train_epoches=train_epoches) #100
     model = estimator.fit(trian_dataset)
      ## dnn learning rate
     estimator.updater = ms.AdamTensorUpdater(adam_learning_rate)
