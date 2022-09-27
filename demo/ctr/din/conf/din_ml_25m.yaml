@@ -11,16 +11,16 @@ server_memory: '10G'
 coordinator_memory: '10G'
 
 ## datasets
-train_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/train.parquet
-test_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/test.parquet
+train_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/train.parquet
+test_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/test.parquet
 
 ## model configurations
-din_column_name_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/column_schema_din_25M.txt
-din_combine_schema_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/combine_schema_din_25M.txt
-wide_column_name_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/column_schema_din_25M.txt
-wide_combine_schema_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/combine_schema_wide.txt
-deep_column_name_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/column_schema_din_25M.txt
-deep_combine_schema_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/combine_schema_deep.txt
+din_column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/column_schema_din_25M.txt
+din_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/combine_schema_din_25M.txt
+wide_column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/column_schema_din_25M.txt
+wide_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/combine_schema_wide.txt
+deep_column_name_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/column_schema_din_25M.txt
+deep_combine_schema_path: s3://dmetasoul-bucket/xwb/demo/movielens/25m/rank-seq/combine_schema_deep.txt
 
 model_in_path: null
 model_out_path: ${MY_S3_BUCKET}/movielens/model/din/model_out/ml_1m/
@@ -56,3 +56,4 @@ ftrl_l2: 120.0
 ftrl_alpha: 0.5
 ftrl_beta: 1.0
 adam_learning_rate: 0.0001
+train_epoches: 1
