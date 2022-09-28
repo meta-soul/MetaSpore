@@ -49,6 +49,7 @@ dependencies = [
     'awscli==1.22.76',
     'awscli-plugin-endpoint~=0.4',
     'fsspec[s3]~=2022.7.1',
+    's3fs~=2022.7.1',
     'python-consul~=1.1.0',
     'faiss-cpu~=1.7.2',
     'pymilvus~=2.1.1',
@@ -69,7 +70,7 @@ skip = ["cp36-*", "cp37-*", "cp311-*", "pp*"]
 
 [tool.cibuildwheel.linux]
 before-all = "pushd /opt/_internal && tar -xJf static-libs-for-embedding-only.tar.xz && popd"
-before-build = "python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/ && python -m pip install 'grpcio[protobuf]==1.37.1' pyarrow==7.0.0 numpy --no-cache-dir && rm -rf /opt/metaspore-build-release/ && cmake -B /opt/metaspore-build-release -S {project} -DCMAKE_PREFIX_PATH=/opt/vcpkg_installed/x64-linux -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_TESTS=OFF -DBUILD_SERVING_BIN=OFF -DBUILD_TRAIN_PKG=ON && cmake --build /opt/metaspore-build-release --target metaspore_shared -- -j`nproc`"
+before-build = "python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/ && python -m pip install 'grpcio[protobuf]==1.47.2' pyarrow==7.0.0 numpy --no-cache-dir && rm -rf /opt/metaspore-build-release/ && cmake -B /opt/metaspore-build-release -S {project} -DCMAKE_PREFIX_PATH=/opt/vcpkg_installed/x64-linux -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_TESTS=OFF -DBUILD_SERVING_BIN=OFF -DBUILD_TRAIN_PKG=ON && cmake --build /opt/metaspore-build-release --target metaspore_shared -- -j`nproc`"
 
 [tool.cibuildwheel.linux.environment]
 _METASPORE_SO = "/opt/metaspore-build-release/_metaspore.so"
