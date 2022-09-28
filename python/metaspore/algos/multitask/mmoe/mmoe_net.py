@@ -18,8 +18,7 @@ import torch
 import metaspore as ms
 import sys
 
-sys.path.append('../../../../')
-from python.algos.layers import MLPLayer
+from ...layers import MLPLayer
 
 class MMoE(torch.nn.Module):
     def __init__(self,
