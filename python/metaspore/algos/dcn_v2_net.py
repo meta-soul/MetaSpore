@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import torch 
+import torch
 import metaspore as ms
 
 from .layers import LRLayer, MLPLayer, CrossNetMix, CrossNetV2
@@ -38,7 +38,7 @@ class DCN(torch.nn.Module):
                  ftrl_l2=120.0,
                  ftrl_alpha=0.5,
                  ftrl_beta=1.0,
-                 stacked_dnn_hidden_units=[512, 512, 512], 
+                 stacked_dnn_hidden_units=[512, 512, 512],
                  parallel_dnn_hidden_units=[512, 512, 512],
                  model_structure='parallel',
                  use_low_rank_mixture=False,
@@ -52,7 +52,7 @@ class DCN(torch.nn.Module):
         self.deep_embedding_dim = deep_embedding_dim
         self.num_crossing_layers = num_crossing_layers
         self.model_structure = model_structure
-        
+
         ## lr layer
         if self.use_wide:
             self.lr_sparse = ms.EmbeddingSumConcat(wide_embedding_dim, wide_column_name_path, wide_combine_schema_path)
@@ -71,16 +71,16 @@ class DCN(torch.nn.Module):
             self.crossnet = CrossNetMix(self.dnn_input_dim, self.num_crossing_layers, low_rank=low_rank, num_experts=num_experts)
         else:
             self.crossnet = CrossNetV2(self.dnn_input_dim, self.num_crossing_layers)
-        
+
         ## crossing structure
         if self.model_structure in ["stacked", "stacked_parallel"]:
             self.stacked_dnn = MLPLayer(input_dim=self.dnn_input_dim,
                                         output_dim=None, # output hidden layer
                                         hidden_units=stacked_dnn_hidden_units,
                                         hidden_activations=dnn_activations,
-                                        final_activation=None, 
-                                        dropout_rates=net_dropout, 
-                                        batch_norm=batch_norm, 
+                                        final_activation=None,
+                                        dropout_rates=net_dropout,
+                                        batch_norm=batch_norm,
                                         use_bias=True)
             final_dim = stacked_dnn_hidden_units[-1]
         if self.model_structure in ["parallel", "stacked_parallel"]:
@@ -88,9 +88,9 @@ class DCN(torch.nn.Module):
                                         output_dim=None, # output hidden layer
                                         hidden_units=parallel_dnn_hidden_units,
                                         hidden_activations=dnn_activations,
-                                        final_activation=None, 
-                                        dropout_rates=net_dropout, 
-                                        batch_norm=batch_norm, 
+                                        final_activation=None,
+                                        dropout_rates=net_dropout,
+                                        batch_norm=batch_norm,
                                         use_bias=True)
             final_dim = self.dnn_input_dim + parallel_dnn_hidden_units[-1]
         if self.model_structure == "stacked_parallel":

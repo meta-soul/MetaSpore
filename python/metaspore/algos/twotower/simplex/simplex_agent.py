@@ -27,10 +27,10 @@ class SimpleXAgent(ms.PyTorchAgent):
     def _create_metric(self):
         metric = RetrievalModelMetric(use_auc=False)
         return metric
-    
+
     def update_metric(self, predictions, labels, loss):
         self._metric.accumulate(predictions.data.numpy(), labels.data.numpy(), loss.data.numpy())
-    
+
     def handle_request(self, req):
         body = json.loads(req.body)
         command = body.get('command')
@@ -59,32 +59,32 @@ class SimpleXAgent(ms.PyTorchAgent):
             self.send_response(req, res)
             return
         super().handle_request(req)
-    
+
     @staticmethod
     def nansum(x):
         return torch.where(torch.isnan(x), torch.zeros_like(x), x).sum()
-    
+
     @staticmethod
     def cosine_contrastive_loss(yhat, y, nsc, w, m):
         z = yhat-m
         z[z<0] = 0
         loss_vector = y*(1-yhat) + (1-y)*(w/nsc*z)
-        
+
         return torch.sum(loss_vector)
-    
+
     def compute_loss(self, predictions, labels):
         loss = self.cosine_contrastive_loss(predictions, labels, self._negative_sample_count, self._w, self._m) / labels.shape[0] * (1+self._negative_sample_count)
         return loss
-    
+
     def update_metric(self, predictions, labels, loss):
         self._metric.accumulate(predictions.data.numpy(), labels.data.numpy(), loss.data.numpy())
-    
+
     def update_progress(self, predictions, labels, loss):
         self.minibatch_id += 1
         self.update_metric(predictions, labels, loss)
         if self.minibatch_id % self.metric_update_interval == 0:
             self.push_metric()
-            
+
     def train_minibatch(self, minibatch):
         self.model.train()
         ndarrays, labels = self.preprocess_minibatch(minibatch)

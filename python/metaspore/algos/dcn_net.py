@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import torch 
+import torch
 import metaspore as ms
 
 from .layers import LRLayer, MLPLayer, CrossNet
@@ -75,13 +75,13 @@ class DCN(torch.nn.Module):
                             output_dim = None,
                             hidden_units = dnn_hidden_units,
                             hidden_activations = dnn_activations,
-                            final_activation = None, 
-                            dropout_rates = net_dropout, 
-                            batch_norm = batch_norm, 
+                            final_activation = None,
+                            dropout_rates = net_dropout,
+                            batch_norm = batch_norm,
                             use_bias = use_bias) \
                    if dnn_hidden_units else None
         self.fc = torch.nn.Linear(self.final_dim, 1)
-        
+
         ## logit
         self.final_activation = torch.nn.Sigmoid()
 
@@ -99,6 +99,6 @@ class DCN(torch.nn.Module):
             lr_feature_map = self.lr_sparse(x)
             lr_logit = self.lr(lr_feature_map)
             logit += lr_logit
-        
+
         prediction = self.final_activation(logit)
         return prediction

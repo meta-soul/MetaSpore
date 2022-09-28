@@ -33,12 +33,12 @@ class MMoEAgent(ms.PyTorchAgent):
 
     def log_loss(self, yhat, y):
         return self.nansum(-(y * (yhat + 1e-12).log() + (1 - y) * (1 - yhat + 1e-12).log()))
-    
+
     def compute_loss(self, predictions, labels):
         loss =  self.log_loss(predictions, labels) / labels.shape[0]
         return loss.sum()
     '''
-    
+
     def train_minibatch(self, minibatch):
         self.model.train()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
@@ -47,7 +47,7 @@ class MMoEAgent(ms.PyTorchAgent):
         loss = self.compute_loss(predictions, labels)
         self.trainer.train(loss)
         self.update_progress(predictions[:, 0], labels[:, 0], loss)
-        
+
     def validate_minibatch(self, minibatch):
         self.model.eval()
         ndarrays, labels = self.preprocess_minibatch(minibatch)
@@ -55,7 +55,7 @@ class MMoEAgent(ms.PyTorchAgent):
         labels = torch.from_numpy(labels).reshape(-1, len(self.input_label_column_indexes))
         self.update_progress(predictions[:, 0], labels[:, 0], torch.tensor(0.0))
         return predictions[:, self.input_label_column_indexes].detach()
-        
+
     def preprocess_minibatch(self, minibatch):
         import numpy as np
         ndarrays = [col.values for col in minibatch]
@@ -64,7 +64,7 @@ class MMoEAgent(ms.PyTorchAgent):
             labels_list.append(np.reshape(minibatch[input_label_column_index].values.astype(np.float32), (-1, 1)))
         labels = np.concatenate(labels_list, axis=1)
         return ndarrays, labels
-    
+
     def feed_validation_dataset(self):
         df = self.dataset.withColumn('prediction_result', self.feed_validation_minibatch()(*self.dataset.columns))
         for i in range(len(self.input_label_column_indexes)):
@@ -73,8 +73,8 @@ class MMoEAgent(ms.PyTorchAgent):
         df = df.drop('prediction_result')
         self.validation_result = df
         df.cache()
-        df.write.format('noop').mode('overwrite').save()  
-        
+        df.write.format('noop').mode('overwrite').save()
+
     def feed_validation_minibatch(self):
         from pyspark.sql.functions import pandas_udf
         returnTypeStr = ', '.join([f'col{i}: float' for i in range(len(self.input_label_column_indexes))])
@@ -84,8 +84,8 @@ class MMoEAgent(ms.PyTorchAgent):
             result = self.validate_minibatch(minibatch)
             result = self.process_validation_minibatch_result(minibatch, result)
             return result
-        return _feed_validation_minibatch  
-        
+        return _feed_validation_minibatch
+
     def process_validation_minibatch_result(self, minibatch, result):
         minibatch_size = len(minibatch[self.input_label_column_index])
         result = pd.DataFrame({
@@ -111,14 +111,14 @@ class MMoEAgent(ms.PyTorchAgent):
             result = pd.Series(result)
         return result
 
-    
+
     def _create_metric(self):
         metric = MMoEMetric()
         return metric
-    
+
     def update_metric(self, predictions, labels, loss):
         self._metric.accumulate(predictions.data.numpy(), labels.data.numpy(), loss.data.numpy())
-    
+
     def update_progress(self, predictions, labels, loss):
         self.minibatch_id += 1
         self.update_metric(predictions, labels, loss)
@@ -156,8 +156,8 @@ class MMoEAgent(ms.PyTorchAgent):
             self.send_response(req, res)
             return
         super().handle_request(req)
-    
-    
+
+
 class MMoEMetric(ms.ModelMetric):
     def __init__(self, buffer_size=1000000, threshold=0.0, beta=1.0):
         super().__init__(buffer_size=1000000, threshold=0.0, beta=1.0)

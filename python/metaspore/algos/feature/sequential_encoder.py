@@ -19,13 +19,13 @@ from functools import reduce
 from pyspark.sql import functions as F
 
 def gen_user_bhv_seq(spark,
-                     dataset, 
+                     dataset,
                      user_column = 'user_id',
                      item_coulmn = 'item_id',
                      time_column = 'timestamp',
                      item_seq_column = 'user_bhv_item_seq',
                      last_item_column = 'user_bhv_last_item',
-                     max_len=10, 
+                     max_len=10,
                      sep=u'\u0001'):
     ''' generate sparese features for MovieLens-1M dataset
 
@@ -44,10 +44,10 @@ def gen_user_bhv_seq(spark,
     def gen_bhv_seq_by_user(kv_pairs, max_len, sep):
         ''' generte user behaviour sequence features
 
-        Args 
+        Args
         - kv_pairs: [item_id, timestamp]
         - max_len: maximum user behavior sequence length
-        - seq: squence splitter    
+        - seq: squence splitter
         '''
         # sort by timestatamp
         kv_pairs.sort(key=lambda x: x[1])
@@ -71,6 +71,6 @@ def gen_user_bhv_seq(spark,
         .flatMapValues(lambda x: x)\
         .map(lambda x: (x[0], x[1][0], x[1][1], x[1][2], x[1][3]))\
         .toDF([user_column, item_coulmn, item_seq_column, last_item_column, time_column])
-    
+
     print('Debug -- generate sequential features cost time:', time.time() - start)
     return hist_item_list_df

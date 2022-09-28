@@ -14,11 +14,11 @@
 # limitations under the License.
 #
 
-import torch 
+import torch
 import metaspore as ms
 import sys
 
-sys.path.append('../../../../') 
+sys.path.append('../../../../')
 from python.algos.layers import MLPLayer
 
 class MMoE(torch.nn.Module):
@@ -47,7 +47,7 @@ class MMoE(torch.nn.Module):
         self.expert_numb = expert_numb
         self.task_numb = task_numb
         self.expert_out_dim = expert_out_dim
-        
+
         self.embedding_dim = embedding_dim
         self.column_name_path = column_name_path
         self.combine_schema_path = combine_schema_path
@@ -58,44 +58,44 @@ class MMoE(torch.nn.Module):
                                                     beta = ftrl_beta)
         self.sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
         self.input_dim = int(self.sparse.feature_count*self.embedding_dim)
-        
+
         self.experts = []
         for i in range(0, self.expert_numb):
             mlp = MLPLayer(input_dim = self.input_dim,
                             output_dim = self.expert_out_dim,
                             hidden_units = expert_hidden_units,
                             hidden_activations = dnn_activations,
-                            final_activation = None, 
+                            final_activation = None,
                             dropout_rates = net_dropout,
                             input_norm=input_norm,
-                            batch_norm = batch_norm, 
+                            batch_norm = batch_norm,
                             use_bias = use_bias)
             self.experts.append(mlp)
-        
+
         self.gates = []
         for i in range(0, self.task_numb):
             mlp = MLPLayer(input_dim = self.input_dim,
                             output_dim = self.expert_numb,
                             hidden_units = gate_hidden_units,
                             hidden_activations = dnn_activations,
-                            final_activation = None, 
+                            final_activation = None,
                             dropout_rates = net_dropout,
                             input_norm=input_norm,
-                            batch_norm = batch_norm, 
+                            batch_norm = batch_norm,
                             use_bias = use_bias)
             self.gates.append(mlp)
         self.gate_softmax = torch.nn.Softmax(dim=1)
-        
+
         self.towers = []
         for i in range(0, self.task_numb):
             mlp = MLPLayer(input_dim = self.expert_out_dim,
                             output_dim = 1,
                             hidden_units = tower_hidden_units,
                             hidden_activations = dnn_activations,
-                            final_activation = 'Sigmoid', 
+                            final_activation = 'Sigmoid',
                             dropout_rates = net_dropout,
                             input_norm=input_norm,
-                            batch_norm = batch_norm, 
+                            batch_norm = batch_norm,
                             use_bias = use_bias)
             self.towers.append(mlp)
 
@@ -107,7 +107,7 @@ class MMoE(torch.nn.Module):
             expert_outputs.append(expert_out)
         expert_cat = torch.cat(expert_outputs, dim=1)
         expert_cat = expert_cat.reshape(-1, self.expert_numb, self.expert_out_dim)
-        
+
         predictions = []
         for i in range(0, self.task_numb):
             gate_out = self.gates[i](x)

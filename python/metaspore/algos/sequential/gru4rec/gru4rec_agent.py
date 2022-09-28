@@ -31,7 +31,7 @@ class GRU4RecBatchNegativeSamplingModule(ms.TwoTowerRetrievalModule):
         self._user_module = user_module
         self._item_module = item_module
         self._similarity_module = similarity_module
-    
+
     @property
     def user_module(self):
         return self._user_module
@@ -43,7 +43,7 @@ class GRU4RecBatchNegativeSamplingModule(ms.TwoTowerRetrievalModule):
     @property
     def similarity_module(self):
         return self._similarity_module
-    
+
     def forward(self, x):
         user_emb = self._user_module(x)
         item_emb = self._item_module(x)
@@ -74,7 +74,7 @@ class GRU4RecBatchNegativeSamplingAgent(ms.PyTorchAgent):
         prob = torch.sigmoid(pairwise_scores).mean()
         reg = torch.sigmoid(scores**2-scores.diag()**2).mean()
         return prob + reg
-    
+
     def preprocess_minibatch(self, minibatch):
         ndarrays = [col.values for col in minibatch]
         # exclude sampling probability and sample weight
@@ -82,7 +82,7 @@ class GRU4RecBatchNegativeSamplingAgent(ms.PyTorchAgent):
             ndarrays = ndarrays[:self.input_feature_column_num]
         labels = minibatch[self.input_label_column_index].values.astype(np.float32)
         return ndarrays, labels
-    
+
     def train_minibatch(self, minibatch):
         # prepare the training process
         self.model.train()

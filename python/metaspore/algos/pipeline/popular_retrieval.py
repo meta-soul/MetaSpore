@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class PopularsRetrievalConfig:
     max_recommendation_count = attrs.field(validator=attrs.validators.instance_of(int))
     group_nums = attrs.field(validator=attrs.validators.instance_of(int))
-    model_out_path = attrs.field(default=None, 
+    model_out_path = attrs.field(default=None,
         validator=attrs.validators.optional(attrs.validators.instance_of(str)))
 
 class PopularRetrievalModule():
@@ -51,7 +51,7 @@ class PopularRetrievalModule():
                             .groupBy(item_id_column)\
                             .agg(F.countDistinct(user_id_column))\
                             .sort(F.col('count('+ user_id_column +')').desc())\
-                            .limit(group_nums * max_recommendation_count) 
+                            .limit(group_nums * max_recommendation_count)
         recall_result = recall_result.withColumn('key', F.floor(F.rand() * group_nums))
         ## sort according to count value in each group
         recall_result = recall_result.withColumn('rank', F.dense_rank().over(
@@ -59,7 +59,7 @@ class PopularRetrievalModule():
         ## compute the score
         recall_result = recall_result.withColumn('score', 1 / (1 + F.col('rank')))\
                             .drop(F.col('rank'))\
-                            .drop(F.col('count(' + user_id_column + ')'))        
+                            .drop(F.col('count(' + user_id_column + ')'))
         recall_result = recall_result.withColumn('value', F.struct(item_id_column, 'score'))\
                             .drop(F.col(item_id_column))\
                             .drop(F.col('score'))
@@ -67,12 +67,12 @@ class PopularRetrievalModule():
         return recall_result
 
     def transform(self, recall_result, test_dataset):
-        recall_result = recall_result.filter(F.col('key')==0)        
-        test_result = test_dataset.join(recall_result.select('value_list'), None, 'full') 
+        recall_result = recall_result.filter(F.col('key')==0)
+        test_result = test_dataset.join(recall_result.select('value_list'), None, 'full')
         str_schema = 'array<struct<name:string,_2:double>>'
         test_result = test_result.withColumn('rec_info', F.col('value_list').cast(str_schema))
         return test_result
-        
+
     def evaluate(self, test_result, item_id_column):
         prediction_label_rdd = test_result.rdd.map(lambda x:(\
             [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
@@ -89,17 +89,17 @@ class PopularRetrievalModule():
     def run(self, train_dataset, test_dataset):
         if not isinstance(train_dataset, DataFrame):
             raise ValueError("Type of train_dataset must be DataFrame.")
-     
+
         popular_match = self.train(
-            train_dataset, 
-            BEHAVIOR_COLUMN_NAME, 
-            BEHAVIOR_FILTER_VALUE, 
-            USER_ID_COLUMN_NAME, 
-            ITEM_ID_COLUMN_NAME, 
-            self.conf.group_nums, 
+            train_dataset,
+            BEHAVIOR_COLUMN_NAME,
+            BEHAVIOR_FILTER_VALUE,
+            USER_ID_COLUMN_NAME,
+            ITEM_ID_COLUMN_NAME,
+            self.conf.group_nums,
             self.conf.max_recommendation_count
         )
-        
+
         if self.conf.model_out_path:
             popular_match.write.parquet(self.conf.model_out_path, mode="overwrite")
             logger.info('Popular - persistence: done')
@@ -107,10 +107,9 @@ class PopularRetrievalModule():
         metric_dict = {}
         if test_dataset:
             if not isinstance(test_dataset, DataFrame):
-                raise ValueError("Type of test_dataset must be DataFrame.") 
+                raise ValueError("Type of test_dataset must be DataFrame.")
             test_result = self.transform(popular_match, test_dataset)
             metric_dict = self.evaluate(test_result, ITEM_ID_COLUMN_NAME)
             logger.info('Popular evaluation metrics: {}'.format(metric_dict))
 
         return popular_match, metric_dict
-        

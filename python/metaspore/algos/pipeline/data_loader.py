@@ -38,7 +38,7 @@ class DataLoaderModule:
     def __init__(self, conf: DataLoaderConfig, spark: SparkSession):
         self.conf = conf
         self.spark = spark
-    
+
     def _add_key_value_pair(self, dict, key, value):
         if value:
             dict[key] = value
@@ -46,18 +46,18 @@ class DataLoaderModule:
 
     def run(self) -> Dict[str, DataFrame]:
         dataset_dict = {}
-        
+
         dataset_dict['train'] = self.spark.read.parquet(self.conf.train_path)
         logger.info('Train dataset is loaded: {}'.format(self.conf.train_path))
-        
+
         if self.conf.test_path:
             dataset_dict['test'] = self.spark.read.parquet(self.conf.test_path)
             logger.info('Test dataset is loaded: {}'.format(self.conf.test_path))
-        
+
         if self.conf.item_path:
             dataset_dict['item'] = self.spark.read.parquet(self.conf.item_path)
             logger.info('Item dataset is loaded: {}'.format(self.conf.item_path))
-        
+
         dataset_dict = self._add_key_value_pair(dataset_dict, 'label_column', self.conf.label_column)
         dataset_dict = self._add_key_value_pair(dataset_dict, 'label_value', self.conf.label_value)
         dataset_dict = self._add_key_value_pair(dataset_dict, 'user_id_column', self.conf.user_id_column)

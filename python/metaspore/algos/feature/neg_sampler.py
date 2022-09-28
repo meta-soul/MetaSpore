@@ -32,7 +32,7 @@ def gen_sample_prob(dataset, group_by, alpha=0.75):
     item_weight = dataset.groupBy(col(group_by)).count()
     item_weight = item_weight.withColumn('norm_weight', pow(item_weight['count'], alpha))
     total_norm = item_weight.select('norm_weight').groupBy().sum().collect()[0][0]
-    item_weight = item_weight.withColumn('sampling_prob', item_weight['norm_weight']/total_norm)    
+    item_weight = item_weight.withColumn('sampling_prob', item_weight['norm_weight']/total_norm)
     print('Debug -- neg_sampler.gen_sample_prob cost time:', time.time() - start)
     return item_weight
 
@@ -54,15 +54,15 @@ def sample(user_id, user_item_list, item_list, dist_list, negative_sample):
     candidate_list = list(set(candidate_list)-set(user_item_list))
     # sample trigger list
     trigger_list = np.random.default_rng().choice(list(user_item_list), size=len(candidate_list), \
-                                    replace=True).tolist()    
+                                    replace=True).tolist()
     return list(zip(trigger_list, candidate_list))
 
-def negative_sampling(spark, 
-                      dataset, 
-                      user_column, 
-                      item_column, 
-                      time_column, 
-                      negative_item_column, 
+def negative_sampling(spark,
+                      dataset,
+                      user_column,
+                      item_column,
+                      time_column,
+                      negative_item_column,
                       negative_sample=3,
                       reserve_other_columns=[]):
     ''' negative sampling on original dataset
@@ -76,7 +76,7 @@ def negative_sampling(spark,
       negative_item_column: negative item id column
       negative_sample: how many negative samples for one positive sample
     '''
-    
+
     # sampling distribution
     item_weight = gen_sample_prob(dataset, item_column)
     # unzip a list of tupples

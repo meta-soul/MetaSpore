@@ -65,13 +65,13 @@ class DeepFM(torch.nn.Module):
                                 output_dim = 1,
                                 hidden_units = dnn_hidden_units,
                                 hidden_activations = dnn_hidden_activations,
-                                final_activation = None, 
-                                dropout_rates = net_dropout, 
-                                batch_norm = batch_norm, 
+                                final_activation = None,
+                                dropout_rates = net_dropout,
+                                batch_norm = batch_norm,
                                 use_bias = use_bias)
         self.fm = FMLayer(self.dnn_sparse.feature_count, self.deep_embedding_dim)
         self.final_activation = torch.nn.Sigmoid()
-                
+
     def forward(self, x):
         nn_feature_map = self.dnn_sparse(x)
         fm_out = self.fm(nn_feature_map)

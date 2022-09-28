@@ -24,17 +24,17 @@ class SimilarityModule(torch.nn.Module):
     def __init__(self, tau):
         super().__init__()
         self.tau = tau
-    
+
     def forward(self, x, y):
         z = torch.sum(x * y, dim=1).reshape(-1, 1)
         s = torch.sigmoid(z/self.tau)
         return s
 
 class UserModule(torch.nn.Module):
-    def __init__(self, 
-                 column_name_path, 
-                 combine_schema_path, 
-                 embedding_dim, 
+    def __init__(self,
+                 column_name_path,
+                 combine_schema_path,
+                 embedding_dim,
                  sparse_init_var=1e-2,
                  dnn_hidden_units=[1024, 512, 256],
                  dnn_hidden_activations="ReLU",
@@ -65,9 +65,9 @@ class UserModule(torch.nn.Module):
                               output_dim = None,
                               hidden_units = dnn_hidden_units,
                               hidden_activations = dnn_hidden_activations,
-                              final_activation = None, 
-                              dropout_rates = net_dropout, 
-                              batch_norm = batch_norm, 
+                              final_activation = None,
+                              dropout_rates = net_dropout,
+                              batch_norm = batch_norm,
                               use_bias = use_bias)
 
     def forward(self, x):
@@ -77,10 +77,10 @@ class UserModule(torch.nn.Module):
         return x
 
 class ItemModule(torch.nn.Module):
-    def __init__(self, 
-                 column_name_path, 
-                 combine_schema_path, 
-                 embedding_dim, 
+    def __init__(self,
+                 column_name_path,
+                 combine_schema_path,
+                 embedding_dim,
                  sparse_init_var=1e-2,
                  dnn_hidden_units=[1024, 512, 256],
                  dnn_hidden_activations="ReLU",
@@ -110,9 +110,9 @@ class ItemModule(torch.nn.Module):
                               output_dim = None,
                               hidden_units = dnn_hidden_units,
                               hidden_activations = dnn_hidden_activations,
-                              final_activation = None, 
-                              dropout_rates = net_dropout, 
-                              batch_norm = batch_norm, 
+                              final_activation = None,
+                              dropout_rates = net_dropout,
+                              batch_norm = batch_norm,
                               use_bias = use_bias)
 
     def forward(self, x):

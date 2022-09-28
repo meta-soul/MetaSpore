@@ -29,10 +29,10 @@ class WideDeep(torch.nn.Module):
                 deep_column_name_path=None,
                 deep_combine_schema_path=None,
                 dnn_hidden_units=[1024,512,256,128],
-                dnn_hidden_activations="ReLU", 
-                net_dropout=0, 
-                batch_norm=False, 
-                embedding_regularizer=None, 
+                dnn_hidden_activations="ReLU",
+                net_dropout=0,
+                batch_norm=False,
+                embedding_regularizer=None,
                 net_regularizer=None,
                 use_bias=True,
                 ftrl_l1=1.0,
@@ -57,16 +57,16 @@ class WideDeep(torch.nn.Module):
                                 output_dim = 1,
                                 hidden_units = dnn_hidden_units,
                                 hidden_activations = dnn_hidden_activations,
-                                final_activation = None, 
-                                dropout_rates = net_dropout, 
-                                batch_norm = batch_norm, 
+                                final_activation = None,
+                                dropout_rates = net_dropout,
+                                batch_norm = batch_norm,
                                 use_bias = use_bias,
                                 input_norm = True)
-        
+
         self.final_activation = torch.nn.Sigmoid()
 
     def forward(self, x):
-        if self.use_wide:      
+        if self.use_wide:
             wide_out = self.lr_sparse(x)
             wide_out = torch.sum(wide_out, dim=1, keepdim=True)
         dnn_out = self.dnn_sparse(x)

@@ -25,16 +25,16 @@ class GRU4RecSimilarityModule(torch.nn.Module):
         super().__init__()
         self.tau = tau
         self.user_dropout = torch.nn.Dropout(net_dropout) if net_dropout > 0 else None
-    
+
     def forward(self, x, y):
         z = torch.sum(x * y, dim=1).reshape(-1, 1)
         return torch.sigmoid(z/self.tau)
 
 class GRU4RecUserModule(torch.nn.Module):
-#     def __init__(self, 
+#     def __init__(self,
 #                  column_name_path,
 #                  seq_combine_schema_path,
-#                  embedding_dim, 
+#                  embedding_dim,
 #                  sparse_init_var=1e-2,
 #                  dnn_hidden_units=[512, 128],
 #                  dnn_hidden_activations="ReLU",
@@ -65,9 +65,9 @@ class GRU4RecUserModule(torch.nn.Module):
 #                               output_dim = None,
 #                               hidden_units = dnn_hidden_units,
 #                               hidden_activations = dnn_hidden_activations,
-#                               final_activation = None, 
-#                               dropout_rates = net_dropout, 
-#                               batch_norm = batch_norm, 
+#                               final_activation = None,
+#                               dropout_rates = net_dropout,
+#                               batch_norm = batch_norm,
 #                               use_bias = use_bias)
 
 #     def forward(self, x):
@@ -76,7 +76,7 @@ class GRU4RecUserModule(torch.nn.Module):
 #         x = self.dense(x)
 #         return x
     def __init__(self,
-                 column_name_path, 
+                 column_name_path,
                  seq_combine_schema_path,
                  embedding_dim,
                  gru_hidden_dim,
@@ -90,7 +90,7 @@ class GRU4RecUserModule(torch.nn.Module):
                  ftrl_alpha=0.5,
                  ftrl_beta=1.0):
         super().__init__()
-        
+
         self.embedding_table = ms.EmbeddingLookup(embedding_dim, column_name_path, seq_combine_schema_path)
         self.embedding_table.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, l2=ftrl_l2, alpha = ftrl_alpha, beta=ftrl_beta)
         self.embedding_table.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
@@ -104,8 +104,8 @@ class GRU4RecUserModule(torch.nn.Module):
                                         batch_first=True,
                                         dropout=net_dropout
                                         )
-        
-        
+
+
         self.dense = torch.nn.Linear(gru_hidden_dim, embedding_dim)
         # dropout
         self.embedding_dropout = torch.nn.Dropout(net_dropout) if net_dropout > 0 else None
@@ -115,11 +115,11 @@ class GRU4RecUserModule(torch.nn.Module):
         if isinstance(module, torch.nn.GRU):
             orthogonal_(module.weight_hh_l0)
             orthogonal_(module.weight_ih_l0)
-    
+
     def get_field_embedding_list(self, x, offset):
         x_reshape = [x[offset[i]:offset[i+1],:] for i in range(offset.shape[0]-1)]
         x_reshape.append(x[offset[offset.shape[0]-1]:x.shape[0],:])
-        return x_reshape 
+        return x_reshape
 
     def gather_indexes(self, output, gather_index):
         """Gathers the vectors at the specific positions over a minibatch"""
@@ -128,9 +128,9 @@ class GRU4RecUserModule(torch.nn.Module):
         gather_index = gather_index.view(-1, 1, 1).expand(-1, -1, output.shape[-1])
         output_tensor = output.gather(dim=1, index=gather_index)
         return output_tensor.squeeze(1)
-    
+
     def forward(self, x):
-        x, offset = self.embedding_table(x) 
+        x, offset = self.embedding_table(x)
         x_reshape = self.get_field_embedding_list(x, offset)
         item_seq_emb = torch.nn.utils.rnn.pad_sequence(x_reshape, batch_first=True)
         start_idx = 1
@@ -142,14 +142,14 @@ class GRU4RecUserModule(torch.nn.Module):
         gru_output, _ = self.gru_layers(item_seq_emb)
         gru_output = self.gather_indexes(gru_output, item_seq_length - 1)
         seq_output = self.dense(gru_output)
-        
+
         return F.normalize(seq_output)
-    
-    
+
+
 class GRU4RecItemModule(torch.nn.Module):
-    def __init__(self, 
-                 column_name_path, 
-                 combine_schema_path, 
+    def __init__(self,
+                 column_name_path,
+                 combine_schema_path,
                  embedding_dim,
                  net_dropout=0,
                  embedding_regularizer=None,
@@ -162,16 +162,16 @@ class GRU4RecItemModule(torch.nn.Module):
         super().__init__()
         # pooling type checks
         self.sparse = ms.EmbeddingSumConcat(
-            embedding_dim, 
-            column_name_path, 
+            embedding_dim,
+            column_name_path,
             combine_schema_path
         )
         self.sparse.updater = ms.FTRLTensorUpdater(
             l1=ftrl_l1,
-            l2=ftrl_l2, 
-            alpha=ftrl_alpha, 
+            l2=ftrl_l2,
+            alpha=ftrl_alpha,
             beta=ftrl_beta
-        )        
+        )
         self.sparse.initializer = ms.NormalTensorInitializer(var = sparse_init_var)
         # dropout
         self.embedding_dropout = torch.nn.Dropout(net_dropout) if net_dropout > 0 else None

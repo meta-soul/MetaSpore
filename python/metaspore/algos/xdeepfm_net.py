@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import torch 
+import torch
 import metaspore as ms
 
 from .layers import LRLayer, MLPLayer, CompressedInteractionNet
@@ -65,9 +65,9 @@ class XDeepFM(torch.nn.Module):
                                 output_dim = 1,
                                 hidden_units = dnn_hidden_units,
                                 hidden_activations = dnn_hidden_activations,
-                                final_activation = None, 
-                                dropout_rates = net_dropout, 
-                                batch_norm = batch_norm, 
+                                final_activation = None,
+                                dropout_rates = net_dropout,
+                                batch_norm = batch_norm,
                                 use_bias = use_bias)
         ## cin layers
         self._cin = CompressedInteractionNet(self.dnn_sparse.feature_count,
@@ -75,7 +75,7 @@ class XDeepFM(torch.nn.Module):
                                             cin_lay_unit,
                                             output_dim=1)
         self._final_activation = torch.nn.Sigmoid()
-    
+
     def forward(self,x):
         nn_feature_map = self.dnn_sparse(x)
         cin_logit = self._cin(nn_feature_map)

@@ -31,7 +31,7 @@ from .common_validators import array_index_validator, learning_rate_validator, d
 
 
 logger = logging.getLogger(__name__)
-    
+
 @attrs.frozen
 class DeepCTRConfig:
     deep_ctr_model_class: object
@@ -49,7 +49,7 @@ class DeepCTRModule:
         else:
             raise TypeError("Type of 'conf' must be dict or DeepCTRConfig. Current type is {}".format(type(conf)))
         self.model = None
-        
+
     @staticmethod
     def convert(conf: dict) -> DeepCTRConfig:
         if not 'deep_ctr_model_class' in conf:
@@ -58,15 +58,15 @@ class DeepCTRModule:
             raise ValueError("Dict of DeepCTRModule must have key 'model_params' !")
         if not 'estimator_params' in conf:
             raise ValueError("Dict of DeepCTRModule must have key 'estimator_params' !")
-            
+
         deep_ctr_model_class = get_class(conf['deep_ctr_model_class'])
         model_config_class = get_class(conf['model_config_class'])
         model_params = cattrs.structure(conf['model_params'], model_config_class)
         estimator_config_class = get_class(conf['estimator_config_class'])
         estimator_params = cattrs.structure(conf['estimator_params'], estimator_config_class)
-        
+
         return DeepCTRConfig(deep_ctr_model_class, model_config_class, model_params, estimator_config_class, estimator_params)
-        
+
     def train(self, train_dataset, worker_count, server_count):
         module = self.conf.deep_ctr_model_class(**remove_none_value(cattrs.unstructure(self.conf.model_params)))
         estimator = ms.PyTorchEstimator(module = module,
@@ -76,28 +76,28 @@ class DeepCTRModule:
         ## model train
         estimator.updater = ms.AdamTensorUpdater(self.conf.estimator_params.adam_learning_rate)
         self.model = estimator.fit(train_dataset)
-        
+
         logger.info('DeepCTR - training: done')
-    
+
     def evaluate(self, train_result, test_result):
         train_evaluator = BinaryClassificationEvaluator()
         test_evaluator = BinaryClassificationEvaluator()
-        
+
         metric_dict = {}
         metric_dict['train_auc'] = train_evaluator.evaluate(train_result)
         metric_dict['test_auc'] = test_evaluator.evaluate(test_result)
         print('Debug -- metric_dict: ', metric_dict)
-        
+
         logger.info('DeepCTR - evaluation: done')
         return metric_dict
-    
+
     def run(self, train_dataset, test_dataset, worker_count, server_count) -> Dict[str, float]:
         if not isinstance(train_dataset, DataFrame):
             raise ValueError("Type of train_dataset must be DataFrame.")
-        
+
         # 1. create estimator and fit model
         self.train(train_dataset, worker_count, server_count)
-        
+
         metric_dict = {}
         if test_dataset:
             if not isinstance(test_dataset, DataFrame):
@@ -108,7 +108,7 @@ class DeepCTRModule:
             logger.info('DeepCTR - inference: done')
             # 3. get metric dictionary (metric name -> metric value)
             metric_dict = self.evaluate(train_result, test_result)
-        
+
         return metric_dict
 
 @frozen(kw_only=True)
@@ -123,7 +123,7 @@ class DeepCTREstimatorConfig:
     adam_learning_rate = field(validator=learning_rate_validator)
     training_epoches = field(validator=[instance_of(int), gt(0)])
     shuffle_training_dataset = field(validator=instance_of(bool))
-    
+
 @frozen(kw_only=True)
 class WideDeepConfig:
     use_wide = field(validator=instance_of(bool))
@@ -144,7 +144,7 @@ class WideDeepConfig:
     ftrl_l2 = field(validator=instance_of(float))
     ftrl_alpha = field(validator=instance_of(float))
     ftrl_beta = field(validator=instance_of(float))
-    
+
 @frozen(kw_only=True)
 class DeepFMConfig:
     use_wide = field(validator=instance_of(bool))

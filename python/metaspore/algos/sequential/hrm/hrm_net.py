@@ -23,14 +23,14 @@ class HRMSimilarityModule(torch.nn.Module):
         super().__init__()
         self.tau = tau
         self.user_dropout = torch.nn.Dropout(net_dropout) if net_dropout > 0 else None
-    
+
     def forward(self, x, y):
         z = torch.sum(x * y, dim=1).reshape(-1, 1)
         return torch.sigmoid(z/self.tau)
 
 class HRMUserModule(torch.nn.Module):
     def __init__(self,
-                 column_name_path, 
+                 column_name_path,
                  user_combine_schema_path,
                  seq_combine_schema_path,
                  embedding_dim,
@@ -50,30 +50,30 @@ class HRMUserModule(torch.nn.Module):
             raise ValueError(f"Pooling type must be one of: 'mean', 'sum', 'max'; {pooling_type_layer_1!r} is invalid")
         # user embedding and pooling layer1
         self.user_sparse = ms.EmbeddingSumConcat(
-            embedding_dim, 
-            column_name_path, 
+            embedding_dim,
+            column_name_path,
             user_combine_schema_path,
             embedding_bag_mode=pooling_type_layer_1
         )
         self.user_sparse.updater = ms.FTRLTensorUpdater(
             l1=ftrl_l1,
-            l2=ftrl_l2, 
-            alpha=ftrl_alpha, 
+            l2=ftrl_l2,
+            alpha=ftrl_alpha,
             beta=ftrl_beta
         )
         self.user_sparse.initializer = ms.NormalTensorInitializer(var = sparse_init_var)
         self.user_sparse.output_batchsize1_if_only_level0 = True
         # behaviour sequence embedding and pooling layer1
         self.seq_sparse = ms.EmbeddingSumConcat(
-            embedding_dim, 
-            column_name_path, 
+            embedding_dim,
+            column_name_path,
             seq_combine_schema_path,
             embedding_bag_mode=pooling_type_layer_1
         )
         self.seq_sparse.updater = ms.FTRLTensorUpdater(
             l1=ftrl_l1,
-            l2=ftrl_l2, 
-            alpha=ftrl_alpha, 
+            l2=ftrl_l2,
+            alpha=ftrl_alpha,
             beta=ftrl_beta
         )
         self.seq_sparse.initializer = ms.NormalTensorInitializer(var = sparse_init_var)
@@ -89,11 +89,11 @@ class HRMUserModule(torch.nn.Module):
 
         # dropout
         self.embedding_dropout = torch.nn.Dropout(net_dropout) if net_dropout > 0 else None
-    
+
     def forward(self, x):
         hybrid_user_embedding = torch.cat([
-            self.user_sparse(x).unsqueeze(dim=1), 
-            self. seq_sparse(x).unsqueeze(dim=1)], 
+            self.user_sparse(x).unsqueeze(dim=1),
+            self. seq_sparse(x).unsqueeze(dim=1)],
             dim=1
         )
         if self.embedding_dropout:
@@ -102,11 +102,11 @@ class HRMUserModule(torch.nn.Module):
         return F.normalize(hybrid_user_embedding)
 
 class HRMItemModule(torch.nn.Module):
-    def __init__(self, 
-                 column_name_path, 
-                 combine_schema_path, 
+    def __init__(self,
+                 column_name_path,
+                 combine_schema_path,
                  embedding_dim,
-                 pooling_type_layer_1='sum', # in ['mean', 'sum', 'max'] 
+                 pooling_type_layer_1='sum', # in ['mean', 'sum', 'max']
                  net_dropout=0,
                  embedding_regularizer=None,
                  net_regularizer=None,
@@ -121,17 +121,17 @@ class HRMItemModule(torch.nn.Module):
             raise ValueError(f"Pooling type must be one of: 'mean', 'sum', 'max'; {pooling_type_layer_1!r} is invalid")
          # user embedding and pooling layer1
         self.sparse = ms.EmbeddingSumConcat(
-            embedding_dim, 
-            column_name_path, 
+            embedding_dim,
+            column_name_path,
             combine_schema_path,
             embedding_bag_mode=pooling_type_layer_1
         )
         self.sparse.updater = ms.FTRLTensorUpdater(
             l1=ftrl_l1,
-            l2=ftrl_l2, 
-            alpha=ftrl_alpha, 
+            l2=ftrl_l2,
+            alpha=ftrl_alpha,
             beta=ftrl_beta
-        )        
+        )
         self.sparse.initializer = ms.NormalTensorInitializer(var = sparse_init_var)
         # dropout
         self.embedding_dropout = torch.nn.Dropout(net_dropout) if net_dropout > 0 else None

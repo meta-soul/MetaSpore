@@ -29,7 +29,7 @@ LEVELS = {
 }
 
 def setup_logging(loglevel=None, name=None, **params):
-    loglevel = LEVELS[loglevel] if loglevel else logging.INFO    
+    loglevel = LEVELS[loglevel] if loglevel else logging.INFO
     formatter = logging.Formatter(fmt=LOG_FORMAT, datefmt=DATE_FORMAT)
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.setLevel(loglevel)

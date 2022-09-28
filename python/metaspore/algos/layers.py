@@ -28,7 +28,7 @@ class LRLayer(torch.nn.Module):
         super().__init__()
         self.embedding_size = embedding_size
         self.feature_dim = feature_dim
-    
+
     def forward(self, inputs):
         out = torch.sum(inputs, dim=1, keepdim=True)
         return out
@@ -47,19 +47,19 @@ class Dice(torch.nn.Module):
         score_p = self.sigmoid(score)
 
         return self.alpha * (1 - score_p) * score + score_p * score
-    
+
 
 # Fully connected layers
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/layers/deep.py
 class MLPLayer(torch.nn.Module):
-    def __init__(self, 
-                 input_dim, 
-                 output_dim=None, 
-                 hidden_units=[], 
+    def __init__(self,
+                 input_dim,
+                 output_dim=None,
+                 hidden_units=[],
                  hidden_activations="ReLU",
-                 final_activation=None, 
-                 dropout_rates=0, 
-                 batch_norm=False, 
+                 final_activation=None,
+                 dropout_rates=0,
+                 batch_norm=False,
                  use_bias=True,
                  input_norm=False):
         super().__init__()
@@ -67,13 +67,13 @@ class MLPLayer(torch.nn.Module):
         if not isinstance(dropout_rates, list):
             dropout_rates = [dropout_rates] * len(hidden_units)
         if not isinstance(hidden_activations, list):
-            hidden_activations = [hidden_activations] * len(hidden_units)        
+            hidden_activations = [hidden_activations] * len(hidden_units)
         hidden_activations = [self.set_activation(x, hidden_size) for x, hidden_size in zip(hidden_activations, hidden_units)]
         hidden_units = [input_dim] + hidden_units
-        
+
         if input_norm:
             dense_layers.append(ms.nn.Normalization(input_dim))
-        
+
         ## batchnorm + linear + activation + dropout...
         for idx in range(len(hidden_units) - 1):
             if batch_norm:
@@ -96,7 +96,7 @@ class MLPLayer(torch.nn.Module):
 
     def forward(self, inputs):
         return self.dnn(inputs)
-    
+
     @staticmethod
     def set_activation(activation, hidden_size):
         if isinstance(activation, str):
@@ -112,7 +112,7 @@ class MLPLayer(torch.nn.Module):
                 return torch.nn.ReLU() ## defalut relu
         else:
             return torch.nn.ReLU() ## defalut relu
-    
+
 # Factorization machine layer
 class FMLayer(torch.nn.Module):
     def __init__(self,
@@ -121,7 +121,7 @@ class FMLayer(torch.nn.Module):
         super().__init__()
         self._feature_count = feature_count
         self._embedding_dim = embedding_dim
-    
+
     def forward(self, inputs):
         inputs = inputs.reshape(-1, self._feature_count, self._embedding_dim)
         square_of_sum = torch.pow(torch.sum(inputs, dim=1, keepdim=True), 2)
@@ -145,7 +145,7 @@ class FFMLayer(torch.nn.Module):
     def forward(self, inputs):
         # [B, F x E] = > [[B, F x E]] => [[B, F, E]]
         field_aware_embedding_list = [
-            each_layer(inputs).reshape(-1, self._feature_count, self._embedding_dim) 
+            each_layer(inputs).reshape(-1, self._feature_count, self._embedding_dim)
             for each_layer in self._embedding_module_list
         ]
 
@@ -163,14 +163,14 @@ class CrossNet(torch.nn.Module):
     def __init__(self, input_dim, num_layers):
         super().__init__()
         self.num_layers = num_layers
-        self.cross_net = torch.nn.ModuleList(CrossInteractionLayer(input_dim) 
+        self.cross_net = torch.nn.ModuleList(CrossInteractionLayer(input_dim)
                                        for _ in range(self.num_layers))
-    
+
     def forward(self, X_0):
         X_i = X_0
         for i in range(self.num_layers):
             X_i = X_i + self.cross_net[i](X_0,X_i)
-        return X_i   
+        return X_i
 
 # Cross interaction Layer
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/layers/interaction.py
@@ -179,7 +179,7 @@ class CrossInteractionLayer(torch.nn.Module):
         super().__init__()
         self.weight = torch.nn.Linear(input_dim, 1, bias=False)
         self.bias = torch.nn.Parameter(torch.zeros(input_dim))
-        
+
     def forward(self, X_0, X_i):
         interaction_out = self.weight(X_i) * X_0 + self.bias
         return interaction_out
@@ -202,7 +202,7 @@ class MultiHeadAttention(torch.nn.Module):
         self.dot_product_attention = ScaledDotproductAttention(dropout_rate)
         self.layer_norm = torch.nn.LayerNorm(self.output_dim) if layer_norm else None
         self.dropout = torch.nn.Dropout(dropout_rate) if dropout_rate is not None and dropout_rate > 0 else None
-    
+
     def forward(self, query, key, value):
         ## linear projection
         residual = self.W_residual(query)
@@ -249,14 +249,14 @@ class ScaledDotproductAttention(torch.nn.Module):
         if dropout_rate is not None and dropout_rate > 0:
             self.dropout = torch.nn.Dropout(dropout_rate)
         self.softmax = torch.nn.Softmax(dim=2)
-    
+
     def forward(self, W_q, W_k, W_v, scale=None, mask=False):
         attention=torch.bmm(W_q, W_k.transpose(1,2))
         scale = (W_k.size(-1)) ** -0.5
         attention = attention * scale
         if mask:
             mask = torch.triu(torch.ones(attention.size(1), attention.size(2)), 1).bool()
-            attention.masked_fill_(mask, 0) 
+            attention.masked_fill_(mask, 0)
         attention = self.softmax(attention)
         if self.dropout is not None:
             attention = self.dropout(attention)
@@ -277,8 +277,8 @@ class CrossNetV2(torch.nn.Module):
         for i in range(self.num_layers):
             X_i = X_i + X_0 * self.cross_layers[i](X_i)
         return X_i
-    
-    
+
+
 # Cross net mix Layer
 # Copyright (C) 2021 The DeepCTR-Torch authors for CrossNetMix
 class CrossNetMix(torch.nn.Module):
@@ -342,7 +342,7 @@ class CrossNetMix(torch.nn.Module):
 
         x_l = x_l.squeeze()  # (bs, in_features)
         return x_l
-    
+
 
 # Inner product layer
 class InnerProductLayer(torch.nn.Module):
@@ -358,8 +358,8 @@ class InnerProductLayer(torch.nn.Module):
         inner_product_matrix = torch.bmm(inputs, inputs.transpose(1, 2))
         flat_upper_triange = torch.masked_select(inner_product_matrix, self.upper_triange_mask)
         return flat_upper_triange.view(-1, self.interaction_units)
-    
-    
+
+
 # Outer product layer
 class OuterProductLayer(torch.nn.Module):
     def __init__(self, num_fields=None, embedding_dim=None):
@@ -381,7 +381,7 @@ class OuterProductLayer(torch.nn.Module):
         V = torch.empty(hadamard_tensor.shape[0] * self.num_fields * self.interaction_units)
         V = (torch.masked_select(hadamard_tensor, self.upper_triange_mask))
         return V.contiguous().view(hadamard_tensor.shape[0], -1)
-    
+
 
 # Compressed interaction net layer
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/layers/interaction.py
@@ -418,12 +418,12 @@ class CompressedInteractionNet(torch.nn.Module):
         return output
 
 # Sequence Attention Layer
-# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py 
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
 class DIEN_DIN_AttLayer(torch.nn.Module):
     def __init__(self, input_dim, att_hidden_size, att_activation, att_dropout, use_att_bn):
         super(DIEN_DIN_AttLayer, self).__init__()
         self.att_mlp_layers = MLPLayer(input_dim=input_dim*4, output_dim=1, hidden_units=att_hidden_size, hidden_activations=att_activation, dropout_rates=att_dropout, batch_norm=use_att_bn)
-        
+
     def forward(self, query, keys, keys_length):
         batch_size, max_length, dim = keys.size()
         mask_mat = torch.arange(max_length).view(1, -1)
@@ -438,11 +438,11 @@ class DIEN_DIN_AttLayer(torch.nn.Module):
         output = output.unsqueeze(1)
         output = output / (keys.shape[-1] ** 0.5)
         output = torch.nn.functional.softmax(output, dim=-1)
-        output = torch.matmul(output, keys) 
+        output = torch.matmul(output, keys)
         return output
-        
+
 # Interest Evolving Layer
-# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py     
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py
 class InterestEvolvingLayer(torch.nn.Module):
     def __init__(
         self,
@@ -457,10 +457,10 @@ class InterestEvolvingLayer(torch.nn.Module):
         use_att_bn,
     ):
         super(InterestEvolvingLayer, self).__init__()
-        self.attention_layer = DIEN_DIN_AttLayer(input_dim = att_input_dim, 
-                                                 att_hidden_size = att_hidden_units, 
-                                                 att_activation = att_activation, 
-                                                 att_dropout = att_dropout, 
+        self.attention_layer = DIEN_DIN_AttLayer(input_dim = att_input_dim,
+                                                 att_hidden_size = att_hidden_units,
+                                                 att_activation = att_activation,
+                                                 att_dropout = att_dropout,
                                                  use_att_bn = use_att_bn)
         self.dynamic_rnn = torch.nn.GRU(
             input_size = embedding_size,
@@ -469,26 +469,26 @@ class InterestEvolvingLayer(torch.nn.Module):
             bias = use_gru_bias,
             batch_first = True,
         )
-        
+
     def forward(self, target_item, interest):
         packed_rnn_outputs,_= self.dynamic_rnn(interest)
         rnn_outputs,rnn_length = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
         att_outputs = self.attention_layer(target_item, rnn_outputs, rnn_length)
         outputs = att_outputs.squeeze(1)
         return outputs
-    
+
 # Interest Extractor Network
-# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py 
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/sequential_recommender/dien.py
 class InterestExtractorNetwork(torch.nn.Module):
-    def __init__(self, 
-                 embedding_size, 
-                 gru_hidden_size, 
+    def __init__(self,
+                 embedding_size,
+                 gru_hidden_size,
                  gru_num_layers,
                  use_gru_bias,
-                 aux_input_dim, 
-                 aux_hidden_units,  
-                 aux_activation, 
-                 aux_dropout, 
+                 aux_input_dim,
+                 aux_hidden_units,
+                 aux_activation,
+                 aux_dropout,
                  use_aux_bn):
         super(InterestExtractorNetwork, self).__init__()
         self.gru_layers = torch.nn.GRU(
@@ -498,41 +498,41 @@ class InterestExtractorNetwork(torch.nn.Module):
             bias = use_gru_bias,
             batch_first = True,
         )
-        self.auxiliary_net = MLPLayer(input_dim = aux_input_dim, 
-                                      output_dim = 1, 
-                                      hidden_units = aux_hidden_units, 
-                                      hidden_activations = aux_activation, 
-                                      final_activation = aux_activation, 
+        self.auxiliary_net = MLPLayer(input_dim = aux_input_dim,
+                                      output_dim = 1,
+                                      hidden_units = aux_hidden_units,
+                                      hidden_activations = aux_activation,
+                                      final_activation = aux_activation,
                                       dropout_rates = aux_dropout,
                                       batch_norm = use_aux_bn)
-        
+
     def forward(self, item_seq_pack, neg_item_seq_pack=None):
         packed_rnn_outputs,_=self.gru_layers(item_seq_pack)
-        
+
         # padding all sequence
         rnn_outputs, _ = pad_packed_sequence(packed_rnn_outputs, batch_first=True)
         item_seq, _ = pad_packed_sequence(item_seq_pack, batch_first=True)
         neg_item_seq, _ = pad_packed_sequence(neg_item_seq_pack, batch_first=True)
         aux_loss = self.auxiliary_loss(rnn_outputs[:,:-1,:], item_seq[:,1:,:], neg_item_seq[:,1:,:])
         return packed_rnn_outputs, aux_loss
-    
+
     def auxiliary_loss(self, h_states, click_seq, noclick_seq):
         click_input = torch.cat([h_states, click_seq], dim=-1)
         noclick_input = torch.cat([h_states, noclick_seq], dim=-1)
-        
+
         click_prop = self.auxiliary_net(click_input.view(h_states.shape[0]*h_states.shape[1], -1)).view(-1, 1)
         click_target = torch.ones(click_prop.shape, device=click_input.device)
-        
+
         noclick_prop = self.auxiliary_net(noclick_input.view(h_states.shape[0]*h_states.shape[1], -1)).view(-1, 1)
         noclick_target = torch.zeros(noclick_prop.shape, device=noclick_input.device)
-        
+
         loss = F.binary_cross_entropy(
             torch.cat([click_prop, noclick_prop], dim=0),torch.cat([click_target, noclick_target],dim=0)
         )
-        
+
         return loss
 
-    
+
 # Field-weighted factorization machine layer
 # This code is adapted from github repository:  https://github.com/xue-pai/FuxiCTR/blob/main/fuxictr/pytorch/models/FwFM.py
 class FwFMLayer(torch.nn.Module):
@@ -544,13 +544,13 @@ class FwFMLayer(torch.nn.Module):
         self.inner_product_layer = InnerProductLayer(feature_count, embedding_dim)
         interact_dim = int(feature_count * (feature_count - 1) / 2)
         self.interaction_weight_layer = torch.nn.Linear(interact_dim, 1)
-    
+
     def forward(self, inputs):
         linear_part = self.linear_weight_layer(inputs)
         inner_product_vec = self.inner_product_layer(inputs)
         poly2_part = self.interaction_weight_layer(inner_product_vec)
         return linear_part + poly2_part
-    
+
 # FeedForward
 # This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
 class FeedForward(torch.nn.Module):
@@ -597,7 +597,7 @@ class TransformerLayer(torch.nn.Module):
         super(TransformerLayer, self).__init__()
         attention_head_size = int(hidden_size / n_heads)
         self.multi_head_attention = MultiHeadSelfAttention(
-             input_dim=hidden_size, dim_per_head=attention_head_size, num_heads=n_heads, dropout_rate=hidden_dropout_prob, 
+             input_dim=hidden_size, dim_per_head=attention_head_size, num_heads=n_heads, dropout_rate=hidden_dropout_prob,
             use_residual=True, layer_norm=True
         )
         self.feed_forward = FeedForward(hidden_size, intermediate_size, hidden_dropout_prob, hidden_act, layer_norm_eps)
@@ -630,4 +630,4 @@ class TransformerEncoder(torch.nn.Module):
         for layer_module in self.layer:
             hidden_states = layer_module(hidden_states)
         return hidden_states
-    
+

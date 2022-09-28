@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-import torch 
+import torch
 import metaspore as ms
 
 from .layers import MLPLayer, MultiHeadSelfAttention
@@ -57,7 +57,7 @@ class AutoInt(torch.nn.Module):
         self.layer_norm=layer_norm
         self.use_scale = use_scale
         self.net_regularizer= net_regularizer
-        
+
         self.sparse = ms.EmbeddingSumConcat(self.embedding_dim, self.column_name_path, self.combine_schema_path)
         self.sparse.updater = ms.FTRLTensorUpdater(l1=ftrl_l1, \
                                                     l2=ftrl_l2, \
@@ -66,26 +66,26 @@ class AutoInt(torch.nn.Module):
         self.sparse.initializer = ms.NormalTensorInitializer(var=sparse_init_var)
         self.input_dim = int(self.sparse.feature_count*self.embedding_dim)
         self.sparse_bn = ms.nn.Normalization(self.input_dim)
-        
+
         self.lr = torch.nn.Linear(self.input_dim, 1, bias=use_bias) if use_wide else None
 
         self.dnn = MLPLayer(input_dim = self.input_dim,
                             output_dim = 1,
                             hidden_units = dnn_hidden_units,
                             hidden_activations = dnn_hidden_activations,
-                            final_activation = None, 
-                            dropout_rates = net_dropout, 
-                            batch_norm = batch_norm, 
+                            final_activation = None,
+                            dropout_rates = net_dropout,
+                            batch_norm = batch_norm,
                             use_bias = use_bias) \
                    if dnn_hidden_units else None
-        
+
         self.self_attention=torch.nn.Sequential(
             *[MultiHeadSelfAttention(input_dim=self.input_dim if i == 0 else self.num_heads * self.attention_dim,
                                     dim_per_head=self.attention_dim,
                                     num_heads=self.num_heads,
                                     dropout_rate=self.net_dropout,
                                     use_residual=self.use_residual,
-                                    layer_norm=self.layer_norm) 
+                                    layer_norm=self.layer_norm)
                  for i in range(self.attention_layers)])
         self.fc = torch.nn.Linear(self.attention_dim * self.num_heads, 1)
         self.final_activation = torch.nn.Sigmoid()

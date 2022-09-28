@@ -31,7 +31,7 @@ class SimpleXDense(torch.nn.Module):
         y = self.average_pooling(y)
         z = self._g*x + (1-self._g)*y
         return z
-    
+
     def average_pooling(self, sequence_emb):
         return self._v(sequence_emb)
 
@@ -39,7 +39,7 @@ class SimilarityModule(torch.nn.Module):
     def __init__(self, net_dropout=0.0):
         super().__init__()
         self.user_dropout = nn.Dropout(net_dropout) if net_dropout > 0 else None
-    
+
     def forward(self, x, y):
         if self.user_dropout is not None:
             x = self.user_dropout(x)
@@ -54,17 +54,17 @@ class UserModule(torch.nn.Module):
         self._column_name_path = column_name_path
         self._user_combine_schema_path = user_combine_schema_path
         self._interacted_items_combine_schema_path = interacted_items_combine_schema_path
-        
+
         self._sparse_user = ms.EmbeddingSumConcat(self._embedding_size, self._column_name_path, self._user_combine_schema_path)
         self._sparse_user.updater = ms.FTRLTensorUpdater(l1=l1, l2=l2, alpha = alpha, beta=beta)
         self._sparse_user.initializer = ms.NormalTensorInitializer(var = 0.0001)
         self._sparse_user.output_batchsize1_if_only_level0 = True
-        
+
         self._sparse_interacted_items = ms.EmbeddingSumConcat(self._embedding_size, self._column_name_path, self._interacted_items_combine_schema_path, embedding_bag_mode='mean')
         self._sparse_interacted_items.updater = ms.FTRLTensorUpdater(l1=l1, l2=l2, alpha = alpha, beta=beta)
         self._sparse_interacted_items.initializer = ms.NormalTensorInitializer(var = 0.0001)
         self._sparse_interacted_items.output_batchsize1_if_only_level0 = True
-        
+
         self._emb_out_size = self._sparse_user.feature_count * self._embedding_size
         self._dense = SimpleXDense(self._emb_out_size, self._g)
 
@@ -81,11 +81,11 @@ class ItemModule(torch.nn.Module):
         self._embedding_size = emb_size
         self._column_name_path = column_name_path
         self._combine_schema_path = combine_schema_path
-        
+
         self._sparse = ms.EmbeddingSumConcat(self._embedding_size, self._column_name_path, self._combine_schema_path)
         self._sparse.updater = ms.FTRLTensorUpdater(l1=l1, l2=l2, alpha = alpha, beta=beta)
         self._sparse.initializer = ms.NormalTensorInitializer(var = 0.0001)
-        
+
         self._emb_out_size = self._sparse.feature_count * self._embedding_size
 
     def forward(self, x):

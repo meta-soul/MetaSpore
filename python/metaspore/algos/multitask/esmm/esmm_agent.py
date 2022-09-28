@@ -1,12 +1,12 @@
 #
 # Copyright 2022 DMetaSoul
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import struct
 from pyspark.sql.functions import col
 
 class ESMMAgent(ms.PyTorchAgent):
-    def __init__(self, 
+    def __init__(self,
                  ctr_loss_weight=1.0,
                  ctcvr_loss_weight=1.0,
                  **kwargs):
@@ -46,7 +46,7 @@ class ESMMAgent(ms.PyTorchAgent):
                + self.ctr_loss(ctr_predictions, ctr_labels) * self.ctr_loss_weight
         self.trainer.train(loss)
         self.update_progress(ctcvr_predictions, ctcvr_labels, loss)
-    
+
     def validate_minibatch(self, minibatch):
         self.model.eval()
         ndarrays, ctcvr_labels, ctr_labels = self.preprocess_minibatch(minibatch)
@@ -93,7 +93,7 @@ class ESMMAgent(ms.PyTorchAgent):
         # ``validation_result`` when we use it, which is not possible as the
         # PS system has been shutdown.
         df.cache()
-        df.write.format('noop').mode('overwrite').save()    
+        df.write.format('noop').mode('overwrite').save()
 
     def feed_validation_minibatch(self):
         from pyspark.sql.functions import pandas_udf
@@ -108,12 +108,12 @@ class ESMMAgent(ms.PyTorchAgent):
     def process_validation_minibatch_result(self, minibatch, result):
         minibatch_size = len(minibatch[self.input_label_column_index])
         result = pd.DataFrame({
-            'col0': self._to_pd_series(result[0], minibatch_size), 
-            'col1': self._to_pd_series(result[1], minibatch_size), 
+            'col0': self._to_pd_series(result[0], minibatch_size),
+            'col1': self._to_pd_series(result[1], minibatch_size),
             'col2': self._to_pd_series(result[2], minibatch_size)
         })
         return result
-    
+
     def _to_pd_series(self, result, minibatch_size):
         if result is None:
             result = pd.Series([0.0] * minibatch_size)
@@ -135,10 +135,10 @@ class ESMMAgent(ms.PyTorchAgent):
     def _create_metric(self):
         metric = ESMMMetric()
         return metric
-    
+
     def update_metric(self, predictions, labels, loss):
         self._metric.accumulate(predictions.data.numpy(), labels.data.numpy(), loss.data.numpy())
-    
+
     def update_progress(self, predictions, labels, loss):
         self.minibatch_id += 1
         self.update_metric(predictions, labels, loss)

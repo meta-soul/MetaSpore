@@ -32,11 +32,11 @@ class DumpToMongoDBConfig:
     index_fields = attrs.field(default=[], validator=attrs.validators.instance_of(List))
     index_unique = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(bool)))
     collection = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(str)))
-    
+
 class DumpToMongoDBModule:
     def __init__(self, conf: DumpToMongoDBConfig):
         self.conf = conf
-    
+
     def run(self, df_to_mongodb, mongo_collection=None) -> None:
         if not isinstance(df_to_mongodb, DataFrame):
             raise ValueError("Type of df_to_mongodb must be DataFrame.")
@@ -44,7 +44,7 @@ class DumpToMongoDBModule:
             mongo_collection = self.conf.collection
         if mongo_collection is None:
             raise ValueError("mongo collection name should not be None.")
-        
+
         logger.info('Dump to MongoDB: start')
         df_to_mongodb.write \
             .format("mongo") \
@@ -53,11 +53,11 @@ class DumpToMongoDBModule:
             .option("database", self.conf.database) \
             .option("collection", mongo_collection) \
             .save()
-        
+
         logger.info('Dump to MongoDB: index')
         if len(self.conf.index_fields) > 0:
             client = pymongo.MongoClient(self.conf.uri)
             collection = client[self.conf.database][mongo_collection]
             for field_name in self.conf.index_fields:
-                collection.create_index([(field_name, pymongo.ASCENDING)], unique=self.conf.index_unique)           
+                collection.create_index([(field_name, pymongo.ASCENDING)], unique=self.conf.index_unique)
         logger.info('Dump to MongoDB: done')
