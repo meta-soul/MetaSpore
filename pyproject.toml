@@ -52,6 +52,7 @@ dependencies = [
     'python-consul~=1.1.0',
     'faiss-cpu~=1.7.2',
     'pymilvus~=2.1.1',
+    'pymongo~=4.2.0',
 ]
 
 [project.urls]
