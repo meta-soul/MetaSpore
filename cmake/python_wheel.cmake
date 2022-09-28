@@ -62,6 +62,56 @@ set(python_files
     python/metaspore/nn/deep_fm.py
     python/metaspore/compat/__init__.py
     python/metaspore/compat/ps/__init__.py
+    python/metaspore/algos/__init__.py
+    python/metaspore/algos/autoint_net.py
+    python/metaspore/algos/dcn_net.py
+    python/metaspore/algos/dcn_v2_net.py
+    python/metaspore/algos/deepfm_net.py
+    python/metaspore/algos/feature/__init__.py
+    python/metaspore/algos/feature/neg_sampler.py
+    python/metaspore/algos/feature/sequential_encoder.py
+    python/metaspore/algos/feature/target_encoder.py
+    python/metaspore/algos/feature/woe_encoder.py
+    python/metaspore/algos/ffm_net.py
+    python/metaspore/algos/fwfm_net.py
+    python/metaspore/algos/item_cf_retrieval.py
+    python/metaspore/algos/layers.py
+    python/metaspore/algos/multitask/__init__.py
+    python/metaspore/algos/multitask/esmm/esmm_agent.py
+    python/metaspore/algos/multitask/esmm/esmm_net.py
+    python/metaspore/algos/multitask/mmoe/mmoe_agent.py
+    python/metaspore/algos/multitask/mmoe/mmoe_net.py
+    python/metaspore/algos/pipeline/__init__.py
+    python/metaspore/algos/pipeline/common_validators.py
+    python/metaspore/algos/pipeline/data_loader.py
+    python/metaspore/algos/pipeline/deep_ctr.py
+    python/metaspore/algos/pipeline/i2i_retrieval.py
+    python/metaspore/algos/pipeline/init_spark.py
+    python/metaspore/algos/pipeline/mongodb_dumper.py
+    python/metaspore/algos/pipeline/popular_retrieval.py
+    python/metaspore/algos/pipeline/utils/__init__.py
+    python/metaspore/algos/pipeline/utils/class_utils.py
+    python/metaspore/algos/pipeline/utils/constants.py
+    python/metaspore/algos/pipeline/utils/dict_utils.py
+    python/metaspore/algos/pipeline/utils/logger.py
+    python/metaspore/algos/pnn_net.py
+    python/metaspore/algos/sequential/__init__.py
+    python/metaspore/algos/sequential/dien/dien_agent.py
+    python/metaspore/algos/sequential/dien/dien_net.py
+    python/metaspore/algos/sequential/din/din_net.py
+    python/metaspore/algos/sequential/gru4rec/gru4rec_agent.py
+    python/metaspore/algos/sequential/gru4rec/gru4rec_net.py
+    python/metaspore/algos/sequential/hrm/hrm_net.py
+    python/metaspore/algos/tuner/base_tuner.py
+    python/metaspore/algos/twotower/dssm/__init__.py
+    python/metaspore/algos/twotower/dssm/dssm_agent.py
+    python/metaspore/algos/twotower/dssm/dssm_net.py
+    python/metaspore/algos/twotower/__init__.py
+    python/metaspore/algos/twotower/simplex/__init__.py
+    python/metaspore/algos/twotower/simplex/simplex_agent.py
+    python/metaspore/algos/twotower/simplex/simplex_net.py
+    python/metaspore/algos/widedeep_net.py
+    python/metaspore/algos/xdeepfm_net.py
     python/ps/__init__.py
     python/ps/job.py
 )
