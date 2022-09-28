@@ -1,8 +1,8 @@
 apiVersion: metaspore/v1
 kind: TrainingJob
 metadata:
-  name: DeepFM
-  category: Rank/DeepCTR/DeepFM
+  name: WideDeep
+  category: Rank/DeepCTR/WideDeep
 
 spec:
   logging:
@@ -59,10 +59,10 @@ spec:
     
     estimator_params:
       model_in_path: null
-      model_out_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/nn/deepfm/model_out/
-      # model_export_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/nn/deepfm/model_export/
+      model_out_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/nn/widedeep/model_out/
+      model_export_path: s3://dmetasoul-bucket/sass/ecommerce/amazonfashion/ctr/nn/widedeep/model_export/
       model_version: '0.1'
-      experiment_name: amazonfashion_deepfm
+      experiment_name: amazonfashion_widedeep
       input_label_column_index: 0
       metric_update_interval: 100
       adam_learning_rate: 0.0001
