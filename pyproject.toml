@@ -60,7 +60,7 @@ repository = "https://github.com/meta-soul/MetaSpore"
 
 [tool.setuptools.packages.find]
 where = ["python"]
-include = ["metaspore", "metaspore.nn", "metaspore.compat", "metaspore.compat.ps", "ps"]
+include = ["metaspore*", "ps"]
 
 [tool.cibuildwheel]
 manylinux-x86_64-image = "dmetasoul/py-wheel-env-manylinux2014:v1.1.0"
