@@ -116,7 +116,7 @@ export default {
     },
     handleDeNum() {
       this.num--;
-      if (this.num <script 1) {
+      if (this.num < 1) {
         this.num = 1;
       }
     },
