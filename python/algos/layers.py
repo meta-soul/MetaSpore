@@ -630,3 +630,4 @@ class TransformerEncoder(torch.nn.Module):
         for layer_module in self.layer:
             hidden_states = layer_module(hidden_states)
         return hidden_states
+    

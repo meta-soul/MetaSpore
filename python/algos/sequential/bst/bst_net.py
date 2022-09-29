@@ -55,7 +55,6 @@ class BST(torch.nn.Module):
                  ftrl_l2=120.0,
                  ftrl_alpha=0.5,
                  ftrl_beta=1.0
-                
                 ):
         super().__init__()
         
@@ -115,8 +114,9 @@ class BST(torch.nn.Module):
                                 )
 
         self.final_activation = torch.nn.Sigmoid()
-    
-    def get_seq_column_embedding(self, seq_column_index_list, x_reshape, column_nums):
+        
+    @staticmethod
+    def get_seq_column_embedding(seq_column_index_list, x_reshape, column_nums):
         all_column_embedding = []
         for column_index in seq_column_index_list:
             column_embedding = x_reshape[column_index::column_nums]         
@@ -125,7 +125,8 @@ class BST(torch.nn.Module):
         all_column_embedding = torch.cat(all_column_embedding, dim=2)
         return all_column_embedding
     
-    def get_non_seq_column_embedding(self, non_seq_column_index_list, x_reshape, column_nums):
+    @staticmethod
+    def get_non_seq_column_embedding(non_seq_column_index_list, x_reshape, column_nums):
         all_column_embedding = []
         for column_index in non_seq_column_index_list:
             column_embedding = x_reshape[column_index::column_nums]
@@ -133,20 +134,20 @@ class BST(torch.nn.Module):
             all_column_embedding.append(column_embedding)
         all_column_embedding = torch.cat(all_column_embedding, dim=1) 
         return all_column_embedding
-        
-    def get_field_embedding_list(self, x, offset):
+    
+    @staticmethod
+    def get_field_embedding_list(x, offset):
         x_reshape = [x[offset[i]:offset[i+1],:] for i in range(offset.shape[0]-1)]
         x_reshape.append(x[offset[offset.shape[0]-1]:x.shape[0],:])
         return x_reshape
     
     def forward(self, x):
         x, offset = self.embedding_table(x)     
-        x_reshape = self.get_field_embedding_list(x, offset)
+        x_reshape = BST.get_field_embedding_list(x, offset)
         column_nums = self.feature_nums
-        other_embedding = None
-        other_embedding = self.get_non_seq_column_embedding(self.other_column_index_list, x_reshape, column_nums)
-        target_embedding = self.get_non_seq_column_embedding(self.target_column_index_list, x_reshape, column_nums).unsqueeze(1)  
-        seq_embedding = self.get_seq_column_embedding(self.seq_column_index_list, x_reshape, column_nums) # [B T 2*H]
+        other_embedding = BST.get_non_seq_column_embedding(self.other_column_index_list, x_reshape, column_nums)
+        target_embedding = BST.get_non_seq_column_embedding(self.target_column_index_list, x_reshape, column_nums).unsqueeze(1)  
+        seq_embedding = BST.get_seq_column_embedding(self.seq_column_index_list, x_reshape, column_nums) # [B T 2*H]
         pad_tensor = torch.zeros(seq_embedding.shape[0], self.max_seq_length-seq_embedding.shape[1], seq_embedding.shape[2])
         seq_embedding = torch.cat((seq_embedding, pad_tensor), dim=1)
         trm_seq_feature = torch.cat((seq_embedding, target_embedding), dim=1) 
