@@ -322,6 +322,12 @@ def dump_nn_feature_table(spark, dataset, conf, verbose=False):
     # TODO unqiue features
     for table_conf in feature_table_conf_list:
         df_to_mongo = dataset.select(table_conf['feature_column'])
+        
+        # TODO: known issue - user_bhv_item_seq
+        print('Debug - ', table_conf['mongo_collection'], " before: ", df_to_mongo.count())
+        df_to_mongo = df_to_mongo.dropDuplicates(table_conf['drop_duplicates_by'])
+        print('Debug - ', table_conf['mongo_collection'], " after: ", df_to_mongo.count())
+        
         mongo_collection = table_conf['mongo_collection']
         dumper.run(df_to_mongo, mongo_collection)
 
