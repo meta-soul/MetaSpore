@@ -18,6 +18,7 @@ from .din.din_net import DIN
 
 from .dien.dien_net import DIEN
 from .dien.dien_agent import DIENAgent
+from .bst.bst_net import BST
 
 from .hrm.hrm_net import HRMUserModule, HRMItemModule, HRMSimilarityModule
 from .gru4rec.gru4rec_net import GRU4RecUserModule, GRU4RecItemModule, GRU4RecSimilarityModule
