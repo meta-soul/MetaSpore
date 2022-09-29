@@ -319,6 +319,11 @@ def dump_nn_feature_table(spark, dataset, conf, verbose=False):
     mongo_conf = conf['mongodb']
     feature_table_conf_list = conf['tables']
     dumper = DumpToMongoDBModule(cattrs.structure(mongo_conf, DumpToMongoDBConfig))
+    
+    dataset.show(20)
+    dataset = dataset.filter(F.length(F.col('user_bhv_item_seq')) >= 10)
+    dataset.show(20)
+    
     # TODO unqiue features
     for table_conf in feature_table_conf_list:
         df_to_mongo = dataset.select(table_conf['feature_column'])
@@ -327,6 +332,7 @@ def dump_nn_feature_table(spark, dataset, conf, verbose=False):
         print('Debug - ', table_conf['mongo_collection'], " before: ", df_to_mongo.count())
         df_to_mongo = df_to_mongo.dropDuplicates(table_conf['drop_duplicates_by'])
         print('Debug - ', table_conf['mongo_collection'], " after: ", df_to_mongo.count())
+        df_to_mongo.show(20)
         
         mongo_collection = table_conf['mongo_collection']
         dumper.run(df_to_mongo, mongo_collection)
