@@ -37,6 +37,25 @@ public class TableData {
         fieldNames = Maps.newHashMap();
     }
 
+    public TableData(List<String> names, List<Object> types) {
+        data = Lists.newArrayList();
+        this.names = Lists.newArrayList();
+        dataSchema = Maps.newHashMap();
+        dataTypes = Maps.newHashMap();
+        fieldNames = Maps.newHashMap();
+        addFieldList(names, types);
+    }
+
+    public void addFieldList(List<String> names, List<Object> types) {
+        if (CollectionUtils.isNotEmpty(names) && names.size() == types.size()) {
+            for (int i = 0; i < names.size(); ++i) {
+                FieldInfo fieldInfo = getFieldInfo(names.get(i));
+                addFieldInfo(fieldInfo);
+                addTypeInfo(fieldInfo, types.get(i));
+            }
+        }
+    }
+
     public void reset(TableData other) {
         data = other.data;
         names = other.names;

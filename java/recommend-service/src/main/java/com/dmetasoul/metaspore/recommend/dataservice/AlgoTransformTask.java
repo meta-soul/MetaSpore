@@ -172,6 +172,7 @@ public class AlgoTransformTask extends DataService {
                 }
                 try {
                     timeRecorder.start(String.format("%s_fieldAction_func_%s", name, fieldAction.getFunc()));
+                    fieldTableData.addFieldList(fieldAction.getNames(), fieldAction.getTypes());
                     if (!function.process(fieldTableData, fieldAction, taskPool)) {
                         throw new RuntimeException("the function process fail. func:" + fieldAction.getFunc());
                     }

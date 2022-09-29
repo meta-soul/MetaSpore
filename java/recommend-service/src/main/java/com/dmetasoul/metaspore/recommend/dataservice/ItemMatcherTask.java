@@ -113,16 +113,16 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 }
             }
             TableData recallData = new TableData();
-            List<Object> itemIds = Lists.newArrayList();
+            List<Object> userIds = Lists.newArrayList();
             List<Object> scores = Lists.newArrayList();
             for (Map.Entry<String, Map<String, Double>> entry : UserItemScore.entrySet()) {
-                itemIds.add(entry.getKey());
+                userIds.add(entry.getKey());
                 scores.add(entry.getValue());
             }
             List<String> names = config.getNames();
             List<Object> types = config.getTypes();
             Assert.isTrue(names.size() > 1, "output has 2 fields");
-            recallData.addValueList(names.get(0), types.get(0), itemIds);
+            recallData.addValueList(names.get(0), types.get(0), userIds);
             recallData.addValueList(names.get(1), types.get(1), scores);
             fieldTableData.reset(recallData);
             return true;
@@ -148,15 +148,15 @@ public class ItemMatcherTask extends AlgoTransformTask {
                     itemToItemScore.put(itemId, itemScore);
                 }
             }
-            TableData recallData = new TableData();
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            TableData recallData = new TableData(names, types);
             List<Object> itemIds = Lists.newArrayList();
             List<Object> scores = Lists.newArrayList();
             for (Map.Entry<String, Map<String, Double>> entry : UserItemScore.entrySet()) {
                 itemIds.add(entry.getKey());
                 scores.add(entry.getValue());
             }
-            List<String> names = config.getNames();
-            List<Object> types = config.getTypes();
             Assert.isTrue(names.size() > 1, "output has 2 fields");
             recallData.addValueList(names.get(0), types.get(0), itemIds);
             recallData.addValueList(names.get(1), types.get(1), scores);
@@ -171,6 +171,14 @@ public class ItemMatcherTask extends AlgoTransformTask {
                     "recallCollectItem has two input");
             FieldInfo userId = config.getInputFields().get(0);
             FieldInfo itemScores = config.getInputFields().get(1);
+            List<Object> userIds = Lists.newArrayList();
+            List<Object> itemIds = Lists.newArrayList();
+            List<Object> scores = Lists.newArrayList();
+            List<Object> originScores = Lists.newArrayList();
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            Assert.isTrue(names.size() > 3, "output has 4 fields");
+            TableData recallData = new TableData(names, types);
             for (int i = 0; i < fieldTableData.getData().size(); ++i) {
                 Map<String, Double> itemScore = (Map<String, Double>) fieldTableData.getValue(i, itemScores);
                 if (MapUtils.isEmpty(itemScore)) continue;
@@ -183,13 +191,6 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 }
                 Double finalMaxScore = maxScore;
                 long limit1 = maxReservation;
-                List<String> names = config.getNames();
-                List<Object> types = config.getTypes();
-                Assert.isTrue(names.size() > 3, "output has 4 fields");
-                List<Object> userIds = Lists.newArrayList();
-                List<Object> itemIds = Lists.newArrayList();
-                List<Object> scores = Lists.newArrayList();
-                List<Object> originScores = Lists.newArrayList();
                 for (Map.Entry<String, Double> x : entries) {
                     if (limit1-- == 0) break;
                     userIds.add(fieldTableData.getValue(i, userId));
@@ -197,13 +198,12 @@ public class ItemMatcherTask extends AlgoTransformTask {
                     scores.add(Utils.getFinalRetrievalScore(x.getValue(), finalMaxScore, finalAlgoLevel));
                     originScores.add(Map.of(algoName, x.getValue()));
                 }
-                TableData recallData = new TableData();
-                recallData.addValueList(names.get(0), types.get(0), userIds);
-                recallData.addValueList(names.get(1), types.get(1), itemIds);
-                recallData.addValueList(names.get(2), types.get(2), scores);
-                recallData.addValueList(names.get(3), types.get(3), originScores);
-                fieldTableData.reset(recallData);
             }
+            recallData.addValueList(names.get(0), types.get(0), userIds);
+            recallData.addValueList(names.get(1), types.get(1), itemIds);
+            recallData.addValueList(names.get(2), types.get(2), scores);
+            recallData.addValueList(names.get(3), types.get(3), originScores);
+            fieldTableData.reset(recallData);
             return true;
         });
     }

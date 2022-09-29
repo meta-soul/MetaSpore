@@ -137,6 +137,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
                         log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        fieldTableData.addValueList(fieldAction.getNames().get(0), fieldAction.getTypes().get(0), List.of());
                         return true;
                     }
                     featureTables.add(featureTable);
