@@ -17,9 +17,9 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
+import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -27,6 +27,7 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 @Slf4j
@@ -42,36 +43,43 @@ public class UserProfileTask extends AlgoTransformTask {
         splitor = getOptionOrDefault("splitor", splitor);
         return true;
     }
+    @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
-        addFunction("splitRecentIds", (fields, result, config, taskPool) -> {
+        addFunction("splitRecentIds", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
+            List<FieldInfo> fields = config.getInputFields();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            FieldData fieldData = fields.get(0);
-            Assert.isTrue(DataTypeEnum.STRING.isMatch(fieldData), "split input must string and not empty!");
+            Assert.isTrue(DataTypeEnum.STRING.equals(fieldTableData.getType(fields.get(0))), "split input must string and not empty!");
             String split = CommonUtils.getField(options, "splitor", splitor);
-            List<IndexData> input = fieldData.getIndexValue();
-            for (IndexData o : input) {
-                Assert.isTrue(o.getVal() instanceof String, "value must string! value:" + o.getVal());
-                String value = o.getVal();
-                result.get(0).addIndexData(FieldData.create(o.getIndex(), List.of(value.split(split))));
+            for (int i = 0; i < fieldTableData.getData().size(); ++i) {
+                String value = (String) fieldTableData.getValue(i, fields.get(0));
+                if (value == null) {
+                    continue;
+                }
+                fieldTableData.setValue(i, config.getNames().get(0), config.getTypes().get(0), List.of(value.split(split)));
             }
             return true;
         });
-        addFunction("recentWeight", (fields, result, config, taskPool) -> {
+        addFunction("recentWeight", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
+            List<FieldInfo> fields = config.getInputFields();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input data is not null");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            List<IndexData> input = fields.get(0).getIndexValue();
             int num = 0;
-            for (IndexData item : input) {
-                List<String> list = item.getVal();
-                for (int k = 0; k < list.size(); ++k) {
-                    result.get(0).addIndexData(FieldData.create(item.getIndex(), list.get(k)));
-                    result.get(1).addIndexData(FieldData.create(item.getIndex(), 1 / (1 + Math.pow((list.size() - k - 1), alpha))));
+            List<List<List<Object>>> data = Lists.newArrayList();
+            for (int i = 0; i < fieldTableData.getData().size(); ++i) {
+                List<Object> list = (List<Object>) fieldTableData.getValue(i, fields.get(0));
+                if (list == null) {
+                    continue;
                 }
+                List<Object> weights = Lists.newArrayList();
+                for (int k = 0; k < list.size(); ++k) {
+                    weights.add(1 / (1 + Math.pow((list.size() - k - 1), alpha)));
+                }
+                data.add(List.of(list, weights));
             }
+            List<FieldInfo> fieldInfos = config.getNames().stream().map(FieldInfo::new).collect(Collectors.toList());
+            fieldTableData.flatListValue(data, fieldInfos, config.getTypes());
             return true;
         });
     }

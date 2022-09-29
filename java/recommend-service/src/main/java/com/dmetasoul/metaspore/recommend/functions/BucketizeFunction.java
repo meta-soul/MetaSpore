@@ -19,8 +19,8 @@ package com.dmetasoul.metaspore.recommend.functions;
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
+import com.dmetasoul.metaspore.recommend.data.TableData;
 import com.google.common.collect.Lists;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.NumberUtils;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -49,28 +48,36 @@ public class BucketizeFunction implements Function {
     private List<Number> ranges = Lists.newArrayList();
 
     @Override
-    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result,
+    public boolean process(@NonNull TableData fieldTableData,
                            @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
         Map<String, Object> options = config.getOptions();
-        Assert.isTrue(CollectionUtils.isNotEmpty(fields) && fields.size() == 1, "input values size must eq 1");
         bins = CommonUtils.getField(options, NAMEBINS, bins);
         min = CommonUtils.getField(options, NAMEMIN, min);
         max = CommonUtils.getField(options, NAMEMAX, max);
         String rangeStr = CommonUtils.getField(options, NAMERANGES, "[]");
         ranges = parseRanges(rangeStr);
-        FieldData fieldData = fields.get(0);
-        List<IndexData> input = fieldData.getIndexValue();
-        List<IndexData> res = Lists.newArrayList();
-        for (IndexData o : input) {
-            Assert.isInstanceOf(Number.class, o, "value must be number!");
-            if (CollectionUtils.isNotEmpty(ranges)) {
-                res.add(FieldData.create(o.getIndex(), bucket(o.getVal(), ranges)));
-            } else {
-                res.add(FieldData.create(o.getIndex(), bucket(o.getVal(), bins, max, min)));
+        if (CollectionUtils.isNotEmpty(config.getNames())) {
+            int fieldSize = 0;
+            if (CollectionUtils.isNotEmpty(config.getFields())) {
+                fieldSize = config.getFields().size();
+            }
+            for (int i = 0; i < config.getNames().size(); ++i) {
+                List<Object> result = Lists.newArrayList();
+                FieldInfo fieldInfo = config.getInputFields().get(i);
+                if (fieldInfo != null) {
+                    for (int j = 0; j < fieldTableData.getData().size(); ++j) {
+                        Object o = fieldTableData.getValue(j, fieldInfo);
+                        Assert.isInstanceOf(Number.class, o, "value must be number!");
+                        if (CollectionUtils.isNotEmpty(ranges)) {
+                            result.add(bucket((Number) o, ranges));
+                        } else {
+                            result.add(bucket((Number) o, bins, max, min));
+                        }
+                    }
+                }
+                fieldTableData.addValueList(config.getNames().get(i), config.getTypes().get(i), result);
             }
         }
-
-        result.get(0).setIndexValue(res);
         return true;
     }
 

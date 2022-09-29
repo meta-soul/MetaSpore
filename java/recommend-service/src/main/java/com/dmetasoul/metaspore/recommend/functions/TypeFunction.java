@@ -16,100 +16,71 @@
 package com.dmetasoul.metaspore.recommend.functions;
 
 import com.dmetasoul.metaspore.recommend.annotation.FunctionAnnotation;
+import com.dmetasoul.metaspore.recommend.configure.ColumnInfo;
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
+import com.dmetasoul.metaspore.recommend.data.TableData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
-import com.google.common.collect.Lists;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.util.Assert;
 
-import javax.validation.constraints.NotEmpty;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 import static com.dmetasoul.metaspore.recommend.common.ConvTools.*;
+
 @Slf4j
 @FunctionAnnotation("typeTransform")
 public class TypeFunction implements Function {
     @Override
-    public boolean process(@NotEmpty List<FieldData> fields, @NotEmpty List<FieldData> result,
-                           @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
+    public boolean process(@NonNull TableData fieldTableData, @NonNull FieldAction config, @NonNull ExecutorService taskPool) {
         Map<String, Object> options = config.getOptions();
-        Assert.isTrue(fields.size() == result.size(), "input and output has same size!");
-        List<CompletableFuture<List<IndexData>>> fieldList = Lists.newArrayList();
-        for (int k = 0; k < fields.size(); ++k) {
-            FieldData input = fields.get(k);
-            FieldData output = result.get(k);
-            DataTypeEnum outType = output.getType();
-            Assert.notNull(outType, "output type should be configure!");
-            fieldList.add(processField(input, outType, taskPool));
-        }
-        CompletableFuture<?> resultFuture = CompletableFuture.allOf(fieldList.toArray(new CompletableFuture[]{}));
-        for (int k = 0; k < fields.size(); ++k) {
-            FieldData output = result.get(k);
-            CompletableFuture<List<IndexData>> fieldFuture = fieldList.get(k);
-            try {
-                output.setIndexValue(fieldFuture.get());
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+        if (CollectionUtils.isNotEmpty(config.getNames())) {
+            Assert.isTrue(config.getInputFields() != null && config.getInputFields().size() == config.getNames().size(),
+                    "input and output must same size");
+            for (int i = 0; i < config.getNames().size(); ++i) {
+                processField(fieldTableData, config.getInputFields().get(i), config.getNames().get(i), config.getTypes().get(i));
             }
         }
         return true;
     }
 
-    private CompletableFuture<List<IndexData>> processField(FieldData input, DataTypeEnum outType,
-                                                            ExecutorService taskPool) {
-        List<CompletableFuture<Object>> valueList = Lists.newArrayList();
-        for (int i = 0; i < input.getValue().size(); ++i) {
-            Object value = input.getValue().get(i);
-            valueList.add(CompletableFuture.supplyAsync(() -> {
-                Object data = null;
-                if (outType.equals(input.getType())) {
-                    data = value;
-                } else if (outType.equals(DataTypeEnum.STRING)) {
-                    data = parseString(value);
-                } else if (outType.equals(DataTypeEnum.LONG)) {
-                    data = parseLong(value);
-                } else if (outType.equals(DataTypeEnum.INT)) {
-                    data = parseInteger(value);
-                } else if (outType.equals(DataTypeEnum.DOUBLE)) {
-                    data = parseDouble(value);
-                } else if (outType.equals(DataTypeEnum.BOOL)) {
-                    data = parseBoolean(value);
-                } else if (outType.equals(DataTypeEnum.DATE)) {
-                    data = parseLocalDateTime(value);
-                } else if (outType.equals(DataTypeEnum.TIMESTAMP)) {
-                    data = parseTimestamp(value);
-                } else if (outType.equals(DataTypeEnum.DECIMAL)) {
-                    data = parseBigDecimal(value);
-                } else if (outType.equals(DataTypeEnum.FLOAT)) {
-                    data = parseFloat(value);
-                } else if (outType.equals(DataTypeEnum.TIME)) {
-                    data = parseLocalTime(value);
-                }
-                if (value != null && data == null) {
-                    log.error("typeTransform type not match, transform fail, output null at inType: {}, outType: {}, value: {}", input.getType(), outType, value);
-                }
-                return data;
-            }, taskPool));
-        }
-        CompletableFuture<?> resultFuture = CompletableFuture.allOf(valueList.toArray(new CompletableFuture[]{}));
-        return resultFuture.thenApplyAsync(x->{
-            List<IndexData> result = Lists.newArrayList();
-            for (int i = 0; i < valueList.size(); ++i) {
-                CompletableFuture<Object> fieldFuture = valueList.get(i);
-                try {
-                    result.add(FieldData.create(i, fieldFuture.get()));
-                } catch (InterruptedException | ExecutionException e) {
-                    throw new RuntimeException(e);
-                }
+    private void processField(TableData fieldTableData, FieldInfo input, String name, Object type) {
+        FieldInfo output = new FieldInfo(name);
+        DataTypeEnum outType = ColumnInfo.getType(type);
+        for (int i = 0; i < fieldTableData.getData().size(); ++i) {
+            Map<FieldInfo, Object> item = fieldTableData.getData().get(i);
+            Object value = item.get(input);
+            Object data = null;
+            if (outType.equals(fieldTableData.getDataSchema().get(input))) {
+                data = value;
+            } else if (outType.equals(DataTypeEnum.STRING)) {
+                data = parseString(value);
+            } else if (outType.equals(DataTypeEnum.LONG)) {
+                data = parseLong(value);
+            } else if (outType.equals(DataTypeEnum.INT)) {
+                data = parseInteger(value);
+            } else if (outType.equals(DataTypeEnum.DOUBLE)) {
+                data = parseDouble(value);
+            } else if (outType.equals(DataTypeEnum.BOOL)) {
+                data = parseBoolean(value);
+            } else if (outType.equals(DataTypeEnum.DATE)) {
+                data = parseLocalDateTime(value);
+            } else if (outType.equals(DataTypeEnum.TIMESTAMP)) {
+                data = parseTimestamp(value);
+            } else if (outType.equals(DataTypeEnum.DECIMAL)) {
+                data = parseBigDecimal(value);
+            } else if (outType.equals(DataTypeEnum.FLOAT)) {
+                data = parseFloat(value);
+            } else if (outType.equals(DataTypeEnum.TIME)) {
+                data = parseLocalTime(value);
             }
-            return result;
-        }, taskPool);
+            if (value != null && data == null) {
+                log.error("typeTransform type not match, transform fail, output null at inType: {}, outType: {}, value: {}", fieldTableData.getDataSchema().get(input), outType, value);
+            }
+            fieldTableData.setValue(i, name, type, data);
+        }
     }
 }

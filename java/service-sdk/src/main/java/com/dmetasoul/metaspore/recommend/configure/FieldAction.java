@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 public class FieldAction {
@@ -23,6 +24,7 @@ public class FieldAction {
     private Map<String, Object> options;
     private List<Map<String, List<String>>> algoColumns;
     private Map<String, FieldInfo> algoFields;
+    private List<FieldInfo> inputFields;
 
     public void setNames(List<String> names) {
         if (CollectionUtils.isEmpty(names)) return;
@@ -91,6 +93,13 @@ public class FieldAction {
             for (String key : input) {
                 Validate.isTrue(!nameSet.contains(key), "input field must not in names! key:" + key);
             }
+        }
+        inputFields = Lists.newArrayList();
+        if (CollectionUtils.isNotEmpty(fields)) {
+            inputFields.addAll(fields);
+        }
+        if (CollectionUtils.isNotEmpty(input)) {
+            inputFields.addAll(input.stream().map(FieldInfo::new).collect(Collectors.toList()));
         }
         return true;
     }

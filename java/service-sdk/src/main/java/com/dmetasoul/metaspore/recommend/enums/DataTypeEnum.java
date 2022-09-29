@@ -15,7 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.enums;
 
-import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.operator.*;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
@@ -391,13 +390,6 @@ public enum DataTypeEnum {
 
     public List<Field> getChildFields() {
         return childFields;
-    }
-
-    public boolean isMatch(FieldData data) {
-        if (data != null && !data.isInvalid()) {
-            return this.equals(data.getType());
-        }
-        return false;
     }
 
     public static DataTypeEnum getEnumByCls(Class<?> cls) {

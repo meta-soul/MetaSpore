@@ -17,9 +17,8 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.configure.ColumnInfo;
 import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
@@ -30,8 +29,6 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.arrow.memory.BufferAllocator;
-import org.apache.arrow.memory.RootAllocator;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.bouncycastle.util.Strings;
@@ -42,6 +39,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Data
 @Slf4j
@@ -82,9 +80,10 @@ public class AlgoInferenceTask extends AlgoTransformTask {
         return channelBuilder.build();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
-        addFunction("genEmbedding", (fields, result, fieldAction, taskPool) -> {
+        addFunction("genEmbedding", (fieldTableData, fieldAction, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
             List<FeatureTable> featureTables = Lists.newArrayList();
             for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
@@ -99,7 +98,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                             columns.add(name);
                         }
                     }
-                    FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fields);
+                    FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
                         log.error("model input is empty! at fieldAction: {}", fieldAction);
                         return true;
@@ -113,14 +112,14 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                 ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
                 List<Object> res = Lists.newArrayList();
                 res.addAll(getFromTensor(arrowTensor));
-                result.get(0).setValue(res, getFieldIndex(fields));
+                fieldTableData.addValueList(fieldAction.getNames().get(0), fieldAction.getTypes().get(0), res);
                 for (FeatureTable featureTable: featureTables) {
                     featureTable.close();
                 }
                 return true;
             }
         });
-        addFunction("predictScore", (fields, result, fieldAction, taskPool) -> {
+        addFunction("predictScore", (fieldTableData, fieldAction, taskPool) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
             List<FeatureTable> featureTables = Lists.newArrayList();
             for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
@@ -135,7 +134,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                             columns.add(name);
                         }
                     }
-                    FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fields);
+                    FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
                         log.error("model input is empty! at fieldAction: {}", fieldAction);
                         return true;
@@ -150,41 +149,42 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                 ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
                 List<Object> res = Lists.newArrayList();
                 res.addAll(getFromTensor(arrowTensor, index));
-                List<Integer> indexs = getFieldIndex(fields);
-                result.get(0).setValue(res, indexs);
+                fieldTableData.addValueList(fieldAction.getNames().get(0), fieldAction.getTypes().get(0), res);
                 for (FeatureTable featureTable: featureTables) {
                     featureTable.close();
                 }
                 return true;
             }
         });
-        addFunction("rankCollectItem", (fields, result, config, taskPool) -> {
+        addFunction("rankCollectItem", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
-            int field_num = 0;
-            if (CollectionUtils.isNotEmpty(config.getFields())) {
-                field_num = config.getFields().size();
-            }
-            Assert.isTrue(fields.size() > field_num && DataTypeEnum.STRING.isMatch(fields.get(field_num)),
-                    "rankCollectItem input[0] is itemId string");
-            Assert.isTrue(fields.size() > (field_num + 1) && DataTypeEnum.FLOAT.isMatch(fields.get(field_num + 1)),
-                    "rankCollectItem input[1] is score float");
+            Assert.isTrue(CollectionUtils.isNotEmpty(config.getInputFields()) && config.getInputFields().size() > 1,
+                "input must has >= 2 field");
             int limit = CommonUtils.getField(options, "maxReservation", maxReservation);
-            List<IndexData> itemIds = fields.get(field_num).getIndexValue();
-            List<Float> scores = fields.get(field_num + 1).getValue();
-            List<Map<String, Double>> originScores = null;
-            if (field_num > 0 && fields.size() > field_num && DataTypeEnum.MAP_STR_DOUBLE.isMatch(fields.get(0))) {
-                originScores = fields.get(0).getValue();
-            }
-            for (int i = 0; i < itemIds.size() && i < limit; ++i) {
-                result.get(0).addIndexData(itemIds.get(i));
-                float score = CommonUtils.get(scores, i, 0.0F);
-                result.get(1).addIndexData(FieldData.create(itemIds.get(i).getIndex(), score));
-                if (result.size() > 2 && CollectionUtils.isNotEmpty(originScores)) {
-                    Map<String, Double> originScore = CommonUtils.get(originScores, i, Maps.newHashMap());
-                    originScore.put(algoName, (double) score);
-                    result.get(2).addIndexData(FieldData.create(itemIds.get(i).getIndex(), originScore));
+            FieldInfo itemid = config.getInputFields().get(1);
+            FieldInfo scores = config.getInputFields().get(2);
+            FieldInfo originScores = config.getInputFields().get(0);
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            for (int i = 0; i < fieldTableData.getData().size() && i < limit; ++i) {
+                if (names.size() > 0) {
+                    fieldTableData.setValue(i, names.get(0), types.get(0), fieldTableData.getValue(i, itemid));
                 }
-
+                float scoreValue = (Float)fieldTableData.getValue(i, scores, 0.0F);
+                if (names.size() > 1) {
+                    fieldTableData.setValue(i, names.get(1), types.get(1), scoreValue);
+                }
+                if (names.size() > 2) {
+                    Map<String, Double> originScoreValue = Maps.newHashMap();
+                    originScoreValue.put(algoName, (double) scoreValue);
+                    if (originScores != null && fieldTableData.getDataSchema().containsKey(originScores)
+                            && DataTypeEnum.MAP_STR_DOUBLE.equals(fieldTableData.getType(originScores))) {
+                        originScoreValue.putAll(
+                                    (Map<? extends String, ? extends Double>) fieldTableData.getValue(i,
+                                            originScores, Maps.newHashMap()));
+                    }
+                    fieldTableData.setValue(i, names.get(2), types.get(2), originScoreValue);
+                }
             }
             return true;
         });

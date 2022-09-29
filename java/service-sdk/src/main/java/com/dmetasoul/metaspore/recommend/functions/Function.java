@@ -16,14 +16,11 @@
 package com.dmetasoul.metaspore.recommend.functions;
 
 import com.dmetasoul.metaspore.recommend.configure.FieldAction;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
+import com.dmetasoul.metaspore.recommend.data.TableData;
 import lombok.NonNull;
-
-import javax.validation.constraints.NotEmpty;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 
 public interface Function {
-    boolean process(List<FieldData> fields, @NotEmpty List<FieldData> result,
+    boolean process(@NonNull TableData fieldTableData,
                     @NonNull FieldAction config, @NonNull ExecutorService taskPool);
 }
