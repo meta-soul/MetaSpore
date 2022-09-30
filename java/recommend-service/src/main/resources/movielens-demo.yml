@@ -229,6 +229,9 @@ recommend-service:
     - name: rank.wideDeep
       chains:
         - then: rank_widedeep
+          transforms:
+            - name: additionalRecall
+              option: { min_request: 10, recall_list: [ algotransform_item_match_icf ] }
   Layers:
     - name: match
       bucketizer: random

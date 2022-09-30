@@ -87,6 +87,8 @@ public class JDBCSourceTableTask extends SourceTableTask {
         String sql = String.format("%s %s", jdbcSql, String.join(" and ", parts));
         if (request.getLimit() > 0) {
             sql += String.format(" limit %d", request.getLimit());
+        } else {
+            sql += String.format(" limit %d", maxLimit);
         }
         return dataSource.getNamedTemplate().query(sql, params, rs -> {
             List<Map<String, Object>> list = Lists.newArrayList();

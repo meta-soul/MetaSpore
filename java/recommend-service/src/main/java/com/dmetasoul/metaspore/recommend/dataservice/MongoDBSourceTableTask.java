@@ -16,6 +16,7 @@
 package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -45,7 +46,6 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
 @Slf4j
 @ServiceAnnotation("MongoDBSourceTable")
 public class MongoDBSourceTableTask extends SourceTableTask {
-
     private MongoDBSource dataSource;
     private Document columnsObject;
     private Document queryObject;
@@ -136,6 +136,8 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         Query query = new BasicQuery(queryObject, columnsObject);
         if (request.getLimit() > 0) {
             query.limit(request.getLimit());
+        } else {
+            query.limit(maxLimit);
         }
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
         List<Map<String, Object>> list = Lists.newArrayList();

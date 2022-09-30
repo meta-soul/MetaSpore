@@ -40,7 +40,9 @@ import java.util.concurrent.*;
 @Slf4j
 @ServiceAnnotation("SourceTable")
 public class SourceTableTask extends DataService {
+    public static final int DEFAULT_MAX_LIMIT = 200;
 
+    protected int maxLimit;
     private DataSource dataSource;
     protected FeatureConfig.Source source;
     protected FeatureConfig.SourceTable sourceTable;
@@ -48,6 +50,7 @@ public class SourceTableTask extends DataService {
     @Override
     public boolean initService() {
         sourceTable = taskFlowConfig.getSourceTables().get(name);
+        this.maxLimit = CommonUtils.getField(sourceTable.getOptions(), "max_limit", DEFAULT_MAX_LIMIT, Integer.class);
         dataSource = taskServiceRegister.getDataSources().get(sourceTable.getSource());
         source = taskFlowConfig.getSources().get(sourceTable.getSource());
         for (String col: sourceTable.getColumnNames()) {
