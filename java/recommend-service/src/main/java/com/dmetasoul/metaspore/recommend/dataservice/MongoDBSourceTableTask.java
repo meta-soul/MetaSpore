@@ -24,6 +24,7 @@ import com.dmetasoul.metaspore.recommend.datasource.MongoDBSource;
 import com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import lombok.extern.slf4j.Slf4j;
@@ -116,7 +117,8 @@ public class MongoDBSourceTableTask extends SourceTableTask {
     private void fillDocument(String col, Object value) {
         if (value instanceof Collection) {
             BasicDBList values = new BasicDBList();
-            values.addAll((Collection) value);
+            HashSet valueSet = Sets.newHashSet((Collection) value);
+            values.addAll(valueSet);
             BasicDBObject in = new BasicDBObject("$in", values);
             queryObject.put(col, in);
         } else {
