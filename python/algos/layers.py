@@ -17,7 +17,7 @@
 import torch
 import torch.nn.functional as F
 import metaspore as ms
-import math
+import math, copy
 from torch.nn.utils.rnn import pack_sequence, pack_padded_sequence, pad_packed_sequence
 
 # Logistic regression layer
@@ -250,12 +250,13 @@ class ScaledDotproductAttention(torch.nn.Module):
             self.dropout = torch.nn.Dropout(dropout_rate)
         self.softmax = torch.nn.Softmax(dim=2)
     
-    def forward(self, W_q, W_k, W_v, scale=None, mask=None):
+    def forward(self, W_q, W_k, W_v, scale=None, mask=False):
         attention=torch.bmm(W_q, W_k.transpose(1,2))
         scale = (W_k.size(-1)) ** -0.5
         attention = attention * scale
-        mask = torch.triu(torch.ones(attention.size(1), attention.size(2)), 1).bool()
-        attention.masked_fill_(~mask, 0) 
+        if mask:
+            mask = torch.triu(torch.ones(attention.size(1), attention.size(2)), 1).bool()
+            attention.masked_fill_(mask, 0) 
         attention = self.softmax(attention)
         if self.dropout is not None:
             attention = self.dropout(attention)
@@ -549,3 +550,84 @@ class FwFMLayer(torch.nn.Module):
         inner_product_vec = self.inner_product_layer(inputs)
         poly2_part = self.interaction_weight_layer(inner_product_vec)
         return linear_part + poly2_part
+    
+# FeedForward
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
+class FeedForward(torch.nn.Module):
+    def __init__(self, hidden_size, inner_size, hidden_dropout_prob, hidden_act, layer_norm_eps):
+        super(FeedForward, self).__init__()
+        self.dense_1 = torch.nn.Linear(hidden_size, inner_size)
+        self.intermediate_act_fn = self.get_hidden_act(hidden_act)
+
+        self.dense_2 = torch.nn.Linear(inner_size, hidden_size)
+        self.LayerNorm = torch.nn.LayerNorm(hidden_size, eps=layer_norm_eps)
+        self.dropout = torch.nn.Dropout(hidden_dropout_prob)
+
+    def get_hidden_act(self, act):
+        ACT2FN = {
+            "gelu": self.gelu,
+            "relu": torch.nn.functional.relu,
+            "swish": self.swish,
+            "tanh": torch.tanh,
+            "sigmoid": torch.sigmoid,
+        }
+        return ACT2FN[act]
+
+    def gelu(self, x):
+        return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
+
+    def swish(self, x):
+        return x * torch.sigmoid(x)
+
+    def forward(self, input_tensor):
+        hidden_states = self.dense_1(input_tensor)
+        hidden_states = self.intermediate_act_fn(hidden_states)
+
+        hidden_states = self.dense_2(hidden_states)
+        hidden_states = self.dropout(hidden_states)
+        hidden_states = self.LayerNorm(hidden_states + input_tensor)
+
+        return hidden_states
+
+# TransformerLayer
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
+class TransformerLayer(torch.nn.Module):
+
+    def __init__(self, n_heads, hidden_size, intermediate_size, hidden_dropout_prob, hidden_act, layer_norm_eps):
+        super(TransformerLayer, self).__init__()
+        attention_head_size = int(hidden_size / n_heads)
+        self.multi_head_attention = MultiHeadSelfAttention(
+             input_dim=hidden_size, dim_per_head=attention_head_size, num_heads=n_heads, dropout_rate=hidden_dropout_prob, 
+            use_residual=True, layer_norm=True
+        )
+        self.feed_forward = FeedForward(hidden_size, intermediate_size, hidden_dropout_prob, hidden_act, layer_norm_eps)
+
+    def forward(self, hidden_states):
+        attention_output = self.multi_head_attention(hidden_states)
+        feedforward_output = self.feed_forward(attention_output)
+        return feedforward_output
+
+#  TransformerEncoder
+# This code is adapted from github repository:  https://github.com/RUCAIBox/RecBole/blob/master/recbole/model/layers.py
+class TransformerEncoder(torch.nn.Module):
+    def __init__(
+        self,
+        n_layers=2,
+        n_heads=2,
+        hidden_size=64,
+        inner_size=256,
+        hidden_dropout_prob=0.5,
+        attn_dropout_prob=0.5,
+        hidden_act='gelu',
+        layer_norm_eps=1e-12
+    ):
+
+        super(TransformerEncoder, self).__init__()
+        layer = TransformerLayer(n_heads, hidden_size, inner_size, hidden_dropout_prob, hidden_act, layer_norm_eps)
+        self.layer = torch.nn.ModuleList([copy.deepcopy(layer) for _ in range(n_layers)])
+
+    def forward(self, hidden_states):
+        for layer_module in self.layer:
+            hidden_states = layer_module(hidden_states)
+        return hidden_states
+    

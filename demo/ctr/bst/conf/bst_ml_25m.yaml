@@ -1,0 +1,61 @@
+## spark session
+app_name: 'CTR Demo BST'
+local: True
+worker_count: 1
+server_count: 1
+worker_cpu: 2
+server_cpu: 2
+batch_size: 64
+worker_memory: '5G'
+server_memory: '5G'
+coordinator_memory: '5G'
+
+## datasets
+train_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/test.parquet
+
+## model configurations
+din_column_name_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/column_schema_din_25M.txt
+din_combine_schema_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/combine_schema_din_25M.txt
+wide_column_name_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/column_schema_din_25M.txt
+wide_combine_schema_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/combine_schema_wide.txt
+deep_column_name_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/column_schema_din_25M.txt
+deep_combine_schema_path: ${MY_S3_BUCKET}/movielens/25m/rank-seq/combine_schema_deep.txt
+
+model_in_path: null
+model_out_path: ${MY_S3_BUCKET}/movielens/model/din/model_out/ml_1m/
+model_version: '0.1'
+experiment_name: movie_lens_bst_25m
+input_label_column_index: 0
+metric_update_interval: 100
+
+## model hyper params
+use_wide: False
+use_deep: False
+max_seq_length: 10
+bst_embedding_dim: 64
+wide_embedding_dim: 64
+deep_embedding_dim: 64
+bst_trm_n_layers: 4
+bst_trm_n_heads: 4
+bst_trm_inner_size: 128
+bst_trm_hidden_dropout: 0.0
+bst_trm_attn_dropout: 0.0
+bst_trm_hidden_act: gelu
+bst_hidden_layers: [256, 128]
+bst_hidden_activations: LeakyReLU
+bst_hidden_batch_norm: True
+bst_hidden_dropout: 0.3
+bst_seq_column_index_list: [1]
+bst_target_column_index_list: [2]
+deep_hidden_units: [32, 16]
+deep_hidden_activations: ReLU
+deep_hidden_dropout: 0.1
+deep_hidden_batch_norm: True
+sparse_init_var: 0.01
+ftrl_l1: 1.0
+ftrl_l2: 120.0
+ftrl_alpha: 0.5
+ftrl_beta: 1.0
+training_epoches: 5
+adam_learning_rate: 0.000001
