@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class InitSparkConfig:
     session_confs = attrs.field(validator=attrs.validators.instance_of(Dict))
     extended_confs = attrs.field(validator=attrs.validators.instance_of(Dict))
-    pyzip = attrs.field(default=None, validator=attrs.validators.instance_of(Dict))
+    pyzip = attrs.field(default=None)
 
 class InitSparkModule:
     def __init__(self, conf: InitSparkConfig):
