@@ -42,7 +42,7 @@ export default new Vuex.Store({
       }));
       let arr = [];
       // 每一项获取单个数据的详情页
-      for (let i = 0; i < result.length; i++) {
+      for (let i = 0; i < result.length && i < 10; i++) {
         arr.push(getOneProduct(user_id, result[i].item_id));
       }
       result = await Promise.all(arr);

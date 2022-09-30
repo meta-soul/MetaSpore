@@ -87,10 +87,9 @@ a {
 }
 .inner {
   width: 100%;
-  // height: 30hw;
+  height: 20vw;
   overflow: hidden;
   position: relative;
-  height: 100%;
 }
 .img-error {
   // font-size: 0.5rem;
