@@ -133,12 +133,16 @@ public class MongoDBSourceTableTask extends SourceTableTask {
                 fillDocument(col, value);
             }
         }
+        if (queryObject.isEmpty()) {
+            return List.of();
+        }
         Query query = new BasicQuery(queryObject, columnsObject);
         if (request.getLimit() > 0) {
             query.limit(request.getLimit());
         } else {
             query.limit(maxLimit);
         }
+        log.info("query: {}", query);
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
         List<Map<String, Object>> list = Lists.newArrayList();
         res.forEach(map -> {
