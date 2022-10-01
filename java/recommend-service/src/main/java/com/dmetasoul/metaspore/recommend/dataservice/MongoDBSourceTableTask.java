@@ -31,8 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.bson.Document;
-import org.springframework.data.mongodb.core.query.BasicQuery;
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.*;
 
 import java.util.*;
 
@@ -48,8 +47,7 @@ import static com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum.*;
 @ServiceAnnotation("MongoDBSourceTable")
 public class MongoDBSourceTableTask extends SourceTableTask {
     private MongoDBSource dataSource;
-    private Document columnsObject;
-    private Document queryObject;
+    private List<Criteria> queryObject;
     private Set<String> columns;
 
     @Override
@@ -59,9 +57,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         }
         FeatureConfig.SourceTable sourceTable = taskFlowConfig.getSourceTables().get(name);
         columns = sourceTable.getColumnMap().keySet();
-        columnsObject = new Document();
-        columns.forEach(col-> columnsObject.put(col, 1));
-        queryObject=new Document();
+        queryObject=Lists.newArrayList();
         List<Map<String, Map<String, Object>>> filters = sourceTable.getFilters();
         if (CollectionUtils.isNotEmpty(filters)) {
             filters.forEach(x ->processFilters(queryObject, x));
@@ -69,25 +65,25 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         return true;
     }
 
-    private void processFilters(Document query, Map<String, Map<String, Object>> filters) {
+    private void processFilters(List<Criteria> query, Map<String, Map<String, Object>> filters) {
         filters.forEach((key, value) -> value.forEach((key1, value1) -> {
             if (columns.contains(key)) {
                 ConditionTypeEnum type = getEnumByName(key1);
                 switch (type) {
                     case EQ:
-                        query.put(key, value1);
+                        query.add(Criteria.where(key).is(value1));
                         break;
                     case GE:
-                        query.put(key, new BasicDBObject("$gte", value1));
+                        query.add(Criteria.where(key).gte(value1));
                         break;
                     case LE:
-                        query.put(key, new BasicDBObject("$lte", value1));
+                        query.add(Criteria.where(key).lte(value1));
                         break;
                     case GT:
-                        query.put(key, new BasicDBObject("$gt", value1));
+                        query.add(Criteria.where(key).gt(value1));
                         break;
                     case LT:
-                        query.put(key, new BasicDBObject("$lt", value1));
+                        query.add(Criteria.where(key).lt(value1));
                         break;
                     case IN:
                     case NIN:
@@ -95,16 +91,14 @@ public class MongoDBSourceTableTask extends SourceTableTask {
                             BasicDBList values = new BasicDBList();
                             values.addAll((Collection) value1);
                             if (type == IN) {
-                                BasicDBObject in = new BasicDBObject("$in", values);
-                                query.put(key, in);
+                                query.add(Criteria.where(key).in(values));
                             } else {
-                                BasicDBObject nin = new BasicDBObject("$nin", values);
-                                query.put(key, nin);
+                                query.add(Criteria.where(key).nin(values));
                             }
                         }
                         break;
                     case NE:
-                        query.put(key, new BasicDBObject("$ne", value1));
+                        query.add(Criteria.where(key).ne(value1));
                         break;
                     default:
                         log.warn("no match filter action[{}] in {}", key1, key);
@@ -114,35 +108,39 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         }));
     }
 
-    private void fillDocument(String col, Object value) {
+    private void fillDocument(Query query, String col, Object value) {
         if (value instanceof Collection) {
             BasicDBList values = new BasicDBList();
             HashSet valueSet = Sets.newHashSet((Collection) value);
             values.addAll(valueSet);
-            BasicDBObject in = new BasicDBObject("$in", values);
-            queryObject.put(col, in);
+            query.addCriteria(Criteria.where(col).in(values));
         } else {
-            queryObject.put(col, value);
+            query.addCriteria(Criteria.where(col).is(value));
         }
     }
 
     @Override
     protected List<Map<String, Object>> processRequest(ServiceRequest request, DataContext context) {
+        Query query = new Query();
+        for (Criteria criteria : queryObject) {
+            query.addCriteria(criteria);
+        }
         Map<String, Object> data = request.getData();
         for (String col : columns) {
             if (MapUtils.isNotEmpty(data) && data.containsKey(col)) {
                 Object value = data.get(col);
-                fillDocument(col, value);
+                fillDocument(query, col, value);
             }
         }
-        if (queryObject.isEmpty()) {
+        if (query.getQueryObject().isEmpty()) {
             return List.of();
         }
-        Query query = new BasicQuery(queryObject, columnsObject);
+        Field field = query.fields();
+        columns.forEach(field::include);
         if (request.getLimit() > 0) {
-            query = query.limit(request.getLimit());
+            query.limit(request.getLimit());
         } else {
-            query = query.limit(maxLimit);
+            query.limit(maxLimit);
         }
         log.info("query: {}", query);
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
