@@ -158,7 +158,7 @@ public class FeatureTask extends DataService {
 
     @Override
     public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        ServiceRequest req = super.makeRequest(depend, request, context);
+        ServiceRequest req = super.makeRequest(depend, null, context);
         // 直接获取数据的数据表集合不需要生成查询条件，不参与makeRequest计算
         if (!immediateTables.contains(depend)) {
             // 获取depend表相关的join条件， 所有条件已经经过预处理，depend位于condition的左侧
