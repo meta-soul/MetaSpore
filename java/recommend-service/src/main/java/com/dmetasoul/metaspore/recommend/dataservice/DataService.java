@@ -306,7 +306,7 @@ public abstract class DataService {
                 try {
                     resultFuture.get(chain.getTimeOut(), chain.getTimeOutUnit());
                 } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    log.error("there was an error when executing the CompletableFuture", e);
+                    log.error(String.format("the service: %s there was an error when executing the CompletableFuture", name), e);
                 }
                 // 记录未执行成功的when任务
                 List<String> noExecuteTasks = Lists.newArrayList();
