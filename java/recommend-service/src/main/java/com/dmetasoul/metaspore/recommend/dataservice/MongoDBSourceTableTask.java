@@ -140,9 +140,9 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         }
         Query query = new BasicQuery(queryObject, columnsObject);
         if (request.getLimit() > 0) {
-            query.limit(request.getLimit());
+            query = query.limit(request.getLimit());
         } else {
-            query.limit(maxLimit);
+            query = query.limit(maxLimit);
         }
         log.info("query: {}", query);
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());

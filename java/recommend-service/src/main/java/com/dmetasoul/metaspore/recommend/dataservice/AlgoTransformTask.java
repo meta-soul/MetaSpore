@@ -84,6 +84,11 @@ public class AlgoTransformTask extends DataService {
     }
 
     @Override
+    public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
+        return super.makeRequest(depend, null, context);
+    }
+
+    @Override
     protected void preCondition(ServiceRequest request, DataContext context) {
         super.preCondition(request, context);
         actionTypes.clear();
