@@ -80,7 +80,7 @@ public class TypeFunction implements Function {
             if (value != null && data == null) {
                 log.error("typeTransform type not match, transform fail, output null at inType: {}, outType: {}, value: {}", fieldTableData.getDataSchema().get(input), outType, value);
             }
-            fieldTableData.setValue(i, name, type, data);
+            fieldTableData.setValue(i, name, data);
         }
     }
 }

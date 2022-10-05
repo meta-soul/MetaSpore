@@ -104,26 +104,7 @@ public class AlgoTransformTask extends DataService {
                 if (value != null) {
                     Assert.isInstanceOf(cls, value, "setValue config value type wrong");
                 }
-                fieldTableData.addValue(new FieldInfo(options.getNames().get(0)), options.getTypes().get(0), value);
-            }
-            return true;
-        });
-        addFunction("flatList", (fieldTableData, options, taskPool) -> {
-            if (CollectionUtils.isNotEmpty(options.getNames())) {
-                FieldInfo fieldInfo = new FieldInfo(options.getNames().get(0));
-                FieldInfo from = options.getInputFields().get(0);
-                fieldTableData.flatListValue(from, fieldInfo, options.getTypes().get(0));
-            }
-            return true;
-        });
-        addFunction("multiFlatList", (fieldTableData, options, taskPool) -> {
-            if (CollectionUtils.isNotEmpty(options.getNames())) {
-                for (int i = 0; i < options.getNames().size(); ++i) {
-                    FieldInfo fieldInfo = new FieldInfo(options.getNames().get(i));
-                    DataTypeEnum dataType = ColumnInfo.getType(options.getTypes().get(i));
-                    FieldInfo from = options.getInputFields().get(i);
-                    fieldTableData.flatListValue(from, fieldInfo, dataType);
-                }
+                fieldTableData.addValue(new FieldInfo(options.getNames().get(0)), value);
             }
             return true;
         });

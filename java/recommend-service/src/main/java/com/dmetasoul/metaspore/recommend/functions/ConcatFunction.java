@@ -48,7 +48,7 @@ public class ConcatFunction implements Function {
                 }
                 result.add(StringUtils.join(data, joinStr));
             }
-            fieldTableData.addValueList(config.getNames().get(0), config.getTypes().get(0), result);
+            fieldTableData.addValueList(config.getNames().get(0), result);
         }
         return true;
     }

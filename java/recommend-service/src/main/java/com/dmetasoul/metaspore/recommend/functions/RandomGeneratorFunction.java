@@ -59,7 +59,7 @@ public class RandomGeneratorFunction implements Function {
                 if (data == null) {
                     log.error("RandomGenerator only support long, int, double, float but {} ", outType);
                 }
-                fieldTableData.addValue(fieldInfo, config.getTypes().get(i), data);
+                fieldTableData.addValue(fieldInfo, data);
             }
         }
         return true;

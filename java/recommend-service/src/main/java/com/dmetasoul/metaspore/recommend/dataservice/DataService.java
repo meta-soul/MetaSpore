@@ -179,6 +179,7 @@ public abstract class DataService {
         result.setFeatureTable(featureTable);
         result.setDataTypes(dataTypes);
         if (CollectionUtils.isEmpty(res)) {
+            featureTable.finish();
             return result;
         }
         for (int i = 0; i < resFields.size(); ++i) {
@@ -205,6 +206,7 @@ public abstract class DataService {
         result.setFeatureTable(featureTable);
         result.setDataTypes(dataTypes);
         if (MapUtils.isEmpty(res)) {
+            featureTable.finish();
             return result;
         }
         for (int i = 0; i < resFields.size(); ++i) {

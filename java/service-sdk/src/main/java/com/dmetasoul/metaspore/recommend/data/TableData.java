@@ -97,6 +97,9 @@ public class TableData {
             FieldInfo fieldInfo = getFieldInfo(col);
             Assert.notNull(fieldInfo, "result field name is not exist or duplicate");
             DataTypeEnum dataType = getType(fieldInfo);
+	    if (dataType == null) {
+                log.info("############dataschema: {}", dataSchema);
+	    }
             Assert.notNull(dataType, "col has type at：" + col);
             for (int index = 0; index < data.size(); ++index) {
                 Map<FieldInfo, Object> map = data.get(index);
@@ -125,6 +128,16 @@ public class TableData {
         }
         result.setDataTypes(dataTypes);
         return result;
+    }
+
+    public boolean checkFieldInfo(FieldInfo fieldInfo) {
+        if (!dataSchema.containsKey(fieldInfo)) {
+	    return false;
+	}
+	if (!dataTypes.containsKey(fieldInfo)) {
+	    return false;
+	}
+	return true;
     }
 
     public void addFieldInfo(FieldInfo fieldInfo) {
@@ -196,17 +209,16 @@ public class TableData {
         copyField(fieldInfo, to);
     }
 
-    public void addValue(FieldInfo fieldInfo, Object outType, Object value) {
-        addValueList(fieldInfo, outType, List.of(value));
+    public void addValue(FieldInfo fieldInfo, Object value) {
+        addValueList(fieldInfo, List.of(value));
     }
 
-    public void addValueList(String fieldInfo, Object outType, List<Object> value) {
-        addValueList(new FieldInfo(fieldInfo), outType, value);
+    public void addValueList(String fieldInfo, List<Object> value) {
+        addValueList(new FieldInfo(fieldInfo), value);
     }
 
-    public void addValueList(FieldInfo fieldInfo, Object outType, List<Object> value) {
-        addFieldInfo(fieldInfo);
-        addTypeInfo(fieldInfo, outType);
+    public void addValueList(FieldInfo fieldInfo, List<Object> value) {
+	Validate.isTrue(checkFieldInfo(fieldInfo), "fieldInfo must add before add value at:" + fieldInfo.getFieldName());
         for (int i = 0; i < value.size(); ++i) {
             if (i < data.size()) {
                 data.get(i).put(fieldInfo, value.get(i));
@@ -239,152 +251,22 @@ public class TableData {
         return data.get(index).getOrDefault(fieldInfo, default_value);
     }
 
-    public void setValue(int index, String name, Object type, Object value) {
+    public void setValue(int index, String name, Object value) {
         FieldInfo fieldInfo = getFieldInfo(name);
-        setValue(index, fieldInfo, type, value);
+        setValue(index, fieldInfo, value);
     }
 
-    public void setValue(int index, FieldInfo fieldInfo, Object type, Object value) {
+    public void setValue(int index, FieldInfo fieldInfo, Object value) {
         if (fieldInfo == null) {
             return;
         }
-        if (!dataSchema.containsKey(fieldInfo)) {
-            addFieldInfo(fieldInfo);
-            addTypeInfo(fieldInfo, type);
-        }
+	Validate.isTrue(checkFieldInfo(fieldInfo), "fieldInfo must add before add value at:" + fieldInfo.getFieldName());
         if (data.size() <= index) {
             Map<FieldInfo, Object> item = Maps.newHashMap();
             item.put(fieldInfo, value);
             data.add(item);
         } else {
             data.get(index).put(fieldInfo, value);
-        }
-    }
-
-    public void flatListValue(FieldInfo from, FieldInfo fieldInfo, Object outType) {
-        addFieldInfo(fieldInfo);
-        addTypeInfo(fieldInfo, outType);
-        int dataSize = data.size();
-        for (int i = 0; i < dataSize; ++i) {
-            Map<FieldInfo, Object> item = data.get(i);
-            Object fromValue = item.get(from);
-            if (!(fromValue instanceof Collection)) {
-                item.put(fieldInfo, fromValue);
-            } else {
-                Collection<?> value = (Collection<?>) fromValue;
-                if (value.isEmpty()) {
-                    item.put(fieldInfo, null);
-                    continue;
-                }
-                boolean first = true;
-                for (Object val : value) {
-                    if (first) {
-                        item.put(fieldInfo, val);
-                        first = false;
-                    } else {
-                        Map<FieldInfo, Object> newItem = Maps.newHashMap();
-                        newItem.putAll(item);
-                        newItem.put(fieldInfo, val);
-                        data.add(newItem);
-                    }
-                }
-            }
-        }
-    }
-
-    public void flatListValue(List<Collection<?>> values, FieldInfo fieldInfo, Object outType) {
-        addFieldInfo(fieldInfo);
-        addTypeInfo(fieldInfo, outType);
-        for (int i = 0; i < values.size(); ++i) {
-            Collection<?> value = values.get(i);
-            if (i < data.size()) {
-                Map<FieldInfo, Object> item = data.get(i);
-                if (value == null || value.isEmpty()) {
-                    continue;
-                }
-                boolean first = true;
-                for (Object val : value) {
-                    if (first) {
-                        item.put(fieldInfo, val);
-                        first = false;
-                    } else {
-                        Map<FieldInfo, Object> newItem = Maps.newHashMap();
-                        newItem.putAll(item);
-                        newItem.put(fieldInfo, val);
-                        data.add(newItem);
-                    }
-                }
-            } else {
-                if (value == null || value.isEmpty()) {
-                    continue;
-                }
-                for (Object val : value) {
-                    Map<FieldInfo, Object> newItem = Maps.newHashMap();
-                    newItem.put(fieldInfo, val);
-                    data.add(newItem);
-                }
-            }
-        }
-    }
-
-    public void flatListValue(List<List<List<Object>>> values, List<FieldInfo> fieldInfos, List<Object> outTypes) {
-        Assert.isTrue(fieldInfos.size() == outTypes.size(), "name and type same size");
-        for (int i = 0; i < fieldInfos.size(); ++i) {
-            addFieldInfo(fieldInfos.get(i));
-            addTypeInfo(fieldInfos.get(i), outTypes.get(i));
-        }
-        for (int i = 0; i < values.size(); ++i) {
-            List<List<Object>> valueList = values.get(i);
-            if (i < data.size()) {
-                Map<FieldInfo, Object> item = data.get(i);
-                if (valueList == null || valueList.isEmpty()) {
-                    continue;
-                }
-                int index = 0;
-                boolean notDone = true;
-                while (notDone) {
-                    notDone = false;
-                    if (index == 0) {
-                        for (int k = 0; k < fieldInfos.size() && k < valueList.size(); ++k) {
-                            List<Object> valList = valueList.get(k);
-                            if (index >= valList.size()) continue;
-                            item.put(fieldInfos.get(k), valList.get(index));
-                            notDone = true;
-                        }
-                        index += 1;
-                    } else {
-                        Map<FieldInfo, Object> newItem = Maps.newHashMap();
-                        for (int k = 0; k < fieldInfos.size() && k < valueList.size(); ++k) {
-                            List<Object> valList = valueList.get(k);
-                            if (index >= valList.size()) continue;
-                            notDone = true;
-                            newItem.putAll(item);
-                            newItem.put(fieldInfos.get(k), valList.get(index));
-                        }
-                        index += 1;
-                        if (notDone) {
-                            data.add(newItem);
-                        }
-                    }
-                }
-            } else {
-                int index = 0;
-                boolean notDone = true;
-                while (notDone) {
-                    notDone = false;
-                    Map<FieldInfo, Object> newItem = Maps.newHashMap();
-                    for (int k = 0; k < fieldInfos.size() && k < valueList.size(); ++k) {
-                        List<Object> valList = valueList.get(k);
-                        if (index >= valList.size()) continue;
-                        notDone = true;
-                        newItem.put(fieldInfos.get(k), valList.get(index));
-                    }
-                    index += 1;
-                    if (notDone) {
-                        data.add(newItem);
-                    }
-                }
-            }
         }
     }
 

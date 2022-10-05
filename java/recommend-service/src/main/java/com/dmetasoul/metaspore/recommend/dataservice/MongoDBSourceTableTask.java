@@ -108,15 +108,19 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         }));
     }
 
-    private void fillDocument(Query query, String col, Object value) {
+    private boolean fillDocument(Query query, String col, Object value) {
         if (value instanceof Collection) {
             BasicDBList values = new BasicDBList();
             HashSet valueSet = Sets.newHashSet((Collection) value);
             values.addAll(valueSet);
+	    if (values.isEmpty()) {
+		return false;
+            }
             query.addCriteria(Criteria.where(col).in(values));
         } else {
             query.addCriteria(Criteria.where(col).is(value));
         }
+	return true;
     }
 
     @Override
@@ -129,7 +133,9 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         for (String col : columns) {
             if (MapUtils.isNotEmpty(data) && data.containsKey(col)) {
                 Object value = data.get(col);
-                fillDocument(query, col, value);
+                if(!fillDocument(query, col, value)) {
+	            return List.of();
+		}
             }
         }
         if (query.getQueryObject().isEmpty()) {

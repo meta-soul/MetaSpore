@@ -112,18 +112,18 @@ public class ItemMatcherTask extends AlgoTransformTask {
                     }
                 }
             }
-            TableData recallData = new TableData();
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            TableData recallData = new TableData(names, types);
             List<Object> userIds = Lists.newArrayList();
             List<Object> scores = Lists.newArrayList();
             for (Map.Entry<String, Map<String, Double>> entry : UserItemScore.entrySet()) {
                 userIds.add(entry.getKey());
                 scores.add(entry.getValue());
             }
-            List<String> names = config.getNames();
-            List<Object> types = config.getTypes();
             Assert.isTrue(names.size() > 1, "output has 2 fields");
-            recallData.addValueList(names.get(0), types.get(0), userIds);
-            recallData.addValueList(names.get(1), types.get(1), scores);
+            recallData.addValueList(names.get(0), userIds);
+            recallData.addValueList(names.get(1), scores);
             fieldTableData.reset(recallData);
             return true;
         });
@@ -158,8 +158,8 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 scores.add(entry.getValue());
             }
             Assert.isTrue(names.size() > 1, "output has 2 fields");
-            recallData.addValueList(names.get(0), types.get(0), itemIds);
-            recallData.addValueList(names.get(1), types.get(1), scores);
+            recallData.addValueList(names.get(0), itemIds);
+            recallData.addValueList(names.get(1), scores);
             fieldTableData.reset(recallData);
             return true;
         });
@@ -199,10 +199,10 @@ public class ItemMatcherTask extends AlgoTransformTask {
                     originScores.add(Map.of(algoName, x.getValue()));
                 }
             }
-            recallData.addValueList(names.get(0), types.get(0), userIds);
-            recallData.addValueList(names.get(1), types.get(1), itemIds);
-            recallData.addValueList(names.get(2), types.get(2), scores);
-            recallData.addValueList(names.get(3), types.get(3), originScores);
+            recallData.addValueList(names.get(0), userIds);
+            recallData.addValueList(names.get(1), itemIds);
+            recallData.addValueList(names.get(2), scores);
+            recallData.addValueList(names.get(3), originScores);
             fieldTableData.reset(recallData);
             return true;
         });

@@ -112,7 +112,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                 ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
                 List<Object> res = Lists.newArrayList();
                 res.addAll(getFromTensor(arrowTensor));
-                fieldTableData.addValueList(fieldAction.getNames().get(0), fieldAction.getTypes().get(0), res);
+                fieldTableData.addValueList(fieldAction.getNames().get(0), res);
                 for (FeatureTable featureTable: featureTables) {
                     featureTable.close();
                 }
@@ -137,7 +137,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
                         log.error("model input is empty! at fieldAction: {}", fieldAction);
-                        fieldTableData.addValueList(fieldAction.getNames().get(0), fieldAction.getTypes().get(0), List.of());
+                        fieldTableData.addValueList(fieldAction.getNames().get(0), List.of());
                         return true;
                     }
                     featureTables.add(featureTable);
@@ -150,7 +150,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                 ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
                 List<Object> res = Lists.newArrayList();
                 res.addAll(getFromTensor(arrowTensor, index));
-                fieldTableData.addValueList(fieldAction.getNames().get(0), fieldAction.getTypes().get(0), res);
+                fieldTableData.addValueList(fieldAction.getNames().get(0), res);
                 for (FeatureTable featureTable: featureTables) {
                     featureTable.close();
                 }
@@ -169,11 +169,11 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             List<Object> types = config.getTypes();
             for (int i = 0; i < fieldTableData.getData().size() && i < limit; ++i) {
                 if (names.size() > 0) {
-                    fieldTableData.setValue(i, names.get(0), types.get(0), fieldTableData.getValue(i, itemid));
+                    fieldTableData.setValue(i, names.get(0), fieldTableData.getValue(i, itemid));
                 }
                 float scoreValue = (Float)fieldTableData.getValue(i, scores, 0.0F);
                 if (names.size() > 1) {
-                    fieldTableData.setValue(i, names.get(1), types.get(1), scoreValue);
+                    fieldTableData.setValue(i, names.get(1), scoreValue);
                 }
                 if (names.size() > 2) {
                     Map<String, Double> originScoreValue = Maps.newHashMap();
@@ -184,7 +184,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                                     (Map<? extends String, ? extends Double>) fieldTableData.getValue(i,
                                             originScores, Maps.newHashMap()));
                     }
-                    fieldTableData.setValue(i, names.get(2), types.get(2), originScoreValue);
+                    fieldTableData.setValue(i, names.get(2), originScoreValue);
                 }
             }
             return true;

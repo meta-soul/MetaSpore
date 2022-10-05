@@ -197,6 +197,26 @@ public abstract class Transform {
             }
             return true;
         });
+        addFunction("addItemInfo", (data, results, context, option) -> {
+            String itemInfoTaskName = CommonUtils.getField(option, "feature_name", "feature_itemInfo", String.class);
+            String dataResultName = CommonUtils.getField(option, "dataName", "recommendResult", String.class);
+	    if (StringUtils.isEmpty(itemInfoTaskName)) {
+		return true;
+	    }
+	    DataService itemInfoTask = serviceRegister.getDataService(itemInfoTaskName);
+            if (CollectionUtils.isNotEmpty(data)) {
+		for (DataResult item : data) {
+                    itemInfoTask.setDataResultByName(dataResultName, item, context);
+                    DataResult dataResult = itemInfoTask.execute(context);
+                    if (dataResult == null) {
+                        log.error("the addItemInfo task exec fail at:" + item);
+			continue;
+		    }
+		    results.add(dataResult);
+		}
+	    }
+            return true;
+        });
     }
 
     public boolean hasSomeTransform(List<TransformConfig> transforms, String name) {

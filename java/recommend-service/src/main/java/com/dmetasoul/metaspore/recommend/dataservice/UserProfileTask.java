@@ -58,7 +58,7 @@ public class UserProfileTask extends AlgoTransformTask {
                 if (value == null) {
                     continue;
                 }
-                fieldTableData.setValue(i, config.getNames().get(0), config.getTypes().get(0), List.of(value.split(split)));
+                fieldTableData.setValue(i, config.getNames().get(0), List.of(value.split(split)));
             }
             return true;
         });
@@ -66,9 +66,9 @@ public class UserProfileTask extends AlgoTransformTask {
             Map<String, Object> options = config.getOptions();
             List<FieldInfo> fields = config.getInputFields();
             Assert.isTrue(CollectionUtils.isNotEmpty(fields), "input data is not null");
-            TableData recallData = new TableData();
             List<String> names = config.getNames();
             List<Object> types = config.getTypes();
+            TableData recallData = new TableData(names, types);
             Assert.isTrue(names.size() > 2, "output has 3 fields");
 	    int num = 0;
             for (int i = 0; i < fieldTableData.getData().size(); ++i) {
@@ -78,9 +78,9 @@ public class UserProfileTask extends AlgoTransformTask {
                 }
                 for (int k = 0; k < list.size(); ++k) {
                     double weight = 1 / (1 + Math.pow((list.size() - k - 1), alpha));
-		    recallData.setValue(num, names.get(0), types.get(0), fieldTableData.getValue(i, fields.get(0)));
-                    recallData.setValue(num, config.getNames().get(1), config.getTypes().get(1), list.get(k));
-                    recallData.setValue(num, config.getNames().get(2), config.getTypes().get(2), weight);
+		    recallData.setValue(num, names.get(0), fieldTableData.getValue(i, fields.get(0)));
+                    recallData.setValue(num, config.getNames().get(1), list.get(k));
+                    recallData.setValue(num, config.getNames().get(2), weight);
 		    num += 1;
                 }
             }

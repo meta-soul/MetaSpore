@@ -81,7 +81,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
                     embedding.add((List<Float>) val);
                 }
             }
-            return searchIdScore(embedding, fieldTableData, config.getNames(), config.getTypes(), options);
+            return searchIdScore(embedding, fieldTableData, config.getNames(), options);
         });
         addFunction("milvusField", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
@@ -96,7 +96,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
                     embedding.add((List<Float>) val);
                 }
             }
-            return searchField(embedding, fieldTableData, config.getNames(), config.getTypes(), options);
+            return searchField(embedding, fieldTableData, config.getNames(), options);
         });
     }
 
@@ -124,7 +124,7 @@ public class MilvusSearchTask extends AlgoTransformTask {
     }
 
     protected boolean searchIdScore(List<List<Float>> embedding, TableData fieldTableData,
-                                    List<String> names, List<Object> types, Map<String, Object> options) {
+                                    List<String> names, Map<String, Object> options) {
         boolean useStrId = CommonUtils.getField(options,"useStrId", false);
         SearchResultsWrapper wrapper = requestMilvus(embedding, List.of(), options);
         for (int i = 0; i < embedding.size(); ++i) {
@@ -141,15 +141,15 @@ public class MilvusSearchTask extends AlgoTransformTask {
                 }
                 itemScores.add(x.getScore());
             });
-            fieldTableData.setValue(i, names.get(i), types.get(i), itemIds);
-            fieldTableData.setValue(i, names.get(i), types.get(i), itemScores);
+            fieldTableData.setValue(i, names.get(0), itemIds);
+            fieldTableData.setValue(i, names.get(1), itemScores);
         }
         return true;
     }
 
     @SuppressWarnings("unchecked")
     protected boolean searchField(List<List<Float>> embedding, TableData fieldTableData,
-                                  List<String> names, List<Object> types, Map<String, Object> options) {
+                                  List<String> names, Map<String, Object> options) {
         String scoreField = CommonUtils.getField(options,"scoreField", "score");
         String idField = CommonUtils.getField(options,"idField", "");
         boolean useStrId = CommonUtils.getField(options,"useStrId", false);
@@ -226,17 +226,13 @@ public class MilvusSearchTask extends AlgoTransformTask {
             res.add(data);
         }
         List<FieldInfo> fieldInfos = names.stream().map(FieldInfo::new).collect(Collectors.toList());
-        if (useFlat) {
-            fieldTableData.flatListValue(res, fieldInfos, types);
-        } else {
-            for (int i = 0; i < res.size(); ++i) {
-                for (int k = 0; k < fieldInfos.size(); ++k) {
-                    List<List<Object>> valueList = res.get(i);
-                    if (valueList.size() <= k) {
-                        continue;
-                    }
-                    fieldTableData.setValue(i, fieldInfos.get(k), types.get(k), valueList.get(k));
+        for (int i = 0; i < res.size(); ++i) {
+            for (int k = 0; k < fieldInfos.size(); ++k) {
+                List<List<Object>> valueList = res.get(i);
+                if (valueList.size() <= k) {
+                    continue;
                 }
+                fieldTableData.setValue(i, fieldInfos.get(k), valueList.get(k));
             }
         }
         return true;

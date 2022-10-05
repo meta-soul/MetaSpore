@@ -75,7 +75,7 @@ public class BucketizeFunction implements Function {
                         }
                     }
                 }
-                fieldTableData.addValueList(config.getNames().get(i), config.getTypes().get(i), result);
+                fieldTableData.addValueList(config.getNames().get(i), result);
             }
         }
         return true;
