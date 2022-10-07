@@ -16,6 +16,7 @@
 
 package com.dmetasoul.metaspore.serving;
 
+import org.apache.arrow.memory.BufferAllocator;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class ServingClient {
     public static Map<String, ArrowTensor> predictBlocking(PredictGrpc.PredictBlockingStub client,
                                               String modelName,
                                               Iterable<FeatureTable> featureTables,
+                                              ArrowAllocator allocator,
                                               Map<String, String> parameters) throws IOException {
         PredictRequest.Builder builder = PredictRequest.newBuilder();
         builder.setModelName(modelName);
@@ -36,7 +38,7 @@ public class ServingClient {
         PredictReply reply = client.predict(builder.build());
         Map<String, ArrowTensor> map = new HashMap<>();
         for (String name : reply.getPayloadMap().keySet()) {
-            map.put(name, TensorSerDe.deserializeFrom(name, reply));
+            map.put(name, TensorSerDe.deserializeFrom(name, reply, allocator));
         }
         return map;
     }
@@ -44,6 +46,7 @@ public class ServingClient {
     public static Mono<Map<String, ArrowTensor>> predictReactor(ReactorPredictGrpc.ReactorPredictStub client,
                                                                 String modelName,
                                                                 Iterable<FeatureTable> featureTables,
+                                                                ArrowAllocator allocator,
                                                                 Map<String, String> parameters) throws IOException {
         PredictRequest.Builder builder = PredictRequest.newBuilder();
         builder.setModelName(modelName);
@@ -55,7 +58,7 @@ public class ServingClient {
             Map<String, ArrowTensor> map = new HashMap<>();
             for (String name : predictReply.getPayloadMap().keySet()) {
                 try {
-                    map.put(name, TensorSerDe.deserializeFrom(name, predictReply));
+                    map.put(name, TensorSerDe.deserializeFrom(name, predictReply, allocator));
                 } catch (IOException e) {
                     sink.error(e);
                 }

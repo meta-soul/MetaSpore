@@ -27,7 +27,7 @@ import java.util.Map;
 @Slf4j
 @Component
 public class UserDefineFunctionLoader {
-    private Method method;
+    private URLClassLoader classLoader;
 
     @Autowired
     private FunctionConfig functionConfig;
@@ -39,7 +39,7 @@ public class UserDefineFunctionLoader {
 
     @SneakyThrows
     public void init() {
-        this.method = URLClassLoader.class.getDeclaredMethod("addURL", URL.class);
+        log.info("functionConfig: {}", functionConfig);
         this.fieldFunctions = Maps.newHashMap();
         this.transformFunctions = Maps.newHashMap();
         this.transformMergeOperators = Maps.newHashMap();
@@ -47,9 +47,21 @@ public class UserDefineFunctionLoader {
         this.layerBucketizers = Maps.newHashMap();
         if (functionConfig != null && functionConfig.getPath() != null
                 && CollectionUtils.isNotEmpty(functionConfig.getJars())) {
+            URL[] urls = new URL[functionConfig.getJars().size()];
+            for (int i = 0; i < functionConfig.getJars().size(); ++i) {
+                FunctionConfig.JarInfo jarInfo = functionConfig.getJars().get(i);
+                urls[i] = getJarURL(functionConfig.getPath(), jarInfo);
+            }
+            this.classLoader = new URLClassLoader(urls);
             for (FunctionConfig.JarInfo jarInfo : functionConfig.getJars()) {
                 loadJarInfo(functionConfig.getPath(), jarInfo);
             }
+        }
+    }
+    @SneakyThrows
+    public void close() {
+        if (null != classLoader) {
+            classLoader.close();
         }
     }
     @SuppressWarnings("unchecked")
@@ -72,31 +84,13 @@ public class UserDefineFunctionLoader {
         return null;
     }
 
-    @SneakyThrows
-    public void loadUDF(String filePath) {
-        if (method == null) {
-            throw new IllegalStateException("UserDefineFunctionLoader need init first");
-        }
-        File jarFile = new File(filePath);
-        if (!jarFile.exists()) {
-            throw new IllegalStateException("path + jar path is not exist! Path: " + filePath);
-        }
-        if (method.trySetAccessible()) {
-            URLClassLoader classLoader = (URLClassLoader) ClassLoader.getSystemClassLoader();
-            URL url = jarFile.toURI().toURL();
-            method.invoke(classLoader, url);
-        } else {
-            log.error("URLClassLoader can not access addURL");
-        }
-    }
-
     @SuppressWarnings("unchecked")
     public <T> void registerUDF(List<Map<String, String>> info, @NonNull Map<String, T> beans, Class<?> cla) {
         if (CollectionUtils.isNotEmpty(info)) {
             info.forEach(item->{
                 item.forEach((name, className) -> {
                     try {
-                        Class<?> cls = Class.forName(className);
+                        Class<?> cls = classLoader.loadClass(className);
                         Object bean = cls.getConstructor().newInstance();
                         if (cla.isAssignableFrom(bean.getClass())) {
                             beans.put(name, (T) bean);
@@ -117,10 +111,19 @@ public class UserDefineFunctionLoader {
 
         }
     }
-
-    public void loadJarInfo(String path, @NonNull FunctionConfig.JarInfo jarInfo) {
+    @SneakyThrows
+    public URL getJarURL(String path, @NonNull FunctionConfig.JarInfo jarInfo) {
         Path filePath = Paths.get(Paths.get(path).toString(), jarInfo.getName());
-        loadUDF(filePath.toString());
+        File jarFile = new File(filePath.toString());
+        if (!jarFile.exists()) {
+            throw new IllegalStateException("path + jar path is not exist! Path: " + filePath);
+        }
+        return jarFile.toURI().toURL();
+    }
+    public void loadJarInfo(String path, @NonNull FunctionConfig.JarInfo jarInfo) {
+        if (classLoader == null) {
+            throw new IllegalStateException("UserDefineFunctionLoader need init first");
+        }
         registerUDF(jarInfo.getFieldFunction(), fieldFunctions, Function.class);
         registerUDF(jarInfo.getTransformFunction(), transformFunctions, TransformFunction.class);
         registerUDF(jarInfo.getTransformMergeOperator(), transformMergeOperators, MergeOperator.class);

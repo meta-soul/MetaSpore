@@ -37,7 +37,7 @@ public class XGBoostController {
 
         // predict and get result tensor
         Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, "xgboost_model",
-                List.of(userTable), Collections.emptyMap());
+                List.of(userTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
         Map<String, Object> toJson = new TreeMap<>();
         for (Map.Entry<String, ArrowTensor> entry : result.entrySet()) {
             ArrowTensor tensor = result.get(entry.getKey());

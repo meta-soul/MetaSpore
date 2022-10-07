@@ -25,10 +25,12 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.springframework.util.StopWatch;
 import org.springframework.util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +51,14 @@ public class Utils {
         if (r.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(r.getMessage());
         }
+    }
+    public static Map<String, Long> getTimeRecords(StopWatch stopWatch) {
+        Map<String, Long> records = Maps.newHashMap();
+        stopWatch.getTaskInfo();
+        for (StopWatch.TaskInfo info : stopWatch.getTaskInfo()) {
+            records.put(info.getTaskName(), info.getTimeMillis());
+        }
+        return records;
     }
     public static double getFinalRetrievalScore(Double originalScore, Double maxScore, int algoLevel) {
         double EPSILON = 0.001;

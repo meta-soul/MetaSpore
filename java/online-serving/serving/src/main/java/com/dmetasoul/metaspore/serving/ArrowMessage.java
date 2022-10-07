@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.serving;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.flatbuf.Message;
 import org.apache.arrow.memory.ArrowBuf;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.ipc.ReadChannel;
 import org.apache.arrow.vector.ipc.message.MessageChannelReader;
 import org.apache.arrow.vector.ipc.message.MessageResult;
@@ -28,13 +29,14 @@ import java.nio.channels.Channels;
 
 public class ArrowMessage {
 
-    public static ArrowMessage readFromByteString(ByteString bs) throws IOException {
+    public static ArrowMessage readFromByteString(ByteString bs, ArrowAllocator alloc) throws IOException {
         MessageChannelReader reader = new MessageChannelReader(new ReadChannel(Channels.newChannel(bs.newInput())),
-                ArrowAllocator.getAllocator());
+                alloc.getAlloc());
         MessageResult mr = reader.readNext();
         ArrowMessage m = new ArrowMessage();
         m.message = mr.getMessage();
         m.body = mr.getBodyBuffer();
+        alloc.addBuffer(m.body);
         return m;
     }
 

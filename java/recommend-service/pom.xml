@@ -29,7 +29,6 @@
         <javaparser.version>3.23.1</javaparser.version>
         <plexus.version>0.0.7</plexus.version>
         <gson.version>2.8.9</gson.version>
-
         <protobuf.version>3.21.1</protobuf.version>
         <spring.cloud.version>3.1.1</spring.cloud.version>
         <grpc.version>1.44.0</grpc.version>
@@ -220,20 +219,6 @@
                                         <volume>${basedir}/src/test/resources/serving_models:/data/models</volume>
                                     </bind>
                                 </volumes>
-                            </run>
-                        </image>
-                        <image>
-                            <alias>mongo</alias>
-                            <name>mongo:6.0.1</name>
-                            <run>
-                                <restartPolicy><name>always</name></restartPolicy>
-                                <ports>
-                                    <port>27017:27017</port>
-                                </ports>
-                                <env>
-                                    <MONGO_INITDB_ROOT_USERNAME>root</MONGO_INITDB_ROOT_USERNAME>
-                                    <MONGO_INITDB_ROOT_PASSWORD>example</MONGO_INITDB_ROOT_PASSWORD>
-                                </env>
                             </run>
                         </image>
                     </images>

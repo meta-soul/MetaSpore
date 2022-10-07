@@ -18,8 +18,8 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
+import com.dmetasoul.metaspore.recommend.data.TableData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -65,27 +65,38 @@ public class MilvusSearchTask extends AlgoTransformTask {
         milvusTemplate.close();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
-        addFunction("milvusIdScore", (fields, result, config) -> {
+        addFunction("milvusIdScore", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
+            Assert.isTrue(CollectionUtils.isNotEmpty(config.getInputFields()),
                     "input fields must not null");
-            Assert.isTrue(DataTypeEnum.LIST_FLOAT.isMatch(fields.get(0)),
+            Assert.isTrue(DataTypeEnum.LIST_FLOAT.equals(fieldTableData.getType(config.getInputFields().get(0))),
                     "milvusSearch input[0] embedding is list float");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            List<IndexData> embedding = fields.get(0).getIndexValue();
-            return searchIdScore(embedding, result, options);
+            List<List<Float>> embedding = Lists.newArrayList();
+            List<Object> result = fieldTableData.getValueList(config.getInputFields().get(0));
+            if (CollectionUtils.isNotEmpty(result)) {
+                for (Object val : result) {
+                    embedding.add((List<Float>) val);
+                }
+            }
+            return searchIdScore(embedding, fieldTableData, config.getNames(), options);
         });
-        addFunction("milvusField", (fields, result, config) -> {
+        addFunction("milvusField", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
+            Assert.isTrue(CollectionUtils.isNotEmpty(config.getInputFields()),
                     "input fields must not null");
-            Assert.isTrue(DataTypeEnum.LIST_FLOAT.isMatch(fields.get(0)),
+            Assert.isTrue(DataTypeEnum.LIST_FLOAT.equals(fieldTableData.getType(config.getInputFields().get(0))),
                     "milvusSearch input[0] embedding is list float");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            List<IndexData> embedding = fields.get(0).getIndexValue();
-            return searchField(embedding, result, options);
+            List<List<Float>> embedding = Lists.newArrayList();
+            List<Object> result = fieldTableData.getValueList(config.getInputFields().get(0));
+            if (CollectionUtils.isNotEmpty(result)) {
+                for (Object val : result) {
+                    embedding.add((List<Float>) val);
+                }
+            }
+            return searchField(embedding, fieldTableData, config.getNames(), options);
         });
     }
 
@@ -112,10 +123,10 @@ public class MilvusSearchTask extends AlgoTransformTask {
         return new SearchResultsWrapper(response.getData().getResults());
     }
 
-    protected boolean searchIdScore(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
-        Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+    protected boolean searchIdScore(List<List<Float>> embedding, TableData fieldTableData,
+                                    List<String> names, Map<String, Object> options) {
         boolean useStrId = CommonUtils.getField(options,"useStrId", false);
-        SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()), List.of(), options);
+        SearchResultsWrapper wrapper = requestMilvus(embedding, List.of(), options);
         for (int i = 0; i < embedding.size(); ++i) {
             Map<String, Double> idScores = Maps.newHashMap();
             List<Object> itemIds = Lists.newArrayList();
@@ -130,43 +141,43 @@ public class MilvusSearchTask extends AlgoTransformTask {
                 }
                 itemScores.add(x.getScore());
             });
-            result.get(0).addIndexData(FieldData.create(embedding.get(i).getIndex(), itemIds));
-            result.get(1).addIndexData(FieldData.create(embedding.get(i).getIndex(), itemScores));
+            fieldTableData.setValue(i, names.get(0), itemIds);
+            fieldTableData.setValue(i, names.get(1), itemScores);
         }
         return true;
     }
 
     @SuppressWarnings("unchecked")
-    protected boolean searchField(List<IndexData> embedding, List<FieldData> result, Map<String, Object> options) {
-        Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
+    protected boolean searchField(List<List<Float>> embedding, TableData fieldTableData,
+                                  List<String> names, Map<String, Object> options) {
         String scoreField = CommonUtils.getField(options,"scoreField", "score");
         String idField = CommonUtils.getField(options,"idField", "");
         boolean useStrId = CommonUtils.getField(options,"useStrId", false);
         boolean useOrder = CommonUtils.getField(options,"useOrder", true);
         boolean useFlat = CommonUtils.getField(options,"useFlat", true);
-        List<FieldData> output = Lists.newArrayList();
-        FieldData score = null;
-        FieldData idData = null;
-        for (FieldData field : result) {
-            if (Objects.equals(field.getName(), scoreField)) {
-                score = field;
-            } else if (Objects.equals(field.getName(), idField)) {
-                idData = field;
+        List<String> fields = Lists.newArrayList();
+        boolean useScore = false;
+        boolean useId = false;
+        for (String field : names) {
+            if (Objects.equals(field, scoreField)) {
+                useScore = true;
+            } else if (Objects.equals(field, idField)) {
+                useId = true;
             } else {
-                output.add(field);
+                fields.add(field);
             }
         }
-        SearchResultsWrapper wrapper = requestMilvus(embedding.stream().map(IndexData::<List<Float>>getVal).collect(Collectors.toList()),
-                output.stream().map(FieldData::getName).collect(Collectors.toList()), options);
+        SearchResultsWrapper wrapper = requestMilvus(embedding, fields, options);
         List<Object> scores = null;
         List<Object> idlist = null;
+        List<List<List<Object>>> res = Lists.newArrayList();
         for (int i = 0; i < embedding.size(); ++i) {
             List<Integer> ids = Lists.newArrayList();
-            if (score != null) {
+            if (useScore) {
                 List<SearchResultsWrapper.IDScore> iDScores = wrapper.getIDScore(i);
                 List<Object> itemScores = iDScores.stream().map(SearchResultsWrapper.IDScore::getScore).collect(Collectors.toList());
                 scores = itemScores;
-                if (idData != null) {
+                if (useId) {
                     idlist = iDScores.stream().map(x->{
                         if (useStrId) {
                             return x.getStrID();
@@ -191,38 +202,37 @@ public class MilvusSearchTask extends AlgoTransformTask {
                     });
                 }
             }
-            for (FieldData field : result) {
+            List<List<Object>> data = Lists.newArrayList();
+            for (String field : names) {
                 List<Object> item;
-                if (Objects.equals(field.getName(), scoreField)) {
+                if (Objects.equals(field, scoreField)) {
                     item = scores;
-                } else if (Objects.equals(field.getName(), idField)) {
+                } else if (Objects.equals(field, idField)) {
                     item = idlist;
                 } else {
-                    item = (List<Object>) wrapper.getFieldData(field.getName(), i);
+                    item = (List<Object>) wrapper.getFieldData(field, i);
                 }
-                if (CollectionUtils.isEmpty(item)) continue;
                 if (CollectionUtils.isNotEmpty(ids) && useOrder) {
                     List<Object> orderList = Lists.newArrayList();
                     for (Integer id : ids) {
                         Object obj = CommonUtils.get(item, id, null);
-                        if (useFlat) {
-                            field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
-                            continue;
-                        }
                         orderList.add(obj);
                     }
-                    if (!useFlat) {
-                        field.addIndexData(FieldData.create(embedding.get(i).getIndex(), orderList));
-                    }
+                    data.add(orderList);
                 } else {
-                    if (!useFlat) {
-                        field.addIndexData(FieldData.create(embedding.get(i).getIndex(), item));
-                    } else {
-                        for (Object obj : item) {
-                            field.addIndexData(FieldData.create(embedding.get(i).getIndex(), obj));
-                        }
-                    }
+                    data.add(item);
                 }
+            }
+            res.add(data);
+        }
+        List<FieldInfo> fieldInfos = names.stream().map(FieldInfo::new).collect(Collectors.toList());
+        for (int i = 0; i < res.size(); ++i) {
+            for (int k = 0; k < fieldInfos.size(); ++k) {
+                List<List<Object>> valueList = res.get(i);
+                if (valueList.size() <= k) {
+                    continue;
+                }
+                fieldTableData.setValue(i, fieldInfos.get(k), valueList.get(k));
             }
         }
         return true;

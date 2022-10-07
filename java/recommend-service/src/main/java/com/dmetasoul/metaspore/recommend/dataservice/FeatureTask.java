@@ -128,6 +128,9 @@ public class FeatureTask extends DataService {
     }
 
     protected void setRewritedField(String depend, Map<FieldInfo, FieldInfo> rewritedField) {
+        if (CollectionUtils.isEmpty(feature.getCondition())) {
+            return;
+        }
         for (Condition cond : feature.getCondition()) {
             if (cond.getType() == JoinTypeEnum.RIGHT || cond.getType() == JoinTypeEnum.INNER) {
                 if (cond.getRight().getTable().equals(depend)) {
@@ -155,7 +158,7 @@ public class FeatureTask extends DataService {
 
     @Override
     public ServiceRequest makeRequest(String depend, ServiceRequest request, DataContext context) {
-        ServiceRequest req = super.makeRequest(depend, request, context);
+        ServiceRequest req = super.makeRequest(depend, null, context);
         // 直接获取数据的数据表集合不需要生成查询条件，不参与makeRequest计算
         if (!immediateTables.contains(depend)) {
             // 获取depend表相关的join条件， 所有条件已经经过预处理，depend位于condition的左侧
@@ -327,6 +330,9 @@ public class FeatureTask extends DataService {
                 updateJoinedTable = false;
                 for (String table : noJoinTables) {
                     List<Condition> conditions = Lists.newArrayList();
+                    if (CollectionUtils.isEmpty(feature.getCondition())) {
+                        continue;
+                    }
                     feature.getCondition().forEach(cond -> {
                         if (matchCondition(joinedTables, table, cond)) {
                             if (table.equals(cond.getRight().getTable())) {

@@ -15,7 +15,6 @@
 //
 package com.dmetasoul.metaspore.recommend.enums;
 
-import com.dmetasoul.metaspore.recommend.data.FieldData;
 import com.dmetasoul.metaspore.recommend.operator.*;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
@@ -70,6 +69,7 @@ public enum DataTypeEnum {
                 vch.buffer = vector.getAllocator().buffer(b.length);
                 vch.buffer.setBytes(0, b);
                 vector.setSafe(index, vch);
+                featureTable.addBuffer(vch.buffer);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -97,7 +97,7 @@ public enum DataTypeEnum {
         public boolean set(FeatureTable featureTable, int index, String col, Object value) {
             Integer data = parseInteger(value);
             if (value != null && data == null) {
-                log.error("set featureTable fail! value type is not match Integer value:{}!", value);
+                log.error("set featureTable fail! value type is not match Integer value:{}, class:{}!", value, value.getClass());
                 return false;
             }
             if (value == null) {
@@ -144,6 +144,7 @@ public enum DataTypeEnum {
                 binHolder.buffer = vector.getAllocator().buffer(data.length);
                 binHolder.buffer.setBytes(0, data);
                 vector.setSafe(index, binHolder);
+                featureTable.addBuffer(binHolder.buffer);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -186,6 +187,7 @@ public enum DataTypeEnum {
                 binHolder.buffer = vector.getAllocator().buffer(blob.length());
                 binHolder.buffer.setBytes(0, blob.getBytes(1L, (int) blob.length()));
                 vector.setSafe(index, binHolder);
+                featureTable.addBuffer(binHolder.buffer);
             }
             featureTable.setRowCount(index+1);
             return true;
@@ -233,10 +235,10 @@ public enum DataTypeEnum {
                 log.error("set featureTable fail! value type is not match BigDecimal value: {}!", value);
                 return false;
             }
-            BigDecimal data = input.setScale(17, RoundingMode.valueOf(6));
             if (value == null) {
                 ((DecimalVector)featureTable.getVector(col)).setNull(index);
             } else {
+                BigDecimal data = input.setScale(17, RoundingMode.valueOf(6));
                 ((DecimalVector)featureTable.getVector(col)).setSafe(index, data);
             }
             featureTable.setRowCount(index+1);
@@ -388,13 +390,6 @@ public enum DataTypeEnum {
 
     public List<Field> getChildFields() {
         return childFields;
-    }
-
-    public boolean isMatch(FieldData data) {
-        if (data != null && !data.isInvalid()) {
-            return this.equals(data.getType());
-        }
-        return false;
     }
 
     public static DataTypeEnum getEnumByCls(Class<?> cls) {

@@ -26,7 +26,7 @@ public class ListOperator<T> extends ArrowOperator {
             @SuppressWarnings("unchecked") List<T> data = (List<T>) value;
             UnionListWriter writer = listVector.getWriter();
             writer.setPosition(index);
-            writeList(writer, data, listVector.getField().getChildren(), listVector.getAllocator());
+            writeList(writer, data, listVector.getField().getChildren(), featureTable, listVector.getAllocator());
         }
         featureTable.setRowCount(index+1);
         return true;

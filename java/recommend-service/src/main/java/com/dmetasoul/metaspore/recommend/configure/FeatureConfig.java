@@ -49,7 +49,7 @@ public class FeatureConfig {
     @Data
     public static class Source {
         private String name;
-        private String format;
+        // private String format;
         private String kind;
         private Map<String, Object> options;
 
@@ -150,6 +150,7 @@ public class FeatureConfig {
         private List<String> from;
         private List<FieldInfo> fields;
         private List<String> select;
+
         private List<Condition> condition;
 
         private List<String> immediateFrom;
@@ -241,10 +242,6 @@ public class FeatureConfig {
             if (fromtables.size() != from.size()) {
                 log.error("Feature config from and dependOutput must not be duplicate table!");
                 throw new IllegalStateException("Feature config from and dependOutput must not be duplicate table!");
-            }
-            if (CollectionUtils.isEmpty(condition) && fromtables.size() > 1) {
-                log.error("Feature join table must has condition!");
-                throw new IllegalStateException("Feature join table must has condition!");
             }
             setFields(select);
             setFilterMap(filters);
@@ -359,6 +356,9 @@ public class FeatureConfig {
                     queue.offer(action);
                 }
             }
+            if (StringUtils.isEmpty(this.taskName)) {
+                this.taskName = "AlgoTransform";
+            }
             return true;
         }
 
@@ -366,10 +366,6 @@ public class FeatureConfig {
             if (StringUtils.isEmpty(name) || CollectionUtils.isEmpty(output)) {
                 log.error("AlgoInference config name, fieldActions must not be empty!");
                 throw new IllegalStateException("AlgoInference config name, fieldActions must not be empty!");
-            }
-            if (CollectionUtils.isEmpty(algoTransform) && CollectionUtils.isEmpty(feature)) {
-                log.error("AlgoInference config algoTransform and feature depend must not be empty!");
-                throw new IllegalStateException("AlgoInference config algoTransform and feature depend must not be empty!");
             }
             return true;
         }

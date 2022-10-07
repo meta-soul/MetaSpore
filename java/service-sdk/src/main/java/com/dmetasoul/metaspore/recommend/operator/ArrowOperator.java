@@ -36,7 +36,8 @@ public abstract class ArrowOperator {
         return vch;
     }
 
-    public <T> void writeField(BaseWriter.ListWriter writer, T item, Field field, BufferAllocator allocator) {
+    public <T> void writeField(BaseWriter.ListWriter writer, T item, Field field,
+                               FeatureTable featureTable, BufferAllocator allocator) {
         Assert.notNull(writer, "writer must not null");
         Types.MinorType minorType = Types.getMinorTypeForArrowType(field.getType());
         if (item == null) {
@@ -44,6 +45,7 @@ public abstract class ArrowOperator {
         } else if (minorType == Types.MinorType.VARCHAR) {
             VarCharHolder vch = getVarCharHolder(String.valueOf(item), allocator);
             writer.varChar().write(vch);
+            featureTable.addBuffer(vch.buffer);
         } else if (minorType == Types.MinorType.INT) {
             writer.integer().writeInt(Integer.parseInt(String.valueOf(item)));
         } else if (minorType == Types.MinorType.BIGINT) {
@@ -53,27 +55,29 @@ public abstract class ArrowOperator {
         } else if (minorType == Types.MinorType.FLOAT8) {
             writer.float8().writeFloat8(Double.parseDouble(String.valueOf(item)));
         } else if (minorType == Types.MinorType.LIST) {
-            writeList(writer.list(), (List<?>)item, field.getChildren(), allocator);
+            writeList(writer.list(), (List<?>)item, field.getChildren(), featureTable, allocator);
         } else if (minorType == Types.MinorType.MAP) {
-            writeMap(writer.map(), (Map<?, ?>)item, field.getChildren(), allocator);
+            writeMap(writer.map(), (Map<?, ?>)item, field.getChildren(), featureTable, allocator);
         } else if (minorType == Types.MinorType.STRUCT){
-            writeStruct(writer.struct(), item, field.getChildren(), allocator);
+            writeStruct(writer.struct(), item, field.getChildren(), featureTable, allocator);
         }
     }
 
-    public <T> void writeList(BaseWriter.ListWriter writer, List<T> data, List<Field> fields, BufferAllocator allocator) {
+    public <T> void writeList(BaseWriter.ListWriter writer, List<T> data, List<Field> fields,
+                              FeatureTable featureTable, BufferAllocator allocator) {
         Assert.notNull(writer, "list writer must not null");
         Assert.isTrue(fields != null && fields.size() == 1, "list need one child field");
         writer.startList();
         if (CollectionUtils.isNotEmpty(data)) {
             for (T item : data) {
-                writeField(writer, item, fields.get(0), allocator);
+                writeField(writer, item, fields.get(0), featureTable, allocator);
             }
         }
         writer.endList();
     }
 
-    public <K, V> void writeMap(BaseWriter.MapWriter writer, Map<K, V> data, List<Field> fields, BufferAllocator allocator) {
+    public <K, V> void writeMap(BaseWriter.MapWriter writer, Map<K, V> data, List<Field> fields,
+                                FeatureTable featureTable, BufferAllocator allocator) {
         Assert.notNull(writer, "map writer must not null");
         Assert.isTrue(fields != null && fields.size() == 1, "list need one child field");
         Field structField = fields.get(0);
@@ -88,8 +92,8 @@ public abstract class ArrowOperator {
                 V obj = entry.getValue();
                 writer.startEntry();
                 Assert.notNull(key, "map key must not null");
-                writeField(writer.key(), key, structField.getChildren().get(0), allocator);
-                writeField(writer.value(), obj, structField.getChildren().get(1), allocator);
+                writeField(writer.key(), key, structField.getChildren().get(0), featureTable, allocator);
+                writeField(writer.value(), obj, structField.getChildren().get(1), featureTable, allocator);
                 writer.endEntry();
             }
         }
@@ -98,7 +102,8 @@ public abstract class ArrowOperator {
 
     @SuppressWarnings("unchecked")
     @SneakyThrows
-    public <T> void writeStruct(BaseWriter.StructWriter writer, T data, List<Field> fields, BufferAllocator allocator) {
+    public <T> void writeStruct(BaseWriter.StructWriter writer, T data, List<Field> fields,
+                                FeatureTable featureTable, BufferAllocator allocator) {
         Assert.notNull(writer, "list writer must not null");
         writer.start();
         if (data == null) {
@@ -114,7 +119,7 @@ public abstract class ArrowOperator {
                     if (field == null) {
                         continue;
                     }
-                    writeField(writer, entry.getValue(), entry.getKey(), field, allocator);
+                    writeField(writer, entry.getValue(), entry.getKey(), field, featureTable, allocator);
                 }
             } else {
                 for (java.lang.reflect.Field field : data.getClass().getDeclaredFields()) {
@@ -124,14 +129,15 @@ public abstract class ArrowOperator {
                         continue;
                     }
                     Object value = field.get(data);
-                    writeField(writer, value, keyName, fieldMap.get(keyName), allocator);
+                    writeField(writer, value, keyName, fieldMap.get(keyName), featureTable, allocator);
                 }
             }
         }
         writer.end();
     }
 
-    public void writeField(BaseWriter.StructWriter writer, Object data, String name, Field field, BufferAllocator allocator) {
+    public void writeField(BaseWriter.StructWriter writer, Object data, String name, Field field,
+                           FeatureTable featureTable, BufferAllocator allocator) {
         Assert.notNull(writer, "writer must not null");
         Types.MinorType minorType = Types.getMinorTypeForArrowType(field.getType());
         if (minorType == Types.MinorType.VARCHAR) {
@@ -140,6 +146,7 @@ public abstract class ArrowOperator {
             } else {
                 VarCharHolder vch = getVarCharHolder(String.valueOf(data), allocator);
                 writer.varChar(name).write(vch);
+                featureTable.addBuffer(vch.buffer);
             }
         } else if (minorType == Types.MinorType.INT) {
             if (data == null) {
@@ -169,19 +176,19 @@ public abstract class ArrowOperator {
             if (data == null) {
                 writer.list(name).writeNull();
             } else {
-                writeList(writer.list(name), (List<?>) data, field.getChildren(), allocator);
+                writeList(writer.list(name), (List<?>) data, field.getChildren(), featureTable, allocator);
             }
         } else if (minorType == Types.MinorType.MAP) {
             if (data == null) {
                 writer.map(name).writeNull();
             } else {
-                writeMap(writer.map(name), (Map<?, ?>) data, field.getChildren(), allocator);
+                writeMap(writer.map(name), (Map<?, ?>) data, field.getChildren(), featureTable, allocator);
             }
         } else {
             if (data == null) {
                 writer.struct(name).writeNull();
             } else {
-                writeStruct(writer.struct(name), data, field.getChildren(), allocator);
+                writeStruct(writer.struct(name), data, field.getChildren(), featureTable, allocator);
             }
         }
     }

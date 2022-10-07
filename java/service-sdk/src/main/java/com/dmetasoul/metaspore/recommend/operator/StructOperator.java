@@ -19,8 +19,7 @@ public class StructOperator extends ArrowOperator {
         } else {
             NullableStructWriter writer = structVector.getWriter();
             writer.setPosition(index);
-            log.info("struct vector: {}", structVector.getField().getChildren());
-            writeStruct(writer, value, structVector.getField().getChildren(), structVector.getAllocator());
+            writeStruct(writer, value, structVector.getField().getChildren(), featureTable, structVector.getAllocator());
         }
         featureTable.setRowCount(index+1);
         return true;

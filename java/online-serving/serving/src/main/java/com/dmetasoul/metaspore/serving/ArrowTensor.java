@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.serving;
 import com.google.flatbuffers.FlatBufferBuilder;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.flatbuf.*;
+import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.ipc.WriteChannel;
 import org.apache.arrow.vector.ipc.message.IpcOption;
 import org.apache.arrow.vector.ipc.message.MessageSerializer;
@@ -35,8 +36,8 @@ import java.nio.channels.Channels;
  */
 public class ArrowTensor {
 
-    public static ArrowTensor readFromByteString(ByteString bs) throws IOException {
-        ArrowMessage m = ArrowMessage.readFromByteString(bs);
+    public static ArrowTensor readFromByteString(ByteString bs, ArrowAllocator alloc) throws IOException {
+        ArrowMessage m = ArrowMessage.readFromByteString(bs, alloc);
         if (m.message.headerType() == MessageHeader.Tensor) {
             Tensor tensor = (Tensor) m.message.header(new Tensor());
             if (m.body != null) {

@@ -19,7 +19,6 @@ import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.UpdateOperator;
-import com.dmetasoul.metaspore.serving.ArrowAllocator;
 import com.dmetasoul.metaspore.serving.FeatureTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,6 +26,8 @@ import com.google.common.collect.Sets;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.arrow.memory.BufferAllocator;
+import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.FieldVector;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
@@ -45,15 +46,29 @@ import static com.dmetasoul.metaspore.recommend.operator.ArrowConv.convValue;
  */
 @Slf4j
 @Data
-public class DataResult {
+public class DataResult implements AutoCloseable {
     protected String name;
     protected String reqSign;
     protected FeatureTable featureTable;
     protected List<DataTypeEnum> dataTypes;
+    @Override
+    public void close() {
+        if (featureTable != null) {
+            featureTable.close();
+            featureTable = null;
+        }
+    }
+
+    public void reset() {
+        this.close();
+        reqSign = "";
+        dataTypes = null;
+    }
 
     public void setFeatureData(String name, List<Field> fields, List<DataTypeEnum> types, List<Map<String, Object>> data) {
         this.setName(name);
-        featureTable = new FeatureTable(name, fields, ArrowAllocator.getAllocator());
+        this.reset();
+        featureTable = new FeatureTable(name, fields);
         dataTypes = types;
         int row = 0;
         for (Map<String, Object> itemData : data) {
@@ -245,7 +260,7 @@ public class DataResult {
     public void copyDataResult(DataResult data, int from, int to) {
         if (data == null || Objects.requireNonNull(data).isNull() ||
                 isNull() || CollectionUtils.isEmpty(dataTypes)) return;
-        for (int i = from; i < to; ++i) {
+        for (int i = from; i < to && i < data.getFeatureTable().getRowCount(); ++i) {
             for (int k = 0; k < dataTypes.size(); ++k) {
                 FieldVector fieldVector = featureTable.getVector(k);
                 FieldVector dataVector = data.getFeatureTable().getVector(k);

@@ -2,9 +2,11 @@ package com.dmetasoul.metaspore.recommend.recommend;
 
 import com.dmetasoul.metaspore.recommend.baseservice.TaskServiceRegister;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.TransformConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.DataResult;
+import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.MergeOperator;
 import com.dmetasoul.metaspore.recommend.recommend.interfaces.TransformFunction;
@@ -19,12 +21,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
 import org.springframework.util.Assert;
+import org.springframework.util.StopWatch;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -44,7 +46,8 @@ public abstract class Transform {
     protected List<Field> resFields;
     protected List<DataTypeEnum> dataTypes;
 
-    public static final int DEFAULT_MAX_RESERVATION = 50;
+    public static final int DEFAULT_MAX_RESERVATION = 200;
+    public static final int DEFAULT_MIN_REQUEST = 50;
 
     public void initTransform(String name, ExecutorService taskPool, TaskServiceRegister serviceRegister) {
         this.name = name;
@@ -61,7 +64,7 @@ public abstract class Transform {
         addFunction("summary", (data, results, context, option) -> {
             Assert.isTrue(CollectionUtils.isNotEmpty(resFields), "summary need configure columns info!");
             DataResult result = new DataResult();
-            FeatureTable featureTable = new FeatureTable(name, resFields, ArrowAllocator.getAllocator());
+            FeatureTable featureTable = new FeatureTable(name, resFields);
             result.setFeatureTable(featureTable);
             result.setDataTypes(dataTypes);
             result.setName(name);
@@ -69,6 +72,9 @@ public abstract class Transform {
             result.mergeDataResult(data, dupFields, getMergeOperators(option), option);
             featureTable.finish();
             results.add(result);
+            if (data != null) {
+                data.forEach(DataResult::close);
+            }
             return true;
         });
         addFunction("summaryBySchema", (data, results, context, option) -> {
@@ -76,13 +82,14 @@ public abstract class Transform {
                 DataResult item = data.get(0);
                 DataResult result = new DataResult();
                 result.setName(name);
-                FeatureTable featureTable = new FeatureTable(String.format("%s.summaryBySchema", name), item.getFields(), ArrowAllocator.getAllocator());
+                FeatureTable featureTable = new FeatureTable(String.format("%s.summaryBySchema", name), item.getFields());
                 result.setFeatureTable(featureTable);
                 result.setDataTypes(item.getDataTypes());
                 List<String> dupFields = getOptionFields("dupFields", option);
                 result.mergeDataResult(data, dupFields, getMergeOperators(option), option);
                 featureTable.finish();
                 results.add(result);
+                data.forEach(DataResult::close);
             }
             return true;
         });
@@ -90,7 +97,7 @@ public abstract class Transform {
             if (CollectionUtils.isNotEmpty(data)) {
                 for (DataResult item : data) {
                     DataResult result = new DataResult();
-                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields(), ArrowAllocator.getAllocator());
+                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields());
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
                     List<String> orderFields = getOptionFields("orderFields", option);
@@ -98,6 +105,7 @@ public abstract class Transform {
                     result.orderAndLimit(item, orderFields, limit);
                     featureTable.finish();
                     results.add(result);
+                    item.close();
                 }
             }
             return true;
@@ -106,13 +114,14 @@ public abstract class Transform {
             if (CollectionUtils.isNotEmpty(data)) {
                 for (DataResult item : data) {
                     DataResult result = new DataResult();
-                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields(), ArrowAllocator.getAllocator());
+                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields());
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
                     int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
                     result.copyDataResult(item, 0, limit);
                     featureTable.finish();
                     results.add(result);
+                    item.close();
                 }
             }
             return true;
@@ -146,17 +155,78 @@ public abstract class Transform {
                             dataTypes.add(getType(outputTypes.get(i)));
                         }
                     }
-                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), fields, ArrowAllocator.getAllocator());
+                    FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), fields);
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(dataTypes);
 
                     result.updateDataResult(item, inputFields, outputFields, getUpdateOperator(option), option);
                     featureTable.finish();
                     results.add(result);
+                    item.close();
                 }
             }
             return true;
         });
+        addFunction("additionalRecall", (data, results, context, option) -> {
+            int currentNum = 0;
+            if (CollectionUtils.isNotEmpty(data)) {
+                for (DataResult item : data) {
+                    currentNum += item.getFeatureTable().getRowCount();
+                    results.add(item);
+                }
+            }
+            int min_request = CommonUtils.getField(option, "min_request", DEFAULT_MIN_REQUEST);
+            if (currentNum < min_request) {
+                List<String> recall_list = getOptionFields("recall_list", option);
+                if (CollectionUtils.isNotEmpty(recall_list)) {
+                    for (String item : recall_list) {
+                        DataService task = serviceRegister.getDataService(item);
+                        Validate.isTrue(task != null, "additionalRecall recall must be exist! " + item);
+                        DataResult dataResult = task.execute(context);
+                        if (dataResult == null) {
+                            log.error("the additionalRecall recall exec fail at:" + item);
+                            continue;
+                        }
+                        results.add(dataResult);
+                        currentNum += dataResult.getFeatureTable().getRowCount();
+                        if (currentNum >= min_request) {
+                            break;
+                        }
+                    }
+                }
+            }
+            return true;
+        });
+        addFunction("addItemInfo", (data, results, context, option) -> {
+            String itemInfoTaskName = CommonUtils.getField(option, "feature_name", "feature_itemInfo", String.class);
+            String dataResultName = CommonUtils.getField(option, "dataName", "recommendResult", String.class);
+	    if (StringUtils.isEmpty(itemInfoTaskName)) {
+		return true;
+	    }
+	    DataService itemInfoTask = serviceRegister.getDataService(itemInfoTaskName);
+            if (CollectionUtils.isNotEmpty(data)) {
+		for (DataResult item : data) {
+                    itemInfoTask.setDataResultByName(dataResultName, item, context);
+                    DataResult dataResult = itemInfoTask.execute(context);
+                    if (dataResult == null) {
+                        log.error("the addItemInfo task exec fail at:" + item);
+			continue;
+		    }
+		    results.add(dataResult);
+		}
+	    }
+            return true;
+        });
+    }
+
+    public boolean hasSomeTransform(List<TransformConfig> transforms, String name) {
+        if (CollectionUtils.isEmpty(transforms) || StringUtils.isEmpty(name)) return false;
+        for (TransformConfig config: transforms) {
+            if (config.getName().equals(name)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public abstract void initFunctions();
@@ -241,8 +311,15 @@ public abstract class Transform {
                     log.error("the service：{} function: {} input is empty!", name, item.getName());
                     return resultList;
                 }
-                if (!function.transform(dataResults, resultList, context, option)) {
-                    log.error("the service：{} function: {} execute fail!", name, item.getName());
+                StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
+                try {
+                    timeRecorder.start(String.format("%s_transform_func_%s", name, item.getName()));
+                    if (!function.transform(dataResults, resultList, context, option)) {
+                        log.error("the service：{} function: {} execute fail!", name, item.getName());
+                    }
+                } finally {
+                    timeRecorder.stop();
+                    context.updateTimeRecords(Utils.getTimeRecords(timeRecorder));
                 }
                 return resultList;
             }, taskPool);

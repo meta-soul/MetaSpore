@@ -28,7 +28,7 @@ public class DataSourceHealthIndicator extends AbstractHealthIndicator {
     @Override
     protected void doHealthCheck(Health.Builder builder) throws Exception {
         if (taskServiceRegister == null || MapUtils.isEmpty(taskServiceRegister.getDataSources())) {
-            builder.up().withDetail("message", "no found DataSources");
+            builder.status(Status.OUT_OF_SERVICE).withDetail("message", "no found DataSources");
             return;
         }
         Map<String, Object> details = Maps.newHashMap();

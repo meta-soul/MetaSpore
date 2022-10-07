@@ -19,6 +19,7 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
@@ -33,10 +34,16 @@ import static com.dmetasoul.metaspore.recommend.common.CommonUtils.getObjectToMa
  */
 @Slf4j
 @Data
-public class DataContext {
+public class DataContext implements AutoCloseable {
     private String id;
     private Map<String, Object> request;
+    private Map<String, Long> timeRecords = Maps.newConcurrentMap();
     private ConcurrentMap<String, DataResult> results = Maps.newConcurrentMap();
+
+    @Override
+    public void close() {
+        results.forEach((key, value)-> value.close());
+    }
 
     public DataContext() {
         this.id = UUID.randomUUID().toString().replaceAll("-", "");
@@ -61,7 +68,11 @@ public class DataContext {
             request = new Gson().fromJson(req, Map.class);
         }
     }
+    public void updateTimeRecords(Map<String, Long> records) {
+        if (MapUtils.isEmpty(records)) return;
+        this.timeRecords.putAll(records);
 
+    }
     public void setRequest(Map<String, Object> req) {
         request = req;
     }

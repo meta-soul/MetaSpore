@@ -1,0 +1,8 @@
+function-config:
+  path: ./example/user-define-function/target
+  jars:
+    - name: user-define-function-1.0.0.jar
+      fieldFunction:
+        - example: com.dmetasoul.metaspore.udf.example.FieldFunction
+      transformFunction:
+        - example: com.dmetasoul.metaspore.udf.example.DataResultFunction

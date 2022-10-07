@@ -12,6 +12,11 @@ public class FieldInfo {
     String table;
     String fieldName;
 
+    public FieldInfo(String fieldName) {
+        this.fieldName = fieldName;
+        this.table = null;
+    }
+
     public static FieldInfo create(String str) {
         String[] array = str.split("\\.");
         if (array.length == 2) {

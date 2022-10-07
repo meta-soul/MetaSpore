@@ -39,7 +39,7 @@ public class LightGBMController {
         }
 
         // predict and get result tensor
-        Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, modelName, List.of(userTable), Collections.emptyMap());
+        Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, modelName, List.of(userTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
 
         // parse the result tensor
         Map<String, Object> toJson = new TreeMap<>();

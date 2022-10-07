@@ -18,8 +18,8 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.common.Utils;
-import com.dmetasoul.metaspore.recommend.data.FieldData;
-import com.dmetasoul.metaspore.recommend.data.IndexData;
+import com.dmetasoul.metaspore.recommend.configure.FieldInfo;
+import com.dmetasoul.metaspore.recommend.data.TableData;
 import com.dmetasoul.metaspore.recommend.enums.DataTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -37,7 +37,7 @@ import java.util.*;
 @ServiceAnnotation("ItemMatcher")
 public class ItemMatcherTask extends AlgoTransformTask {
     public static final int DEFAULT_ALGO_LEVEL = 3;
-    public static final int DEFAULT_MAX_RESERVATION = 50;
+    public static final int DEFAULT_MAX_RESERVATION = 200;
 
     private int algoLevel;
     private int maxReservation;
@@ -54,67 +54,56 @@ public class ItemMatcherTask extends AlgoTransformTask {
     @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
-        addFunction("toItemScore", (fields, result, config) -> {
+        addFunction("toItemScore", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
-                    "input fields must not null");
-            Assert.isTrue(fields.size() > 0 && DataTypeEnum.STRING.isMatch(fields.get(0)),
-                    "toItemScore input[0] is recall userId string");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            List<String> userIds = fields.get(0).getValue();
-            List<List<String>> recallItemData = null;
-            List<List<Double>> recallWeights = null;
-            List<Double> userProfileWeights = null;
-            if (fields.size() > 2 && DataTypeEnum.LIST_STR.isMatch(fields.get(1)) &&
-                    DataTypeEnum.LIST_DOUBLE.isMatch(fields.get(2))) {
-                recallItemData = fields.get(1).getValue();
-                recallWeights = fields.get(2).getValue();
-                if (fields.size() > 3 && DataTypeEnum.DOUBLE.isMatch(fields.get(3))) {
-                    userProfileWeights = fields.get(3).getValue();
-                }
-            } else if (fields.size() > 1 && DataTypeEnum.LIST_STRUCT.isMatch(fields.get(1))){
-                List<List<Object>> objData = fields.get(1).getValue();
-                recallItemData = Lists.newArrayList();
-                recallWeights = Lists.newArrayList();
-                Field field = ((FieldData)fields.get(1)).getField();
-                Assert.isTrue(field.getChildren().size() == 1, "list struct only has one struct children!");
-                List<Field> children = field.getChildren().get(0).getChildren();
-                Assert.isTrue(children != null && children.size() == 2, "itemscore must has 2 field!");
-                Field itemField = children.get(0);
-                Field scoreField = children.get(1);
-                if (CollectionUtils.isNotEmpty(objData)) {
-                    for (List<Object> itemData : objData) {
-                        List<String> itemArray = Lists.newArrayList();
-                        List<Double> scoreArray = Lists.newArrayList();
-                        recallItemData.add(itemArray);
-                        recallWeights.add(scoreArray);
-                        if (CollectionUtils.isEmpty(itemData)) {
+            Assert.isTrue(config.getInputFields() != null && config.getInputFields().size() > 2,
+                    "recallCollectItem has three input");
+            FieldInfo userId = config.getInputFields().get(0);
+            FieldInfo userProfile = null;
+            Map<String, Map<String, Double>> UserItemScore = new HashMap<>();
+            for (int i = 0; i< fieldTableData.getData().size(); ++i) {
+                Map<String, Double> itemToItemScore = UserItemScore.computeIfAbsent((String) fieldTableData.getValue(i, userId), key->Maps.newHashMap());
+                List<FieldInfo> input = config.getInputFields();
+                List<String> recallItem = Lists.newArrayList();
+                List<Double> recallWeight = Lists.newArrayList();
+                if (input.size() > 1 && fieldTableData.getType(input.get(1)).equals(DataTypeEnum.LIST_STRUCT)) {
+                    List<Object> itemData = (List<Object>) fieldTableData.getValue(i, input.get(1));
+                    Field field = fieldTableData.getField(input.get(1));
+                    Assert.isTrue(field.getChildren().size() == 1, "list struct only has one struct children!");
+                    List<Field> children = field.getChildren().get(0).getChildren();
+                    Assert.isTrue(children != null && children.size() == 2, "itemscore must has 2 field!");
+                    Field itemField = children.get(0);
+                    Field scoreField = children.get(1);
+                    if (CollectionUtils.isEmpty(itemData)) {
+                        continue;
+                    }
+                    for (Object data : itemData) {
+                        if (data == null) {
                             continue;
                         }
-                        for (Object data : itemData) {
-                            if (data == null) {
-                                continue;
-                            }
-                            Map<String, Object> map;
-                            if (data instanceof Map) {
-                                map = (Map<String, Object>)data;
-                            } else {
-                                map = CommonUtils.getObjectToMap(data);
-                            }
-                            itemArray.add((String) map.get(itemField.getName()));
-                            scoreArray.add((Double) map.get(scoreField.getName()));
+                        Map<String, Object> map;
+                        if (data instanceof Map) {
+                            map = (Map<String, Object>)data;
+                        } else {
+                            map = CommonUtils.getObjectToMap(data);
                         }
+                        recallItem.add((String) map.get(itemField.getName()));
+                        recallWeight.add((Double) map.get(scoreField.getName()));
+                    }
+                    if (input.size() > 2) {
+                        userProfile = input.get(2);
+                    }
+                } else if (input.size() > 2) {
+                    recallItem.addAll((List<String>) fieldTableData.getValue(i, input.get(1)));
+                    recallWeight.addAll((List<Double>) fieldTableData.getValue(i, input.get(2)));
+                    if (input.size() > 3) {
+                        userProfile = input.get(3);
                     }
                 }
-            }
-            Map<String, Map<String, Double>> UserItemScore = new HashMap<>();
-            for (int i = 0; i< userIds.size(); ++i) {
-                Map<String, Double> itemToItemScore = UserItemScore.computeIfAbsent(userIds.get(i), key->Maps.newHashMap());
-                List<String> recallItem = recallItemData.get(i);
-                if (CollectionUtils.isEmpty(recallItem)) continue;
-                List<Double> recallWeight = recallWeights.get(i);
-                Double userProfileWeight = CommonUtils.get(userProfileWeights, i, 1.0);
-                if (userProfileWeight == null) userProfileWeight = 1.0;
+                double userProfileWeight = 1.0;
+                if (userProfile != null) {
+                    userProfileWeight = (double) fieldTableData.getValue(i, userProfile);
+                }
                 for (int j = 0; j < recallItem.size(); ++j) {
                     String itemId = recallItem.get(j);
                     Double itemScore = CommonUtils.get(recallWeight, j, 1.0) * userProfileWeight;
@@ -123,69 +112,80 @@ public class ItemMatcherTask extends AlgoTransformTask {
                     }
                 }
             }
-            int newIndex = 0;
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            TableData recallData = new TableData(names, types);
+            List<Object> userIds = Lists.newArrayList();
+            List<Object> scores = Lists.newArrayList();
             for (Map.Entry<String, Map<String, Double>> entry : UserItemScore.entrySet()) {
-                result.get(0).addIndexData(FieldData.create(newIndex, entry.getKey()));
-                result.get(1).addIndexData(FieldData.create(newIndex, entry.getValue()));
-                newIndex += 1;
+                userIds.add(entry.getKey());
+                scores.add(entry.getValue());
             }
+            Assert.isTrue(names.size() > 1, "output has 2 fields");
+            recallData.addValueList(names.get(0), userIds);
+            recallData.addValueList(names.get(1), scores);
+            fieldTableData.reset(recallData);
             return true;
         });
-        addFunction("toItemScore2", (fields, result, config) -> {
+        addFunction("toItemScore2", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
-                    "input fields must not null");
-            Assert.isTrue(fields.size() > 0 && DataTypeEnum.STRING.isMatch(fields.get(0)),
-                    "toItemScore2 input[0] is recall userId string");
-            Assert.isTrue(fields.size() > 1 && DataTypeEnum.STRING.isMatch(fields.get(1)),
-                    "toItemScore2 input[1] is recall itemId string");
-            Assert.isTrue(fields.size() > 2 && DataTypeEnum.DOUBLE.isMatch(fields.get(2)),
-                    "toItemScore2 input[2] is recall item score double");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
-            List<String> userIds = fields.get(0).getValue();
-            List<String> recallItemData = fields.get(1).getValue();
-            List<Double> recallWeights = fields.get(2).getValue();
-            List<Double> userProfileWeights = null;
-            if (fields.size() > 3 && DataTypeEnum.DOUBLE.isMatch(fields.get(3))) {
-                userProfileWeights = fields.get(3).getValue();
-            }
+            Assert.isTrue(config.getInputFields() != null && config.getInputFields().size() > 2,
+                    "recallCollectItem has three input");
+            FieldInfo userId = config.getInputFields().get(0);
+            FieldInfo recallItem = config.getInputFields().get(1);
+            FieldInfo recallWeight = config.getInputFields().get(2);
             Map<String, Map<String, Double>> UserItemScore = new HashMap<>();
-            for (int i = 0; i< userIds.size(); ++i) {
-                Map<String, Double> itemToItemScore = UserItemScore.computeIfAbsent(userIds.get(i), key->Maps.newHashMap());
-                String itemId = recallItemData.get(i);
-                Double itemScore = recallWeights.get(i) * CommonUtils.get(userProfileWeights, i, 1.0);
+            for (int i = 0; i< fieldTableData.getData().size(); ++i) {
+                Map<String, Double> itemToItemScore = UserItemScore.computeIfAbsent((String) fieldTableData.getValue(i, userId), key->Maps.newHashMap());
+                String itemId = (String) fieldTableData.getValue(i, recallItem);
+                double userProfileWeight = 1.0;
+                if (config.getInputFields().size() > 3
+                        && DataTypeEnum.DOUBLE.equals(fieldTableData.getType(config.getInputFields().get(3)))) {
+                    userProfileWeight = (double) fieldTableData.getValue(i, config.getInputFields().get(3));
+                }
+                Double itemScore = (double) fieldTableData.getValue(i, recallWeight) * userProfileWeight;
                 if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
                     itemToItemScore.put(itemId, itemScore);
                 }
             }
-            int newIndex = 0;
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            TableData recallData = new TableData(names, types);
+            List<Object> itemIds = Lists.newArrayList();
+            List<Object> scores = Lists.newArrayList();
             for (Map.Entry<String, Map<String, Double>> entry : UserItemScore.entrySet()) {
-                result.get(0).addIndexData(FieldData.create(newIndex, entry.getKey()));
-                result.get(1).addIndexData(FieldData.create(newIndex, entry.getValue()));
-                newIndex += 1;
+                itemIds.add(entry.getKey());
+                scores.add(entry.getValue());
             }
+            Assert.isTrue(names.size() > 1, "output has 2 fields");
+            recallData.addValueList(names.get(0), itemIds);
+            recallData.addValueList(names.get(1), scores);
+            fieldTableData.reset(recallData);
             return true;
         });
-        addFunction("recallCollectItem", (fields, result, config) -> {
+        addFunction("recallCollectItem", (fieldTableData, config, taskPool) -> {
             Map<String, Object> options = config.getOptions();
-            Assert.isTrue(CollectionUtils.isNotEmpty(fields),
-                    "input fields must not null");
-            Assert.isTrue(fields.size() > 0 && DataTypeEnum.STRING.isMatch(fields.get(0)),
-                    "recallCollectItem input[0] is recall userId string");
-            Assert.isTrue(DataTypeEnum.MAP_STR_DOUBLE.isMatch(fields.get(1)),
-                    "recallCollectItem input[1] is userprofileWeight map<string, double>>");
-            Assert.isTrue(CollectionUtils.isNotEmpty(result), "output fields must not empty");
             int limit = CommonUtils.getField(options, "maxReservation", maxReservation);
             int finalAlgoLevel = CommonUtils.getField(options, "algoLevel", algoLevel);
-            List<IndexData> userIds = fields.get(0).getIndexValue();
-            List<Map<String, Double>> itemScores = fields.get(1).getValue();
-            for (int i = 0; i < userIds.size(); ++i) {
-                Map<String, Double> itemScore = itemScores.get(i);
+            Assert.isTrue(config.getInputFields() != null && config.getInputFields().size() > 1,
+                    "recallCollectItem has two input");
+            FieldInfo userId = config.getInputFields().get(0);
+            FieldInfo itemScores = config.getInputFields().get(1);
+            List<Object> userIds = Lists.newArrayList();
+            List<Object> itemIds = Lists.newArrayList();
+            List<Object> scores = Lists.newArrayList();
+            List<Object> originScores = Lists.newArrayList();
+            List<String> names = config.getNames();
+            List<Object> types = config.getTypes();
+            Assert.isTrue(names.size() > 3, "output has 4 fields");
+            TableData recallData = new TableData(names, types);
+            for (int i = 0; i < fieldTableData.getData().size(); ++i) {
+                Map<String, Double> itemScore = (Map<String, Double>) fieldTableData.getValue(i, itemScores);
                 if (MapUtils.isEmpty(itemScore)) continue;
                 ArrayList<Map.Entry<String, Double>> entries = new ArrayList<>(itemScore.entrySet());
                 entries.sort((o1, o2) -> o2.getValue().compareTo(o1.getValue()));
                 Double maxScore = 0.0;
-                if (itemScores.size() > 0) {
+                if (itemScore.size() > 0) {
                     Map.Entry<String, Double> entry = entries.get(0);
                     maxScore = entry.getValue();
                 }
@@ -193,13 +193,17 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 long limit1 = maxReservation;
                 for (Map.Entry<String, Double> x : entries) {
                     if (limit1-- == 0) break;
-                    int index = userIds.get(i).getIndex();
-                    result.get(0).addIndexData(FieldData.create(index, userIds.get(i).getVal()));
-                    result.get(1).addIndexData(FieldData.create(index, x.getKey()));
-                    result.get(2).addIndexData(FieldData.create(index, Utils.getFinalRetrievalScore(x.getValue(), finalMaxScore, finalAlgoLevel)));
-                    result.get(3).addIndexData(FieldData.create(index, Map.of(algoName, x.getValue())));
+                    userIds.add(fieldTableData.getValue(i, userId));
+                    itemIds.add(x.getKey());
+                    scores.add(Utils.getFinalRetrievalScore(x.getValue(), finalMaxScore, finalAlgoLevel));
+                    originScores.add(Map.of(algoName, x.getValue()));
                 }
             }
+            recallData.addValueList(names.get(0), userIds);
+            recallData.addValueList(names.get(1), itemIds);
+            recallData.addValueList(names.get(2), scores);
+            recallData.addValueList(names.get(3), originScores);
+            fieldTableData.reset(recallData);
             return true;
         });
     }

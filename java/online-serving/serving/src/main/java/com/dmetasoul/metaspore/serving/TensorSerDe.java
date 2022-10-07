@@ -19,6 +19,7 @@ package com.dmetasoul.metaspore.serving;
 import java.io.IOException;
 
 import com.google.protobuf.ByteString;
+import org.apache.arrow.memory.BufferAllocator;
 
 public class TensorSerDe {
     public static void serializeTo(String name, ArrowTensor tensor, PredictRequest.Builder builder) throws IOException {
@@ -26,7 +27,7 @@ public class TensorSerDe {
         builder.putPayload(name, payload);
     }
 
-    public static ArrowTensor deserializeFrom(String name, PredictReply response) throws IOException {
-        return ArrowTensor.readFromByteString(response.getPayloadOrThrow(name));
+    public static ArrowTensor deserializeFrom(String name, PredictReply response, ArrowAllocator alloc) throws IOException {
+        return ArrowTensor.readFromByteString(response.getPayloadOrThrow(name), alloc);
     }
 }
