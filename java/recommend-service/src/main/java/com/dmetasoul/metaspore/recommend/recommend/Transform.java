@@ -28,7 +28,9 @@ import org.springframework.util.StopWatch;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeoutException;
 
 import static com.dmetasoul.metaspore.recommend.configure.ColumnInfo.getField;
 import static com.dmetasoul.metaspore.recommend.configure.ColumnInfo.getType;
@@ -198,23 +200,18 @@ public abstract class Transform {
             return true;
         });
         addFunction("addItemInfo", (data, results, context, option) -> {
-            String itemInfoTaskName = CommonUtils.getField(option, "feature_name", "feature_itemInfo", String.class);
-            String dataResultName = CommonUtils.getField(option, "dataName", "recommendResult", String.class);
-	    if (StringUtils.isEmpty(itemInfoTaskName)) {
-		return true;
-	    }
-	    DataService itemInfoTask = serviceRegister.getDataService(itemInfoTaskName);
-            if (CollectionUtils.isNotEmpty(data)) {
-		for (DataResult item : data) {
-                    itemInfoTask.setDataResultByName(dataResultName, item, context);
-                    DataResult dataResult = itemInfoTask.execute(context);
-                    if (dataResult == null) {
-                        log.error("the addItemInfo task exec fail at:" + item);
-			continue;
-		    }
-		    results.add(dataResult);
-		}
-	    }
+            String itemInfoTaskName = CommonUtils.getField(option, "service_name", "service_itemInfo", String.class);
+	        if (StringUtils.isEmpty(itemInfoTaskName)) {
+		        return true;
+	        }
+	        Service itemInfoTask = serviceRegister.getRecommendService(itemInfoTaskName);
+            CompletableFuture<List<DataResult>> future = itemInfoTask.execute(data, context);
+            try {
+                results.addAll(future.get(itemInfoTask.timeout, itemInfoTask.timeUnit));
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                log.error("addItemInfo exception e: {}", e.getMessage());
+                throw new RuntimeException(e);
+            }
             return true;
         });
     }
