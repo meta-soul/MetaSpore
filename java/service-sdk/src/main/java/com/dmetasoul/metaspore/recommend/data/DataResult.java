@@ -268,15 +268,17 @@ public class DataResult implements AutoCloseable {
         }
         int num = from;
         for (int i = from; num < to && i < data.getFeatureTable().getRowCount(); ++i) {
-            boolean isdup = true;
-            for (Map.Entry<String, Set<Object>> entry : dupSets.entrySet()) {
-                if (!entry.getValue().contains(data.get(entry.getKey(), i))) {
-                    isdup = false;
-                    break;
+            if (MapUtils.isNotEmpty(dupSets)) {
+                boolean isdup = true;
+                for (Map.Entry<String, Set<Object>> entry : dupSets.entrySet()) {
+                    if (!entry.getValue().contains(data.get(entry.getKey(), i))) {
+                        isdup = false;
+                        entry.getValue().add(data.get(entry.getKey(), i));
+                    }
                 }
-            }
-            if (isdup) {
-                continue;
+                if (isdup) {
+                    continue;
+                }
             }
             for (int k = 0; k < dataTypes.size(); ++k) {
                 FieldVector fieldVector = featureTable.getVector(k);
