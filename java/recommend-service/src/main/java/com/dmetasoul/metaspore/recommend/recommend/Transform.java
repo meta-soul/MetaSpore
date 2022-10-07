@@ -119,8 +119,9 @@ public abstract class Transform {
                     FeatureTable featureTable = new FeatureTable(item.getFeatureTable().getName(), item.getFields());
                     result.setFeatureTable(featureTable);
                     result.setDataTypes(item.getDataTypes());
+                    List<String> dupFields = getOptionFields("dupFields", option);
                     int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
-                    result.copyDataResult(item, 0, limit);
+                    result.copyDataResult(item, 0, limit, dupFields);
                     featureTable.finish();
                     results.add(result);
                     item.close();
@@ -200,7 +201,7 @@ public abstract class Transform {
             return true;
         });
         addFunction("addItemInfo", (data, results, context, option) -> {
-            String itemInfoTaskName = CommonUtils.getField(option, "service_name", "service_itemInfo", String.class);
+            String itemInfoTaskName = CommonUtils.getField(option, "service_name", "itemInfo_summary", String.class);
 	        if (StringUtils.isEmpty(itemInfoTaskName)) {
 		        return true;
 	        }
