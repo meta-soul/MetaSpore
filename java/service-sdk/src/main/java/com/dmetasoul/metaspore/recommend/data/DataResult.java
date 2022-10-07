@@ -253,20 +253,38 @@ public class DataResult implements AutoCloseable {
         }
         featureTable.finish();
     }
-    public void copyDataResult(DataResult data) {
+    public void copyDataResult(DataResult data, List<String> dupFields) {
         if (data == null || Objects.requireNonNull(data).isNull() || isNull()) return;
-        copyDataResult(data, 0, data.featureTable.getRowCount());
+        copyDataResult(data, 0, data.featureTable.getRowCount(), dupFields);
     }
-    public void copyDataResult(DataResult data, int from, int to) {
+    public void copyDataResult(DataResult data, int from, int to, List<String> dupFields) {
         if (data == null || Objects.requireNonNull(data).isNull() ||
                 isNull() || CollectionUtils.isEmpty(dataTypes)) return;
-        for (int i = from; i < to && i < data.getFeatureTable().getRowCount(); ++i) {
+        Map<String, Set<Object>> dupSets = Maps.newHashMap();
+        if (CollectionUtils.isNotEmpty(dupFields)) {
+            for (String col : dupFields) {
+                dupSets.put(col, Sets.newHashSet());
+            }
+        }
+        int num = from;
+        for (int i = from; num < to && i < data.getFeatureTable().getRowCount(); ++i) {
+            boolean isdup = true;
+            for (Map.Entry<String, Set<Object>> entry : dupSets.entrySet()) {
+                if (!entry.getValue().contains(data.get(entry.getKey(), i))) {
+                    isdup = false;
+                    break;
+                }
+            }
+            if (isdup) {
+                continue;
+            }
             for (int k = 0; k < dataTypes.size(); ++k) {
                 FieldVector fieldVector = featureTable.getVector(k);
                 FieldVector dataVector = data.getFeatureTable().getVector(k);
                 Validate.isTrue(fieldVector.getField().equals(dataVector.getField()), "schema must same!");
                 dataTypes.get(k).set(featureTable, fieldVector.getName(), i, data.get(k, i));
             }
+            num += 1;
         }
         featureTable.finish();
     }
