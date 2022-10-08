@@ -253,11 +253,11 @@ public class DataResult implements AutoCloseable {
         }
         featureTable.finish();
     }
-    public void copyDataResult(DataResult data, List<String> dupFields) {
+    public void copyDataResult(DataResult data, List<String> dupFields, Map<String, Object> orFilters, Map<String, Object> andFilters) {
         if (data == null || Objects.requireNonNull(data).isNull() || isNull()) return;
-        copyDataResult(data, 0, data.featureTable.getRowCount(), dupFields);
+        copyDataResult(data, 0, data.featureTable.getRowCount(), dupFields, orFilters, andFilters);
     }
-    public void copyDataResult(DataResult data, int from, int to, List<String> dupFields) {
+    public void copyDataResult(DataResult data, int from, int to, List<String> dupFields, Map<String, Object> orFilters, Map<String, Object> andFilters) {
         if (data == null || Objects.requireNonNull(data).isNull() ||
                 isNull() || CollectionUtils.isEmpty(dataTypes)) return;
         Map<String, Set<Object>> dupSets = Maps.newHashMap();
@@ -280,6 +280,30 @@ public class DataResult implements AutoCloseable {
                     continue;
                 }
             }
+            if (MapUtils.isNotEmpty(orFilters)) {
+                boolean isFilter = false;
+                for (Map.Entry<String, Object> entry : orFilters.entrySet()) {
+                    if (matchFilter(entry.getValue(), data.get(entry.getKey(), i))) {
+                        isFilter = true;
+                        break;
+                    }
+                }
+                if (isFilter) {
+                    continue;
+                }
+            }
+            if (MapUtils.isNotEmpty(andFilters)) {
+                boolean isFilter = true;
+                for (Map.Entry<String, Object> entry : andFilters.entrySet()) {
+                    if (!matchFilter(entry.getValue(), data.get(entry.getKey(), i))) {
+                        isFilter = false;
+                        break;
+                    }
+                }
+                if (isFilter) {
+                    continue;
+                }
+            }
             for (int k = 0; k < dataTypes.size(); ++k) {
                 FieldVector fieldVector = featureTable.getVector(k);
                 FieldVector dataVector = data.getFeatureTable().getVector(k);
@@ -289,6 +313,16 @@ public class DataResult implements AutoCloseable {
             num += 1;
         }
         featureTable.finish();
+    }
+
+    private boolean matchFilter(Object value, Object obj) {
+        if (Objects.equals(value, obj)) {
+            return true;
+        }
+        if (value instanceof Collection) {
+            return ((Collection) value).contains(obj);
+        }
+        return false;
     }
 
     public  void orderAndLimit(DataResult data, List<String> orderBy, int limit) {
