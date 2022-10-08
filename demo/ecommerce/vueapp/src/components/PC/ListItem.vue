@@ -28,8 +28,8 @@
         }}
       </div>
       <div class="price">
-        <s v-if="underline">{{ data.price.split('-')[1] }}</s>
-        <span :style="{ color: acolor }">{{ data.price.split('-')[0] }}</span>
+        <s v-if="underline && data.price && data.price.split('-')[1]">{{ data.price.split('-')[1] }}</s>
+        <span :style="{ color: acolor }" v-if="data.price">{{ data.price.split('-')[0] }}</span>
         <span :style="{ color: acolor }" v-if="!data.price">$39</span>
         <!-- <s v-if="underline"
           >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s

@@ -44,11 +44,11 @@
         <!-- 价格 -->
         <div class="price letter-space">
           <!-- 划掉的价格 -->
-          <s class="small-fontsize gray-color">{{
+          <s class="small-fontsize gray-color" v-if="data.price">{{
             data.price.split('-')[1]
           }}</s>
           <!-- 打折后的价格 -->
-          <span class="discount">{{ data.price.split('-')[0] }}</span>
+          <span class="discount" :class="{nomargin: !data.price}">{{ data.price?data.price.split('-')[0]:'$39' }}</span>
           <!-- 划掉的价格
           <s class="small-fontsize gray-color"
             >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s
@@ -296,6 +296,9 @@ export default {
 .discount {
   font-size: 0.4rem;
   margin: 0px 0.2rem;
+}
+.discount.nomargin {
+  margin-left: 0;
 }
 .quantity-button {
   margin: 0.2rem 0;

@@ -3,7 +3,7 @@ import Vuex from 'vuex';
 import {
   getAllProducts,
   getOneProduct,
-  guessYouLikeProducts,
+  LookAndLookProducts
 } from '@/api/index';
 
 Vue.use(Vuex);
@@ -36,37 +36,22 @@ export default new Vuex.Store({
     async asyncGetAllProducts({ commit }, user_id) {
       // 获取首页所有数据
       let result = await getAllProducts(user_id);
-      result = result.map((item) => ({
-        user_id: item.user_id,
-        item_id: item.item_id,
-      }));
-      let arr = [];
-      // 每一项获取单个数据的详情页
-      for (let i = 0; i < result.length && i < 10; i++) {
-        arr.push(getOneProduct(user_id, result[i].item_id));
-      }
-      result = await Promise.all(arr);
-      result = result.map((item) => item[0]);
+      // result = result.map((item) => ({
+      //   user_id: item.user_id,
+      //   item_id: item.item_id,
+      // }));
+      // let arr = [];
+      // // 每一项获取单个数据的详情页
+      // for (let i = 0; i < result.length && i < 10; i++) {
+      //   arr.push(getOneProduct(user_id, result[i].item_id));
+      // }
+      // result = await Promise.all(arr);
+      // result = result.map((item) => item[0]);
       commit('setMainAllProducts', result);
       return result;
     },
-    async asyncGetYouLikeProducts({ commit }, user_id) {
-      let result = await guessYouLikeProducts(user_id);
-      // console.log(result);
-
-      result = result.map((item) => ({
-        user_id: item.user_id,
-        item_id: item.item_id,
-      }));
-      let arr = [];
-      for (let i = 0; i < result.length; i++) {
-        arr.push(getOneProduct(user_id, result[i].item_id));
-      }
-      result = await Promise.all(arr);
-      result = result.map((item) => item[0]);
-
-      // console.log(result);
-      
+    async asyncGetYouLikeProducts({ commit }, {user_id, item_id}) {
+      let result = await LookAndLookProducts(user_id, item_id);
       commit('setYoulikeProducts', result);
       return result;
     },
