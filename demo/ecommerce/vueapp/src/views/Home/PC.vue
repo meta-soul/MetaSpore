@@ -5,17 +5,17 @@
         <el-dropdown split-button type="primary" @command="handleCommand">
           {{ $store.state.cur_user }}
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="A14EI4NEAWCH18"
-              >A14EI4NEAWCH18</el-dropdown-item
+            <el-dropdown-item command="A120RH58WVY4W6"
+              >A120RH58WVY4W6</el-dropdown-item
             >
-            <el-dropdown-item command="A1P62PK6QVH8LV"
-              >A1P62PK6QVH8LV</el-dropdown-item
+            <el-dropdown-item command="A3FMK5TW8HVBZZ"
+              >A3FMK5TW8HVBZZ</el-dropdown-item
             >
-            <el-dropdown-item command="A1GJTTKWXX3W5B"
-              >A1GJTTKWXX3W5B</el-dropdown-item
+            <el-dropdown-item command="A2RM4WAQNE0PQN"
+              >A2RM4WAQNE0PQN</el-dropdown-item
             >
-            <el-dropdown-item command="A1COZP39EL13YZ"
-              >A1COZP39EL13YZ</el-dropdown-item
+            <el-dropdown-item command="ANOYMOUS"
+              >ANOYMOUS</el-dropdown-item
             >
           </el-dropdown-menu>
         </el-dropdown>
