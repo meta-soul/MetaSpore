@@ -96,6 +96,7 @@ set(python_files
     python/metaspore/algos/pipeline/utils/logger.py
     python/metaspore/algos/pnn_net.py
     python/metaspore/algos/sequential/__init__.py
+    python/metaspore/algos/sequential/bst/bst_net.py
     python/metaspore/algos/sequential/dien/dien_agent.py
     python/metaspore/algos/sequential/dien/dien_net.py
     python/metaspore/algos/sequential/din/din_net.py
