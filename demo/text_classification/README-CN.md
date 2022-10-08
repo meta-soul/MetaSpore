@@ -8,7 +8,7 @@
 模型方面我们选取的是 [HuggingFace Bert Base Cased 预训练 checkpoint](https://huggingface.co/bert-base-cased) 。
 模型有 12 层的 Transformer Encoder，隐藏层维度是 768，共 1.1 亿的参数量。
 在 Bert 层之上，是 Dropout 层，Linear 层和 Sigmoid 层，整体结构如下：
-![title_to_fishion 架构](/MetaSpore/docs/images/title_to_fishion.PNG)
+![title_to_fishion 架构](../../docs/images/title_to_fishion.PNG)
 
 ## 准备数据
 
@@ -21,18 +21,32 @@
 cd dataset
 python -u gen_data.py
 ```
+在gen_data.py中，注意到原始数据为json格式，我们用load_file函数加载原始数据，使用gen_dataset函数处理原始数据，使用save_dataset函数将处理好的数据存到base_path文件夹中，用作之后模型的训练。
 
 ## 模型训练
-训练模型的脚本在[train.sh](text_classifier/train.sh)，你可以根据你的环境进行参数配置。
+
+在得到模型训练需要的数据后，就可以运行训练模型的脚本[train.sh](text_classifier/train.sh)来训练模型了。
 ```
 cd text_classifier
 bash train.sh
 ```
+以下为train.sh的内容：
+```
+python -u train.py --name title_to_fashion \
+    --model bert-base-cased --num-labels 1 \
+    --train-file /your/working/path/title_to_fashion_500k/train.tsv \
+    --eval-file /your/working/path/title_to_fashion_500k/val.tsv \
+    --eval-steps 1000 \
+    --num-epochs 1 --lr 2e-5 --train-batch-size 32 --eval-batch-size 32 --gpu 0 \
+    --output-path ./output
+```
+在该脚本中，你可以自定义参数配置，下面说明个参数作用：
+--name参数为模型的名字，--model参数选择要用的预训练模型，这里用的是bert的基础版（12层），--num-labels参数为分类的类别个数，train-file，eval-file为准备数据阶段中生成的数据，--eval-steps参数为每隔多少步进行一次推理，--num-epochs参数为训练epoch个数，--lr为训练阶段的学习率，
+--train-batch-size为训练阶段的batch_size大小，--train-batch-size为推理阶段的batch_size大小，--gpu为指定哪个gpu，--output-path为模型保存路径。
 
 ## 模型效果
 
-模型训练一个 epoch 已经收敛的比较好了，下面是 Accuracy、AUC、Precision、Recall、F1等几个指标，如果我们取 Threshold = 0.5 的时候，那么
-
+在我们的实验中，模型训练一个 epoch 已经收敛的比较好了，下面是Threshold = 0.5时Accuracy、AUC、Precision、Recall、F1等几个指标的值：
 
 | Accuracy | AUC | Precision | Recall   |    F1    |
 |:--------:|:---:|:---------:|:--------:|:--------:|
