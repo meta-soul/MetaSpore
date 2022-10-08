@@ -8,7 +8,8 @@
 模型方面我们选取的是 [HuggingFace Bert Base Cased 预训练 checkpoint](https://huggingface.co/bert-base-cased) 。
 模型有 12 层的 Transformer Encoder，隐藏层维度是 768，共 1.1 亿的参数量。
 在 Bert 层之上，是 Dropout 层，Linear 层和 Sigmoid 层，整体结构如下：
-![title_to_fishion 架构](../../docs/images/title_to_fishion.PNG)
+
+<img src="../../docs/images/title_to_fishion.PNG" alt="title_to_fish architecture" width="500">
 
 ## 准备数据
 
@@ -40,9 +41,19 @@ python -u train.py --name title_to_fashion \
     --num-epochs 1 --lr 2e-5 --train-batch-size 32 --eval-batch-size 32 --gpu 0 \
     --output-path ./output
 ```
-在该脚本中，你可以自定义参数配置，下面说明个参数作用：
---name参数为模型的名字，--model参数选择要用的预训练模型，这里用的是bert的基础版（12层），--num-labels参数为分类的类别个数，train-file，eval-file为准备数据阶段中生成的数据，--eval-steps参数为每隔多少步进行一次推理，--num-epochs参数为训练epoch个数，--lr为训练阶段的学习率，
---train-batch-size为训练阶段的batch_size大小，--train-batch-size为推理阶段的batch_size大小，--gpu为指定哪个gpu，--output-path为模型保存路径。
+在该脚本中，你可以自定义参数配置，下面简单说明每个参数作用：
++ name: 指定模型的名字
++ model: 指定使用的预训练模型
++ num-labels: 分类的类别个数
++ train-file: 数据准备阶段生成的训练数据
++ eval-file: 数据准备阶段生成的验证数据
++ eval-steps: 模型训练过程中进行推理的步数间隔
++ num-epochs: 模型训练的轮数
++ lr: 模型训练的学习率
++ train-batch-size: 训练阶段的批量大小
++ eval-batch-size: 测试阶段的批量大小
++ gpu: 使用指定gpu进行训练
++ output-path: 模型保存的路径
 
 ## 模型效果
 
