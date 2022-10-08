@@ -80,16 +80,21 @@ export default {
         top: 0,
         behavior: 'smooth',
       });
-      // this.productData = null;
-      let result = await getOneProduct(this.$store.state.cur_user, this.$route.params.productId);
+      this.productData = null; // 请求前先置为空
+      let result = await getOneProduct(
+        this.$store.state.cur_user,
+        this.$route.params.productId
+      );
       this.productData = result[0];
-      this.listDatas.items = null;// 请求前先置为空
-      let res = await this.$store.dispatch('asyncGetYouLikeProducts',this.$store.state.cur_user);
+      this.listDatas.items = null; // 请求前先置为空
+      let res = await this.$store.dispatch('asyncGetYouLikeProducts', {
+        user_id: this.$store.state.cur_user,
+        item_id: this.$route.params.productId
+      });
       this.listDatas = {
         title: 'You Also May Like',
         items: res,
       };
-
     },
     handleEnlarge(value) {
       this.isShow = value;
@@ -106,7 +111,7 @@ export default {
 <style scoped>
 .product-container {
   height: calc(100vh - 46px);
-  padding: 10px .5rem;
+  padding: 10px 0.5rem;
   box-sizing: border-box;
 }
 </style>

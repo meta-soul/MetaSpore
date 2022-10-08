@@ -25,7 +25,7 @@
           <s class="small-fontsize gray-color">{{
             data.price.split('-')[1]
           }}</s>
-          <span class="discount">{{ data.price.split('-')[0] }}</span>
+          <span class="discount" :class="{nomargin: !data.price}">{{ data.price.split('-')[0]?data.price.split('-')[0]:'$39' }}</span>
           <!-- <s class="small-fontsize gray-color"
             >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s
           >
@@ -245,6 +245,9 @@ export default {
 .discount {
   margin: 0px 5px;
 }
+.discount.nomargin {
+  margin-left: 0;
+}
 .quantity-button {
   margin: 10px 0;
   border: 1px solid #333;
@@ -275,7 +278,7 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  opacity: 0.9;sale
+  opacity: 0.9;
   font-size: 16px;
 }
 

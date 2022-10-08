@@ -5,10 +5,13 @@
         <el-dropdown split-button type="primary" @command="handleCommand">
           {{ $store.state.cur_user }}
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="A120RH58WVY4W6"
-              >A120RH58WVY4W6</el-dropdown-item
+            <el-dropdown-item
+              v-for="item in getUserList"
+              :key="item"
+              :command="item"
+              >{{ item }}</el-dropdown-item
             >
-            <el-dropdown-item command="A3FMK5TW8HVBZZ"
+            <!-- <el-dropdown-item command="A3FMK5TW8HVBZZ"
               >A3FMK5TW8HVBZZ</el-dropdown-item
             >
             <el-dropdown-item command="A2RM4WAQNE0PQN"
@@ -16,7 +19,7 @@
             >
             <el-dropdown-item command="ANOYMOUS"
               >ANOYMOUS</el-dropdown-item
-            >
+            > -->
           </el-dropdown-menu>
         </el-dropdown>
       </div>
@@ -36,7 +39,21 @@ export default {
     return {
       datas: null,
       user: this.$store.state.cur_user,
+      userList: [
+        'A14EI4NEAWCH18',
+        'A120RH58WVY4W6',
+        'A3FMK5TW8HVBZZ',
+        'A2RM4WAQNE0PQN',
+        'ANOYMOUS',
+      ],
     };
+  },
+  computed: {
+    getUserList() {
+      return this.userList.filter(
+        (item) => item !== this.$store.state.cur_user
+      );
+    },
   },
   async created() {
     let result = await this.$store.dispatch(
