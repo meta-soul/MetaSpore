@@ -1,16 +1,16 @@
-# 预测目标
+## 预测目标
 
 一般来说大型的电商网站都有自己的类目体系，电商的类目规划在运营工作中起着举足轻重的作用，
 我们这个Demo的目标是使用预训练的BERT模型去完成电商网站的物品分类任务，通过输入物品的title去判断该物品是否属于Fashion（服饰）行业。
 
-# 模型结构
+## 模型结构
 
 模型方面我们选取的是 [HuggingFace Bert Base Cased 预训练 checkpoint](https://huggingface.co/bert-base-cased) 。
 模型有 12 层的 Transformer Encoder，隐藏层维度是 768，共 1.1 亿的参数量。
 在 Bert 层之上，是 Dropout 层，Linear 层和 Sigmoid 层，整体结构如下：
-![title_to_fishion 架构](docs/images/title_to_fishion.PNG)
+![title_to_fishion 架构](/MetaSpore/docs/images/title_to_fishion.PNG)
 
-# 准备数据
+## 准备数据
 
 我们使用 [Amazon Review Data(2018)](https://nijianmo.github.io/amazon/) 数据集，
 我们选取`Clothing, Shoes & Jewelry`这个行业作为我们的正样本，其他行业作为我们的负样本。
@@ -22,7 +22,7 @@ cd dataset
 python -u gen_data.py
 ```
 
-# 模型训练
+## 模型训练
 训练模型的脚本在[train.sh](text_classifier/train.sh)，你可以根据你的环境进行参数配置。
 ```
 cd text_classifier

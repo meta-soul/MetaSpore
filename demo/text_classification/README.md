@@ -1,10 +1,10 @@
-# Forecast target
+## Forecast target
 
 Generally speaking, large e-commerce websites have their own category system, and the category planning of e-commerce plays an important role in the operation,
 
 Our goal in this Demo is to use the pre-trained BERT model to complete the task of classifying items on e-commerce websites, and to judge whether the item belongs to the Fashion industry by entering the title of the item.
 
-# Model structure
+## Model structure
 
 
 For the model, we selected [HuggingFace Bert Base Cased pre training checkpoint](https://huggingface.co/bert-base-cased).
@@ -13,9 +13,9 @@ The model has 12 layers of Transformer Encoder, and the hidden layer dimension i
 
 Above the Bert layer are the Dropout layer, the Linear layer and the Sigmaid layer. The overall structure is as follows:
 
-![title_to_fish architecture](docs/images/title_to_fish.PNG)
+![title_to_fish architecture](/MetaSpore/docs/images/title_to_fishion.PNG)
 
-# Prepare data
+## Prepare data
 
 We use [Amazon Review Data (2018)](https://nijianmo.github.io/amazon/) Datasets,
 
@@ -32,7 +32,7 @@ cd dataset
 python -u gen_ data.py
 ```
 
-# Model training
+## Model training
 
 The training model script is in [train.sh](text_classifier/train.sh), and you can configure parameters according to your environment.
 
