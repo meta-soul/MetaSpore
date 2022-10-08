@@ -16,6 +16,7 @@
 
 package com.dmetasoul.metaspore.recommend.baseservice;
 
+import com.dmetasoul.metaspore.recommend.common.CommonUtils;
 import com.dmetasoul.metaspore.recommend.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.recommend.dataservice.DataService;
 import com.dmetasoul.metaspore.recommend.dataservice.FeatureTask;
@@ -31,6 +32,8 @@ import com.dmetasoul.metaspore.recommend.recommend.Layer;
 import com.dmetasoul.metaspore.recommend.recommend.Scene;
 import com.dmetasoul.metaspore.recommend.recommend.Service;
 import com.google.common.collect.Maps;
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import com.googlecode.concurrentlinkedhashmap.Weighers;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +45,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.util.List;
 import java.util.Map;
 
 import java.util.concurrent.ExecutorService;
@@ -55,6 +59,7 @@ import java.util.concurrent.ExecutorService;
 @RefreshScope
 @Component
 public class TaskServiceRegister {
+    public static final int DEFAULT_MAX_CACHE_NUM = 10000;
     /**
      * spring 配置类实例
      */
@@ -73,6 +78,8 @@ public class TaskServiceRegister {
     private ExecutorService workFlowPool;
     @Autowired
     private ExecutorService taskPool;
+
+    protected ConcurrentLinkedHashMap<String, Object> localCache;
     /**
      * 用于注册保存各种DataService，每次更新配置，重新生成；
      */
@@ -109,6 +116,7 @@ public class TaskServiceRegister {
     @PostConstruct
     public void initServices() {
         userDefineFunctionLoader.init();
+        initCache();
         initDataSources();
         initFunctions();
         initDataService();
@@ -130,6 +138,18 @@ public class TaskServiceRegister {
         layerMap.forEach((name,service)->service.close());
         sceneMap.forEach((name,service)->service.close());
         userDefineFunctionLoader.close();
+    }
+
+    private void initCache() {
+        int maxCacheNum = DEFAULT_MAX_CACHE_NUM;
+        if (taskFlowConfig != null && taskFlowConfig.getFeatureConfig() != null
+                && taskFlowConfig.getFeatureConfig().getFeatureCacheCapacity() > 0) {
+            maxCacheNum = taskFlowConfig.getFeatureConfig().getFeatureCacheCapacity();
+        }
+        localCache = new ConcurrentLinkedHashMap.Builder<String, Object>()
+                .maximumWeightedCapacity(maxCacheNum)
+                .weigher(Weighers.singleton())
+                .build();
     }
 
     @SuppressWarnings("unchecked")

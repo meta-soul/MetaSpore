@@ -121,7 +121,9 @@ public abstract class Transform {
                     result.setDataTypes(item.getDataTypes());
                     List<String> dupFields = getOptionFields("dupFields", option);
                     int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
-                    result.copyDataResult(item, 0, limit, dupFields);
+                    Map<String, Object> orFilters = CommonUtils.getField(option, "orFilters", Map.of());
+                    Map<String, Object> andFilters = CommonUtils.getField(option, "andFilters", Map.of());
+                    result.copyDataResult(item, 0, limit, dupFields, orFilters, andFilters);
                     featureTable.finish();
                     results.add(result);
                     item.close();

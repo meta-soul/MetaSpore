@@ -47,6 +47,9 @@ public class Utils {
         }
         return MetricType.values()[index];
     }
+    public static String getCacheKey(String name, String key) {
+        return String.format("CACHE_%s_%s", name, key);
+    }
     public static void handleResponseStatus(R<?> r) {
         if (r.getStatus() != R.Status.Success.getCode()) {
             throw new RuntimeException(r.getMessage());

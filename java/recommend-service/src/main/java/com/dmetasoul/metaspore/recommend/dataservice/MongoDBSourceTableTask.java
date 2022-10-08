@@ -17,6 +17,7 @@ package com.dmetasoul.metaspore.recommend.dataservice;
 
 import com.dmetasoul.metaspore.recommend.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.recommend.common.CommonUtils;
+import com.dmetasoul.metaspore.recommend.common.Utils;
 import com.dmetasoul.metaspore.recommend.configure.FeatureConfig;
 import com.dmetasoul.metaspore.recommend.data.DataContext;
 import com.dmetasoul.metaspore.recommend.data.ServiceRequest;
@@ -25,6 +26,7 @@ import com.dmetasoul.metaspore.recommend.enums.ConditionTypeEnum;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
     private MongoDBSource dataSource;
     private List<Criteria> queryObject;
     private Set<String> columns;
+    private ConcurrentLinkedHashMap<String, Object> localCache;
 
     @Override
     public boolean initService() {
@@ -62,6 +65,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         if (CollectionUtils.isNotEmpty(filters)) {
             filters.forEach(x ->processFilters(queryObject, x));
         }
+        this.localCache = taskServiceRegister.getLocalCache();
         return true;
     }
 
@@ -148,7 +152,19 @@ public class MongoDBSourceTableTask extends SourceTableTask {
         } else {
             query.limit(maxLimit);
         }
+        return getDataByQuery(query);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> getDataByQuery(Query query) {
         log.info("query: {}", query);
+        if (query == null || query.getQueryObject().isEmpty() && query.getFieldsObject().isEmpty()) {
+            return List.of();
+        }
+        String cacheKey = Utils.getCacheKey(name, query.toString());
+        if (localCache.containsKey(cacheKey)) {
+            return (List<Map<String, Object>>) localCache.get(cacheKey);
+        }
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
         List<Map<String, Object>> list = Lists.newArrayList();
         res.forEach(map -> {
@@ -158,6 +174,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
             }
             list.add(item);
         });
+        localCache.put(cacheKey, list);
         return list;
     }
 }

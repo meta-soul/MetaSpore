@@ -41,6 +41,7 @@ import java.util.*;
 @RefreshScope
 @ConfigurationProperties(prefix = "feature-service")
 public class FeatureConfig {
+    private int featureCacheCapacity;
     private List<Source> source;
     private List<SourceTable> sourceTable;
     private List<Feature> feature;
