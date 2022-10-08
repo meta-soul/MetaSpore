@@ -113,6 +113,34 @@ public abstract class Transform {
             return true;
         });
         addFunction("cutOff", (data, results, context, option) -> {
+            String orFilterDataTask = CommonUtils.getField(option, "or_filter_data", "source_table_request");
+            String andFilterDataTask = CommonUtils.getField(option, "and_filter_data", "source_table_request");
+            List<String> orFieldList = getOptionFields("or_field_list", option);
+            List<String> andFieldList = getOptionFields("and_field_list", option);
+            Map<String, Object> orFilters = CommonUtils.getField(option, "orFilters",  Maps.newHashMap());
+            Map<String, Object> andFilters = CommonUtils.getField(option, "andFilters",  Maps.newHashMap());
+            if (StringUtils.isNotEmpty(orFilterDataTask)) {
+                DataService task = serviceRegister.getDataService(orFilterDataTask);
+                if (task != null) {
+                    DataResult dataResult = task.execute(context);
+                    if (CollectionUtils.isNotEmpty(orFieldList)) {
+                        for (String field : orFieldList) {
+                            orFilters.put(field, dataResult.get(field));
+                        }
+                    }
+                }
+            }
+            if (StringUtils.isNotEmpty(andFilterDataTask)) {
+                DataService task = serviceRegister.getDataService(andFilterDataTask);
+                if (task != null) {
+                    DataResult dataResult = task.execute(context);
+                    if (CollectionUtils.isNotEmpty(andFieldList)) {
+                        for (String field : andFieldList) {
+                            andFilters.put(field, dataResult.get(field));
+                        }
+                    }
+                }
+            }
             if (CollectionUtils.isNotEmpty(data)) {
                 for (DataResult item : data) {
                     DataResult result = new DataResult();
@@ -121,8 +149,6 @@ public abstract class Transform {
                     result.setDataTypes(item.getDataTypes());
                     List<String> dupFields = getOptionFields("dupFields", option);
                     int limit = CommonUtils.getField(option, "maxReservation", DEFAULT_MAX_RESERVATION);
-                    Map<String, Object> orFilters = CommonUtils.getField(option, "orFilters", Map.of());
-                    Map<String, Object> andFilters = CommonUtils.getField(option, "andFilters", Map.of());
                     result.copyDataResult(item, 0, limit, dupFields, orFilters, andFilters);
                     featureTable.finish();
                     results.add(result);
