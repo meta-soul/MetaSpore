@@ -1,0 +1,7 @@
+apiVersion: metaspore/v1
+kind: OfflinePythonTask
+metadata:
+  name: train_model_deepctr
+spec:
+  scriptPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/deepctr/train.py"
+  configPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/deepctr/conf/deep_ctr.yaml"

@@ -1,0 +1,75 @@
+apiVersion: metaspore/v1
+kind: OnlineFlow
+metadata:
+  name: online_local_flow
+spec:
+  services:
+    mongo:
+      host: 172.17.0.1
+      port: 27018
+      kind: mongodb
+      collection: [jpa]
+      options:
+        uri: mongodb://root:test_mongodb_123456@172.17.0.1:27018/jpa?authSource=admin
+  source:
+    user_key_name: user_id
+    item_key_name: item_id
+    user_item_ids_name: user_bhv_item_seq
+    user_item_ids_split: "\u0001"
+    user:
+      table: amazonfashion_user_feature
+      serviceName: mongo
+      collection: jpa
+      columns:
+        - user_id: str
+        - user_bhv_item_seq: str
+    item:
+      table: amazonfashion_item_feature
+      serviceName: mongo
+      collection: jpa
+      columns:
+        - item_id: str
+        - brand: str
+        - category: str
+    summary:
+      table: amazonfashion_item_summary
+      serviceName: mongo
+      collection: jpa
+      columns:
+        - item_id: str
+        - brand: str
+        - category: str
+        - title: str
+        - description: str
+        - image: str
+        - url: str
+        - price: str
+    request:
+      - user_id: str
+      - item_id: str
+  random_models:
+    - name: pop
+      bound: 10
+      source:
+        table: amazonfashion_pop
+        serviceName: mongo
+        collection: jpa
+  cf_models:
+    - name: swing
+      source:
+        table: amazonfashion_swing
+        serviceName: mongo
+        collection: jpa
+  rank_models:
+    - name: widedeep
+      model: amazonfashion_widedeep
+      column_info:
+        - dnn_sparse: ["user_id", "item_id", "brand", "category"]
+        - lr_sparse: ["user_id", "item_id", "category", "brand", "user_id#brand", "user_id#category"]
+      cross_features:
+        - name: user_id#brand
+          join: "#"
+          fields: ["user_id", "brand"]
+        - name: user_id#category
+          join: "#"
+          fields: [ "user_id", "category" ]

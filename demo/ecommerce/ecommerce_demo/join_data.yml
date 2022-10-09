@@ -1,0 +1,7 @@
+apiVersion: metaspore/v1
+kind: OfflinePythonTask
+metadata:
+  name: join_data
+spec:
+  scriptPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/dataset/gen_samples.py"
+  configPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/dataset/conf/gen_samples.yaml"

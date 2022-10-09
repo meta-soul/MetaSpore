@@ -92,7 +92,8 @@ RUN export DEBIAN_FRONTEND=noninteractive \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
+RUN python -m pip config set global.extra-index-url https://pypi.org/simple
 
 USER root
 
