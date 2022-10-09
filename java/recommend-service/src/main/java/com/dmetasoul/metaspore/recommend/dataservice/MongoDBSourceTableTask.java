@@ -162,7 +162,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
             return List.of();
         }
         String cacheKey = Utils.getCacheKey(name, query.toString());
-        if (localCache.containsKey(cacheKey)) {
+        if (localCache != null && localCache.containsKey(cacheKey)) {
             return (List<Map<String, Object>>) localCache.get(cacheKey);
         }
         List<Map> res = dataSource.getMongoTemplate().find(query, Map.class, sourceTable.getTable());
@@ -174,7 +174,9 @@ public class MongoDBSourceTableTask extends SourceTableTask {
             }
             list.add(item);
         });
-        localCache.put(cacheKey, list);
+        if (localCache != null) {
+            localCache.put(cacheKey, list);
+        }
         return list;
     }
 }

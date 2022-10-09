@@ -59,7 +59,6 @@ import java.util.concurrent.ExecutorService;
 @RefreshScope
 @Component
 public class TaskServiceRegister {
-    public static final int DEFAULT_MAX_CACHE_NUM = 10000;
     /**
      * spring 配置类实例
      */
@@ -141,15 +140,14 @@ public class TaskServiceRegister {
     }
 
     private void initCache() {
-        int maxCacheNum = DEFAULT_MAX_CACHE_NUM;
         if (taskFlowConfig != null && taskFlowConfig.getFeatureConfig() != null
                 && taskFlowConfig.getFeatureConfig().getFeatureCacheCapacity() > 0) {
-            maxCacheNum = taskFlowConfig.getFeatureConfig().getFeatureCacheCapacity();
+            int maxCacheNum = taskFlowConfig.getFeatureConfig().getFeatureCacheCapacity();
+            localCache = new ConcurrentLinkedHashMap.Builder<String, Object>()
+                    .maximumWeightedCapacity(maxCacheNum)
+                    .weigher(Weighers.singleton())
+                    .build();
         }
-        localCache = new ConcurrentLinkedHashMap.Builder<String, Object>()
-                .maximumWeightedCapacity(maxCacheNum)
-                .weigher(Weighers.singleton())
-                .build();
     }
 
     @SuppressWarnings("unchecked")
