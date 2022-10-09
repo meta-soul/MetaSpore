@@ -8,11 +8,16 @@
     class="list-item-container"
   >
     <div class="inner">
-      <span v-if="imgError" class="img-error">图片加载错误</span>
-      <img
+      <!-- <span v-if="imgError" class="img-error">图片加载错误</span> -->
+      <!-- <img
         v-lazy="data.image"
         @load="handleLoad"
         @error="handleError"
+        class="img"
+        alt=""
+      /> -->
+      <img
+        v-lazy="data.image"
         class="img"
         alt=""
       />
@@ -48,19 +53,16 @@ export default {
   props: ['data', 'underline', 'acolor'],
   data() {
     return {
-      isShow: false,
       imgError: false,
     };
   },
   methods: {
-    handleLoad() {
-      this.isShow = true;
-    },
-    handleError(e) {
-      // e.detail.el.parentNode.parentNode.remove();
-      this.imgError = true;
-      e.detail.el.remove();
-    },
+    // handleError() {
+    //   // e.detail.el.parentNode.parentNode.remove();
+    //   // this.imgError = true;
+    //   // e.detail.el.remove();
+      
+    // },
   },
 };
 </script>

@@ -5,11 +5,9 @@
     class="list-item-container"
   >
     <div class="inner">
-      <span v-if="imgError" class="img-error">图片加载错误</span>
+      <!-- <span v-if="imgError" class="img-error">图片加载错误</span> -->
       <img
         v-lazy="data.image"
-        @load="handleLoad"
-        @error="handleImgError"
         class="img"
         alt=""
       />
@@ -54,19 +52,6 @@ export default {
       isShow: false,
       imgError: false
     };
-  },
-  methods: {
-    handleLoad() {
-      this.isShow = true;
-    },
-    handleImgError(e) {
-      // let span = document.createElement('span');
-      // span.classList.add("img-error");
-      // span.innerText = '图片加载错误';
-      // e.detail.el.parentNode.appendChild(span);
-      this.imgError = true;
-      e.detail.el.remove();
-    },
   },
 };
 </script>

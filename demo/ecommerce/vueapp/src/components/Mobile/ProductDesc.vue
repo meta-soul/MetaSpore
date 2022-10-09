@@ -1,14 +1,14 @@
 <template>
   <div class="product-desc-container" ref="container">
     <!-- 图片放大 -->
-    <div class="enlarge" v-if="isShow">
-      <img class="image" :src="data.image" alt="" />
+    <div class="enlarge" v-show="isShow">
+      <img class="image" @error="handleError" :src="data.image" alt="" />
       <i @click="handleOriginImg" class="iconfont icon-shanchu"></i>
     </div>
     <!-- 正统页面 -->
-    <div class="desc-wrapper" v-else>
+    <div class="desc-wrapper" :style="{ opacity: isShow ? 0 : 1 }">
       <!-- 左边图片部分 -->
-      <div class="imgs left" ref="left" v-if="!isImgError">
+      <div class="imgs left" ref="left">
         <img class="image" @error="handleError" :src="data.image" alt="" />
         <i @click="handleEnlargeImg" class="iconfont icon-tupianfangda"></i>
       </div>
@@ -48,7 +48,9 @@
             data.price.split('-')[1]
           }}</s>
           <!-- 打折后的价格 -->
-          <span class="discount" :class="{nomargin: !data.price}">{{ data.price?data.price.split('-')[0]:'$39' }}</span>
+          <span class="discount" :class="{ nomargin: !data.price }">{{
+            data.price ? data.price.split('-')[0] : '$39'
+          }}</span>
           <!-- 划掉的价格
           <s class="small-fontsize gray-color"
             >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s
@@ -90,6 +92,7 @@
 </template>
 
 <script>
+import defaultImg from '@/assets/default-img.webp';
 export default {
   props: ['data'],
   data() {
@@ -116,21 +119,20 @@ export default {
     document.addEventListener('scroll', this.handleScroll);
 
     // console.log(this.$refs.title.clientHeight, this.$refs.titleOut.clientHeight);
-    if(this.$refs.title.clientHeight === this.$refs.titleOut.clientHeight) {
+    if (this.$refs.title.clientHeight === this.$refs.titleOut.clientHeight) {
       this.readMoreShow = false;
     }
   },
   methods: {
     handleError(e) {
-      this.isImgError = true;
+      // this.isImgError = true;
+      e.target.src = defaultImg;
     },
     handleScroll() {
-      if(!this.$refs.left || !this.$refs.right) {
+      if (!this.$refs.left || !this.$refs.right) {
         return;
       }
-      if (
-        this.$refs.left.clientWidth === this.$refs.right.clientWidth
-      ) {
+      if (this.$refs.left.clientWidth === this.$refs.right.clientWidth) {
         // 高相同，说明不在同一行
         this.getScrollTop = 0;
       } else if (
@@ -212,9 +214,17 @@ export default {
 }
 .enlarge {
   width: 100%;
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1000;
   font-size: 0;
 }
+// .enlarge {
+//   width: 100%;
+//   position: relative;
+//   font-size: 0;
+// }
 .left {
   width: 100%;
   height: fit-content;

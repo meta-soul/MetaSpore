@@ -1,12 +1,12 @@
 <template>
   <div class="product-desc-container">
-    <div class="enlarge" v-if="isShow">
-      <img class="image" :src="data.image" alt="" />
+    <div class="enlarge" v-show="isShow">
+      <img class="image" @error="handleError" :src="data.image" alt="" />
       <i @click="handleOriginImg" class="iconfont icon-shanchu"></i>
     </div>
-    <div class="desc-wrapper" v-else>
+    <div class="desc-wrapper" :style="{opacity: isShow?0:1}">
       <div class="imgs left" ref="left" :class="{ 'left-error': isImgError }">
-        <span v-if="isImgError" class="img-error">图片加载错误</span>
+        <!-- <span v-if="isImgError" class="img-error">图片加载错误</span> -->
         <img class="image" @error="handleError" :src="data.image" alt="" />
         <i @click="handleEnlargeImg" class="iconfont icon-tupianfangda"></i>
       </div>
@@ -63,6 +63,7 @@
 </template>
 
 <script>
+import defaultImg from "@/assets/default-img.webp";
 export default {
   props: ['data'],
   data() {
@@ -85,8 +86,9 @@ export default {
     document.addEventListener('scroll', this.handleScroll);
   },
   methods: {
-    handleError() {
-      this.isImgError = true;
+    handleError(e) {
+      // this.isImgError = true;
+      e.target.src = defaultImg;
     },
     handleScroll() {
       if (!this.$refs.left || !this.$refs.right) {
@@ -165,9 +167,17 @@ export default {
 }
 .enlarge {
   width: 100%;
-  position: relative;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1000;
   font-size: 0;
 }
+// .enlarge {
+//   width: 100%;
+//   position: relative;
+//   font-size: 0;
+// }
 .left {
   width: 100%;
   height: fit-content;
