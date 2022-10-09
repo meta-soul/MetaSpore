@@ -9,7 +9,9 @@
 模型有 12 层的 Transformer Encoder，隐藏层维度是 768，共 1.1 亿的参数量。
 在 Bert 层之上，是 Dropout 层，Linear 层和 Sigmoid 层，整体结构如下：
 
+<div align=center>
 <img src="../../docs/images/title_to_fishion.PNG" alt="title_to_fish architecture" width="500">
+</div>
 
 ## 准备数据
 

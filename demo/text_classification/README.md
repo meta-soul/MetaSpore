@@ -10,7 +10,9 @@ For the model, we selected [HuggingFace Bert Base Cased pre training checkpoint]
 The model has 12 layers of Transformer Encoder, and the hidden layer dimension is 768, with a total of 110 million parameters.
 Above the Bert layer are the Dropout layer, the Linear layer and the Sigmaid layer. The overall structure is as follows:
 
+<div align=center>
 <img src="../../docs/images/title_to_fishion.PNG" alt="title_to_fish architecture" width="500">
+</div>
 
 ## Prepare data
 
