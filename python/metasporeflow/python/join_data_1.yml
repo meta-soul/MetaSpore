@@ -1,7 +1,0 @@
-apiVersion: metaspore/v1
-kind: OfflinePythonTask
-metadata:
-  name: join_data_1
-spec:
-  scriptPath: "/opt/join_data_1.py"
-  configPath: "/opt/join_data_1.yml"

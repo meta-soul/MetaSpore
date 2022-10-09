@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "metasporecli"
+version = "0.1.0"
+authors = [
+  { name="DMetaSoul", email="opensource@dmetasoul.com" },
+]
+description = "metasporecli: Command-line Interface for MetaSpore Flow Management"
+readme = "README.md"
+license = { text="Apache-2.0" }
+requires-python = ">=3.8"
+dependencies = [
+    "metasporeflow~=0.1.0",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/meta-soul/metasporecli"
+"Bug Tracker" = "https://github.com/meta-soul/metasporecli/issues"
+
+[project.scripts]
+metaspore = "metasporecli.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["python"]
+include = ["metasporecli*"]

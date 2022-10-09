@@ -1,7 +1,0 @@
-apiVersion: metaspore/v1
-kind: OfflinePythonTask
-metadata:
-  name: sync_data
-spec:
-  scriptPath: "/opt/sync_data.py"
-  configPath: "/opt/sync_data.yml"
