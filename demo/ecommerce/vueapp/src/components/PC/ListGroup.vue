@@ -41,7 +41,7 @@ export default {
   flex-wrap: wrap;
   margin-top: 20px;
   /* grid-row-gap: 10px; */
-  /* padding: 20px; */
+   padding: 20px;
   box-sizing: border-box;
 }
 @media screen and (min-width: 912px) {

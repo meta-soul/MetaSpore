@@ -87,14 +87,23 @@ export default {
       );
       this.productData = result[0];
       this.listDatas.items = null; // 请求前先置为空
-      let res = await this.$store.dispatch('asyncGetYouLikeProducts', {
-        user_id: this.$store.state.cur_user,
-        item_id: this.$route.params.productId
-      });
-      this.listDatas = {
-        title: 'You Also May Like',
-        items: res,
-      };
+      let res;
+      try {
+
+         res = await this.$store.dispatch('asyncGetYouLikeProducts', {
+          user_id: this.$store.state.cur_user,
+          item_id: this.$route.params.productId,
+        });
+        this.listDatas = {
+          title: 'You Also May Like',
+          items: res,
+        };
+      }catch(e) {
+         this.listDatas = {
+          title: 'You Also May Like',
+          items: [],
+        };
+      }
     },
     handleEnlarge(value) {
       this.isShow = value;

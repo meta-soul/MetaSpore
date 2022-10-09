@@ -14,7 +14,7 @@ Vue.use(ElementUI);
 // 2.添加自定义选项
 Vue.use(VueLazyload, {
   preLoad: 3,
-  // error: require('@/assets/星星.webp'),
+  error: require('@/assets/default-img.webp'),
   // loading: require('@/assets/loading.svg'),
   attempt: 1,
   dispatchEvent: true, // 开启原生dom事件

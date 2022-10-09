@@ -40,7 +40,6 @@ export default {
   flex-wrap: wrap;
   margin-top: 0.5rem;
   /* grid-row-gap: 10px; */
-  /* padding: 20px; */
   box-sizing: border-box;
 }
 
