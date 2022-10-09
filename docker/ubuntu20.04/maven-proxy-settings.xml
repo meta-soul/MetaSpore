@@ -10,7 +10,7 @@
   <mirrors>
     <mirror>
      <id>huaweicloud</id>
-     <mirrorOf>*</mirrorOf>
+     <mirrorOf>central,apache,google</mirrorOf>
      <url>https://repo.huaweicloud.com/repository/maven/</url>
     </mirror>
   </mirrors>
