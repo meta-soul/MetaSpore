@@ -1,6 +1,0 @@
-attrs==22.1.0
-cattrs==22.1.0
-exceptiongroup==1.0.0rc9
-metasporecli==0.1.0
-metasporeflow==0.1.0
-PyYAML==5.4.1

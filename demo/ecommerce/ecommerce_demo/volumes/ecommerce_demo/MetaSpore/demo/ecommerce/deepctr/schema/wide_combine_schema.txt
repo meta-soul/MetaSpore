@@ -1,6 +1,0 @@
-user_id
-item_id
-category
-brand
-user_id#brand
-user_id#category

@@ -1,5 +1,0 @@
-FROM mysql:5.7
-WORKDIR /docker-entrypoint-initdb.d
-COPY my.cnf /etc/mysql/conf.d/utf8mb4.cnf
-COPY ./sql/ /opt/sql/
-ADD init.sql /docker-entrypoint-initdb.d/

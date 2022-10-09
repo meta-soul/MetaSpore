@@ -1,7 +1,0 @@
-apiVersion: metaspore/v1
-kind: OfflinePythonTask
-metadata:
-  name: notify_load_model
-spec:
-  scriptPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/notify_load_model.py"
-  configPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/deepctr/conf/deep_ctr.yaml"

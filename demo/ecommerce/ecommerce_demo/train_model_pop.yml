@@ -1,7 +1,0 @@
-apiVersion: metaspore/v1
-kind: OfflinePythonTask
-metadata:
-  name: train_model_pop
-spec:
-  scriptPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/pop/train.py"
-  configPath: "/opt/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/pop/conf/popular_topk.yaml"
