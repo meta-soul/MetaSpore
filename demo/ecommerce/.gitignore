@@ -1,0 +1,7 @@
+.idea/
+ecommerce_demo/.tmp/
+python-env/
+ecommerce_demo/volumes/ecommerce_demo/MetaSpore/output/
+ecommerce_demo/volumes/output/
+ecommerce_demo/docker-compose.yml
+ecommerce_demo/volumes/ecommerce_demo/MetaSpore/demo/ecommerce/__pycache__/
