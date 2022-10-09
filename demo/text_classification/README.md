@@ -1,4 +1,7 @@
-## Forecast target
+### [中文介绍](README-CN.md)
+
+
+## Backgroud
 
 Generally speaking, large e-commerce websites have their own category system, and the category planning of e-commerce plays an important role in the operation,
 Our goal in this Demo is to use the pre trained BERT model to complete the task of classifying items on e-commerce websites, and to judge whether the item belongs to the Fashion industry by entering the title of the item.
@@ -25,12 +28,11 @@ You can run the following script to generate data.
 ```
 cd dataset
 python -u gen_ data.py
-
 ```
 
 ## Model training
 
-After obtaining the data required for model training, you can run the training model script [train. sh] (text_classifier/train. sh) to train the model.
+After obtaining the data required for model training, you can run the training model script [train.sh] (text_classifier/train. sh) to train the model.
 
 ```
 cd text_ classifier
