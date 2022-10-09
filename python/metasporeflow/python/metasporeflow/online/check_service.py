@@ -1,7 +1,7 @@
 import requests
 import time
 
-def notifyRecommendService(host="127.0.0.1", port=8081):
+def notifyRecommendService(host, port):
     num = 14
     while num > 0:
         resp = requests.post('http://%s:%s/actuator/refresh' % (host, port))

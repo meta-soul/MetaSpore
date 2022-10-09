@@ -39,7 +39,7 @@ class Consul(object):
         self._consul.kv.delete(key)
 
 
-def putServiceConfig(config, host="localhost", port=8500, prefix="config", context="recommend", data_key="data"):
+def putServiceConfig(config, host, port, prefix="config", context="recommend", data_key="data"):
     client = Consul(host, port)
     key = "%s/%s/%s" % (prefix, context, data_key)
     num = 14
