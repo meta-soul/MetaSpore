@@ -39,7 +39,6 @@ public class DataContext implements AutoCloseable {
     private Map<String, Object> request;
     private Map<String, Long> timeRecords = Maps.newConcurrentMap();
     private ConcurrentMap<String, DataResult> results = Maps.newConcurrentMap();
-    private Map<String, Object> debugInfo = Maps.newConcurrentMap();
 
     @Override
     public void close() {
@@ -62,10 +61,6 @@ public class DataContext implements AutoCloseable {
         if (req != null) {
             request = getObjectToMap(req);
         }
-    }
-
-    public void putDebug(String key, Object value) {
-        debugInfo.put(key, value);
     }
 
     public void setRequest(String req) {
