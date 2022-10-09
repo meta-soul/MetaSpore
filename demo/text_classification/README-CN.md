@@ -10,7 +10,7 @@
 在 Bert 层之上，是 Dropout 层，Linear 层和 Sigmoid 层，整体结构如下：
 
 <div align=center>
-<img src="../../docs/images/title_to_fishion.PNG" alt="title_to_fish architecture" width="500">
+<img src="../../docs/images/title_to_fashion.PNG" alt="title_to_fish architecture" width="500">
 </div>
 
 ## 准备数据
@@ -61,6 +61,6 @@ python -u train.py --name title_to_fashion \
 
 在我们的实验中，模型训练一个 epoch 已经收敛的比较好了，下面是Threshold = 0.5时Accuracy、AUC、Precision、Recall、F1等几个指标的值：
 
-| Accuracy | AUC | Precision | Recall   |    F1    |
-|:--------:|:---:|:---------:|:--------:|:--------:|
-|0.9757|0.9943|0.9355|0.9389|0.9372|
+| Accuracy |  AUC   | Precision | Recall |   F1   |
+|:--------:|:------:|:---------:|:------:|:------:|
+|  0.9757  | 0.9943 |  0.9355   | 0.9389 | 0.9372 |

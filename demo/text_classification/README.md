@@ -1,20 +1,20 @@
 ### [中文介绍](README-CN.md)
 
 
-## Backgroud
+## Background
 
 Generally speaking, large e-commerce websites have their own category system, and the category planning of e-commerce plays an important role in the operation,
-Our goal in this Demo is to use the pre trained BERT model to complete the task of classifying items on e-commerce websites, and to judge whether the item belongs to the Fashion industry by entering the title of the item.
+Our goal in this Demo is to use the pre-trained BERT model to complete the task of classifying items on e-commerce websites, and to judge whether the item belongs to the Fashion industry by entering the title of the item.
 
 ## Model structure
 
 
-For the model, we selected [HuggingFace Bert Base Cased pre training checkpoint](https://huggingface.co/bert-base-cased).
+For the model, we selected [HuggingFace Bert Base Cased pre-training checkpoint](https://huggingface.co/bert-base-cased).
 The model has 12 layers of Transformer Encoder, and the hidden layer dimension is 768, with a total of 110 million parameters.
-Above the Bert layer are the Dropout layer, the Linear layer and the Sigmaid layer. The overall structure is as follows:
+Above the Bert layer are the Dropout layer, the Linear layer and the Sigmoid layer. The overall structure is as follows:
 
 <div align=center>
-<img src="../../docs/images/title_to_fishion.PNG" alt="title_to_fish architecture" width="500">
+<img src="../../docs/images/title_to_fashion.PNG" alt="title_to_fish architecture" width="500">
 </div>
 
 ## Prepare data
@@ -53,21 +53,21 @@ python -u train. py --name title_ to_ fashion \
 
 In this script, you can customize the parameter configuration. The following describes the functions of the parameters:
 + name: assign the name of the model
-+ model: assign the pre training model to be used
++ model: assign the pre-training model to be used
 + num-labels: the number of categories classified
 + train-file: the train file that generated in the data preparation phase
 + eval-file: the train file that generated in the data preparation phase
 + eval-steps: the number of steps to inference
 + num-epochs: the number of training epochs
 + lr: the learning rate in the training phase
-+ train-batch-size: the batch size in the training stage
-+ eval-batch-size: the batch size in the evaluate stage
++ train-batch-size: the batch size for training stage
++ eval-batch-size: the batch size for evaluation stage
 + gpu: assign the specified gpu
 + output-path: the saved path of the model.
 
 ## Model effect
 The model training for an epoch has converged well. The following indicators are Accuracy, AUC, Precision, Recall, F1, etc. If we take Threshold=0.5, then
 
-| Accuracy | AUC | Precision | Recall | F1 |
-|:--------:|:---:|:---------:|:--------:|:--------:|
-|0.9757|0.9943|0.9355|0.9389|0.9372|
+| Accuracy |  AUC   | Precision | Recall |   F1   |
+|:--------:|:------:|:---------:|:------:|:------:|
+|  0.9757  | 0.9943 |  0.9355   | 0.9389 | 0.9372 |
