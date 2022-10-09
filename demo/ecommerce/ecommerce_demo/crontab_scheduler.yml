@@ -1,0 +1,9 @@
+apiVersion: metaspore/v1
+kind: OfflineCrontabScheduler
+metadata:
+  name: offline_crontab_scheduler
+spec:
+  cronExpr: "* */1 * * *"
+  dag:
+    sync_data: [ "join_data" ]
+    join_data: [ "train_model_pop", "train_model_itemcf", "train_model_deepctr", "notify_load_model" ]

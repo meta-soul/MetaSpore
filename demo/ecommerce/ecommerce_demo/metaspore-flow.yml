@@ -1,0 +1,18 @@
+apiVersion: metaspore/v1
+kind: MetaSporeFlow
+metadata:
+    name: demo_metaspore_flow
+    uses:
+      - ./online_local_flow.yml
+      - ./offline-local-flow.yml
+      - ./crontab_scheduler.yml
+      - ./sync_data.yml
+      - ./join_data.yml
+      - ./train_model_pop.yml
+      - ./train_model_itemcf.yml
+      - ./train_model_deepctr.yml
+      - ./notify_load_model.yml
+
+spec:
+    sharedVolumeInContainer: '/opt/volumes'
+

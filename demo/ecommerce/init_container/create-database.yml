@@ -1,0 +1,31 @@
+version: "3"
+services:
+  mongo:
+    image: mongo:5.0
+    container_name: metaspore-local-mongodb
+    restart: always
+    ports:
+      - "27018:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Dmetasoul_123456
+      MONGO_INITDB_DATABASE: jpa
+  mysql:
+    image: mysql:5.7
+    container_name: metaspore-local-mysql
+    restart: always
+    volumes:
+      - ${PWD}/init_container/mysql/my.cnf:/etc/my.cnf
+      - ${PWD}/init_container/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ${PWD}/init_container/mysql/sql/:/opt/sql/
+    environment:
+      - "MYSQL_ROOT_PASSWORD=123456"
+      - "MYSQL_DATABASE=metaspore_offline_flow"
+    ports:
+      - 3306:3306
+  front:
+    container_name: metaspore-front
+    image: dmetasoul-repo/ecommerce-vue-app:v1.0.0
+    restart: always
+    ports:
+      - "41730:41730"
