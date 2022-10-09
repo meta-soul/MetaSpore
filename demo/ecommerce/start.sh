@@ -12,6 +12,7 @@ sleep 10s
 # insert data into mysql
 ./init_data/insert_mysql_data.sh
 
+./rebuild.env
 source ./env.sh
 cd ecommerce_demo || exit
 metaspore flow up
