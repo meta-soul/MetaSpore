@@ -82,11 +82,14 @@ public class Experiment extends TaskFlow<Service> {
             return field;
         });
         registerUpdateOperator("putOriginScores", (input, output, option) ->{
-            Assert.isTrue(input.size() == 2 && input.get(1) instanceof Map, "originScores is map");
+            Assert.isTrue(input.size() == 2, "input size: two");
             Assert.isTrue(CollectionUtils.isNotEmpty(output), "output is not empty");
             String label = CommonUtils.getField(option, "label", name);
             Map<String, Object> res = Maps.newHashMap();
-            Map<String, Object> map = (Map<String, Object>) input.get(1);
+            Map<String, Object> map = Maps.newHashMap();
+            if (input.get(1) instanceof Map) {
+                map = (Map<String, Object>) input.get(1);
+            }
             map.put(label, input.get(0));
             res.put(output.get(0), map);
             return res;
