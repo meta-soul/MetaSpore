@@ -1,6 +1,6 @@
 #!/bin/bash
 
-docker-compose -f init_container/create-database.yml down
+docker compose -f init_container/create-database.yml down
 
 source ./env.sh
 cd ecommerce_demo || exit

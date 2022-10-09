@@ -62,7 +62,7 @@ class OnlineLocalExecutor(object):
         consul_port = compose_info.services["consul"].ports[0]
         recommend_container_name = compose_info.services["recommend"].container_name
         recommend_port = compose_info.services["recommend"].ports[0]
-        if run_cmd(["docker-compose -f %s up -d" % self._docker_compose_file]) == 0:
+        if run_cmd(["docker compose -f %s up -d" % self._docker_compose_file]) == 0:
             while not is_container_active(consul_container_name):
                 print("wait consul start...")
                 time.sleep(1)
@@ -77,7 +77,7 @@ class OnlineLocalExecutor(object):
             print("online flow up fail!")
 
     def execute_down(self, **kwargs):
-        if run_cmd(["docker-compose -f %s down" % self._docker_compose_file]) == 0:
+        if run_cmd(["docker compose -f %s down" % self._docker_compose_file]) == 0:
             print("online flow down success!")
         else:
             print("online flow down fail!")

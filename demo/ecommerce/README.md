@@ -36,7 +36,7 @@ http://localhost:41730
 
 Create Mysql & MongoDB with docker compose
 ```bash
-docker-compose -f init_container/create-database.yml up -d
+docker compose -f init_container/create-database.yml up -d
 ```
 
 Check Mysql & MongoDB status
@@ -46,13 +46,13 @@ docker ps | grep metaspore-local
 
 Stop Mysql & MongoDB container
 ```bash
-docker-compose -f init_container/create-database.yml down
+docker compose -f init_container/create-database.yml down
 ```
 
 ### Insert MYSQL
 
 ```bash
-sh init_data/insert_mysql_data.sh
+./init_data/insert_mysql_data.sh
 ```
 
 ## Metaspore Flow Cli
