@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   nginx:
-    image: dmetasoul-repo/ecommerce-vue-app:v1.0.0
+    image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/ecommerce-vue-app
     restart: always
     ports:
       - "41730:41730"
