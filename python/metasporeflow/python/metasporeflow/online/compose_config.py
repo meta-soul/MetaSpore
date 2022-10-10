@@ -95,7 +95,7 @@ class OnlineDockerCompose(BaseDefaultConfig):
                                                           "consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui")
         if str(name).startswith("model"):
             service_kwargs["ports"] = kwargs.setdefault("ports", [50000])
-            service_kwargs["image"] = kwargs.setdefault("image", "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1")
+            service_kwargs["image"] = kwargs.setdefault("image", "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1")
             service_kwargs["command"] = kwargs.setdefault("command", "/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port 50000 -init_load_path /data/models")
             service_kwargs["volumes"] = kwargs.setdefault("volumes", ["${DOCKER_VOLUME_DIRECTORY:-.}/volumes/serving_models:/data/models"])
         if str(name).startswith("mongo"):
