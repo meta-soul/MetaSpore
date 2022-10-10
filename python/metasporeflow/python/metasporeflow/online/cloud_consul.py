@@ -43,7 +43,8 @@ class Consul(object):
 def putServiceConfig(config, host, port, prefix="config", context="recommend", data_key="data"):
     client = Consul(host, port)
     key = "%s/%s/%s" % (prefix, context, data_key)
-    num = 300
+    max_wait = 300
+    num = max_wait
     while num > 0 and not client.setConfig(key, config):
         print("wait set config to consul!")
         time.sleep(1)
@@ -54,3 +55,5 @@ def putServiceConfig(config, host, port, prefix="config", context="recommend", d
         print("set config to consul falied!")
         if client._last_exception is not None:
             traceback.print_exception(client._last_exception)
+        message = "fail to set config to consul after waiting %d seconds" % max_wait
+        raise RuntimeError(message)
