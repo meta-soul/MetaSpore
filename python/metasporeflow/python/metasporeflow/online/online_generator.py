@@ -78,9 +78,9 @@ class OnlineGenerator(object):
             info = dictToObj(info)
             volumes = []
             if str(name).startswith("model"):
-                volumes.append("%s/volumes/output/model/ctr/nn/widedeep/model_export:/data/models" % os.getcwd())
+                volumes.append("%s/volumes/output/model:/data/models" % os.getcwd())
             online_docker_compose.add_service(name, "container_%s_service" % name,
-                                              image=info.image, environment=info.environment, volumes=volumes)
+                                              image=info.image, volumes=volumes)
         online_recommend_service = online_docker_compose.services.get("recommend")
         if not online_recommend_service:
             raise ValueError("container_recommend_service init fail!")

@@ -3,6 +3,9 @@ kind: OnlineFlow
 metadata:
   name: online_local_flow
 spec:
+  dockers:
+    recommend:
+      image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0
   services:
     mongo:
       host: 172.17.0.1

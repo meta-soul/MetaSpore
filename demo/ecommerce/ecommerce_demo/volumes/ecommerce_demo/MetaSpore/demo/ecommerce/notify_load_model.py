@@ -15,7 +15,7 @@ def notify_loading_model(model_info):
     import metaspore_pb2
     import metaspore_pb2_grpc
     print('Notify loading model %s' % model_info)
-    local_path = "/data/models/" + os.path.basename(model_info.path)
+    local_path = "/data/models/ctr/nn/widedeep/model_export/" + os.path.basename(model_info.path)
     try:
         with grpc.insecure_channel('127.0.0.1:50000') as channel:
             stub = metaspore_pb2_grpc.LoadStub(channel)
