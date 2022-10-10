@@ -69,7 +69,7 @@ class OnlineDockerCompose(BaseDefaultConfig):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.dict_data["version"] = self.version
-        self.dict_data["networks"] = self.networks
+        #self.dict_data["networks"] = self.networks
 
     def to_dict(self):
         if self.services:
