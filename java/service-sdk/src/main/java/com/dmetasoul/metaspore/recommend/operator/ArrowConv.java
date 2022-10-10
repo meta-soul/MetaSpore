@@ -7,7 +7,7 @@ import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.util.JsonStringHashMap;
 import org.apache.arrow.vector.util.Text;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.util.Assert;
+import org.apache.commons.lang3.Validate;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -34,7 +34,7 @@ public class ArrowConv {
             }
         } else if (minorType == Types.MinorType.LIST) {
             if (value == null) return null;
-            Assert.isInstanceOf(List.class, value);
+            Validate.isInstanceOf(List.class, value);
             List<Object> result = Lists.newArrayList();
             for (Object obj : (List<Object>) value) {
                 result.add(convValue(field.getChildren().get(0), obj));
@@ -42,13 +42,15 @@ public class ArrowConv {
             return result;
         } else if (minorType == Types.MinorType.MAP) {
             if (value == null) return null;
-            Assert.isInstanceOf(List.class, value);
+            Validate.isInstanceOf(List.class, value);
             Map<Object, Object> result = Maps.newHashMap();
             Field entry = field.getChildren().get(0);
             Field key = entry.getChildren().get(0);
             Field val = entry.getChildren().get(1);
             for (JsonStringHashMap<String, Object> obj : (List<JsonStringHashMap<String, Object>>) value) {
-                result.put(convValue(key, obj.get(key.getName())), convValue(val, obj.get(val.getName())));
+                if (obj != null && obj.size() == 2) {
+                    result.put(convValue(key, obj.get(key.getName())), convValue(val, obj.get(val.getName())));
+                }
             }
             return result;
         } else if (minorType == Types.MinorType.STRUCT) {
