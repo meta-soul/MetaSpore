@@ -208,7 +208,7 @@
                         </image>
                         <image>
                             <alias>serving</alias>
-                            <name>swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1</name>
+                            <name>swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1</name>
                             <run>
                                 <restartPolicy><name>on-failure</name></restartPolicy>
                                 <ports>
