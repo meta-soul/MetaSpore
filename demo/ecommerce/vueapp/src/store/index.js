@@ -9,7 +9,7 @@ import {
 Vue.use(Vuex);
 
 if (!localStorage.getItem('user')) {
-  localStorage.setItem('user', JSON.stringify('A14EI4NEAWCH18')); // 初始化
+  localStorage.setItem('user', JSON.stringify('A23P7HJBRQ0F7L')); // 初始化
 }
 
 export default new Vuex.Store({

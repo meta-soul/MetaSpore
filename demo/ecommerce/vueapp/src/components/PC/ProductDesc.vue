@@ -94,6 +94,10 @@ export default {
       if (!this.$refs.left || !this.$refs.right) {
         return;
       }
+      if(document.documentElement.clientWidth <= 912) {
+        this.getScrollTop = 0;
+        return;
+      }
       if (this.$refs.left.clientWidth === this.$refs.right.clientWidth) {
         // 高相同，说明不在同一行
         this.getScrollTop = 0;
@@ -180,10 +184,12 @@ export default {
 // }
 .left {
   width: 100%;
-  height: fit-content;
+  // height: fit-content;
   border: 1px solid lighten(#ccc, 10%);
   position: relative;
   font-size: 0;
+  text-align: center;
+  box-sizing: border-box;
 }
   .left-error {
     height: 100%;
@@ -199,8 +205,9 @@ export default {
   text-align: center;
 }
 .image {
-  width: 100%;
-  object-fit: cover;
+  // height: 70vh;
+  width: 80%;
+  object-fit: contain;
 }
 .icon-tupianfangda {
   border: 1px solid #ccc;
@@ -233,7 +240,7 @@ export default {
   -webkit-line-clamp: 5;
 }
 .right {
-  width: 50%;
+  width: 70%;
   height: fit-content;
   padding-left: 2vw;
   box-sizing: border-box;
@@ -261,7 +268,7 @@ export default {
 .quantity-button {
   margin: 10px 0;
   border: 1px solid #333;
-  width: 120px;
+  width: 50%;
 
   /* display: flex;
   justify-content: space-around; */

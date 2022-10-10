@@ -40,10 +40,13 @@ export default {
       datas: null,
       user: this.$store.state.cur_user,
       userList: [
-        'A14EI4NEAWCH18',
-        'A120RH58WVY4W6',
-        'A3FMK5TW8HVBZZ',
-        'A2RM4WAQNE0PQN',
+        "A23P7HJBRQ0F7L",
+        "A1EL1KCQTW6P32",
+        "A2E9076GV6LE6F",
+        // 'A14EI4NEAWCH18',
+        // 'A120RH58WVY4W6',
+        // 'A3FMK5TW8HVBZZ',
+        // 'A2RM4WAQNE0PQN',
         'ANOYMOUS',
       ],
     };
