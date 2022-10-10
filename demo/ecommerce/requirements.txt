@@ -1,6 +1,16 @@
 attrs==22.1.0
 cattrs==22.1.0
+certifi==2022.9.24
+chardet==3.0.4
 exceptiongroup==1.0.0rc9
+idna==2.8
 metasporecli==0.1.0
 metasporeflow==0.1.0
+networkx==2.8.7
+python-consul2==0.1.5
 PyYAML==5.4.1
+requests==2.22.0
+ruamel.yaml==0.17.21
+ruamel.yaml.clib==0.2.6
+six==1.16.0
+urllib3==1.25.11
