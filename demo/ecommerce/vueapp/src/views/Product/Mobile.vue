@@ -27,26 +27,8 @@ export default {
   data() {
     return {
       // ListDatas: {
-      //   title: 'You Also May Like',
+      //   title: 'Related Products',
       //   items: [
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
-      //     { img: FlowerUrl },
-      //     { img: Xing },
       //     { img: FlowerUrl },
       //     { img: Xing },
       //     { img: FlowerUrl },
@@ -56,7 +38,7 @@ export default {
       isShow: true,
       productData: null,
       listDatas: {
-        title: 'You Also May Like',
+        title: 'Related Products',
       },
     };
   },
@@ -69,7 +51,7 @@ export default {
     // this.productData = result[0];
     // let res = await this.$store.dispatch('asyncGetYouLikeProducts');
     // this.listDatas = {
-    //   title: 'You Also May Like',
+    //   title: 'Related Products',
     //   items: res,
     // };
   },
@@ -95,12 +77,12 @@ export default {
           item_id: this.$route.params.productId,
         });
         this.listDatas = {
-          title: 'You Also May Like',
+          title: 'Related Products',
           items: res,
         };
       }catch(e) {
          this.listDatas = {
-          title: 'You Also May Like',
+          title: 'Related Products',
           items: [],
         };
       }

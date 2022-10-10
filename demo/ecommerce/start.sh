@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# install metasporeflow
-# pip install metasporeflow
-
 source ./env.sh
 
 ./init_container/pull_images.sh

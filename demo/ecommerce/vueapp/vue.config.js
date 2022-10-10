@@ -4,7 +4,7 @@ module.exports = defineConfig({
   devServer: {
     proxy: {
       "/service": {
-        target: "http://127.0.0.1:13013"
+        target: "http://recommend-demo.dmetasoul.com"
       }
     }
   }

@@ -3,13 +3,21 @@
     <template v-if="datas">
       <div class="user-list">
         <el-dropdown split-button type="primary" @command="handleCommand">
-          {{ $store.state.cur_user }}
+          <div class="avatar-container">
+            <el-avatar
+              src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+            ></el-avatar>
+            <span class="user">{{ $store.state.cur_user }}</span>
+          </div>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item
               v-for="item in getUserList"
               :key="item"
               :command="item"
-              >{{item}}</el-dropdown-item
+              >
+              <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
+              {{item}}
+              </el-dropdown-item
             >
             <!-- <el-dropdown-item command="A120RH58WVY4W6"
               >A120RH58WVY4W6</el-dropdown-item
@@ -68,7 +76,7 @@ export default {
       this.$store.state.cur_user
     );
     this.datas = {
-      title: 'Featured Products',
+      title: 'Guess You Like',
       items: result,
     };
   },
@@ -81,7 +89,7 @@ export default {
       this.datas = null;
       let result = await this.$store.dispatch('asyncGetAllProducts', command);
       this.datas = {
-        title: 'Featured Products',
+        title: 'Guess You Like',
         items: result,
       };
       this.isCollapse = false;
@@ -99,4 +107,13 @@ export default {
 .user-list {
   text-align: end;
 }
+.avatar-container {
+    cursor: pointer;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+  }
+  .user {
+    margin-left: 5px;
+  }
 </style>
