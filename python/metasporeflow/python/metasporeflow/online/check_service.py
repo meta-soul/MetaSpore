@@ -3,8 +3,9 @@ import time
 import traceback
 
 def notifyRecommendService(host, port):
-    print("notify recommend service: %s:%s" % (host, port))
-    num = 300
+    print("notify recommend service %s:%s" % (host, port))
+    max_wait = 300
+    num = max_wait
     last_exception = None
     while num > 0:
         try:
@@ -19,6 +20,7 @@ def notifyRecommendService(host, port):
                 data = None
                 last_exception = ex
             if data is not None:
+                # succeed: print and return
                 print(data)
                 return
         print("retry refresh recommend service! %s:%s" % (host, port))
@@ -26,6 +28,8 @@ def notifyRecommendService(host, port):
         num -= 1
     if last_exception is not None:
         traceback.print_exception(last_exception)
+    message = "fail to notify recommend service %s:%s after waiting %d seconds" % (host, port, max_wait)
+    raise RuntimeError(message)
 
 if __name__ == "__main__":
     print("test")
