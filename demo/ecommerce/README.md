@@ -3,7 +3,7 @@
 ## Getting Started
 ### Dependencies
 - Docker
-- Docker Compose
+- Docker Compose v2.11.2
 - Python 3.8+
 
 1. Install MetaSpore Flow Cli
@@ -31,6 +31,12 @@ http://localhost:41730
 ```
 
 ## Demo Instructions 
+
+### Docker Compose
+Check Docker Compose available. [Install Docker Compose](https://docs.docker.com/compose/install/linux/#install-the-plugin-manually)
+```bash
+docker compose version
+```
 
 ### Init Container
 
