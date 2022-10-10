@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="icon" href="<%= BASE_URL %>favicon.ico" />
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <style>
+      body, html {
+        margin: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <strong
+        >We're sorry but <%= htmlWebpackPlugin.options.title %> doesn't work
+        properly without JavaScript enabled. Please enable it to
+        continue.</strong
+      >
+    </noscript>
+    <div id="app"></div>
+    <!-- built files will be auto injected -->
+    <script>
+      const isMobile = () => {
+        return /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i.test(
+          navigator.userAgent
+        );
+      };
+      if(isMobile()) {
+        func(document, window, 1080)
+      }
+      function func(doc, win, designWidth) {
+        var html = doc.documentElement;
+        function refreshRem() {
+          var clientWidth = html.clientWidth;
+          if (clientWidth >= designWidth) {
+            // 如果设备宽度都大于设计稿了，那么测量出来是多少就是多少
+            html.style.fontSize = '100px';
+          } else {
+            // 计算出比例
+            // 拿 iPhone6 为例，375/750=0.5
+            // 相当于每一列的宽度为 0.5px，分成了 750 列
+            // 但是浏览器是不允许这么小的字体大小的，因此乘上一个 100
+            // 变成每一列的宽度为 50px
+            // 之后在将设计稿尺寸转换为列数时，也不需要繁杂的计算
+            // 假设设计稿量出来为 375px => 187.5(CSS像素) => 187.5/50(每一列宽度) = 3.75(所占列数)
+            html.style.fontSize = 100 * (clientWidth / designWidth) + 'px';
+          }
+        }
+        doc.addEventListener('DOMContentLoaded', refreshRem);
+      }
+      // (function (doc, win) {
+      //   var doc = doc.documentElement;
+      //   doc.addEventListener('DOMContentLoaded', Resize, false);
+      //   // 当DOM加载后执行
+      //   win.addEventListener('resize', Resize, false);
+      //   if (doc.clientWidth) {
+      //     Resize();
+      //   } else {
+      //     nsetTimeout(Resize, 100);
+      //   }
+      //   // 当屏幕发生变化时执行
+      //   function Resize() {
+      //     doc.style.fontSize = doc.clientWidth / 19.2 + 'px';
+      //   }
+      // })(document, window);
+    </script>
+  </body>
+</html>
