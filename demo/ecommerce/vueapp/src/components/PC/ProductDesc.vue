@@ -4,7 +4,7 @@
       <img class="image" @error="handleError" :src="data.image" alt="" />
       <i @click="handleOriginImg" class="iconfont icon-shanchu"></i>
     </div>
-    <div class="desc-wrapper" :style="{opacity: isShow?0:1}">
+    <div class="desc-wrapper" :style="{ opacity: isShow ? 0 : 1 }">
       <div class="imgs left" ref="left" :class="{ 'left-error': isImgError }">
         <!-- <span v-if="isImgError" class="img-error">图片加载错误</span> -->
         <img class="image" @error="handleError" :src="data.image" alt="" />
@@ -25,7 +25,9 @@
           <s class="small-fontsize gray-color">{{
             data.price.split('-')[1]
           }}</s>
-          <span class="discount" :class="{nomargin: !data.price}">{{ data.price.split('-')[0]?data.price.split('-')[0]:'$39' }}</span>
+          <span class="discount" :class="{ nomargin: !data.price }">{{
+            data.price.split('-')[0] ? data.price.split('-')[0] : '$39'
+          }}</span>
           <!-- <s class="small-fontsize gray-color"
             >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s
           >
@@ -63,7 +65,7 @@
 </template>
 
 <script>
-import defaultImg from "@/assets/default-img.webp";
+import defaultImg from '@/assets/default-img.webp';
 export default {
   props: ['data'],
   data() {
@@ -94,7 +96,7 @@ export default {
       if (!this.$refs.left || !this.$refs.right) {
         return;
       }
-      if(document.documentElement.clientWidth <= 912) {
+      if (document.documentElement.clientWidth <= 912) {
         this.getScrollTop = 0;
         return;
       }
@@ -109,8 +111,13 @@ export default {
       }
     },
     getHeightInfo() {
-      this.leftHeight = this.$refs.left.clientHeight;
-      this.rightHeight = this.$refs.right.clientHeight;
+      this.leftHeight = this.$refs.left.clientWidth * 1;
+      this.rightHeight = this.leftHeight;
+      this.$refs.left.style.height = this.$refs.left.clientWidth * 1 + 'px';
+
+      // this.$refs.right.style.height = this.leftHeight +"px";
+      // this.leftHeight = this.$refs.left.clientHeight;
+      // this.rightHeight = this.$refs.right.clientHeight;
     },
     handleEnlargeImg() {
       this.isShow = true;
@@ -191,9 +198,9 @@ export default {
   text-align: center;
   box-sizing: border-box;
 }
-  .left-error {
-    height: 100%;
-  }
+.left-error {
+  height: 100%;
+}
 .img-error {
   font-size: 20px;
   color: #ccc;
@@ -205,8 +212,8 @@ export default {
   text-align: center;
 }
 .image {
-  // height: 70vh;
-  width: 80%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
 }
 .icon-tupianfangda {
@@ -237,7 +244,7 @@ export default {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  -webkit-line-clamp: 5;
+  -webkit-line-clamp: 4;
 }
 .right {
   width: 70%;
