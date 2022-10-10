@@ -15,7 +15,6 @@
 #
 ARG SPARK_RELEASE="tarball"
 ARG METASPORE_RELEASE="http"
-ARG METASPORE_BUILD_IMAGE="metaspore-training-build:v1.0.0"
 ARG INSTALL_SPARK_CLOUD="false"
 
 FROM ubuntu:20.04 as env
@@ -65,11 +64,8 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     python -m pip cache purge && \
     echo OK: python
 
-FROM ${METASPORE_BUILD_IMAGE} as metaspore_build
 FROM env as metaspore_http_install
 ARG METASPORE_WHEEL="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B48beee4-cp38-cp38-linux_x86_64.whl"
-COPY --from=metaspore_build /lib/x86_64-linux-gnu/libstdc++.so.6.0.29 /lib/x86_64-linux-gnu
-RUN ln -svf libstdc++.so.6.0.29 /lib/x86_64-linux-gnu/libstdc++.so.6
 RUN python -m pip install ${METASPORE_WHEEL} && pip cache purge
 
 FROM env as metaspore_build_install
