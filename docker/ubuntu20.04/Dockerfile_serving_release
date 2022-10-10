@@ -28,6 +28,7 @@ RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal multiverse" >>/etc/apt/s
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal-updates multiverse" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal-backports main restricted universe multiverse" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security main restricted" >>/etc/apt/sources.list
+RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security universe" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security multiverse" >>/etc/apt/sources.list
 RUN apt-get update && apt-get upgrade -y && apt-get clean
 RUN apt-get install -y locales && apt-get clean
