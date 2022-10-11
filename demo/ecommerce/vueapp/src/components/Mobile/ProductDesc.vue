@@ -44,12 +44,12 @@
         <!-- 价格 -->
         <div class="price letter-space">
           <!-- 划掉的价格 -->
-          <s class="small-fontsize gray-color" v-if="data.price">{{
+          <s class="small-fontsize gray-color" v-if="data.price&&data.price.split('-')[1]">{{
             data.price.split('-')[1]
           }}</s>
           <!-- 打折后的价格 -->
-          <span class="discount" :class="{ nomargin: !data.price }">{{
-            data.price ? data.price.split('-')[0] : '$39'
+          <span class="discount" :class="{ nomargin: !data.price||!data.price.split('-')[1] }">{{
+            data.price ? data.price.split('-')[0] : '$39.99'
           }}</span>
           <!-- 划掉的价格
           <s class="small-fontsize gray-color"
@@ -143,8 +143,12 @@ export default {
       }
     },
     getHeightInfo() {
-      this.leftHeight = this.$refs.left.clientHeight;
-      this.rightHeight = this.$refs.right.clientHeight;
+      this.getScrollTop = 0;
+      this.leftHeight = this.$refs.left.clientWidth * 1;
+      this.rightHeight = this.leftHeight;
+      this.$refs.left.style.height = this.$refs.left.clientWidth * 1 + 'px';
+      // this.leftHeight = this.$refs.left.clientHeight;
+      // this.rightHeight = this.$refs.right.clientHeight;
     },
     handleReadMore() {
       if (this.isReadMoreValue === '查看更多 >>>') {
@@ -220,21 +224,22 @@ export default {
   z-index: 1000;
   font-size: 0;
 }
-// .enlarge {
-//   width: 100%;
-//   position: relative;
-//   font-size: 0;
-// }
+ /* .enlarge {
+   width: 100%;
+   position: relative;
+   font-size: 0;
+ } */
 .left {
   width: 100%;
-  height: fit-content;
+  /* height: fit-content; */
   border: 1px solid lighten(#ccc, 10%);
   position: relative;
   font-size: 0;
 }
 .image {
   width: 100%;
-  object-fit: cover;
+  height: 100%;
+  object-fit: contain;
 }
 .icon-tupianfangda {
   border: 0.02rem solid #ccc;
@@ -278,6 +283,7 @@ export default {
   padding: 0;
   margin: 0;
   color: blue;
+  outline: none;
 
   font-size: 0.3rem;
 }

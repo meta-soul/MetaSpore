@@ -32,6 +32,7 @@ export default {
   font-style: normal;
   letter-spacing: 2px;
   color: lighten(#000, 40%);
+  font-size: 25px;
 }
 .content {
   width: 100%;
@@ -58,9 +59,9 @@ export default {
   .content a:nth-of-type(4) {
     border-top: 1px solid lighten(#ccc, 10%);
   }
-  // .content a:last-of-type {
+  /* // .content a:last-of-type {
   //   border-right: 1px solid lighten(#ccc, 10%);
-  // }
+  // } */
 }
 
 @media screen and (max-width: 912px) {

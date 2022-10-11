@@ -61,7 +61,6 @@ export default {
       // 滚动条回滚到顶部
       document.documentElement.scrollTo({
         top: 0,
-        behavior: 'smooth',
       });
       this.productData = null; // 请求前先置为空
       let result = await getOneProduct(

@@ -114,6 +114,6 @@ export default {
   }
   .user {
     margin-left: .1rem;
-    font-size: .1rem;
+    font-size: .4rem;
   }
 </style>

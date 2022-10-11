@@ -35,7 +35,7 @@
       <div class="price">
         <s v-if="underline && data.price && data.price.split('-')[1]">{{ data.price.split('-')[1] }}</s>
         <span :style="{ color: acolor }" v-if="data.price">{{ data.price.split('-')[0] }}</span>
-        <span :style="{ color: acolor }" v-if="!data.price">$39</span>
+        <span :style="{ color: acolor }" v-if="!data.price">$39.99</span>
         <!-- <s v-if="underline"
           >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s
         >
@@ -62,6 +62,9 @@ export default {
   },
   methods: {
     handleResize() {
+      if(!this.$refs.inner) {
+        return;
+      }
       this.$refs.inner.style.height = this.$refs.inner.clientWidth *1 + "px";
     }
     // handleError() {
@@ -104,7 +107,6 @@ a {
   position: relative;
 }
 .img-error {
-  // font-size: 0.5rem;
   font-size: 20px;
   color: #ccc;
   position: absolute;

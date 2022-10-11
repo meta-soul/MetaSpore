@@ -58,10 +58,9 @@ export default {
   methods: {
     async fetchProductData() {
       // 滚动条回滚到顶部
-      document.documentElement.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
+       document.documentElement.scrollTo({
+         top: 0,
+       });
       this.productData = null; // 请求前先置为空
       let result = await getOneProduct(
         this.$store.state.cur_user,

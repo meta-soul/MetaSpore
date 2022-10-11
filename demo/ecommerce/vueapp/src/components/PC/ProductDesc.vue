@@ -22,10 +22,10 @@
           {{ data.description }}
         </div>
         <div class="price letter-space">
-          <s class="small-fontsize gray-color">{{
+          <s class="small-fontsize gray-color" v-if="data.price&&data.price.split('-')[1]">{{
             data.price.split('-')[1]
           }}</s>
-          <span class="discount" :class="{ nomargin: !data.price }">{{
+          <span class="discount" :class="{ nomargin: !data.price||!data.price.split('-')[1] }">{{
             data.price.split('-')[0] ? data.price.split('-')[0] : '$39'
           }}</span>
           <!-- <s class="small-fontsize gray-color"
@@ -111,6 +111,7 @@ export default {
       }
     },
     getHeightInfo() {
+      this.getScrollTop = 0;
       this.leftHeight = this.$refs.left.clientWidth * 1;
       this.rightHeight = this.leftHeight;
       this.$refs.left.style.height = this.$refs.left.clientWidth * 1 + 'px';
@@ -184,14 +185,14 @@ export default {
   z-index: 1000;
   font-size: 0;
 }
-// .enlarge {
-//   width: 100%;
-//   position: relative;
-//   font-size: 0;
-// }
+ /* .enlarge {
+   width: 100%;
+   position: relative;
+   font-size: 0;
+ } */
 .left {
   width: 100%;
-  // height: fit-content;
+   /* height: fit-content; */
   border: 1px solid lighten(#ccc, 10%);
   position: relative;
   font-size: 0;
@@ -238,8 +239,9 @@ export default {
 }
 
 .title {
-  line-height: 3rem;
-  font-size: 2rem;
+  line-height: 2.5rem;
+  font-size: 1.5rem;
+  color: lighten(#000, 20%);
 
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -298,7 +300,7 @@ export default {
   text-align: center;
   outline: none;
   padding: 20px;
-  // top: -10px;
+  /* // top: -10px; */
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);

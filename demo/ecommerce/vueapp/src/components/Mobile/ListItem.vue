@@ -4,7 +4,7 @@
     :to="{ name: 'product', params: { productId: data.item_id } }"
     class="list-item-container"
   >
-    <div class="inner">
+    <div class="inner" ref="inner">
       <!-- <span v-if="imgError" class="img-error">图片加载错误</span> -->
       <img
         v-lazy="data.image"
@@ -53,6 +53,12 @@ export default {
       imgError: false
     };
   },
+  mounted() {
+    if(!this.$refs.inner) {
+      return;
+    }
+    this.$refs.inner.style.height = this.$refs.inner.clientWidth *1.2 + "px";
+  },
 };
 </script>
 
@@ -79,13 +85,13 @@ a {
 }
 .inner {
   width: 100%;
-  height: 5rem;
+  /* height: 5rem; */
   overflow: hidden;
   position: relative;
 
-  // font-size: .5rem;
-  // color: #ccc;
-  // text-align: center;
+   /* font-size: .5rem;
+   color: #ccc;
+   text-align: center; */
 }
 .img-error {
   font-size: 0.5rem;
@@ -117,7 +123,7 @@ a {
   height: 100%;
   object-fit: contain;
   object-position: center center;
-  // object-position: 0px 0px;
+  /* // object-position: 0px 0px; */
   cursor: pointer;
   transition: all 0.5s;
 }
@@ -148,7 +154,7 @@ a {
   text-decoration: underline;
 }
 .price span {
-  // font-size: .4rem;
+  /* // font-size: .4rem; */
   color: rgba(0, 0, 0, 0.9);
 }
 s {
