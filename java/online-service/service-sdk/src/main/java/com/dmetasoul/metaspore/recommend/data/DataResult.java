@@ -94,7 +94,7 @@ public class DataResult implements AutoCloseable {
 
     public List<Object> get(String field) {
         if (featureTable == null || featureTable.getVector(field) == null)
-            throw new IllegalArgumentException("featureTable is null or field not exist");
+            return List.of();
         FieldVector vector = featureTable.getVector(field);
         List<Object> values = Lists.newArrayList();
         for (int i = 0; i < vector.getValueCount(); ++i) {
@@ -105,7 +105,7 @@ public class DataResult implements AutoCloseable {
 
     public List<Object> get(int index) {
         if (featureTable == null || featureTable.getVector(index) == null)
-            throw new IllegalArgumentException("featureTable is null or field not exist");
+            return List.of();
         FieldVector vector = featureTable.getVector(index);
         List<Object> values = Lists.newArrayList();
         for (int i = 0; i < vector.getValueCount(); ++i) {
