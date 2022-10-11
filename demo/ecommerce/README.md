@@ -8,7 +8,7 @@
 
 1. Install MetaSpore Flow Cli
 ```bash
-python -m pip install metasporecli==0.1.0
+python -m pip install metasporecli
 ```
 
 2. Run the ecommerce demo using metasporeflow including offline-flow/online-flow
