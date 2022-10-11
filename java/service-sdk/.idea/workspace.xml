@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="dfcc0bc4-3d00-42fe-b3b9-f6a7c3691e1c" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../.." />
+  </component>
+  <component name="MavenRunner">
+    <option name="jreName" value="#JAVA_INTERNAL" />
+  </component>
+  <component name="ProjectId" id="2FoJWidqj3mRxMghsG5hWDTBu57" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
+    <property name="settings.editor.selected.configurable" value="reference.settings.project.maven.runner" />
+  </component>
+  <component name="RunAnythingCache">
+    <option name="myCommands">
+      <command value="mvn install" />
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="dfcc0bc4-3d00-42fe-b3b9-f6a7c3691e1c" name="Default Changelist" comment="" />
+      <created>1665152536902</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1665152536902</updated>
+    </task>
+    <task id="LOCAL-00001" summary="add do duplicate">
+      <created>1665161872934</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1665161872934</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fix bug about do duplicate">
+      <created>1665163071560</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1665163071560</updated>
+    </task>
+    <task id="LOCAL-00003" summary="add filter function filter some recall">
+      <created>1665232175030</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1665232175030</updated>
+    </task>
+    <task id="LOCAL-00004" summary="add debuginfo in context">
+      <created>1665285814980</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1665285814980</updated>
+    </task>
+    <task id="LOCAL-00005" summary="revert add debuginfo in context">
+      <created>1665286278283</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1665286278283</updated>
+    </task>
+    <task id="LOCAL-00006" summary="revert add debuginfo in context">
+      <created>1665376438952</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1665376438952</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
+    <servers />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="add do duplicate" />
+    <MESSAGE value="fix bug about do duplicate" />
+    <MESSAGE value="add filter function filter some recall" />
+    <MESSAGE value="add debuginfo in context" />
+    <MESSAGE value="revert add debuginfo in context" />
+    <option name="LAST_COMMIT_MESSAGE" value="revert add debuginfo in context" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="116" y="0" key="CommitChangelistDialog2" timestamp="1665376428776">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="116" y="0" key="CommitChangelistDialog2/0.0.1366.728@0.0.1366.728" timestamp="1665376428776" />
+    <state x="484" y="119" key="FileChooserDialogImpl" timestamp="1665198855052">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="484" y="119" key="FileChooserDialogImpl/0.0.1366.728@0.0.1366.728" timestamp="1665198855052" />
+    <state width="1306" height="179" key="GridCell.Tab.0.bottom" timestamp="1665376190508">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1306" height="179" key="GridCell.Tab.0.bottom/0.0.1366.728@0.0.1366.728" timestamp="1665376190508" />
+    <state width="1306" height="179" key="GridCell.Tab.0.center" timestamp="1665376190507">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1306" height="179" key="GridCell.Tab.0.center/0.0.1366.728@0.0.1366.728" timestamp="1665376190507" />
+    <state width="1306" height="179" key="GridCell.Tab.0.left" timestamp="1665376190507">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1306" height="179" key="GridCell.Tab.0.left/0.0.1366.728@0.0.1366.728" timestamp="1665376190507" />
+    <state width="1306" height="179" key="GridCell.Tab.0.right" timestamp="1665376190508">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state width="1306" height="179" key="GridCell.Tab.0.right/0.0.1366.728@0.0.1366.728" timestamp="1665376190508" />
+    <state x="184" y="0" key="SettingsEditor" timestamp="1665198858080">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="184" y="0" key="SettingsEditor/0.0.1366.728@0.0.1366.728" timestamp="1665198858080" />
+    <state x="363" y="188" key="com.intellij.ide.util.TipDialog" timestamp="1665155989734">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="363" y="188" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1665155989734" />
+    <state x="339" y="162" width="672" height="677" key="run.anything.popup" timestamp="1665376190544">
+      <screen x="0" y="0" width="1366" height="728" />
+    </state>
+    <state x="339" y="162" width="672" height="677" key="run.anything.popup/0.0.1366.728@0.0.1366.728" timestamp="1665376190544" />
+  </component>
+</project>
