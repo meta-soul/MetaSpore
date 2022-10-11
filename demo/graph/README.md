@@ -11,17 +11,7 @@ In this project, we will implement recall models based on jaccard distance and e
 | Jaccard | [jaccard.py](jaccard/jaccard.py) | [jaccard_retrieval.py](../../python/algos/graph/jaccard/jaccard_retrieval.py) | `-` |
 | Euclidean | [euclidean.py](euclidean/euclidean.py) | [euclidean_retrieval.py](../../python/algos/graph/euclidean/euclidean_retrieval.py) | `-` |
 
-We are constantly adding new models.
-
-## Test results
-
-| Model | Dataset | Precision@20 | Recall@20 | MAP@20 |
-|:-- ----:|:--------------------------|:------------:|:---------:|:--------:|
-| Jaccard | MovieLens-1M NegSample-10 | 0.00429635 | 0.08592715|0.02708586|
-|Euclidean| MovieLens-1M | 0.00019867 | 0.00397350|0.00228660|
-
-For the recall model based on item similarity, we give their respective experimental results. The experimental results are for reference only.
-
+We will constantly add new models.
 
 ## How to run
 
@@ -33,13 +23,13 @@ For MovieLens dataset, we only use `user_id`，`movie_id` is the feature of the 
 Initialize the model configuration file we need by replacing the variables in the corresponding 'YAML' template. For example:
 
 ```shell
-export MY_ S3_ BUCKET='your S3 bucket directory'
-envsubst < jaccard/conf/jaccard. yaml > jaccard/conf/jaccard.yaml.dev
+export MY_S3_BUCKET='your S3 bucket directory'
+envsubst < jaccard/conf/jaccard.yaml > jaccard/conf/jaccard.yaml.dev
 ```
 ### 3. Run the model test script
 
 We can now run the training script. For example, to train and test the Jaccard model with MovieLens-1M dataset, you need to execute the following command:
 ```shell
 cd jaccard
-python jaccard. py --conf conf/jaccard.yaml. dev > log/jaccard_ ml_ 1m. log 2>&1 &
+python jaccard.py --conf conf/jaccard.yaml.dev > log/jaccard_ml_1m.log 2>&1 &
 ```

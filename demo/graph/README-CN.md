@@ -4,21 +4,12 @@
 
 ## 模型列表
 
-
 |    模型     |                训练脚本                 |                        算法实现                         | 论文                                                                                                                                     |
 |:---------:|:-----------------------------------:|:-----------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
 |  Jaccard  |      [jaccard.py](jaccard/jaccard.py)    |   [jaccard_retrieval.py](../../python/algos/graph/jaccard/jaccard_retrieval.py)         | `-` |
 | Euclidean | [euclidean.py](euclidean/euclidean.py)   |   [euclidean_retrieval.py](../../python/algos/graph/euclidean/euclidean_retrieval.py)   | `-` |
-我们正在不断的添加新模型。
 
-## 测试结果
-
-|  Model  |           Dataset         | Precision@20 | Recall@20 |  MAP@20  | 
-|:-- ----:|:--------------------------|:------------:|:---------:|:--------:|
-| Jaccard | MovieLens-1M NegSample-10 |  0.00429635  | 0.08592715|0.02708586|
-|Euclidean| MovieLens-1M              |  0.00019867  | 0.00397350|0.00228660|
-
-对于基于物品相似度的召回模型，我们给出了它们各自实验结果。实验结果仅供参考。
+我们会不断的添加新模型。
 
 ## 如何运行
 ### 1. 数据准备
