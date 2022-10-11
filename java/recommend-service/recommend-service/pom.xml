@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>recommend-service</artifactId>
-        <groupId>com.dmetasoul.metaspore.recommend</groupId>
+        <artifactId>online-service</artifactId>
+        <groupId>com.dmetasoul.metaspore</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>service</artifactId>
+    <artifactId>recommend-service</artifactId>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
@@ -58,8 +58,8 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-bootstrap</artifactId>
-            <version>${spring.cloud.version}</version>
+            <version>${spring.cloud.version}</version><artifactId>spring-cloud-starter-bootstrap</artifactId>
+
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
@@ -67,7 +67,7 @@
             <version>${spring.cloud.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.dmetasoul.metaspore.recommend</groupId>
+            <groupId>com.dmetasoul.metaspore</groupId>
             <artifactId>service-sdk</artifactId>
             <version>1.0.0</version>
         </dependency>

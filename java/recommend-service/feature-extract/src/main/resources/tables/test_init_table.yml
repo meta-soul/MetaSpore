@@ -1,0 +1,7 @@
+tableName: "testinit"
+collectionName: "testinit"
+dbType: "mysql"
+columns:
+  - colName: "queryid"
+    colType: "String"
+

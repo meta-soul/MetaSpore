@@ -4,14 +4,17 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.dmetasoul.metaspore.recommend</groupId>
-    <artifactId>recommend-service</artifactId>
+    <groupId>com.dmetasoul.metaspore</groupId>
+    <artifactId>online-service</artifactId>
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>serving</module>
         <module>service-sdk</module>
         <module>example</module>
-        <module>service</module>
+        <module>recommend-service</module>
+        <module>feature-extract</module>
+        <module>experiment-pipeline</module>
+        <module>experiment-pipeline-example</module>
     </modules>
     <packaging>pom</packaging>
     <parent>

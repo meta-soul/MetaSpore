@@ -3,8 +3,8 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>recommend-service</artifactId>
-        <groupId>com.dmetasoul.metaspore.recommend</groupId>
+        <artifactId>online-service</artifactId>
+        <groupId>com.dmetasoul.metaspore</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -69,7 +69,7 @@
             <version>4.4.2</version>
         </dependency>
         <dependency>
-            <groupId>com.dmetasoul.metaspore.recommend</groupId>
+            <groupId>com.dmetasoul.metaspore</groupId>
             <artifactId>serving</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
