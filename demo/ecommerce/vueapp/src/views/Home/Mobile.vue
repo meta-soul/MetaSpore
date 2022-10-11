@@ -2,7 +2,7 @@
   <div class="home-container" v-loading="!datas">
     <template v-if="datas">
       <div class="user-list">
-        <el-dropdown split-button type="primary" @command="handleCommand">
+        <el-dropdown @command="handleCommand">
           <div class="avatar-container">
             <el-avatar
               src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
@@ -15,8 +15,7 @@
               :key="item"
               :command="item"
               >
-              <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
-              {{item}}
+             {{ item }}
               </el-dropdown-item
             >
             <!-- <el-dropdown-item command="A120RH58WVY4W6"
