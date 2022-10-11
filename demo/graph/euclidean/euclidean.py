@@ -22,7 +22,7 @@ import argparse
 import sys
 
 sys.path.append('../../../') 
-from python.algos.jaccard_retrieval import JaccardModel, JaccardEstimator
+from python.algos.graph import EuclideanModel, EuclideanEstimator
 
 def load_config(path):
     params = dict()
@@ -32,7 +32,7 @@ def load_config(path):
     return params
 
 def init_spark():
-    subprocess.run(['zip', '-r', 'demo/movielens/offline/python.zip', 'python'], cwd='../../../')
+    subprocess.run(['zip', '-r', 'demo/graph/euclidean/python.zip', 'python'], cwd='../../../')
     spark_confs={
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
@@ -82,14 +82,15 @@ def read_dataset(spark):
 
 
 def train(spark, train_dataset, item_dataset, **params):
-    estimator = JaccardEstimator(user_id_column_name=user_id_column_name,
+    estimator = EuclideanEstimator(user_id_column_name=user_id_column_name,
                                 item_id_column_name=item_id_column_name,
                                 behavior_column_name=behavior_column_name,
                                 behavior_filter_value=behavior_filter_value,
                                 key_column_name=key_column_name,
                                 value_column_name=value_column_name,
                                 max_recommendation_count=max_recommendation_count,
-                                jaccard_distance_threshold=jaccard_distance_threshold,
+                                euclidean_distance_threshold=euclidean_distance_threshold,
+                                euclidean_bucket_length=euclidean_bucket_length,
                                 debug=use_debug)
     print('Debug -- train item cf model...')
     model = estimator.fit(train_dataset)
@@ -118,10 +119,10 @@ def evaluate(spark, test_result, test_user=100):
     return RankingMetrics(prediction_label_rdd)
 
 def publish_model_to_s3(spark, model):
-    model.df.write.parquet(jaccard_out_path, mode="overwrite")
+    model.df.write.parquet(euclidean_out_path, mode="overwrite")
 
 if __name__=="__main__":
-    print('Debug -- Movielens jaccard Demo')
+    print('Debug -- Movielens euclidean Demo')
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
     args = parser.parse_args()
