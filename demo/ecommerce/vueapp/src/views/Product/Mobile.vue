@@ -27,7 +27,7 @@ export default {
   data() {
     return {
       // ListDatas: {
-      //   title: '相关推荐',
+      //   title: '看了又看',
       //   items: [
       //     { img: FlowerUrl },
       //     { img: Xing },
@@ -38,7 +38,7 @@ export default {
       isShow: true,
       productData: null,
       listDatas: {
-        title: '相关推荐',
+        title: '看了又看',
       },
     };
   },
@@ -51,7 +51,7 @@ export default {
     // this.productData = result[0];
     // let res = await this.$store.dispatch('asyncGetYouLikeProducts');
     // this.listDatas = {
-    //   title: '相关推荐',
+    //   title: '看了又看',
     //   items: res,
     // };
   },
@@ -76,12 +76,12 @@ export default {
           item_id: this.$route.params.productId,
         });
         this.listDatas = {
-          title: '相关推荐',
+          title: '看了又看',
           items: res,
         };
       }catch(e) {
          this.listDatas = {
-          title: '相关推荐',
+          title: '看了又看',
           items: [],
         };
       }

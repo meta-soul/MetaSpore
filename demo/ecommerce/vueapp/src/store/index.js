@@ -8,9 +8,16 @@ import {
 
 Vue.use(Vuex);
 
+const userList = [
+  "A23P7HJBRQ0F7L",
+  "A1EL1KCQTW6P32",
+  "A2E9076GV6LE6F",
+  'ANOYMOUS',
+]
 if (!localStorage.getItem('user')) {
-  localStorage.setItem('user', JSON.stringify('A23P7HJBRQ0F7L')); // 初始化
+  localStorage.setItem('user', JSON.stringify(userList[0])); // 初始化
 }
+
 
 export default new Vuex.Store({
   state: {

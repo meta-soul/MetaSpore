@@ -1,30 +1,39 @@
 <template>
   <div class="product-desc-container">
+    <!-- 图片放大 -->
     <div class="enlarge" v-show="isShow">
       <img class="image" @error="handleError" :src="data.image" alt="" />
       <i @click="handleOriginImg" class="iconfont icon-shanchu"></i>
     </div>
+     <!-- 正统页面 -->
     <div class="desc-wrapper" :style="{ opacity: isShow ? 0 : 1 }">
+      <!-- 左边图片部分 -->
       <div class="imgs left" ref="left" :class="{ 'left-error': isImgError }">
         <!-- <span v-if="isImgError" class="img-error">图片加载错误</span> -->
         <img class="image" @error="handleError" :src="data.image" alt="" />
         <i @click="handleEnlargeImg" class="iconfont icon-tupianfangda"></i>
       </div>
+      <!-- 右边文字等详情 -->
       <div
         class="right"
         ref="right"
         :style="{ transform: `translateY(${getScrollTop}px)` }"
       >
+        <!-- METASOUL DEV 字样 -->
         <div class="label letter-space gray-color small-fontsize">
           METASOUL DEV
         </div>
+        <!-- title详情 -->
         <div class="title letter-space" :title="data.description">
           {{ data.description }}
         </div>
+        <!-- 价格 -->
         <div class="price letter-space">
+          <!-- 划掉的价格 -->
           <s class="small-fontsize gray-color" v-if="data.price&&data.price.split('-')[1]">{{
             data.price.split('-')[1]
           }}</s>
+          <!-- 打折后的价格 -->
           <span class="discount" :class="{ nomargin: !data.price||!data.price.split('-')[1] }">{{
             data.price.split('-')[0] ? data.price.split('-')[0] : '$39'
           }}</span>
@@ -36,6 +45,7 @@
           > -->
           <a :href="data.url" class="sale">Sale</a>
         </div>
+        <!-- 购买数量的加减 -->
         <div class="quantity-container">
           <div class="quantity-label letter-space gray-color small-fontsize">
             Quantity
@@ -55,6 +65,7 @@
             <span @click="handleInNum" class="in">+</span>
           </div>
         </div>
+        <!-- 两个button -->
         <div class="add-card-button letter-space comment-button">
           Add to Card
         </div>
