@@ -109,7 +109,11 @@ public class FeatureTask extends DataService {
         immediateTables.addAll(feature.getImmediateFrom());
         for (String table : feature.getImmediateFrom()) {
             DataResult result = execute(table, request, context);
-            Assert.notNull(result, "immediateTables DataResult is not exist! at " + table);
+            if (result == null) {
+                result = new DataResult();
+                result.setName(table);
+                setDataResultByName(table, result, context);
+            }
         }
         rewritedField.clear();
         rewritedField.putAll(immediateRewritedField);

@@ -46,7 +46,6 @@ public class AlgoTransformTask extends DataService {
     protected ExecutorService taskPool;
     protected FeatureConfig.AlgoTransform algoTransform;
     protected Map<String, Function> additionFunctions;
-    protected TableData fieldTableData;
     protected Map<String, String> actionTypes;
 
     public <T> T getOptionOrDefault(String key, T value) {
@@ -74,7 +73,6 @@ public class AlgoTransformTask extends DataService {
         additionFunctions = Maps.newHashMap();
         initFunctions();
         addFunctions();
-        fieldTableData = new TableData();
         actionTypes = Maps.newHashMap();
         return initTask();
     }
@@ -117,7 +115,7 @@ public class AlgoTransformTask extends DataService {
         additionFunctions.put(name, function);
     }
 
-    public void addDataResults(List<String> names, DataContext context) {
+    public void addDataResults(TableData fieldTableData, List<String> names, DataContext context) {
         if (CollectionUtils.isNotEmpty(names)) {
             for (String taskName : names) {
                 DataResult result = getDataResultByName(taskName, context);
@@ -130,8 +128,9 @@ public class AlgoTransformTask extends DataService {
 
     @Override
     public DataResult process(ServiceRequest request, DataContext context) {
-        addDataResults(algoTransform.getFeature(), context);
-        addDataResults(algoTransform.getAlgoTransform(), context);
+        TableData fieldTableData = new TableData();
+        addDataResults(fieldTableData, algoTransform.getFeature(), context);
+        addDataResults(fieldTableData, algoTransform.getAlgoTransform(), context);
         StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
         for (FieldAction fieldAction : algoTransform.getActionList()) {
             if (StringUtils.isEmpty(fieldAction.getFunc())) {
