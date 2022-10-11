@@ -17,6 +17,8 @@
 |  xDeepFM  |  [xdeepfm.py](xdeepfm/xdeepfm.py)   |  [xdeepfm_net.py](../../python/algos/xdeepfm_net.py)  | [xDeepFM: Combining Explicit and Implicit Feature Interactions for Recommender Systems](https://arxiv.org/pdf/1803.05170.pdf)          |
 |   FwFM    |       [fwfm.py](fwfm/fwfm.py)       |     [fwfm_net.py](../../python/algos/fwfm_net.py)     | [Field-weighted Factorization Machines for Click-Through Rate Prediction in Display Advertising](https://arxiv.org/pdf/1806.03514.pdf) |
 |   FFM     |     [ffm.py](ffm/ffm.py)|  [ffm_net.py](../../python/algos/ffm_net.py)  | [Field-aware Factorization Machines for CTR Prediction](https://www.csie.ntu.edu.tw/~cjlin/papers/ffm.pdf)
+|   DIN     |    [din.py](din/din.py)     |  [din_net.py](../../python/algos/sequential/din/din_net.py)   |  [Deep Interest Network for Click-Through Rate Prediction](https://arxiv.org/pdf/1706.06978.pdf) |
+|   DIEN    |    [dien.py](dien/dien.py)  |  [dien_net.py](../../python/algos/sequential/dien/dien_net.py) |  [Deep Interest Evolution Network for Click-Through Rate Prediction](https://arxiv.org/pdf/1809.03672v1.pdf) |
 
 
 ## 基准
