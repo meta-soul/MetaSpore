@@ -235,23 +235,6 @@ class OnlineGenerator(object):
                                              options={"algo-name": model_info.name},
                                              fieldActions=field_actions,
                                              output=[user_key, item_key, "score", "origin_scores"])
-            service_name = "recall_%s" % model_info.name
-            recommend_config.add_service(name=service_name, tasks=[algoTransform_name],
-                                         options={"maxReservation": 200})
-            experiment_name = "recall.%s" % model_info.name
-            recommend_config.add_experiment(name=experiment_name,
-                                            options={"maxReservation": 100}, chains=[
-                    Chain(then=[service_name], transforms=[
-                        TransformConfig(name="cutOff"),
-                        TransformConfig(name="updateField", option={
-                            "input": ["score", "origin_scores"], "output": ["origin_scores"],
-                            "updateOperator": "putOriginScores"
-                        })
-                    ])
-                ])
-            recall_experiments.append(experiment_name)
-            related_recall_experiments.append(experiment_name)
-            recall_services.append(service_name)
         if self.configure.cf_models:
             for model_info in self.configure.cf_models:
                 model_info = dictToObj(model_info)
