@@ -2,7 +2,7 @@
   <div class="home-container" v-loading="!datas">
     <template v-if="datas">
       <div class="user-list">
-        <el-dropdown type="#000" @command="handleCommand">
+        <el-dropdown @command="handleCommand">
           <div class="avatar-container">
             <el-avatar
               src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
@@ -70,7 +70,7 @@ export default {
       this.$store.state.cur_user
     );
     this.datas = {
-      title: 'Guess You Like',
+      title: '猜你喜欢',
       items: result,
     };
   },
@@ -83,7 +83,7 @@ export default {
       this.datas = null;
       let result = await this.$store.dispatch('asyncGetAllProducts', command);
       this.datas = {
-        title: 'Guess You Like',
+        title: '猜你喜欢',
         items: result,
       };
     },
@@ -93,7 +93,7 @@ export default {
 <style scoped lang="less">
 .home-container {
   height: calc(100vh - 46px);
-  padding: 5px 100px;
+  padding: 5px 10vw;
   box-sizing: border-box;
   .user-list {
     text-align: end;

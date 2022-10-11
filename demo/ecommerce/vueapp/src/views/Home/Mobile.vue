@@ -75,7 +75,7 @@ export default {
       this.$store.state.cur_user
     );
     this.datas = {
-      title: 'Guess You Like',
+      title: '猜你喜欢',
       items: result,
     };
   },
@@ -88,7 +88,7 @@ export default {
       this.datas = null;
       let result = await this.$store.dispatch('asyncGetAllProducts', command);
       this.datas = {
-        title: 'Guess You Like',
+        title: '猜你喜欢',
         items: result,
       };
       this.isCollapse = false;
@@ -108,11 +108,12 @@ export default {
 }
 .avatar-container {
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: .3rem;
     display: flex;
     align-items: center;
   }
   .user {
-    margin-left: 5px;
+    margin-left: .1rem;
+    font-size: .1rem;
   }
 </style>

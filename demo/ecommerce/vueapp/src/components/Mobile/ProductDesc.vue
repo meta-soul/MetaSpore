@@ -192,8 +192,8 @@ export default {
     },
   },
   beforeDestroy() {
-    document.addEventListener('scroll', this.handleScroll);
-    window.addEventListener('resize', this.getHeightInfo);
+    document.removeEventListener('scroll', this.handleScroll);
+    window.removeEventListener('resize', this.getHeightInfo);
   },
 };
 </script>
