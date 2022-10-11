@@ -31,6 +31,7 @@ export default {
   font-family: Assistant, sans-serif;
   font-style: normal;
   letter-spacing: 2px;
+  color: lighten(#000, 40%);
 }
 .content {
   width: 100%;
