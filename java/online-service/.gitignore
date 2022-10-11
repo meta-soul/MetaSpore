@@ -1,0 +1,5 @@
+# Default ignored files
+/.idea
+/online-service.iml
+/experiment-pipeline-example/target/
+/feature-extract/target/
