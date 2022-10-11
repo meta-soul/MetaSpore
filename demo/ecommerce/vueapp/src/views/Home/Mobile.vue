@@ -2,7 +2,7 @@
   <div class="home-container" v-loading="!datas">
     <template v-if="datas">
       <div class="user-list">
-        <el-dropdown split-button type="primary" @command="handleCommand">
+        <el-dropdown @command="handleCommand">
           <div class="avatar-container">
             <el-avatar
               src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
@@ -15,8 +15,7 @@
               :key="item"
               :command="item"
               >
-              <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
-              {{item}}
+             {{ item }}
               </el-dropdown-item
             >
             <!-- <el-dropdown-item command="A120RH58WVY4W6"
@@ -76,7 +75,7 @@ export default {
       this.$store.state.cur_user
     );
     this.datas = {
-      title: 'Guess You Like',
+      title: '猜你喜欢',
       items: result,
     };
   },
@@ -89,7 +88,7 @@ export default {
       this.datas = null;
       let result = await this.$store.dispatch('asyncGetAllProducts', command);
       this.datas = {
-        title: 'Guess You Like',
+        title: '猜你喜欢',
         items: result,
       };
       this.isCollapse = false;
@@ -109,11 +108,12 @@ export default {
 }
 .avatar-container {
     cursor: pointer;
-    margin-top: 20px;
+    margin-top: .3rem;
     display: flex;
     align-items: center;
   }
   .user {
-    margin-left: 5px;
+    margin-left: .1rem;
+    font-size: .1rem;
   }
 </style>

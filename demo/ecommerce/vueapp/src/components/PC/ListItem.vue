@@ -7,7 +7,7 @@
     }"
     class="list-item-container"
   >
-    <div class="inner">
+    <div class="inner" ref="inner">
       <!-- <span v-if="imgError" class="img-error">图片加载错误</span> -->
       <!-- <img
         v-lazy="data.image"
@@ -56,13 +56,23 @@ export default {
       imgError: false,
     };
   },
+  mounted() {
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
+  },
   methods: {
+    handleResize() {
+      this.$refs.inner.style.height = this.$refs.inner.clientWidth *1 + "px";
+    }
     // handleError() {
     //   // e.detail.el.parentNode.parentNode.remove();
     //   // this.imgError = true;
     //   // e.detail.el.remove();
       
     // },
+  },
+  beforeDestroy() {
+    window.removeEventListener('resize', this.handleResize);
   },
 };
 </script>
@@ -89,7 +99,7 @@ a {
 }
 .inner {
   width: 100%;
-  height: 20vw;
+  /*height: 20vw;*/
   overflow: hidden;
   position: relative;
 }

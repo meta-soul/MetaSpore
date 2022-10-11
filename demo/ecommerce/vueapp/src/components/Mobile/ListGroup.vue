@@ -30,6 +30,7 @@ export default {
 .title {
   letter-spacing: 0.05rem;
   font-size: 0.5rem;
+  color: lighten(#000, 40%);
 }
 .content {
   width: 100%;
