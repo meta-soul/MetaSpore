@@ -28,8 +28,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/meta-soul/metasporeflow"
-"Bug Tracker" = "https://github.com/meta-soul/metasporeflow/issues"
+"Homepage" = "https://github.com/meta-soul/MetaSpore/tree/main/python/metasporeflow"
+"Bug Tracker" = "https://github.com/meta-soul/MetaSpore/issues"
 
 [tool.setuptools.packages.find]
 where = ["python"]

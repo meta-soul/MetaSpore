@@ -22,8 +22,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/meta-soul/metasporecli"
-"Bug Tracker" = "https://github.com/meta-soul/metasporecli/issues"
+"Homepage" = "https://github.com/meta-soul/MetaSpore/tree/main/python/metasporecli"
+"Bug Tracker" = "https://github.com/meta-soul/MetaSpore/issues"
 
 [project.scripts]
 metaspore = "metasporecli.__main__:main"
