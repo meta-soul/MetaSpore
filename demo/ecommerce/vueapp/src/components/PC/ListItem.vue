@@ -158,9 +158,11 @@ a {
   overflow: hidden;
   -webkit-line-clamp: 3;
   color: #666;
+  transition: .5s;
 }
 .desc:hover {
-  text-decoration: underline;
+  /* text-decoration: underline; */
+  color: lighten(gray, 5%);
 }
 .price span {
   font-size: 1vw;

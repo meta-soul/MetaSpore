@@ -6,6 +6,6 @@ module.exports = defineConfig({
       "/service": {
         target: "http://recommend-demo.dmetasoul.com"
       }
-    }
-  }
+    },
+  },
 })

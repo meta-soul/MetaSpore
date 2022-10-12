@@ -10,16 +10,30 @@
         :key="i"
       />
     </div>
+    <!-- <Top /> -->
   </div>
 </template>
 
 <script>
 import ListItem from './ListItem.vue';
+// import Top from '@/components/Mobile/Top.vue';
 export default {
   props: ['datas', 'underline', 'acolor'],
   components: {
     ListItem,
+    // Top
   },
+  // mounted() {
+  //   window.addEventListener("scroll", this.handleScroll);
+  // },
+  // methods: {
+  //   handleScroll() {
+  //     this.$bus.$emit("mainScroll", window);
+  //   },
+  //   beforeDestroy() {
+  //     window.removeEventListener("scroll", this.handleScroll);
+  //   }
+  // }
 };
 </script>
 
@@ -31,6 +45,8 @@ export default {
   letter-spacing: 0.05rem;
   font-size: 0.5rem;
   color: lighten(#000, 40%);
+
+  
 }
 .content {
   width: 100%;

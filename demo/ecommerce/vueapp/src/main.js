@@ -5,8 +5,10 @@ import store from './store';
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import VueLazyload from 'vue-lazyload';
+import bus from "./eventBus"
 
 Vue.use(ElementUI);
+Vue.prototype.$bus = bus;
 
 // 使用（以下两种方式可选）：
 // 1.直接使用

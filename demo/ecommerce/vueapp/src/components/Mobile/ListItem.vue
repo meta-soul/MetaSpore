@@ -19,7 +19,7 @@
         {{
           data.description
             ? ''
-            : 'Doublju companyservices to customer qualified products withqualified products with'
+            : 'Doublju companyservices to customer qualified products with qualified products with'
         }}
       </div>
       <div class="price">

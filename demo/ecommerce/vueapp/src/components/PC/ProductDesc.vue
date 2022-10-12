@@ -35,7 +35,7 @@
           }}</s>
           <!-- 打折后的价格 -->
           <span class="discount" :class="{ nomargin: !data.price||!data.price.split('-')[1] }">{{
-            data.price.split('-')[0] ? data.price.split('-')[0] : '$39'
+            data.price&&data.price.split('-')[0] ? data.price.split('-')[0] : '$39'
           }}</span>
           <!-- <s class="small-fontsize gray-color"
             >{{ data.price.split('-')[1] }}{{ data.price ? ' USD' : '' }}</s

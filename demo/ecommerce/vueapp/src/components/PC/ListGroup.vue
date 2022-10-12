@@ -1,6 +1,6 @@
 <template>
   <div class="list-group-container">
-    <div class="title">{{ datas.title }}</div>
+    <div class="title"><span class="title-title">{{ datas.title }}</span></div>
     <div class="content" v-loading="!datas.items">
       <ListItem
         :underline="underline"
@@ -10,16 +10,31 @@
         :key="i"
       />
     </div>
+    <!-- <Top /> -->
   </div>
 </template>
 
 <script>
 import ListItem from './ListItem.vue';
+// import Top from '@/components/PC/Top.vue';
 export default {
   props: ['datas', 'underline', 'acolor'],
   components: {
     ListItem,
+    // Top
   },
+  
+  // mounted() {
+  //   window.addEventListener("scroll", this.handleScroll);
+  // },
+  // methods: {
+  //   handleScroll() {
+  //     this.$bus.$emit("mainScroll", window);
+  //   },
+  //   beforeDestroy() {
+  //     window.removeEventListener("scroll", this.handleScroll);
+  //   }
+  // }
 };
 </script>
 
@@ -33,6 +48,20 @@ export default {
   letter-spacing: 2px;
   color: lighten(#000, 40%);
   font-size: 25px;
+  width: fit-content;
+
+
+  text-shadow: 
+              -1px -1px #fff;
+  /* animation: identifier 1s linear infinite alternate; */
+}
+@keyframes identifier {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1.1);
+  }
 }
 .content {
   width: 100%;
