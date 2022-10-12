@@ -24,7 +24,7 @@ import sys
 from operator import itemgetter
 
 sys.path.append('../../../')
-from python.algos.sequential import DIN
+from python.algos.sequential import BST
 
 def load_config(path):
     params=dict()
@@ -34,7 +34,7 @@ def load_config(path):
     return params
 
 def init_spark():
-    subprocess.run(['zip', '-r', 'demo/ctr/din/python.zip', 'python'], cwd='../../../')
+    subprocess.run(['zip', '-r', 'demo/ctr/bst/python.zip', 'python'], cwd='../../../')
     spark_confs={
         "spark.network.timeout":"500",
         "spark.submit.pyFiles":"python.zip",
@@ -48,7 +48,7 @@ def init_spark():
                                         server_memory=server_memory,
                                         coordinator_memory=coordinator_memory,
                                         spark_confs=spark_confs)
-    
+
     sc = spark_session.sparkContext
     print('Debug -- spark init')
     print('Debug -- version:', sc.version)   
@@ -71,30 +71,32 @@ def read_dataset(spark):
     print('Debug -- train dataset negative count:', train_dataset[train_dataset['label']=='0'].count())
     print('Debug -- test dataset count:', test_dataset.count())
     return train_dataset, test_dataset
-    
+
 def train(spark, trian_dataset, **model_params):
-    ## init wide and deep model
-    module = DIN(use_wide=use_wide,
+    module = BST(max_seq_length=max_seq_length,
+                 use_wide=use_wide,
                  use_deep=use_deep,
-                 din_embedding_dim=din_embedding_dim,
+                 bst_embedding_dim=bst_embedding_dim,
                  wide_embedding_dim=wide_embedding_dim,
                  deep_embedding_dim=deep_embedding_dim,
-                 din_column_name_path=din_column_name_path,
-                 din_combine_schema_path=din_combine_schema_path,
+                 bst_column_name_path=bst_column_name_path,
+                 bst_combine_schema_path=bst_combine_schema_path,
                  wide_column_name_path=wide_column_name_path,
                  wide_combine_schema_path=wide_combine_schema_path,
                  deep_column_name_path=deep_column_name_path,
-                 deep_combine_schema_path=deep_combine_schema_path,                 
-                 din_attention_hidden_layers=din_attention_hidden_layers,
-                 din_attention_hidden_activations=din_attention_hidden_activations,
-                 din_attention_batch_norm=din_attention_batch_norm,
-                 din_attention_dropout=din_attention_dropout,
-                 din_hidden_layers=din_hidden_layers,
-                 din_hidden_activations=din_hidden_activations,
-                 din_hidden_batch_norm=din_hidden_batch_norm,
-                 din_hidden_dropout=din_hidden_dropout,
-                 din_seq_column_index_list=din_seq_column_index_list,
-                 din_target_column_index_list=din_target_column_index_list,
+                 deep_combine_schema_path=deep_combine_schema_path,  
+                 bst_trm_n_layers=bst_trm_n_layers,
+                 bst_trm_n_heads=bst_trm_n_heads,
+                 bst_trm_inner_size=bst_trm_inner_size,
+                 bst_trm_hidden_dropout=bst_trm_hidden_dropout,
+                 bst_trm_attn_dropout=bst_trm_attn_dropout,
+                 bst_trm_hidden_act=bst_trm_hidden_act,
+                 bst_hidden_layers=bst_hidden_layers,
+                 bst_hidden_activations=bst_hidden_activations,
+                 bst_hidden_batch_norm=bst_hidden_batch_norm,
+                 bst_hidden_dropout=bst_hidden_dropout,
+                 bst_seq_column_index_list=bst_seq_column_index_list,
+                 bst_target_column_index_list=bst_target_column_index_list,
                  deep_hidden_units=deep_hidden_units,
                  deep_hidden_activations=deep_hidden_activations,
                  deep_hidden_dropout=deep_hidden_dropout,
@@ -104,7 +106,7 @@ def train(spark, trian_dataset, **model_params):
                  ftrl_l2=ftrl_l2,
                  ftrl_alpha=ftrl_alpha,
                  ftrl_beta=ftrl_beta)
-    
+
     estimator = ms.PyTorchEstimator(module=module,
                                   worker_count=worker_count,
                                   server_count=server_count,
@@ -114,9 +116,8 @@ def train(spark, trian_dataset, **model_params):
                                   experiment_name=experiment_name,
                                   input_label_column_index=input_label_column_index,
                                   metric_update_interval=metric_update_interval,
-                                  train_epoches=train_epoches) #100
+                                  training_epoches=training_epoches) 
     model = estimator.fit(trian_dataset)
-     ## dnn learning rate
     estimator.updater = ms.AdamTensorUpdater(adam_learning_rate)
     import subprocess
     run_res = subprocess.run(['aws', 's3', 'ls', model_out_path], 
@@ -137,7 +138,7 @@ def evaluate(spark, test_result):
     return auc
 
 if __name__=="__main__":
-    print('Debug -- CTR Demo DIN')
+    print('Debug -- CTR Demo BST')
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
     args = parser.parse_args()

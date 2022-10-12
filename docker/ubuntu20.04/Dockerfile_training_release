@@ -29,6 +29,7 @@ RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal multiverse" >>/etc/apt/s
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal-updates multiverse" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal-backports main restricted universe multiverse" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security main restricted" >>/etc/apt/sources.list
+RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security universe" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security multiverse" >>/etc/apt/sources.list
 RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y locales
@@ -41,6 +42,7 @@ ENV LC_ALL=en_US.UTF-8
 ENV TZ=Asia/Shanghai
 RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install -y tzdata
 RUN apt-get install -y python3.8 python3-setuptools ca-certificates maven vim sudo curl wget git libgomp1
+RUN apt-get install -y cron zip
 ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
@@ -86,7 +88,7 @@ ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/jars/synapseml_2.12-${SYNAPSEML_VE
 COPY docker/ubuntu20.04/release-copy-deps-pom.xml docker/ubuntu20.04/maven-proxy-settings.xml .
 ARG MAVEN_OPTS="-Xmx4g -XX:ReservedCodeCacheSize=1g"
 ENV MAVEN_OPTS=${MAVEN_OPTS}
-RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -Dsynapseml.version=$SYNAPSEML_VERSION -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
+RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml org.apache.maven.plugins:maven-dependency-plugin:2.10:copy-dependencies -Dsynapseml.version=$SYNAPSEML_VERSION -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
 ENV MAVEN_OPTS=
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
@@ -101,7 +103,7 @@ ENV PYTHONPATH=$SPARK_HOME/python:$SPARK_HOME/jars/synapseml_2.12-${SYNAPSEML_VE
 COPY docker/ubuntu20.04/release-copy-deps-pom.xml docker/ubuntu20.04/maven-proxy-settings.xml .
 ARG MAVEN_OPTS="-Xmx4g -XX:ReservedCodeCacheSize=1g"
 ENV MAVEN_OPTS=${MAVEN_OPTS}
-RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml dependency:copy-dependencies -Dsynapseml.version=$SYNAPSEML_VERSION -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
+RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml org.apache.maven.plugins:maven-dependency-plugin:2.10:copy-dependencies -Dsynapseml.version=$SYNAPSEML_VERSION -DskipTests -Dmaven.test.skip=true -Dactivate.spark-hadoop-cloud=${INSTALL_SPARK_CLOUD} -DoutputDirectory=${SPARK_HOME}/jars && rm -rf ~/.m2 maven-proxy-settings.xml release-copy-deps-pom.xml
 ENV MAVEN_OPTS=
 
 FROM spark-${SPARK_RELEASE}-install as release
