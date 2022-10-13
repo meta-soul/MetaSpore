@@ -25,7 +25,7 @@
         </div>
         <!-- title详情 -->
         <div class="title letter-space" :title="data.description">
-          {{ data.description }}
+          {{ data.description||data.title }}
         </div>
         <!-- 价格 -->
         <div class="price letter-space">

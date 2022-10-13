@@ -25,9 +25,9 @@
     </div>
     <div class="information">
       <div class="desc" :style="{ color: acolor }">
-        {{ data.description
+        {{ data.description||data.title
         }}{{
-          data.description
+          data.description||data.title
             ? ''
             : 'Doublju company services to customer qualified products withqualified products with'
         }}

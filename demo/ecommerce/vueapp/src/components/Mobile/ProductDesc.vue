@@ -29,14 +29,14 @@
           :class="{ 'multiline-ellipsis': !isReadMore }"
           :title="data.description"
         >
-          {{ data.description }}
+          {{ data.description||data.title}}
         </div>
         <div
           ref="titleOut"
           class="title title-out letter-space"
           :title="data.description"
         >
-          {{ data.description }}
+          {{ data.description||data.title }}
         </div>
         <button v-if="readMoreShow" @click="handleReadMore" class="read-more">
           {{ isReadMoreValue }}
