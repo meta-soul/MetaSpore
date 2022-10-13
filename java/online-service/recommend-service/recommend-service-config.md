@@ -25,18 +25,25 @@
 > + name：str, 必须字段，特征数据表数据别名
 > + source：str, 必须字段，特征数据连接信息source中配置的name
 > + columns：list<map<str, object>>, 必须字段， 特征数据表的表结构， 列表中每一项为一个key-value对，key是字段名， value是类型名称，支持struct类型配置，如
-```
-    value_list: # 字段名
-        list_struct: # 表示是一个list， 元素为一个struct，这个struct包含一个str字段item_id, double字段score
-          item_id: str
-          score: double
-```
+>> ```
+>>    value_list: # 字段名
+>>        list_struct: # 表示是一个list， 元素为一个struct，这个struct包含一个str字段item_id, double字段score
+>>          item_id: str
+>>          score: double
+>> ```
 > + options: map<str, object>,可选字段（默认为空字典), 读取数据表额外需要的配置参数
 > + taskName：str, 可选字段（默认跟随kind选择相应的读取程序），一般不用配置，用于自定义数据源读取程序时使用
 > + table： str, 可选字段（默认为name)， 数据表名称 (没有数据表 如redis，可不配置)
 > + prefix： str, 可选字段（默认为"")，暂时特别用于redis， 生成redis key时，指定key的格式， 字符串format格式化字符串，可以不用配置
 > + sqlFilters: list<str>, 可选字段（默认为[]), 特别用于JDBC条件下， 列表中每一项为sql中where过滤条件sql片断
 > + filters: list<map<str, map<str, object>>>，可选字段（默认为[]), 特别用于MongoDB条件下， 列表中每一项为一个key-value对， key是数据表包含的字段名称， value是一个map， 其中key支持gt, lt, ge, le, eq, in等操作， value是相应的数值
+
+> 这里source相当于database， sourceTable相当于database中的数据表，读取sourceTable相当于执行sql
+>> ```
+>> use source; 
+>> select cloumns from table where filters and request condition;
+>>```
+> 后续可以实现支持使用sql来完成配置sourceTable
 
 ### 3. 特征join关联表配置： feature
 > feature包含配置项：
@@ -45,6 +52,14 @@
 > + select: list<str>, 必须字段，关联表选取的字段，对于from表里有多个表同时含有相同字段名称时，需要指定table
 > + condition: list<struct>, 可选字段（默认为[]), list中每一项包含一个key-value，key是join左表表名.字段， value是join右表表名。字段； type指定join类型，如left， right， inner， full。 默认inner
 > + filters:list<map<str, map<str, object>>>,可选字段（默认为[]), 类似于sourceTable中的filters，不同的是这里对所有kind都生效，暂不支持类似a.field1 > b.fileld2这样的过滤
+
+> 这里feature相当于
+>> ```
+>> select feature.select 
+>> from feature.from[0] join on feature.from[1] on feature.condition
+>> where feature.filters;
+>> ```
+> 后续可以实现支持使用sql来完成配置feature
 
 ### 4. 特征计算转换配置： algoTransform
 > algoTransform包含配置项：
@@ -80,6 +95,24 @@
 ```
 > + output:list<str>, 必须字段，algoTransform最终的输出字段
 > + options: map<str, object>, 可选字段（默认为空字典),相关额外参数
+
+> 这里algoTransform相当于
+ >> ```
+ >> select algoTransform.output 
+ >> from (
+ >>   select fieldActions[i].func(fields[0], ..., input[0], ..) as fieldActions[i].names, 
+ >>          ...,
+ >>   from feature[0]
+ >>   union
+ >>   ...
+ >>   union
+  >>   select fieldActions[j].func(fields[0], ..., input[0], ..) as fieldActions[j].names,
+  >>          ...
+  >>   from algoTransform[n]
+ >> );
+ >> 其中input[0] = fieldActions[?].func(fields[0], ..., input[0], ..)[?]
+ >> ```
+ > 后续可以实现支持使用sql来完成配置algoTransform
 
 ## 三. 推荐服务：recommend-config
 > recommend-config包括 
