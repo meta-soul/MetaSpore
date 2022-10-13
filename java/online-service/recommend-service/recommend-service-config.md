@@ -96,6 +96,7 @@
 > + output:list<str>, 必须字段，algoTransform最终的输出字段
 > + options: map<str, object>, 可选字段（默认为空字典),相关额外参数
 
+
 > 这里algoTransform相当于
  >> ```
  >> select algoTransform.output 
