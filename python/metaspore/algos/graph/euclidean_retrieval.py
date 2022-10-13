@@ -14,7 +14,6 @@
 # limitations under the License.
 #
 
-from sqlalchemy import alias
 import pyspark.ml.base
 import pyspark.sql.functions as F
 from pyspark.sql import Window
