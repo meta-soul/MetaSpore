@@ -15,12 +15,7 @@
     </div>
     <div class="information">
       <div class="desc" :style="{ color: acolor }">
-        {{ data.description||data.title }}
-        {{
-          data.description||data.title
-            ? ''
-            : 'Doublju companyservices to customer qualified products with qualified products with'
-        }}
+        {{data.title||data.description}}
       </div>
       <div class="price">
         <s v-if="underline && data.price && data.price.split('-')[1]">{{
@@ -143,7 +138,7 @@ a {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 
   color: lighten(#000, 10%);
 }

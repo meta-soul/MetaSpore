@@ -27,16 +27,16 @@
           ref="title"
           class="title elipse letter-space"
           :class="{ 'multiline-ellipsis': !isReadMore }"
-          :title="data.description"
+          :title="data.title"
         >
-          {{ data.description||data.title}}
+          {{ data.title||data.description}}
         </div>
         <div
           ref="titleOut"
           class="title title-out letter-space"
-          :title="data.description"
+          :title="data.title"
         >
-          {{ data.description||data.title }}
+          {{ data.title||data.description }}
         </div>
         <button v-if="readMoreShow" @click="handleReadMore" class="read-more">
           {{ isReadMoreValue }}
@@ -113,6 +113,7 @@ export default {
     };
   },
   mounted() {
+    console.log(this.data);
     this.getHeightInfo();
     window.addEventListener('resize', this.getHeightInfo);
 
@@ -137,9 +138,9 @@ export default {
         this.getScrollTop = 0;
       } else if (
         this.$refs.left.clientHeight - this.$refs.right.clientHeight >=
-        document.documentElement.scrollTop
+        (document.documentElement.scrollTop || document.body.scrollTop)
       ) {
-        this.getScrollTop = document.documentElement.scrollTop;
+        this.getScrollTop = document.documentElement.scrollTop || document.body.scrollTop;
       }
     },
     getHeightInfo() {
@@ -153,12 +154,19 @@ export default {
     handleReadMore() {
       if (this.isReadMoreValue === '查看更多 >>>') {
         // 在点之前记录一下scrollTop的值
-        this.readMoreTop = document.documentElement.scrollTop;
+        this.readMoreTop = document.documentElement.scrollTop || document.body.scrollTop;
       } else if (this.isReadMoreValue === '收起 >') {
-        document.documentElement.scrollTo({
-          top: this.readMoreTop,
-          behavior: 'smooth',
-        });
+        if(document.documentElement) {
+          document.documentElement.scrollTo({
+            top: this.readMoreTop,
+            behavior: 'smooth',
+          });
+        }else {
+          document.body.scrollTo({
+            top: this.readMoreTop,
+            behavior: 'smooth',
+          })
+        }
       }
       this.isReadMore = !this.isReadMore;
       this.isReadMoreValue =
@@ -193,6 +201,9 @@ export default {
       this.num = this.editNum;
       this.editNum = '';
       this.numEditShow = false;
+      if(this.num < 1) {
+        this.num = 1;
+      }
     },
   },
   beforeDestroy() {

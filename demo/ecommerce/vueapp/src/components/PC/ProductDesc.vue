@@ -24,8 +24,8 @@
           METASOUL DEV
         </div>
         <!-- title详情 -->
-        <div class="title letter-space" :title="data.description">
-          {{ data.description||data.title }}
+        <div class="title letter-space" :title="data.title">
+          {{ data.title||data.description }}
         </div>
         <!-- 价格 -->
         <div class="price letter-space">
@@ -116,9 +116,9 @@ export default {
         this.getScrollTop = 0;
       } else if (
         this.$refs.left.clientHeight - this.$refs.right.clientHeight >=
-        document.documentElement.scrollTop
+        (document.documentElement.scrollTop || document.body.scrollTop)
       ) {
-        this.getScrollTop = document.documentElement.scrollTop;
+        this.getScrollTop = document.documentElement.scrollTop || document.body.scrollTop;
       }
     },
     getHeightInfo() {
@@ -160,6 +160,9 @@ export default {
       this.num = this.editNum;
       this.editNum = '';
       this.numEditShow = false;
+      if(this.num < 1) {
+        this.num = 1;
+      }
     },
   },
   beforeDestroy() {
@@ -250,8 +253,8 @@ export default {
 }
 
 .title {
-  line-height: 2.5rem;
-  font-size: 1.5rem;
+  line-height: 3rem;
+  font-size: 2rem;
   color: lighten(#000, 20%);
 
   display: -webkit-box;
