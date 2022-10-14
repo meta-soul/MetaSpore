@@ -133,7 +133,7 @@ def evaluate(spark, test_result, test_user=100):
     return RankingMetrics(prediction_label_rdd)
 '''
 if __name__=="__main__":
-    print('Debug -- Ecommerce Samples Preprocessing')
+    print('Debug -- Node2Vec Demo')
     parser = argparse.ArgumentParser()
     parser.add_argument('--conf', type=str, action='store', default='', help='config file path')
     parser.add_argument('--debug', type=boolean_string, default=False, help='whether to open debug mode')
