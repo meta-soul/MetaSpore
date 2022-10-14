@@ -20,7 +20,7 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 
 ### Build Docker Image
 ```
-docker build -t swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/ecommerce-vue-app -f dockerfile .
+docker build -t swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/ecommerce-vue-app:v1.0.0 -f dockerfile .
 ```
 
 ### Start Docker
