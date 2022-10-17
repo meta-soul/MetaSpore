@@ -30,6 +30,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import StringType, ArrayType
 from python.algos.graph import Node2VecEstimator
+from pyspark.mllib.evaluation import RankingMetrics
 
 def load_config(path):
     params = dict()
@@ -76,14 +77,16 @@ def load_dataset(spark, conf, fmt='parquet', debug=False, verbose=False):
     train_dataset = spark.read.parquet(conf['train_path'])
     print('Debug -- train dataset count:', train_dataset.count())
     
-    test_dataset = spark.read.parquet(conf['test_path'])
-    print('Debug -- test dataset count:', test_dataset.count())
+    test_dataset = None
+    if 'test_path' in conf:
+        test_dataset = spark.read.parquet(conf['test_path'])
+        print('Debug -- test dataset count:', test_dataset.count())
     
     return train_dataset, test_dataset
 
 def train(spark, train_dataset, **params):
     estimator = Node2VecEstimator(source_vertex_column_name=params['user_id'],
-                                    destination_vertex_column_name=params['friend_id'],
+                                    destination_vertex_column_name=params['item_id'],
                                     trigger_vertex_column_name=params['user_id'],
                                     behavior_column_name=params['label_column'],
                                     behavior_filter_value=params['label_value'],
@@ -104,10 +107,9 @@ def train(spark, train_dataset, **params):
                                     debug=params['debug'])
     print('Debug -- train node2vec model...')
     model = estimator.fit(train_dataset)
-    print('Debug -- train model.df:', model.df)
     model.df.show(20, False)
     return model
-'''
+
 def transform(spark, model, test_dataset, user_id_column_name, last_item_col_name, 
               item_id_column_name, **kwargs):
     print('Debug -- transform swing model...')
@@ -116,22 +118,27 @@ def transform(spark, model, test_dataset, user_id_column_name, last_item_col_nam
             .agg(F.collect_set(item_id_column_name).alias('label_items'))
     test_df = test_df.withColumnRenamed(last_item_col_name, item_id_column_name)
     prediction_df = model.transform(test_df)
-    prediction_df = prediction_df.withColumnRenamed('value', 'rec_info')
+    prediction_df = prediction_df.withColumn('rec_info', F.col('value').cast('array<struct<name:string,_2:double>>'))
     print('Debug -- transform result sample:')
     prediction_df.show(10)
     return prediction_df
 
-def evaluate(spark, test_result, test_user=100):
+def evaluate(spark, test_result, top_k, test_user=100): 
     print('Debug -- test sample:')
     test_result.select('user_id', 'rec_info').show(10)
     print('Debug -- test user:%d sample:' % test_user)
     test_result[test_result['user_id']==100].select('user_id', 'rec_info').show(10)
 
     prediction_label_rdd = test_result.rdd.map(lambda x:(\
-                                    [xx._1 for xx in x.rec_info] if x.rec_info is not None else [], \
+                                    [xx.name for xx in x.rec_info] if x.rec_info is not None else [], \
                                      x.label_items))
-    return RankingMetrics(prediction_label_rdd)
-'''
+    
+    recall_metrics = RankingMetrics(prediction_label_rdd)
+    print("Debug -- Precision@%d: %f" % (top_k, recall_metrics.precisionAt(top_k)))
+    print("Debug -- Recall@%d: %f" % (top_k, recall_metrics.recallAt(top_k)))
+    print("Debug -- MAP@%d: %f" % (top_k, recall_metrics.meanAveragePrecisionAt(top_k)))
+    print("Debug -- NDCG@%d: %f" % (top_k, recall_metrics.ndcgAt(top_k)))
+
 if __name__=="__main__":
     print('Debug -- Node2Vec Demo')
     parser = argparse.ArgumentParser()
@@ -142,12 +149,16 @@ if __name__=="__main__":
     print('Debug -- conf:', args.conf)
     print('Debug -- verbose:', args.verbose)
     params = load_config(args.conf)
-    # init logging
-    # setup_logging(**params['logging'])
     # init spark
     spark = init_spark(params['spark'])
     # load datasets
     train_dataset, test_dataset = load_dataset(spark,  params['dataset'], debug=args.debug, verbose=args.verbose)
     # fit model
     model = train(spark, train_dataset, **params['training'])
+    if test_dataset:
+        # transform
+        test_result = transform(spark, model, test_dataset, params['training']['user_id'],
+                           params['training']['last_item_id'], params['training']['item_id'])
+        # evaluate
+        evaluate(spark, test_result, params['training']['max_recommendation_count'])
     spark.stop()

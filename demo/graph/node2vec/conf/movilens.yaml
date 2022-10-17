@@ -1,6 +1,6 @@
 spark:
   session_confs:
-    app_name: Node2Vec Demo
+    app_name: Node2Vec Demo - MovieLens
     local: false
     worker_count: 4
     worker_cpu: 4
@@ -22,15 +22,15 @@ spark:
     zip_file_path: '/home/jovyan/workspace/node2vec/MetaSpore/demo/graph/node2vec/python.zip'
           
 dataset:
-  train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
-  test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
-
+  train_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/train.parquet
+  test_path: s3://dmetasoul-bucket/demo/movielens/match/num_negs_100/test.parquet
 
 training:
   user_id: user_id
-  friend_id: friend_id
+  item_id: movie_id
   label_column: label
   label_value: '1'
+  last_item_id: last_movie
   
   max_recommendation_count: 20   
   max_out_degree: 20
