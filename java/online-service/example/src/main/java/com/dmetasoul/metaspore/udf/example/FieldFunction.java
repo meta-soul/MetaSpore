@@ -1,8 +1,8 @@
 package com.dmetasoul.metaspore.udf.example;
 
-import com.dmetasoul.metaspore.recommend.configure.FieldAction;
-import com.dmetasoul.metaspore.recommend.data.TableData;
-import com.dmetasoul.metaspore.recommend.functions.Function;
+import com.dmetasoul.metaspore.configure.FieldAction;
+import com.dmetasoul.metaspore.data.TableData;
+import com.dmetasoul.metaspore.functions.Function;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 

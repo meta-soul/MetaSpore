@@ -1,10 +1,9 @@
 package com.dmetasoul.metaspore.udf.example;
 
-import com.dmetasoul.metaspore.recommend.data.DataContext;
-import com.dmetasoul.metaspore.recommend.data.DataResult;
-import com.dmetasoul.metaspore.recommend.recommend.interfaces.TransformFunction;
+import com.dmetasoul.metaspore.data.DataContext;
+import com.dmetasoul.metaspore.data.DataResult;
+import com.dmetasoul.metaspore.recommend.interfaces.TransformFunction;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.Validate;
 
 import javax.validation.constraints.NotEmpty;
 import java.util.List;

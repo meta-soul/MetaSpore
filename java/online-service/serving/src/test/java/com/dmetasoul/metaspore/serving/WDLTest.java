@@ -1,7 +1,8 @@
 package com.dmetasoul.metaspore.serving;
 
 import net.devh.boot.grpc.client.autoconfigure.GrpcClientAutoConfiguration;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import org.testng.annotations.AfterTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
