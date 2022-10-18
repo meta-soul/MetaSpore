@@ -15,15 +15,14 @@ spark:
     spark.network.timeout: '1000'
     spark.ui.showConsoleProgress: 'true'
     spark.kubernetes.executor.deleteOnTermination: 'true'
-    spark.kubernetes.namespace: wanggen
+    spark.kubernetes.namespace: ${MY_NAMESPACE}
     
   pyzip:
-    cwd_path: '/home/jovyan/workspace/node2vec/MetaSpore/'
-    zip_file_path: '/home/jovyan/workspace/node2vec/MetaSpore/demo/graph/node2vec/python.zip'
+    cwd_path: '${PATH_TO_METASPORE}'
+    zip_file_path: '${PATH_TO_METASPORE}/demo/graph/node2vec/python.zip'
           
 dataset:
-  train_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/train_dataset.parquet
-  # test_path: s3://dmetasoul-bucket/demo/datasets/soc-pokec/demo_fg/test_dataset.parquet
+  train_path: ${MY_S3_BUCKET}/datasets/soc-pokec/demo_fg/train_dataset.parquet
 
 training:
   user_id: user_id
