@@ -1,13 +1,14 @@
 # 图模型
 
-在这个项目中，我们会实现比如基于jaccard距离的召回模型, 基于euclidean距离的召回模型，下面简称为Jaccard和Euclidean。我们在MovieLens数据集上进行对比。我们会持续丰富我们算法包和对比实验结果。
+在这个项目中，我们会实现比如基于jaccard距离的召回模型, 基于euclidean距离的召回模型，以及基于node to vector的召回模型，下面简称为Jaccard，Euclidean以及node2vec。我们在MovieLens 与/或 Pokec数据集上进行对比。我们会持续丰富我们算法包和对比实验结果。
 
 ## 模型列表
 
-|    模型     |                训练脚本                 |                        算法实现                         | 论文                                                                                                                                     |
-|:---------:|:-----------------------------------:|:-----------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------|
-|  Jaccard  |      [jaccard.py](jaccard/jaccard.py)    |   [jaccard_retrieval.py](../../python/algos/graph/jaccard/jaccard_retrieval.py)         | `-` |
-| Euclidean | [euclidean.py](euclidean/euclidean.py)   |   [euclidean_retrieval.py](../../python/algos/graph/euclidean/euclidean_retrieval.py)   | `-` |
+|    模型     |                  训练脚本                  |                                   算法实现                                    | 论文                                                                                       |
+|:---------:|:--------------------------------------:|:-------------------------------------------------------------------------:|:-----------------------------------------------------------------------------------------|
+|  Jaccard  |    [jaccard.py](jaccard/jaccard.py)    |   [jaccard_retrieval.py](../../python/algos/graph/jaccard_retrieval.py)   |                                                                                          |
+| Euclidean | [euclidean.py](euclidean/euclidean.py) | [euclidean_retrieval.py](../../python/algos/graph/euclidean_retrieval.py) |                                                                                          |
+| node2vec  |  [node2vec.py](node2vec/node2vec.py)   |  [node2vec_retrieval.py](../../python/algos/graph/node2vec_retrieval.py)  | [node2vec: Scalable Feature Learning for Networks](https://arxiv.org/pdf/1607.00653.pdf) |
 
 我们会不断的添加新模型。
 
