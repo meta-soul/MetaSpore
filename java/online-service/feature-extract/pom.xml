@@ -19,7 +19,7 @@
         <skipTests>true</skipTests>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
-        <apache-commons.version>1.9</apache-commons.version>
+        <apache-commons.version>1.10.0</apache-commons.version>
         <maven.version>3.8.4</maven.version>
         <maven-annotations.version>3.6.4</maven-annotations.version>
         <javapoet.version>1.13.0</javapoet.version>
