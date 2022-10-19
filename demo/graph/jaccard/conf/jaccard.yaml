@@ -1,0 +1,30 @@
+## spark session
+app_name: 'Jaccard Demo'
+local: False
+worker_count: 4
+server_count: 4
+batch_size: 256
+worker_memory: '10G'
+server_memory: '10G'
+coordinator_memory: '10G'
+spark_sql_shuffle_partitions: 1000
+
+## datasets
+train_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/train.parquet
+test_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/test.parquet
+item_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/item.parquet
+jaccard_out_path: ${MY_S3_BUCKET}/movielens/mango/jaccard.parquet/
+
+## jaccard model configuration
+user_id_column_name: user_id
+item_id_column_name: movie_id
+behavior_column_name: label
+behavior_filter_value: '1'
+key_column_name: key
+value_column_name: value
+use_debug: False
+last_item_col_name: last_movie
+
+## model hyper params
+max_recommendation_count: 20
+jaccard_distance_threshold: 20
