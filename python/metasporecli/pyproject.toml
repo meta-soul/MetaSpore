@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metasporecli"
-version = "0.1.2"
+version = "0.2.0"
 authors = [
   { name="DMetaSoul", email="opensource@dmetasoul.com" },
 ]
@@ -13,7 +13,7 @@ readme = "README.md"
 license = { text="Apache-2.0" }
 requires-python = ">=3.8"
 dependencies = [
-    "metasporeflow~=0.1.2",
+    "metasporeflow~=0.2.0",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
