@@ -1,0 +1,7 @@
+apiVersion: metaspore/v1
+kind: OfflineLocalFlow
+metadata:
+  name: offline_local_flow
+spec:
+  offlineLocalImage: 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-training-release:v1.1.0'
+  offlineLocalContainerName: 'metaspore_offline_flow'

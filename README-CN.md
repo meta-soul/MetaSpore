@@ -66,11 +66,11 @@ pip install pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl
 我们提供预编译好的 Docker 镜像。
 #### CPU 镜像
 ```
-docker pull swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:cpu-v1.0.1
+docker pull swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1
 ```
 #### GPU 镜像
 ```
-docker pull swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-public/metaspore-serving-release:gpu-v1.0.1
+docker pull swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:gpu-v1.0.1
 ```
 
 Serving 服务的启动方法见 [运行 Serving 镜像](docs/run-serving-image-cn.md)

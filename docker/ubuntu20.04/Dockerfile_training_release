@@ -15,7 +15,6 @@
 #
 ARG SPARK_RELEASE="tarball"
 ARG METASPORE_RELEASE="http"
-ARG METASPORE_BUILD_IMAGE="metaspore-training-build:v1.0.0"
 ARG INSTALL_SPARK_CLOUD="false"
 
 FROM ubuntu:20.04 as env
@@ -47,7 +46,8 @@ ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
+RUN python -m pip config set global.extra-index-url https://pypi.org/simple
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
     apt-get install -y tini libpam-modules krb5-user libnss3 procps && \
@@ -64,11 +64,8 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     python -m pip cache purge && \
     echo OK: python
 
-FROM ${METASPORE_BUILD_IMAGE} as metaspore_build
 FROM env as metaspore_http_install
-ARG METASPORE_WHEEL="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/metaspore/metaspore-1.0.0%2B48beee4-cp38-cp38-linux_x86_64.whl"
-COPY --from=metaspore_build /lib/x86_64-linux-gnu/libstdc++.so.6.0.29 /lib/x86_64-linux-gnu
-RUN ln -svf libstdc++.so.6.0.29 /lib/x86_64-linux-gnu/libstdc++.so.6
+ARG METASPORE_WHEEL="metaspore==1.1.0"
 RUN python -m pip install ${METASPORE_WHEEL} && pip cache purge
 
 FROM env as metaspore_build_install
@@ -78,8 +75,8 @@ RUN ln -svf libstdc++.so.6.0.29 /lib/x86_64-linux-gnu/libstdc++.so.6
 RUN python -m pip install metaspore-*.whl && pip cache purge && rm -f metaspore-*.whl
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-tarball-install
-ARG SPARK_FILE="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/spark-3.1.2-bin-free-265f9ad4ee.tgz"
-ARG SYNAPSEML_VERSION="0.9.5-92-76c32ccf-SNAPSHOT"
+ARG SPARK_FILE="https://dmetasoul-bucket.obs.cn-southwest-2.myhuaweicloud.com/releases/spark/spark-3.1.2-bin-free-265f9ad4ee.tgz"
+ARG SYNAPSEML_VERSION="0.10.1"
 RUN mkdir -p /opt/spark && wget ${SPARK_FILE} && tar xf `basename ${SPARK_FILE}` -C /opt/spark --strip-components 1 && rm -f `basename ${SPARK_FILE}`
 ENV SPARK_HOME /opt/spark
 ENV SPARK_CONF_DIR /opt/spark/conf
@@ -92,8 +89,8 @@ RUN mvn -f release-copy-deps-pom.xml -s maven-proxy-settings.xml org.apache.mave
 ENV MAVEN_OPTS=
 
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
-ARG SPARK_FILE="https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/releases/spark/pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl"
-ARG SYNAPSEML_VERSION="0.9.5-92-76c32ccf-SNAPSHOT"
+ARG SPARK_FILE="https://dmetasoul-bucket.obs.cn-southwest-2.myhuaweicloud.com/releases/spark/pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl"
+ARG SYNAPSEML_VERSION="0.10.1"
 RUN python -m pip install ${SPARK_FILE}
 ENV SPARK_HOME /usr/local/lib/python3.8/dist-packages/pyspark
 RUN mkdir -p /opt/spark/conf

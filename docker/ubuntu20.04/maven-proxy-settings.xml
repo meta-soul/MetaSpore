@@ -9,46 +9,9 @@
   <pluginGroups/>
   <mirrors>
     <mirror>
-     <id>aliyunmaven-central</id>
-     <mirrorOf>central</mirrorOf>
-     <name>阿里云公共仓库</name>
-     <url>https://maven.aliyun.com/repository/central</url>
-    </mirror>
-    <mirror>
-     <id>aliyunmaven</id>
-     <mirrorOf>public</mirrorOf>
-     <name>阿里云公共仓库</name>
-     <url>https://maven.aliyun.com/repository/public</url>
-    </mirror>
-     <mirror>
-     <id>aliyun-google</id>
-     <mirrorOf>google</mirrorOf>
-     <name>阿里云谷歌仓库</name>
-     <url>https://maven.aliyun.com/repository/google</url>
-    </mirror>
-    <mirror>
-     <id>apache snapshots</id>
-     <mirrorOf>apache snapshots</mirrorOf>
-     <name>阿里云阿帕奇仓库</name>
-     <url>https://maven.aliyun.com/repository/apache-snapshots</url>
-    </mirror>
-    <mirror>
-     <id>spring</id>
-     <mirrorOf>spring</mirrorOf>
-     <name>阿里云spring仓库</name>
-     <url>https://maven.aliyun.com/repository/spring</url>
-    </mirror>
-    <mirror>
-     <id>spring-plugin</id>
-     <mirrorOf>spring-plugin</mirrorOf>
-     <name>阿里云spring插件仓库</name>
-     <url>https://maven.aliyun.com/repository/spring-plugin</url>
-    </mirror>
-    <mirror>
-     <id>gradle-plugin</id>
-     <mirrorOf>gradle-plugin</mirrorOf>
-     <name>阿里云gradle插件仓库</name>
-     <url>https://maven.aliyun.com/repository/gradle-plugin</url>
+     <id>huaweicloud</id>
+     <mirrorOf>central,apache,google</mirrorOf>
+     <url>https://repo.huaweicloud.com/repository/maven/</url>
     </mirror>
   </mirrors>
 </settings>
