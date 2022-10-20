@@ -24,18 +24,17 @@ spec:
       spark.network.timeout: '500'
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
-      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
       spark.default.parallelism: '10'
       spark.sql.shuffle.partitions: '10'
 
-  load_dataset: 
+  load_dataset:
     user_path: /opt/volumes/output/data/amazon_fashion_user.parquet
     item_path: /opt/volumes/output/data/amazon_fashion_item.parquet
     interaction_path: /opt/volumes/output/data/amazon_fashion_interaction.parquet
     fmt: parquet
 
   join_dataset:
-    join_on: 
+    join_on:
       user_key: user_id
       item_key: item_id
       timestamp: timestamp
@@ -89,18 +88,18 @@ spec:
       index_fields: []
       index_unique: False
     tables:
-      - feature_column: 
+      - feature_column:
           - user_id
           - user_bhv_item_seq
         mongo_collection: amazonfashion_user_feature
         drop_duplicates_by: [user_id]
-      - feature_column: 
+      - feature_column:
           - item_id
           - brand
           - category
         mongo_collection: amazonfashion_item_feature
         drop_duplicates_by: [item_id]
-      - feature_column: 
+      - feature_column:
           - item_id
           - brand
           - category
@@ -124,4 +123,3 @@ spec:
         mongo_collection: amazonfashion_user_lgb_feature
       - feature_column: item_cols
         mongo_collection: amazonfashion_item_lgb_feature
-  

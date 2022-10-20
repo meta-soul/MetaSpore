@@ -7,7 +7,7 @@ metadata:
 spec:
   logging:
     loglevel: debug
-  
+
   spark:
     session_confs:
       app_name: 'Ecommerce Swing I2I Pipeline'
@@ -24,8 +24,7 @@ spec:
       spark.network.timeout: '500'
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
-      spark.jars.packages: 'org.mongodb.spark:mongo-spark-connector_2.12:3.0.1'
-  
+
   dataset:
     train_path: /opt/volumes/output/data/match/icf/train.parquet
     test_path: /opt/volumes/output/data/match/icf/test.parquet
@@ -38,7 +37,7 @@ spec:
     # i2i_estimator_config_class: metaspore.algos.pipeline.SwingEstimatorConfig
     estimator_params:
       max_recommendation_count: 20
-  
+
   mongodb:
     uri: mongodb://root:test_mongodb_123456@localhost:27018/?authSource=admin
     database: jpa
@@ -46,4 +45,3 @@ spec:
     index_fields: []
     index_unique: False
     collection: amazonfashion_swing
-

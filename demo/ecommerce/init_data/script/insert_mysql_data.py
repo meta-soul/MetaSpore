@@ -17,9 +17,9 @@ if __name__ == '__main__':
     prop['password'] = 'test_mysql_123456'
     prop['driver'] = 'com.mysql.jdbc.Driver'
 
-    user_parquet_path = '/opt/script/amazon_fashion_user.base.parquet'
-    item_parquet_path = '/opt/script/amazon_fashion_item.base.parquet'
-    interantion_parquet_path = '/opt/script/amazon_fashion_interaction.base.parquet'
+    user_parquet_path = '/opt/script/amazon_fashion_user.small.parquet'
+    item_parquet_path = '/opt/script/amazon_fashion_item.small.parquet'
+    interantion_parquet_path = '/opt/script/amazon_fashion_interaction.small.parquet'
     item_df = spark.read.parquet(item_parquet_path)
     interaction_df = spark.read.parquet(interantion_parquet_path)
     user_df = spark.read.parquet(user_parquet_path)
