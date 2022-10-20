@@ -24,8 +24,7 @@ spec:
       spark.network.timeout: '500'
       spark.ui.showConsoleProgress: 'true'
       spark.kubernetes.executor.deleteOnTermination: 'true'
-      spark.jars.packages: 'mysql:mysql-connector-java:5.1.49'
-      
+
   load_dataset:
     format: jdbc
     driver: com.mysql.jdbc.Driver
@@ -37,9 +36,7 @@ spec:
     user: root
     password: "test_mysql_123456"
 
-  save_dataset: 
+  save_dataset:
     user_path: /opt/volumes/output/data/amazon_fashion_user.parquet
     item_path: /opt/volumes/output/data/amazon_fashion_item.parquet
     interaction_path: /opt/volumes/output/data/amazon_fashion_interaction.parquet
-
-  
