@@ -16,3 +16,4 @@
 
 from .euclidean_retrieval import EuclideanModel, EuclideanEstimator
 from .jaccard_retrieval import JaccardModel, JaccardEstimator
+from .node2vec_retrieval import Node2VecEstimator, Node2VecModel

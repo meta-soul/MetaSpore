@@ -3,15 +3,16 @@
 
 以下是数据集的概述：
 
-| 数据集                             | 如何在MetaSpore中使用                                    | 引用链接                                                                                                                                   |
-|:--------------------------------|:---------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
-| [MovieLens-1M](#MovieLens-1M)   | [Movie Recommendation End2End Demo](../movielens/) | [MovieLens 1M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                   |
-| [MovieLens-25M](#MovieLens-25M) | [CTR Demo](../ctr/)                                | [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                  |
-| [Criteo-5D](#Criteo-5D)         | [CTR Demo](../ctr/)                                | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/)                                                 |
-| [Census](#Census)               | [MMoE Demo](../multitask/mmoe/)                    | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
-| [Ali-CCP](#Ali-CCP)             | [ESMM Demo](../multitask/esmm/)                    | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
-| [Tianchi-Loan](#Tianchi-Loan)             | [Loan Default Demo](../riskmodels/loan_default/)                    | [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information) |
-| [ULB-CreditCard](#ULB-CreditCard)             | [Fraud Detection Demo](../riskmodels/fraud_detection/)                    | [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) |
+| 数据集                               | 如何在MetaSpore中使用                                        | 引用链接                                                                                                                                   |
+|:----------------------------------|:-------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------|
+| [MovieLens-1M](#MovieLens-1M)     | [Movie Recommendation End2End Demo](../movielens/)     | [MovieLens 1M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                   |
+| [MovieLens-25M](#MovieLens-25M)   | [CTR Demo](../ctr/)                                    | [MovieLens 25M Dataset](https://grouplens.org/datasets/movielens/1m/)                                                                  |
+| [Criteo-5D](#Criteo-5D)           | [CTR Demo](../ctr/)                                    | [Display Advertising Challenge](https://www.kaggle.com/c/criteo-display-ad-challenge/)                                                 |
+| [Census](#Census)                 | [MMoE Demo](../multitask/mmoe/)                        | [Scaling Up the Accuracy of Naive-Bayes Classifiers: a Decision-Tree Hybrid](http://robotics.stanford.edu/~ronnyk/nbtree.pdf)          |
+| [Ali-CCP](#Ali-CCP)               | [ESMM Demo](../multitask/esmm/)                        | [Entire Space Multi-Task Model: An Effective Approach for Estimating Post-Click Conversion Rate](https://arxiv.org/pdf/1804.07931.pdf) |
+| [Tianchi-Loan](#Tianchi-Loan)     | [Loan Default Demo](../riskmodels/loan_default/)       | [Tianchi Loan Default Estimation Competetion](https://tianchi.aliyun.com/competition/entrance/531830/information)                      |
+| [ULB-CreditCard](#ULB-CreditCard) | [Fraud Detection Demo](../riskmodels/fraud_detection/) | [Credit Card Fraud Detection](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)                                                 |
+| [Pokec](#Pokec)                   | [Node2Vec Demo](../graph/node2vec/)                    | [Pokec social network](https://snap.stanford.edu/data/soc-pokec.html)                                                                  |
 
 ## 初始化模型配置文件
 首先，我们需要初始化配置文件，我们需要通过给出的 YAML 配置模版对不同阶段的配置文件进行初始化，主要是替换模版中一些需要定制的变量。举例来说，我们需要替换自己具体的 S3 路径 `MY_S3_BUCKET`:
@@ -169,3 +170,16 @@ python fg_large_dataset.py --conf fg_large_dataset.yaml.dev
 ### Feature Generation
 下载完成后，我们可以使用 [fg.ipynb](./ulb_creditcard/fg.ipynb) 来生成我们模型中使用的数值特征并使用 [SMOTE](https://imbalanced-learn.org/stable/references/generated/imblearn.over_sampling.SMOTE.html) 算法对正样本进行上采样。
 
+
+## ULB-CreditCard
+Pokec 是斯洛伐克最受欢迎的在线社交网络。 即使在 Facebook 出现之后，网络的流行程度也没有改变。 Pokec 已经提供了 10 多年，连接了超过 160 万人。 数据集包含整个网络的匿名数据。 个人资料数据包含性别、年龄、爱好、兴趣、教育等。个人资料数据为斯洛伐克语。 Pokec中的用户之间的关系是单向的。
+
+### Download Data
+首先我们应该从 [Pokec social network](https://snap.stanford.edu/data/soc-pokec.html) 上手动下载这个数据集。
+
+### Feature Generation
+在数据下载完成之后，我们可以通过以下的 Python 脚本来生成MetaSpore可以使用特征和 label 的列：
+```bash
+cd pokec
+python pokec.py --conf pokec.yaml
+```

@@ -1,0 +1,34 @@
+spark:
+  session_confs:
+    app_name: Node2Vec Demo
+    local: false
+    worker_count: 4
+    worker_cpu: 4
+    server_count: 4
+    server_cpu: 4
+    batch_size: 128
+    worker_memory: '10G'
+    server_memory: '10G'
+    coordinator_memory: '10G'
+    
+  extended_confs:
+    spark.network.timeout: '1000'
+    spark.ui.showConsoleProgress: 'true'
+    spark.kubernetes.executor.deleteOnTermination: 'true'
+    spark.kubernetes.namespace: ${MY_NAMESPACE}
+    
+load_dataset:
+  profile_path: ${MY_S3_BUCKET}/datasets/soc-pokec/soc-pokec-profiles.txt
+  relationship_path: ${MY_S3_BUCKET}/datasets/soc-pokec/soc-pokec-relationships.txt
+  profile_limit: 16000
+  
+split_train_test:
+  test_ratio: 0.1
+  random_seed: 24
+  
+save_dataset:
+  train_path: ${MY_S3_BUCKET}/datasets/soc-pokec/demo_fg/train_dataset.parquet
+  test_path: ${MY_S3_BUCKET}/datasets/soc-pokec/demo_fg/test_dataset.parquet
+  item_path: ${MY_S3_BUCKET}/datasets/soc-pokec/demo_fg/item_dataset.parquet
+  profile_path: ${MY_S3_BUCKET}/datasets/soc-pokec/demo_fg/profile_dataset.parquet
+  relationship_path: ${MY_S3_BUCKET}/datasets/soc-pokec/demo_fg/relationship_dataset.parquet

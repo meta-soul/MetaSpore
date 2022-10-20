@@ -1,0 +1,49 @@
+spark:
+  session_confs:
+    app_name: Node2Vec Demo - MovieLens
+    local: false
+    worker_count: 4
+    worker_cpu: 4
+    server_count: 4
+    server_cpu: 4
+    batch_size: 128
+    worker_memory: '10G'
+    server_memory: '10G'
+    coordinator_memory: '10G'
+    
+  extended_confs:
+    spark.network.timeout: '1000'
+    spark.ui.showConsoleProgress: 'true'
+    spark.kubernetes.executor.deleteOnTermination: 'true'
+    spark.kubernetes.namespace: ${MY_NAMESPACE}
+    
+  pyzip:
+    cwd_path: '${PATH_TO_METASPORE}'
+    zip_file_path: '${PATH_TO_METASPORE}/demo/graph/node2vec/python.zip'
+          
+dataset:
+  train_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/train.parquet
+  test_path: ${MY_S3_BUCKET}/movielens/match/num_negs_100/test.parquet
+
+training:
+  user_id: user_id
+  item_id: movie_id
+  label_column: label
+  label_value: '1'
+  last_item_id: last_movie
+  
+  max_recommendation_count: 20   
+  max_out_degree: 20
+  random_walk_p: 2.0
+  random_walk_q: 0.5
+  random_walk_Z: 1.0
+  random_walk_steps: 10
+  walk_times: 8
+  w2v_vector_size: 8
+  w2v_window_size: 30
+  w2v_min_count: 0
+  w2v_max_iter: 10
+  w2v_num_partitions: 1
+  euclid_bucket_length: 100
+  euclid_distance_threshold: 10
+  debug: false
