@@ -14,22 +14,20 @@
 # limitations under the License.
 #
 
-from metasporeflow.offline.task.task import Task
+from .flow_executor import FlowExecutor
 
+class K8sClusterFlowExecutor(FlowExecutor):
+    def __init__(self, resources):
+        super(K8sClusterFlowExecutor, self).__init__(resources)
 
-class OfflinePythonTask(Task):
+    async def execute_up(self):
+        print('k8s cluster flow up')
 
-    def __init__(self,
-                 name,
-                 type,
-                 data
-                 ):
-        super().__init__(name,
-                         type,
-                         data
-                         )
-        self._script_path = data.scriptPath
-        self._config_path = data.configPath
+    async def execute_down(self):
+        print('k8s cluster flow down')
 
-    def _execute(self):
-        return "python -u %s --conf %s" % (self._script_path, self._config_path)
+    async def execute_status(self):
+        print('k8s cluster flow status')
+
+    async def execute_reload(self):
+        print('k8s cluster flow reload')
