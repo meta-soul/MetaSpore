@@ -22,7 +22,11 @@ from attrs import frozen
 @frozen
 class DockerInfo(object):
     image: Optional[str] = None
+    ports: Optional[list] = list()
+    nodePort: Optional[int] = 30000
+    volumns: Optional[dict] = dict()
     environment: Optional[dict] = dict()
+    domain: Optional[str] = None
 
 
 @frozen
@@ -97,6 +101,24 @@ class FeatureInfo(object):
 
 
 @frozen
+class Experiment(object):
+    name: str
+    then: Optional[list] = list()
+    when: Optional[list] = list()
+
+
+@frozen
+class Layer(object):
+    name: str
+    data: Optional[dict] = dict()
+
+
+@frozen
+class Scene(object):
+    layers: Optional[list] = list()
+
+
+@frozen
 class OnlineFlow(object):
     source: Optional[FeatureInfo] = None
     random_models: Optional[list] = None
@@ -105,7 +127,6 @@ class OnlineFlow(object):
     rank_models: Optional[list] = None
     services: Optional[dict] = None
     dockers: Optional[dict] = None
-
-
-
-
+    scenes: Optional[dict] = dict()
+    experiments: Optional[list] = list()
+    layers: Optional[list] = list()

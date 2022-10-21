@@ -78,10 +78,12 @@ class OnlineGenerator(object):
         for name, info in dockers.items():
             info = dictToObj(info)
             volumes = []
-            if str(name).startswith("model"):
+            for key, value in info.volumes.items():
+                volumes.append("%s/volumes/%s" % (os.getcwd(), value))
+            if not volumes and str(name).startswith("model"):
                 volumes.append("%s/volumes/output/model:/data/models" % os.getcwd())
             online_docker_compose.add_service(name, "container_%s_service" % name,
-                                              image=info.image, volumes=volumes)
+                                              image=info.image, volumes=volumes, ports=info.ports)
         online_recommend_service = online_docker_compose.services.get("recommend")
         if not online_recommend_service:
             raise ValueError("container_recommend_service init fail!")
@@ -93,6 +95,35 @@ class OnlineGenerator(object):
                 online_recommend_service.add_env("%s_HOST" % name.upper(), name)
                 online_recommend_service.add_env("%s_PORT" % name.upper(), service.ports[0])
         return online_docker_compose
+
+    def gen_k8s_config(self):
+        consul_data = {}
+        recommend_data = {}
+        model_data = {}
+        if not self.configure.dockers:
+            return consul_data, recommend_data, model_data
+        for name, info in self.configure.dockers.items():
+            info = dictToObj(info)
+            data = {}
+            for key, value in info.volumes.items():
+                data["volume_%s" % key] = value
+            if info.ports:
+                data["port"] = info.ports[0]
+            if not info.domain:
+                data["domain"] = info.domain
+            data["image"] = info.image
+            data["name"] = name
+            data["node_port"] = info.nodePort
+            data["container_name"] = "container_%s_service" % name
+            if name == "recommend":
+                recommend_data.update(data)
+            elif name == "consul":
+                consul_data.update(data)
+            elif name == "model":
+                model_data.update(data)
+        recommend_data["consul_port"] = consul_data.setdefault("port", 8500)
+        model_data["consul_port"] = consul_data.setdefault("port", 8500)
+        return consul_data, recommend_data, model_data
 
     def gen_server_config(self):
         feature_config = FeatureConfig(source=[Source(name="request"), ])
@@ -190,9 +221,8 @@ class OnlineGenerator(object):
                                                 func="recentWeight", input=["typeTransform.%s" % user_key, "item_ids"]))
         feature_config.add_algoTransform(name="algotransform_user", taskName="UserProfile", feature=["feature_user"],
                                          fieldActions=user_profile_actions, output=[user_key, item_key, "item_score"])
-        recall_services = list()
-        recall_experiments = list()
-        related_recall_experiments = list()
+        service_dict = dict()
+        related_service_dict = dict()
         random_recall_list = list()
         if self.configure.random_models:
             model_info = self.configure.random_models[0]
@@ -289,52 +319,11 @@ class OnlineGenerator(object):
                 service_name = "recall_%s" % model_info.name
                 recommend_config.add_service(name=service_name, tasks=[algoTransform_name],
                                              options={"maxReservation": 200})
-                experiment_name = "recall.%s" % model_info.name
-                recommend_config.add_experiment(name=experiment_name,
-                                                options={"maxReservation": 100}, chains=[
-                        Chain(then=[service_name], transforms=[
-                            TransformConfig(name="cutOff"),
-                            TransformConfig(name="updateField", option={
-                                "input": ["score", "origin_scores"], "output": ["origin_scores"],
-                                "updateOperator": "putOriginScores"
-                            })
-                        ])
-                    ])
-                recall_experiments.append(experiment_name)
-                recall_services.append(service_name)
+                service_dict[model_info.name] = service_name
                 related_service_name = "recall_related_%s" % model_info.name
                 recommend_config.add_service(name=related_service_name, tasks=[related_algoTransform_name],
                                              options={"maxReservation": 200})
-                related_experiment_name = "recall_related.%s" % model_info.name
-                recommend_config.add_experiment(name=related_experiment_name,
-                                                options={"maxReservation": 100}, chains=[
-                        Chain(then=[related_service_name], transforms=[
-                            TransformConfig(name="cutOff"),
-                            TransformConfig(name="updateField", option={
-                                "input": ["score", "origin_scores"], "output": ["origin_scores"],
-                                "updateOperator": "putOriginScores"
-                            })
-                        ])
-                    ])
-                related_recall_experiments.append(related_experiment_name)
-        if len(recall_services) > 1:
-            recommend_config.add_experiment(name="recall.multiple", options={"maxReservation": 100}, chains=[
-                Chain(when=recall_services, transforms=[
-                    TransformConfig(name="summaryBySchema", option={
-                        "dupFields": [user_key, item_key],
-                        "mergeOperator": {"score": "maxScore", "origin_scores": "mergeScoreInfo"}
-                    }),
-                    TransformConfig(name="updateField", option={
-                        "input": ["score", "origin_scores"], "output": ["origin_scores"],
-                        "updateOperator": "putOriginScores"
-                    }),
-                    TransformConfig(name="orderAndLimit", option={
-                        "orderFields": ["score"]
-                    })
-                ])
-            ])
-            recall_experiments.append("recall.multiple")
-        rank_experiments = list()
+                related_service_dict[model_info.name] = related_service_name
         if self.configure.rank_models:
             for model_info in self.configure.rank_models:
                 model_info = dictToObj(model_info)
@@ -397,10 +386,64 @@ class OnlineGenerator(object):
                                              columns=[{user_key: user_key_type}, {item_key: item_key_type},
                                                       {"score": "double"}, {"origin_scores": "map_str_double"}],
                                              tasks=[algoTransform_name], options={"maxReservation": 200})
-                experiment_name = "rank.%s" % model_info.name
-                recommend_config.add_experiment(name=experiment_name,
-                                                options={"maxReservation": 100}, chains=[
-                        Chain(then=[service_name], transforms=[
+                service_dict[model_info.name] = service_name
+        recommend_experiments = set()
+        if self.configure.experiments:
+            for data in self.configure.experiments:
+                experiment_data = dictToObj(data)
+                then = []
+                when = []
+                if experiment_data.then:
+                    for model_name in experiment_data.then:
+                        if model_name in service_dict:
+                            then.append(service_dict.get(model_name))
+                        elif model_name in related_service_dict:
+                            then.append(related_service_dict.get(model_name))
+                        else:
+                            print("no found service from model name: %s" % model_name)
+                if experiment_data.when:
+                    for model_name in experiment_data.when:
+                        if model_name in service_dict:
+                            when.append(service_dict.get(model_name))
+                        elif model_name in related_service_dict:
+                            when.append(related_service_dict.get(model_name))
+                        else:
+                            print("no found service from model name: %s" % model_name)
+                recommend_config.add_experiment(name=experiment_data.name,
+                                                options={"maxReservation": 200}, chains=[
+                        Chain(then=then, when=when, transforms=[
+                            TransformConfig(name="cutOff"),
+                            TransformConfig(name="updateField", option={
+                                "input": ["score", "origin_scores"], "output": ["origin_scores"],
+                                "updateOperator": "putOriginScores"
+                            })
+                        ])
+                    ])
+                recommend_experiments.add(experiment_data.name)
+        layer_set = set()
+        if self.configure.layers:
+            for data in self.configure.layers:
+                layer_config = dictToObj(data)
+                layer_name = layer_config.name
+                experiments = list()
+                for experiment_name, rato in layer_config.data.items():
+                    if experiment_name not in recommend_experiments:
+                        print("no experiment_name:%s found" % experiment_name)
+                        continue
+                    experiments.append(ExperimentItem(name=experiment_name, ratio=rato))
+                recommend_config.add_layer(name=layer_name, bucketizer="random", experiments = experiments)
+                layer_set.add(layer_name)
+        if self.configure.scenes:
+            for name, data in self.configure.scenes.items():
+                scene_data = dictToObj(data)
+                layers = []
+                for layer_config in scene_data.layers:
+                    layer_name = layer_config.name
+                    if layer_name not in layer_set:
+                        print("no layer_name:%s found" % layer_name)
+                        continue
+                    layers.append(layer_name)
+                recommend_config.add_scene(name=name, chains=[Chain(then=layers, transforms=[
                             TransformConfig(name="cutOff", option={
                                 "dupFields": [user_key, item_key],
                                 "or_filter_data": "source_table_request",
@@ -417,36 +460,9 @@ class OnlineGenerator(object):
                             TransformConfig(name="addItemInfo", option={
                                 "service_name": iteminfo_service_name,
                             }),
-                        ])
-                    ])
-                rank_experiments.append(experiment_name)
-        layers = []
-        related_layers = []
-        if recall_experiments:
-            layer_name = "recall"
-            recommend_config.add_layer(name=layer_name, bucketizer="random", experiments=[
-                ExperimentItem(name=name, ratio=1.0 / len(recall_experiments)) for name in recall_experiments
-            ])
-            layers.append(layer_name)
-        if related_recall_experiments:
-            layer_name = "related_recall"
-            recommend_config.add_layer(name=layer_name, bucketizer="random", experiments=[
-                ExperimentItem(name=name, ratio=1.0 / len(related_recall_experiments)) for name in related_recall_experiments
-            ])
-            related_layers.append(layer_name)
-        if recall_experiments:
-            layer_name = "rank"
-            recommend_config.add_layer(name=layer_name, bucketizer="random", experiments=[
-                ExperimentItem(name=name, ratio=1.0 / len(rank_experiments)) for name in rank_experiments
-            ])
-            layers.append(layer_name)
-            related_layers.append(layer_name)
-        recommend_config.add_scene(name="guess-you-like", chains=[
-            Chain(then=layers)],
-                                   columns=[{user_key: user_key_type}, {item_key: item_key_type}])
-        recommend_config.add_scene(name="looked-and-looked", chains=[
-            Chain(then=related_layers)],
-                                   columns=[{user_key: user_key_type}, {item_key: item_key_type}])
+                        ]
+                        )],
+                        columns=[{user_key: user_key_type}, {item_key: item_key_type}])
         online_configure = OnlineServiceConfig(feature_config, recommend_config)
         return DumpToYaml(online_configure).encode("utf-8").decode("latin1")
 
