@@ -1,29 +1,34 @@
-keys = [
-  'port',
-  'node_port',
-  'name',
-  'image',
-]
+default = {
+  'port': 8500,
+  'name': "consul-service",
+  'container_name': "container_consul_service",
+  'image': "consul:1.13.1",
+}
 template = '''
-apiVersion: v1
-kind: Service
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: consul-ui
+  name: consul-ingress
+  annotations:
+       nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
-  selector:
-    app: consul
-  type: NodePort
-  ports:
-    - name: http
-      port: ${port}
-      targetPort: ${port}
-      nodePort: ${node_port}
-      
+  rules:
+  - host: ${name}.huawei.dmetasoul.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ${name}
+            port:
+              number: ${port}
+                    
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: consul-server
+  name: ${name}
   labels:
     app: consul
 spec:
@@ -75,7 +80,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: ${name}
+      - name: ${container_name}
         image: ${image}
         imagePullPolicy: IfNotPresent
         ports:

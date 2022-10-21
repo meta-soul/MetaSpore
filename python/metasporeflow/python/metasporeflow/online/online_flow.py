@@ -23,10 +23,8 @@ from attrs import frozen
 class DockerInfo(object):
     image: Optional[str] = None
     ports: Optional[list] = list()
-    nodePort: Optional[int] = 30000
     volumns: Optional[dict] = dict()
     environment: Optional[dict] = dict()
-    domain: Optional[str] = None
 
 
 @frozen

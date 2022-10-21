@@ -109,11 +109,10 @@ class OnlineGenerator(object):
                 data["volume_%s" % key] = value
             if info.ports:
                 data["port"] = info.ports[0]
-            if not info.domain:
-                data["domain"] = info.domain
+            if info.environment:
+                data.update(info.environment)
             data["image"] = info.image
-            data["name"] = name
-            data["node_port"] = info.nodePort
+            data["name"] = "%s-service" % name
             data["container_name"] = "container_%s_service" % name
             if name == "recommend":
                 recommend_data.update(data)

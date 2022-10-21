@@ -90,15 +90,13 @@ class OnlineK8sExecutor(object):
             return False
         return True
 
-    def k8s_service(self, service_name, command, template, keys, data, default):
+    def k8s_service(self, service_name, command, template, data, default):
         if not data:
-            data = default
+            data = {}
         if not data and not default:
             print("service:%s config data is empty! %s fail" % (service_name, command))
             return
-        for key in keys:
-            if data.get(key) is None:
-                data[key] = default.get(key)
+        data.update(default)
         if command == "up":
             if self.create_k8s_service(service_name, template, data):
                 print("%s k8s service create successfully!"%service_name)
@@ -111,29 +109,20 @@ class OnlineK8sExecutor(object):
                 print("%s k8s service delete fail!" % service_name)
 
     def k8s_consul(self, data, command):
-        default = {'image': 'consul:1.13.1',
-            'port': 8500,
-            'node_port': 30500,
-            'name': 'consul'}
-        from metasporeflow.online.k8s_template.consul_template import template, keys
-        self.k8s_service("consul-server", command, template, keys, data, default)
+        from metasporeflow.online.k8s_template.consul_template import template, default
+        self.k8s_service("consul-server", command, template, data, default)
 
     def k8s_recommend(self, data, command):
-        default = {'image': 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0',
-            'port': 13013,
-            'node_port': 30313,
-            'consul_port': 8500,
-            'name': 'recommend'}
-        from metasporeflow.online.k8s_template.recommend_template import template, keys
-        self.k8s_service("recommend-service", command, template, keys, data, default)
+        from metasporeflow.online.k8s_template.recommend_template import template, default
+        self.k8s_service("recommend-service", command, template, data, default)
 
     def k8s_model(self, data, command):
         default = {'image': 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1',
             'port': 50000,
             'node_port': 30188,
             'name': 'model-serving'}
-        from metasporeflow.online.k8s_template.model_template import template, keys
-        self.k8s_service("model-serving", command, template, keys, data, default)
+        from metasporeflow.online.k8s_template.model_template import template, default
+        self.k8s_service("model-serving", command, template, data, default)
 
 
 if __name__=='__main__':

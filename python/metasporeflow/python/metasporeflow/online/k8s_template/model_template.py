@@ -1,12 +1,13 @@
-keys = [
-    'name',
-    'port',
-    'node_port',
-    'image',
-    'consul_port',
-    'watch_image',
-    'consul_key',
-]
+default = {
+    'name': "model-serving",
+    'port': 50000,
+    'image': 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1',
+    'container_name': "container_model_service",
+    'consul_port': 8500,
+    'watch_image': "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/consul-watch-load:v1.0.0",
+    'watch_port': 8080,
+    'consul_key': "dev/",
+}
 template = '''
 apiVersion: v1
 kind: Service
@@ -21,8 +22,7 @@ spec:
     - name: server
       port: ${port}
       targetPort: ${port}
-      nodePort: ${node_port}
-  type: NodePort
+  type: ClusterIP
   
 ---
 apiVersion: apps/v1
@@ -65,7 +65,7 @@ spec:
             protocol: TCP
         volumeMounts:
           - name: aws-config-volume
-            mountPath: /root/.aws
+            mountPath: /data/aws-config
           - name: data
             mountPath: /data/models
         env:
@@ -93,7 +93,7 @@ spec:
         command: ["/bin/sh","create_consul_watch.sh"]
         env:
           - name: CONSUL_IP
-            value: consul-ui
+            value: consul-server
           - name: POD_IP
             valueFrom:
               fieldRef:
