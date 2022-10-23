@@ -4,6 +4,9 @@ default = {
   "container_name": "container_recommend_service",
   "image": 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0',
   "consul_port": 8500,
+  "consul_service": "consul-service",
+  "model_port": 50000,
+  "model_service": "model-service",
 }
 template = '''
 apiVersion: v1
@@ -70,9 +73,15 @@ spec:
           name: http
         env:
         - name: CONSUL_HOST
-          value: consul-server
+          value: ${consul_service}
         - name: CONSUL_PORT
           value: "${consul_port}"
+        - name: MODEL_HOST
+          value: ${model_service}
+        - name: MODEL_PORT
+          value: "${model_port}"
+        - name: SERVICE_PORT
+          value: "${port}"
         command: ["java", "-Xmx2048M", "-Xms2048M", "-Xmn768M", "-XX:MaxMetaspaceSize=256M", "-XX:MetaspaceSize=256M", "-jar", "recommend-service-1.0-SNAPSHOT.jar"]
         resources:
           limits:

@@ -25,15 +25,15 @@ class DockerInfo(object):
     ports: Optional[list] = list()
     volumns: Optional[dict] = dict()
     environment: Optional[dict] = dict()
-
+    options: Optional[dict] = dict()
 
 @frozen
 class ServiceInfo(object):
+    options: Optional[dict] = dict()
     host: Optional[str] = "172.17.0.1"
     port: Optional[int] = 27017
     kind: Optional[str] = "mongodb"
     collection: Optional[list] = list()
-    options: Optional[dict] = dict()
 
 
 @frozen
@@ -56,12 +56,16 @@ class RandomModelInfo(object):
     name: str
     bound: int
     source: DataSource
+    keyName: Optional[str] = "key"
+    valueName: Optional[str] = "value_list"
 
 
 @frozen
 class CFModelInfo(object):
     name: str
     source: DataSource
+    keyName: Optional[str] = "key"
+    valueName: Optional[str] = "value"
 
 
 @frozen
@@ -113,6 +117,7 @@ class Layer(object):
 
 @frozen
 class Scene(object):
+    name: str
     layers: Optional[list] = list()
 
 
@@ -125,6 +130,6 @@ class OnlineFlow(object):
     rank_models: Optional[list] = None
     services: Optional[dict] = None
     dockers: Optional[dict] = None
-    scenes: Optional[dict] = dict()
+    scenes: Optional[list] = list()
     experiments: Optional[list] = list()
     layers: Optional[list] = list()

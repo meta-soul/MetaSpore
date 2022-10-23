@@ -1,18 +1,21 @@
 default = {
-    'name': "model-serving",
+    'name': "model-service",
     'port': 50000,
     'image': 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1',
     'container_name': "container_model_service",
     'consul_port': 8500,
+    'consul_service': "consul-service",
     'watch_image': "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/consul-watch-load:v1.0.0",
     'watch_port': 8080,
     'consul_key': "dev/",
+    'endpoint_url': 'http://obs.cn-southwest-2.myhuaweicloud.com',
+    'docker_secret': "regcred",
 }
 template = '''
 apiVersion: v1
 kind: Service
 metadata:
-  name: model-serving
+  name: ${name}
   labels:
     app: model
 spec:
@@ -23,7 +26,21 @@ spec:
       port: ${port}
       targetPort: ${port}
   type: ClusterIP
-  
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-configmap
+data:
+  config: |
+    [default]
+    s3 =
+      addressing_style = virtual
+      endpoint_url = ${endpoint_url}
+    [plugins]
+    endpoint = awscli_plugin_endpoint
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -44,6 +61,8 @@ spec:
       labels:
         app: model
     spec:
+      imagePullSecrets:
+      - name: ${docker_secret}
       containers:
       - name: ${container_name}
         image: ${image}
@@ -65,7 +84,7 @@ spec:
             protocol: TCP
         volumeMounts:
           - name: aws-config-volume
-            mountPath: /data/aws-config
+            mountPath: /root/.aws
           - name: data
             mountPath: /data/models
         env:
@@ -93,7 +112,7 @@ spec:
         command: ["/bin/sh","create_consul_watch.sh"]
         env:
           - name: CONSUL_IP
-            value: consul-server
+            value: ${consul_service}
           - name: POD_IP
             valueFrom:
               fieldRef:

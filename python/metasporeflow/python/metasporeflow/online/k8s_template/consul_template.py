@@ -36,7 +36,7 @@ spec:
     app: consul
   ports:
     - name: http
-      port: ${port}
+      port: 8500
       targetPort: ${port}
     - name: server
       port: 8300
@@ -84,7 +84,7 @@ spec:
         image: ${image}
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: ${port}
+        - containerPort: 8500
           name: http
         - containerPort: 8300
           name: server

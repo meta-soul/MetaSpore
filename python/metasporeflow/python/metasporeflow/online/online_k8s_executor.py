@@ -12,6 +12,7 @@ def k8s_template_by_file(filename, data):
         tempTemplate = Template(template_content)
         print(tempTemplate.safe_substitute(data))
 
+
 def k8s_template(template_content, data):
     tempTemplate = Template(template_content)
     return tempTemplate.safe_substitute(data)
@@ -117,10 +118,6 @@ class OnlineK8sExecutor(object):
         self.k8s_service("recommend-service", command, template, data, default)
 
     def k8s_model(self, data, command):
-        default = {'image': 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1',
-            'port': 50000,
-            'node_port': 30188,
-            'name': 'model-serving'}
         from metasporeflow.online.k8s_template.model_template import template, default
         self.k8s_service("model-serving", command, template, data, default)
 
