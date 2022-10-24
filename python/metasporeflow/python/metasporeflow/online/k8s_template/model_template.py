@@ -9,6 +9,7 @@ default = {
     'consul_key': "dev/",
     'endpoint_url': 'http://obs.cn-southwest-2.myhuaweicloud.com',
     'docker_secret': "regcred",
+    'aws_secret': "aws-secret",
 }
 template = '''
 apiVersion: v1
@@ -90,19 +91,19 @@ spec:
           - name: AWS_ENDPOINT
             valueFrom:
               secretKeyRef:
-                name: aws-secret
+                name: ${aws_secret}
                 key: aws_endpoint
                 optional: true
           - name: AWS_ACCESS_KEY_ID
             valueFrom:
               secretKeyRef:
-                name: aws-secret
+                name: ${aws_secret}
                 key: aws_access_key_id
                 optional: true
           - name: AWS_SECRET_ACCESS_KEY
             valueFrom:
               secretKeyRef:
-                name: aws-secret
+                name: ${aws_secret}
                 key: aws_secret_access_key
                 optional: true
       - name: serving-curl-watch
