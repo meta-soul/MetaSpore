@@ -27,7 +27,7 @@ class OfflineK8sCronjobScheduler(Scheduler):
         self._create_offline_cronjob()
         self._run_offline_batch_job_once()
 
-    def stop(self):
+    def destroy(self):
         self._delete_offline_cronjob()
         self._delete_offline_batch_job()
 
@@ -62,7 +62,7 @@ class OfflineK8sCronjobScheduler(Scheduler):
         self._log_job_config('Delete offline cronjob:', text)
         try:
             args = ['kubectl', 'delete', '-f', '-']
-            subprocess.run(args, input=text.encode('utf-8'), check=True)
+            subprocess.run(args, input=text.encode('utf-8'))
             print('Delete offline cronjob succeeded.')
         except subprocess.CalledProcessError:
             self._log_job_config('Delete offline cronjob failed:', text)
@@ -85,7 +85,7 @@ class OfflineK8sCronjobScheduler(Scheduler):
         self._log_job_config('Delete offline batch job:', text)
         try:
             args = ['kubectl', 'delete', '-f', '-']
-            subprocess.run(args, input=text.encode('utf-8'), check=True)
+            subprocess.run(args, input=text.encode('utf-8'))
             print('Delete offline batch job succeeded.')
         except subprocess.CalledProcessError:
             self._log_job_config('Delete offline batch job failed:', text)
