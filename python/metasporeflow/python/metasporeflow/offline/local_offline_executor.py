@@ -18,7 +18,7 @@ from typing import Dict, Tuple
 import subprocess
 import os
 import time
-from metasporeflow.flows.metaspore_oflline_flow import OfflineScheduler, OfflineTask
+from metasporeflow.flows.metaspore_offline_flow import OfflineScheduler, OfflineTask
 from metasporeflow.offline.scheduler.offline_crontab_scheduler import OfflineCrontabScheduler
 from metasporeflow.offline.scheduler.scheduler import Scheduler
 from metasporeflow.offline.task.offline_python_task import OfflinePythonTask
