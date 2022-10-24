@@ -15,19 +15,39 @@
 #
 
 from .flow_executor import FlowExecutor
+from metasporeflow.online.online_k8s_executor import OnlineK8sExecutor
+
 
 class K8sClusterFlowExecutor(FlowExecutor):
     def __init__(self, resources):
         super(K8sClusterFlowExecutor, self).__init__(resources)
+        self.online_executor = OnlineK8sExecutor(self._resources)
 
     async def execute_up(self):
+        print(self._resources)
+        print('-------------------------------')
+        self.online_executor.execute_up()
+        print('online k8s cluster flow up')
+        print('-------------------------------')
         print('k8s cluster flow up')
 
     async def execute_down(self):
+        print('-------------------------------')
+        self.online_executor.execute_down()
+        print('online k8s cluster flow down')
+        print('-------------------------------')
         print('k8s cluster flow down')
 
     async def execute_status(self):
-        print('k8s cluster flow status')
+        print('k8s cluster flow status:')
+        print('-------------------------------')
+        print('online k8s cluster flow status:')
+        self.online_executor.execute_status()
+        print('-------------------------------')
 
     async def execute_reload(self):
+        print('-------------------------------')
+        self.online_executor.execute_reload()
+        print('online k8s cluster flow reload')
+        print('-------------------------------')
         print('k8s cluster flow reload')
