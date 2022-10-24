@@ -32,6 +32,12 @@ class OfflineCrontabScheduler(OfflineScheduler):
     pass
 
 @frozen
+class OfflineK8sCronjobScheduler(OfflineScheduler):
+    namespace: str
+    serviceAccountName: str
+    cronjobImage: str
+
+@frozen
 class OfflineTask:
     scriptPath: str
     configPath: str
