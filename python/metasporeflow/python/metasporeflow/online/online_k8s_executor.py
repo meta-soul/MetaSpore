@@ -43,11 +43,11 @@ class OnlineK8sExecutor(object):
         online_recommend_config_file.write(online_recommend_config)
         online_recommend_config_file.close()
         putServiceConfig(online_recommend_config,
-                         "%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-service"),
-                         consul_data.setdefault("port", 8500))
+                         "%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"),
+                         80)
         time.sleep(3)
-        notifyRecommendService("%s.huawei.dmetasoul.com" % recommend_data.setdefault("name", "recommend-service"),
-                               recommend_data.setdefault("port", 13013))
+        notifyRecommendService("%s.huawei.dmetasoul.com" % recommend_data.setdefault("name", "recommend-k8s-service"),
+                               80)
 
     def execute_down(self, **kwargs):
         consul_data, recommend_data, model_data = self._generator.gen_k8s_config
