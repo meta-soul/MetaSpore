@@ -7,6 +7,9 @@ spec:
     recommend:
       image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0
       ports: [ 13013 ]
+      options:
+        mongo_service: 192.168.0.22
+        mongo_port: 27018
     model:
       image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1
       ports: [ 50000 ]
@@ -26,7 +29,7 @@ spec:
       serviceName: mongo
       collection: [ jpa ]
       options:
-        uri: mongodb://root:test_mongodb_123456@172.17.0.1:27018/jpa?authSource=admin
+        uri: mongodb://root:test_mongodb_123456@${MONGO_HOST:172.17.0.1}:${MONGO_PORT:27018}/jpa?authSource=admin
   source:
     user_key_name: user_id
     item_key_name: item_id

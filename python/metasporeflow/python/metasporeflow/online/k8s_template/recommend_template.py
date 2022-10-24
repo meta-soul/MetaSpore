@@ -6,6 +6,8 @@ default = {
   "consul_service": "consul-k8s-service",
   "model_port": 50000,
   "model_service": "model-k8s-service",
+  "mongo_port": 27017,
+  "mongo_service": "127.0.0.1",
 }
 template = '''
 apiVersion: v1
@@ -77,6 +79,10 @@ spec:
           value: ${model_service}
         - name: MODEL_PORT
           value: "${model_port}"
+        - name: MONGO_HOST
+          value: "${mongo_service}"
+        - name: MONGO_PORT
+          value: "${mongo_port}"
         - name: SERVICE_PORT
           value: "${port}"
         command: ["java", "-Xmx2048M", "-Xms2048M", "-Xmn768M", "-XX:MaxMetaspaceSize=256M", "-XX:MetaspaceSize=256M", "-jar", "recommend-service-1.0-SNAPSHOT.jar"]

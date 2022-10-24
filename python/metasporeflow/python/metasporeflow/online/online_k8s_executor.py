@@ -4,7 +4,7 @@ import time
 from string import Template
 
 from metasporeflow.online.check_service import notifyRecommendService
-from metasporeflow.online.cloud_consul import putServiceConfig
+from metasporeflow.online.cloud_consul import putServiceConfig, Consul, putConfigByKey
 from metasporeflow.online.online_generator import OnlineGenerator
 
 
@@ -39,12 +39,8 @@ class OnlineK8sExecutor(object):
         self.k8s_recommend(recommend_data, "up")
         time.sleep(3)
         online_recommend_config = self._generator.gen_server_config()
-        online_recommend_config_file = open("recommend-service.yaml", "w")
-        online_recommend_config_file.write(online_recommend_config)
-        online_recommend_config_file.close()
-        putServiceConfig(online_recommend_config,
-                         "%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"),
-                         80)
+        consul_client = Consul("%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"), 80)
+        putServiceConfig(consul_client, online_recommend_config)
         time.sleep(3)
         notifyRecommendService("%s.huawei.dmetasoul.com" % recommend_data.setdefault("name", "recommend-k8s-service"),
                                80)
@@ -151,3 +147,16 @@ if __name__ == '__main__':
 
     flow_executor = OnlineK8sExecutor(resources)
     flow_executor.execute_up()
+
+    widedeep_model_info = '''
+    {
+    "name": "amazonfashion_widedeep",
+    "service": "model-k8s-service",
+    "path": "s3://dmetasoul-bucket/qinyy/test-model-watched/amazonfashion_widedeep",
+    "version": "20221024",
+    "util_cmd": "aws s3 cp --recursive"
+    }
+    '''
+    consul_client = Consul("%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"), 80)
+    putConfigByKey(consul_client, widedeep_model_info, "dev/amazonfashion_widedeep")
+    

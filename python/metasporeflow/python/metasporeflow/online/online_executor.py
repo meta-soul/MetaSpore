@@ -20,9 +20,9 @@ import time
 import os
 
 from metasporeflow.online.check_service import notifyRecommendService
-from metasporeflow.online.cloud_consul import putServiceConfig
+from metasporeflow.online.cloud_consul import putServiceConfig, Consul
 from metasporeflow.online.online_flow import OnlineFlow
-from metasporeflow.online.online_generator import OnlineGenerator, get_demo_jpa_flow
+from metasporeflow.online.online_generator import OnlineGenerator
 from metasporeflow.online.common import DumpToYaml
 
 
@@ -68,7 +68,8 @@ class OnlineLocalExecutor(object):
                 print("wait consul start...")
                 time.sleep(1)
             online_recommend_config = self._generator.gen_server_config()
-            putServiceConfig(online_recommend_config, "localhost", consul_port)
+            consul_client = Consul("localhost", consul_port)
+            putServiceConfig(consul_client, online_recommend_config)
             time.sleep(3)
             while not is_container_active(recommend_container_name):
                 print("wait recommend start...")
@@ -100,6 +101,17 @@ class OnlineLocalExecutor(object):
 
 
 if __name__ == "__main__":
-    online = get_demo_jpa_flow()
-    executor = OnlineLocalExecutor(online)
-    executor.execute_up()
+    from metasporeflow.flows.flow_loader import FlowLoader
+    from metasporeflow.online.online_flow import OnlineFlow
+
+    flow_loader = FlowLoader()
+    flow_loader._file_name = 'test/metaspore-flow.yml'
+    resources = flow_loader.load()
+
+    online_flow = resources.find_by_type(OnlineFlow)
+    print(type(online_flow))
+    print(online_flow)
+
+
+    flow_executor = OnlineLocalExecutor(resources)
+    flow_executor.execute_up()
