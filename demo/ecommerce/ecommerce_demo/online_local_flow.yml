@@ -16,6 +16,7 @@ spec:
         consul_key: dev/
         endpoint_url: http://obs.cn-southwest-2.myhuaweicloud.com
         docker_secret: regcred
+        aws_secret: aws-secret
     consul:
       image: consul:1.13.1
       ports: [ 8500 ]
