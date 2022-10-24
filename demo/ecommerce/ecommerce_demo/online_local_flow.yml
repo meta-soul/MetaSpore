@@ -6,12 +6,24 @@ spec:
   dockers:
     recommend:
       image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0
+      ports: [ 13013 ]
+    model:
+      image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1
+      ports: [ 50000 ]
+      options:
+        watch_image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/consul-watch-load:v1.0.0
+        watch_port: 8080
+        consul_key: dev/
+        endpoint_url: http://obs.cn-southwest-2.myhuaweicloud.com
+        docker_secret: regcred
+    consul:
+      image: consul:1.13.1
+      ports: [ 8500 ]
   services:
     mongo:
-      host: 172.17.0.1
-      port: 27018
-      kind: mongodb
-      collection: [jpa]
+      kind: MongoDB
+      serviceName: mongo
+      collection: [ jpa ]
       options:
         uri: mongodb://root:test_mongodb_123456@172.17.0.1:27018/jpa?authSource=admin
   source:
@@ -53,12 +65,16 @@ spec:
   random_models:
     - name: pop
       bound: 10
+      keyName: key
+      valueName: value_list
       source:
         table: amazonfashion_pop
         serviceName: mongo
         collection: jpa
   cf_models:
     - name: swing
+      keyName: key
+      valueName: value
       source:
         table: amazonfashion_swing
         serviceName: mongo
@@ -67,12 +83,37 @@ spec:
     - name: widedeep
       model: amazonfashion_widedeep
       column_info:
-        - dnn_sparse: ["user_id", "item_id", "brand", "category"]
-        - lr_sparse: ["user_id", "item_id", "category", "brand", "user_id#brand", "user_id#category"]
+        - dnn_sparse: [ "user_id", "item_id", "brand", "category" ]
+        - lr_sparse: [ "user_id", "item_id", "category", "brand", "user_id#brand", "user_id#category" ]
       cross_features:
         - name: user_id#brand
           join: "#"
-          fields: ["user_id", "brand"]
+          fields: [ "user_id", "brand" ]
         - name: user_id#category
           join: "#"
           fields: [ "user_id", "category" ]
+  experiments:
+    - name: experiment.recall.swing
+      then: [ recall_swing ]
+    - name: experiment.related.swing
+      then: [ related_swing ]
+    - name: experiment.rank.widedeep
+      then: [ rank_widedeep ]
+  layers:
+    - name: layer.recall
+      data:
+        experiment.recall.swing: 1.0
+    - name: layer.related
+      data:
+        experiment.related.swing: 1.0
+    - name: layer.rank
+      data:
+        experiment.rank.widedeep: 1.0
+  scenes:
+    - name: guess-you-like
+      layers: [ layer.recall, layer.rank ]
+      additionalRecalls: [ pop ]
+    - name: looked-and-looked
+      layers: [ layer.related, layer.rank ]
+      additionalRecalls: [ pop ]
+

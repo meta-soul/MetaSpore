@@ -105,9 +105,9 @@ spec:
         - "-data-dir=/consul/data"
         - "-disable-host-node-id"
         - "-domain=cluster.local"
-        - "-retry-join=consul-server-0.consul-server.$(NAMESPACE).svc.cluster.local"
-        - "-retry-join=consul-server-1.consul-server.$(NAMESPACE).svc.cluster.local"
-        - "-retry-join=consul-server-2.consul-server.$(NAMESPACE).svc.cluster.local"
+        - "-retry-join=consul-server-0.${name}.$(NAMESPACE).svc.cluster.local"
+        - "-retry-join=consul-server-1.${name}.$(NAMESPACE).svc.cluster.local"
+        - "-retry-join=consul-server-2.${name}.$(NAMESPACE).svc.cluster.local"
         - "-client=0.0.0.0"
         - "-ui"
         resources:
