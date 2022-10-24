@@ -282,10 +282,6 @@ class OnlineGenerator(object):
                         "or_filter_data": "source_table_request",
                         "or_field_list": [self.item_key],
                     }),
-                    TransformConfig(name="updateField", option={
-                        "input": ["score", "origin_scores"], "output": ["origin_scores"],
-                        "updateOperator": "putOriginScores"
-                    }),
                 ]
                 if "additionalRecalls" in scene_data and scene_data.additionalRecalls:
                     if not random_recall_dict:
