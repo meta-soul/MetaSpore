@@ -32,12 +32,17 @@ class OnlineK8sExecutor(object):
         if consul_data is None or recommend_data is None or model_data is None:
             print("k8s online service config is empty")
             return
+        print("**********************************")
+        print(consul_data)
+        print(recommend_data)
+        print(model_data)
+        print("*"*80)
         self.k8s_consul(consul_data, "up")
         time.sleep(3)
         self.k8s_model(model_data, "up")
         time.sleep(3)
         self.k8s_recommend(recommend_data, "up")
-        time.sleep(3)
+        time.sleep(10)
         online_recommend_config = self._generator.gen_server_config()
         consul_client = Consul("%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"), 80)
         putServiceConfig(consul_client, online_recommend_config)
@@ -106,7 +111,9 @@ class OnlineK8sExecutor(object):
         if not data and not default:
             print("service:%s config data is empty! %s fail" % (service_name, command))
             return
-        data.update(default)
+        for key, value in default.items():
+            if key not in data or data.get(key) is None:
+                data[key] = value
         if command == "up":
             if self.create_k8s_service(service_name, template, data):
                 print("%s k8s service create successfully!"%service_name)
