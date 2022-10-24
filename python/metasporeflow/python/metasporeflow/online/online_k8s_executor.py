@@ -32,12 +32,12 @@ class OnlineK8sExecutor(object):
         if consul_data is None or recommend_data is None or model_data is None:
             print("k8s online service config is empty")
             return
-        #       self.k8s_consul(consul_data, "up")
-        #       time.sleep(3)
-        #       self.k8s_model(model_data, "up")
-        #       time.sleep(3)
-        #       self.k8s_recommend(recommend_data, "up")
-        #       time.sleep(3)
+        self.k8s_consul(consul_data, "up")
+        time.sleep(3)
+        self.k8s_model(model_data, "up")
+        time.sleep(3)
+        self.k8s_recommend(recommend_data, "up")
+        time.sleep(3)
         online_recommend_config = self._generator.gen_server_config()
         online_recommend_config_file = open("recommend-service.yaml", "w")
         online_recommend_config_file.write(online_recommend_config)
@@ -54,9 +54,9 @@ class OnlineK8sExecutor(object):
         if consul_data is None or recommend_data is None or model_data is None:
             print("k8s online service config is empty")
             return
-        self.k8s_consul(consul_data, "down")
-        self.k8s_model(model_data, "down")
         self.k8s_recommend(recommend_data, "down")
+        self.k8s_model(model_data, "down")
+        self.k8s_consul(consul_data, "down")
 
     def execute_status(self, **kwargs):
         pass

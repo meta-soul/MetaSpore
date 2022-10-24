@@ -30,8 +30,6 @@ def append_source_table(feature_config, name, datasource, default_columns=[]):
     source_name = datasource.serviceName
     if datasource.collection:
         source_name = "%s_%s" % (datasource.serviceName, datasource.collection)
-    print(feature_config)
-    print(datasource)
     if not feature_config.find_source(source_name):
         raise ValueError("source: %s must set in services!" % source_name)
     columns = setDefault(datasource, "columns", default_columns)
