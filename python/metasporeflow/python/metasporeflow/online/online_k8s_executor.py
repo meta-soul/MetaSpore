@@ -148,7 +148,6 @@ if __name__ == '__main__':
     print(type(online_flow))
     print(online_flow)
 
-    import asyncio
 
     flow_executor = OnlineK8sExecutor(resources)
-    asyncio.run(flow_executor.execute_up())
+    flow_executor.execute_up()

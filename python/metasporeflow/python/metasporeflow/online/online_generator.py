@@ -372,10 +372,11 @@ class OnlineGenerator(object):
                                              output=["hash_id", "score"])
             random_task_name_2 = "feature_random_%s" % model_info.name
             feature_config.add_feature(name=random_task_name_2,
-                                       depend=["source_table_request", "algotransform_random", model_info.name],
-                                       select=["source_table_request.%s" % self.user_key, "algotransform_random.score",
+                                       depend=["source_table_request", random_task_name_1, model_info.name],
+                                       select=["source_table_request.%s" % self.user_key,
+                                               "%s.score" % random_task_name_1,
                                                "%s.%s" % (model_info.name, value_name)],
-                                       condition=[Condition(left="algotransform_random.hash_id",
+                                       condition=[Condition(left="%s.hash_id" % random_task_name_1,
                                                             right="%s.%s" % (model_info.name, key_name))])
             field_actions = list()
             field_actions.append(FieldAction(names=["toItemScore.%s" % self.user_key, "item_score"],
@@ -387,7 +388,7 @@ class OnlineGenerator(object):
                             func="recallCollectItem", input=["toItemScore.%s" % self.user_key, "item_score"]))
             random_task_name_3 = "algotransform_recall_%s" % model_info.name
             feature_config.add_algoTransform(name=random_task_name_3,
-                                             taskName="ItemMatcher", feature=["feature_random"],
+                                             taskName="ItemMatcher", feature=[random_task_name_2],
                                              options={"algo-name": model_info.name},
                                              fieldActions=field_actions,
                                              output=[self.user_key, self.item_key, "score", "origin_scores"])
@@ -479,18 +480,19 @@ class OnlineGenerator(object):
             if not model_info.name or not model_info.model:
                 raise ValueError("rank_models model name or model must not be empty")
             rank_task_name_1 = "feature_rank_%s" % model_info.name
+            service_name = "rank_%s" % model_info.name
             select_fields = list()
             select_fields.extend(["source_table_user.%s" % key for key in self.user_fields])
             select_fields.extend(["source_table_item.%s" % key for key in self.item_fields])
             select_fields.append("rank_%s.origin_scores" % model_info.name)
             feature_config.add_feature(name=rank_task_name_1,
                                        depend=["source_table_user", "source_table_item",
-                                               "rank_%s" % model_info.name],
+                                               service_name],
                                        select=select_fields,
                                        condition=[Condition(left="source_table_user.%s" % self.user_key,
-                                                            right="rank_%s.%s" % (model_info.name, self.user_key)),
+                                                            right="%s.%s" % (service_name, self.user_key)),
                                                   Condition(left="source_table_item.%s" % self.item_key,
-                                                            right="rank_%s.%s" % (model_info.name, self.item_key)),
+                                                            right="%s.%s" % (service_name, self.item_key)),
                                                   ])
             field_actions = list()
             cross_features = list()
@@ -529,7 +531,6 @@ class OnlineGenerator(object):
                                                       "port": "${MODEL_PORT:50000}"},
                                              fieldActions=field_actions,
                                              output=[self.user_key, self.item_key, "score", "origin_scores"])
-            service_name = "rank_%s" % model_info.name
             recommend_config.add_service(name=service_name,
                                          preTransforms=[TransformConfig(name="summary")],
                                          columns=[{self.user_key: self.user_key_type},
