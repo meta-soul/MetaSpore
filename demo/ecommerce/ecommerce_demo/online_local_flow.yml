@@ -26,7 +26,7 @@ spec:
       serviceName: mongo
       collection: [ jpa ]
       options:
-        uri: mongodb://root:test_mongodb_123456@${MONGO_HOST:172.17.0.1}:${MONGO_PORT:27018}/jpa?authSource=admin
+        uri: mongodb://root:test_mongodb_123456@$${MONGO_HOST:172.17.0.1}:$${MONGO_PORT:27018}/jpa?authSource=admin
   source:
     user_key_name: user_id
     item_key_name: item_id

@@ -157,6 +157,6 @@ if __name__ == '__main__':
     "util_cmd": "aws s3 cp --recursive"
     }
     '''
-    consul_client = Consul("%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"), 80)
+    consul_client = Consul("consul-k8s-service.huawei.dmetasoul.com", 80)
     putConfigByKey(consul_client, widedeep_model_info, "dev/amazonfashion_widedeep")
     
