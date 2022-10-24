@@ -1,7 +1,6 @@
 default = {
   'port': 8500,
-  'name': "consul-service",
-  'container_name': "container_consul_service",
+  'name': "consul-k8s-service",
   'image': "consul:1.13.1",
 }
 template = '''
@@ -9,8 +8,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: consul-ingress
-  annotations:
-       nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   rules:
   - host: ${name}.huawei.dmetasoul.com
@@ -53,7 +50,7 @@ data:
 apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
-  name: consul-server
+  name: consul-server-budget
 spec:
   selector:
     matchLabels:
@@ -66,7 +63,7 @@ kind: StatefulSet
 metadata:
   name: consul-server
 spec:
-  serviceName: consul-server
+  serviceName: ${name}
   replicas: 3
   updateStrategy:
     type: RollingUpdate
@@ -80,7 +77,7 @@ spec:
     spec:
       terminationGracePeriodSeconds: 10
       containers:
-      - name: ${container_name}
+      - name: consul
         image: ${image}
         imagePullPolicy: IfNotPresent
         ports:

@@ -1,10 +1,9 @@
 default = {
-    'name': "model-service",
+    'name': "model-k8s-service",
     'port': 50000,
     'image': 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1',
-    'container_name': "container_model_service",
     'consul_port': 8500,
-    'consul_service': "consul-service",
+    'consul_service': "consul-k8s-service",
     'watch_image': "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/consul-watch-load:v1.0.0",
     'watch_port': 8080,
     'consul_key': "dev/",
@@ -64,7 +63,7 @@ spec:
       imagePullSecrets:
       - name: ${docker_secret}
       containers:
-      - name: ${container_name}
+      - name: model
         image: ${image}
         imagePullPolicy: IfNotPresent
         ports:

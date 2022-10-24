@@ -3,7 +3,9 @@ import subprocess
 import time
 from string import Template
 
-from metasporeflow.online.online_generator import OnlineGenerator, get_demo_jpa_flow
+from metasporeflow.online.check_service import notifyRecommendService
+from metasporeflow.online.cloud_consul import putServiceConfig
+from metasporeflow.online.online_generator import OnlineGenerator
 
 
 def k8s_template_by_file(filename, data):
@@ -26,15 +28,26 @@ class OnlineK8sExecutor(object):
         self._service_k8s_filename_template = "%s/k8s-%%s.yaml" % os.getcwd()
 
     def execute_up(self, **kwargs):
-        consul_data, recommend_data, model_data = self._generator.gen_k8s_config
+        consul_data, recommend_data, model_data = self._generator.gen_k8s_config()
         if consul_data is None or recommend_data is None or model_data is None:
             print("k8s online service config is empty")
             return
-        self.k8s_consul(consul_data, "up")
+        #       self.k8s_consul(consul_data, "up")
+        #       time.sleep(3)
+        #       self.k8s_model(model_data, "up")
+        #       time.sleep(3)
+        #       self.k8s_recommend(recommend_data, "up")
+        #       time.sleep(3)
+        online_recommend_config = self._generator.gen_server_config()
+        online_recommend_config_file = open("recommend-service.yaml", "w")
+        online_recommend_config_file.write(online_recommend_config)
+        online_recommend_config_file.close()
+        putServiceConfig(online_recommend_config,
+                         "%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-service"),
+                         consul_data.setdefault("port", 8500))
         time.sleep(3)
-        self.k8s_model(model_data, "up")
-        time.sleep(3)
-        self.k8s_recommend(recommend_data, "up")
+        notifyRecommendService("%s.huawei.dmetasoul.com" % recommend_data.setdefault("name", "recommend-service"),
+                               recommend_data.setdefault("port", 13013))
 
     def execute_down(self, **kwargs):
         consul_data, recommend_data, model_data = self._generator.gen_k8s_config
@@ -122,7 +135,20 @@ class OnlineK8sExecutor(object):
         self.k8s_service("model-serving", command, template, data, default)
 
 
-if __name__=='__main__':
-    online = get_demo_jpa_flow()
-    executor = OnlineK8sExecutor(online)
-    executor.execute_up()
+if __name__ == '__main__':
+    from metasporeflow.flows.flow_loader import FlowLoader
+    from metasporeflow.online.online_flow import OnlineFlow
+    import asyncio
+
+    flow_loader = FlowLoader()
+    flow_loader._file_name = 'test/metaspore-flow.yml'
+    resources = flow_loader.load()
+
+    online_flow = resources.find_by_type(OnlineFlow)
+    print(type(online_flow))
+    print(online_flow)
+
+    import asyncio
+
+    flow_executor = OnlineK8sExecutor(resources)
+    asyncio.run(flow_executor.execute_up())

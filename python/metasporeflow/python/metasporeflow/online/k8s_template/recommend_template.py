@@ -1,12 +1,11 @@
 default = {
   "port": 13013,
-  "name": "recommend-service",
-  "container_name": "container_recommend_service",
+  "name": "recommend-k8s-service",
   "image": 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0',
   "consul_port": 8500,
-  "consul_service": "consul-service",
+  "consul_service": "consul-k8s-service",
   "model_port": 50000,
-  "model_service": "model-service",
+  "model_service": "model-k8s-service",
 }
 template = '''
 apiVersion: v1
@@ -29,8 +28,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: recommend-ingress
-  annotations:
-       nginx.ingress.kubernetes.io/rewrite-target: /$1
 spec:
   rules:
   - host: ${name}.huawei.dmetasoul.com
@@ -65,7 +62,7 @@ spec:
         app: recommend
     spec:
       containers:
-      - name: ${container_name}
+      - name: recommend
         image: ${image}
         imagePullPolicy: IfNotPresent
         ports:

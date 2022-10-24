@@ -30,6 +30,8 @@ def append_source_table(feature_config, name, datasource, default_columns=[]):
     source_name = datasource.serviceName
     if datasource.collection:
         source_name = "%s_%s" % (datasource.serviceName, datasource.collection)
+    print(feature_config)
+    print(datasource)
     if not feature_config.find_source(source_name):
         raise ValueError("source: %s must set in services!" % source_name)
     columns = setDefault(datasource, "columns", default_columns)
@@ -105,15 +107,16 @@ class OnlineGenerator(object):
         for name, info in self.configure.dockers.items():
             info = dictToObj(info)
             data = {}
-            for key, value in info.volumes.items():
-                data["volume_%s" % key] = value
-            if info.ports:
+            if "volumes" in info:
+                for key, value in info.volumes.items():
+                    data["volume_%s" % key] = value
+            if "ports" in info:
                 data["port"] = info.ports[0]
-            if info.options:
+            if "options" in info:
                 data.update(info.options)
-            data["image"] = info.image
-            data["name"] = "%s-service" % name
-            data["container_name"] = "container_%s_service" % name
+            if "image" in info:
+                data["image"] = info.image
+            data["name"] = "%s-k8s-service" % name
             if name == "recommend":
                 recommend_data.update(data)
             elif name == "consul":
@@ -133,7 +136,7 @@ class OnlineGenerator(object):
             raise ValueError("services must set!")
         for name, info in self.configure.services.items():
             info = dictToObj(info)
-            if not info.collection:
+            if "collection" not in info:
                 feature_config.add_source(name=name, kind=info.kind,
                                           options=get_source_option(self.configure, name, None))
             else:
@@ -203,13 +206,13 @@ class OnlineGenerator(object):
                 experiment_data = dictToObj(data)
                 then = []
                 when = []
-                if experiment_data.then:
+                if "then" in experiment_data:
                     for model_name in experiment_data.then:
                         if model_name in service_dict:
                             then.append(service_dict.get(model_name))
                         else:
                             print("no found service from model name: %s" % model_name)
-                if experiment_data.when:
+                if "when" in experiment_data:
                     for model_name in experiment_data.when:
                         if model_name in service_dict:
                             when.append(service_dict.get(model_name))
@@ -265,7 +268,7 @@ class OnlineGenerator(object):
                                    condition=[
                                        Condition(left="%s.%s" % (iteminfo_service_name, self.item_key), type="left",
                                                  right="source_table_summary.%s" % self.item_key)])
-        random_recall_list = self.add_random_recalls(feature_config)
+        random_recall_dict = self.add_random_recalls(feature_config)
         if self.configure.scenes:
             for data in self.configure.scenes:
                 scene_data = dictToObj(data)
@@ -286,9 +289,14 @@ class OnlineGenerator(object):
                         "updateOperator": "putOriginScores"
                     }),
                 ]
-                if random_recall_list:
+                if "additionalRecalls" in scene_data and scene_data.additionalRecalls:
+                    if not random_recall_dict:
+                        raise ValueError("random_recall_model set empty!")
+                    for model_name in scene_data.additionalRecalls:
+                        if model_name not in random_recall_dict:
+                            raise ValueError("random_recall_model: %s not set in config!" % model_name)
                     transforms.append(TransformConfig(name="additionalRecall", option={
-                        "recall_list": random_recall_list,
+                        "recall_list": [random_recall_dict[item] for item in scene_data.additionalRecalls],
                         "min_request": 10
                     }))
                 transforms.append(TransformConfig(name="addItemInfo", option={
@@ -327,24 +335,25 @@ class OnlineGenerator(object):
                                          output=[self.user_key, self.item_key, "item_score"])
 
     def add_random_recalls(self, feature_config):
-        random_recall_list = list()
+        random_recall_dict = dict()
         if self.configure.random_models:
             model_info = self.configure.random_models[0]
             model_info = dictToObj(model_info)
+            if not model_info.name:
+                raise ValueError("random_model model name must not be empty")
             random_recall = self.add_one_random_recall(model_info, feature_config)
             if random_recall is not None:
-                random_recall_list.append(random_recall)
-        return random_recall_list
+                random_recall_dict[model_info.name] = random_recall
+        return random_recall_dict
 
     def add_one_random_recall(self, model_info, feature_config):
         if model_info:
-            if not model_info.name:
-                raise ValueError("random_model model name must not be empty")
             key_name = model_info.keyName
             value_name = model_info.valueName
-            columns = model_info.source.columns
-            if not columns:
+            if "columns" not in model_info.source:
                 columns = [{key_name: "int"}, {value_name: {"list_struct": {"item_id": "str", "score": "double"}}}]
+            else:
+                columns = model_info.source.columns
             if not columns_has_key(columns, key_name):
                 raise ValueError("random model datasource column must has key_name: %s!" % key_name)
             if not columns_has_key(columns, value_name):
@@ -399,9 +408,10 @@ class OnlineGenerator(object):
                 raise ValueError("cf_model model name must not be empty")
             key_name = model_info.keyName
             value_name = model_info.valueName
-            columns = model_info.source.columns
-            if not columns:
+            if "columns" not in model_info.source:
                 columns = [{key_name: "str"}, {value_name: {"list_struct": {"_1": "str", "_2": "double"}}}]
+            else:
+                columns = model_info.source.columns
             if not columns_has_key(columns, key_name):
                 raise ValueError("cf model datasource column must has key_name: %s!" % key_name)
             for info in columns:

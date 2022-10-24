@@ -23,17 +23,17 @@ from attrs import frozen
 class DockerInfo(object):
     image: Optional[str] = None
     ports: Optional[list] = list()
-    volumns: Optional[dict] = dict()
+    volumes: Optional[dict] = dict()
     environment: Optional[dict] = dict()
     options: Optional[dict] = dict()
 
 @frozen
 class ServiceInfo(object):
+    kind: Optional[str] = "mongodb"
     options: Optional[dict] = dict()
+    collection: Optional[list] = list()
     host: Optional[str] = "172.17.0.1"
     port: Optional[int] = 27017
-    kind: Optional[str] = "mongodb"
-    collection: Optional[list] = list()
 
 
 @frozen
@@ -119,6 +119,7 @@ class Layer(object):
 class Scene(object):
     name: str
     layers: Optional[list] = list()
+    additionalRecalls: Optional[list] = list()
 
 
 @frozen
