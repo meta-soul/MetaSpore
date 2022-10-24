@@ -17,5 +17,6 @@
 from enum import Enum
 
 
-class SchedulerTpye(Enum):
+class SchedulerType(Enum):
     OfflineCrontabScheduler = "OfflineCrontabScheduler"
+    OfflineK8sCronjobScheduler = "OfflineK8sCronjobScheduler"

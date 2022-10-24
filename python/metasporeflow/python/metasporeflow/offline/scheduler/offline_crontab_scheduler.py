@@ -21,8 +21,8 @@ from metasporeflow.offline.utils.file_util import FileUtil
 
 
 class OfflineCrontabScheduler(Scheduler):
-    def __init__(self, schedulers_conf, tasks, local_container_name):
-        super().__init__(schedulers_conf, tasks)
+    def __init__(self, scheduler_conf, tasks, local_container_name):
+        super().__init__(scheduler_conf, tasks)
         self._local_container_name = local_container_name
         self._local_temp_dir = ".tmp"
         self._docker_temp_dir = "/opt" + "/" + self._local_temp_dir
