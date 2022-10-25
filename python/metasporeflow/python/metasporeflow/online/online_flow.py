@@ -56,6 +56,7 @@ class RandomModelInfo(object):
     name: str
     bound: int
     source: DataSource
+    recallService: Optional[str] = None
     keyName: Optional[str] = "key"
     valueName: Optional[str] = "value_list"
 
@@ -64,6 +65,8 @@ class RandomModelInfo(object):
 class CFModelInfo(object):
     name: str
     source: DataSource
+    recallService: Optional[str] = None
+    relatedService: Optional[str] = None
     keyName: Optional[str] = "key"
     valueName: Optional[str] = "value"
 
@@ -88,6 +91,7 @@ class RankModelInfo(object):
     model: str
     column_info: dict
     cross_features: list
+    rankService: Optional[str] = None
 
 
 @frozen

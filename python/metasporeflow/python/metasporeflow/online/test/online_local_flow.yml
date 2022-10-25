@@ -72,6 +72,8 @@ spec:
   random_models:
     - name: pop
       bound: 10
+      model_info:
+      recallService: recall_pop
       keyName: key
       valueName: value_list
       source:
@@ -80,6 +82,8 @@ spec:
         collection: jpa
   cf_models:
     - name: swing
+      recallService: recall_swing
+      relatedService: related_swing
       keyName: key
       valueName: value
       source:
@@ -89,6 +93,7 @@ spec:
   rank_models:
     - name: widedeep
       model: amazonfashion_widedeep
+      rankService: rank_widedeep
       column_info:
         - dnn_sparse: [ "user_id", "item_id", "brand", "category" ]
         - lr_sparse: [ "user_id", "item_id", "category", "brand", "user_id#brand", "user_id#category" ]

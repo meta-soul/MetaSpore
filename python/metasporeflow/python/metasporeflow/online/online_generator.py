@@ -198,7 +198,7 @@ class OnlineGenerator(object):
         feature_config.add_sourceTable(
             name="source_table_request", source="request", columns=self.request_columns)
 
-    def process_expriments(self, service_dict, recommend_config):
+    def process_expriments(self, recommend_config):
         recommend_experiments = set()
         if self.configure.experiments:
             for data in self.configure.experiments:
@@ -207,14 +207,14 @@ class OnlineGenerator(object):
                 when = []
                 if "then" in experiment_data:
                     for model_name in experiment_data.then:
-                        if model_name in service_dict:
-                            then.append(service_dict.get(model_name))
+                        if model_name in self.service_dict:
+                            then.append(self.service_dict.get(model_name))
                         else:
                             print("no found service from model name: %s" % model_name)
                 if "when" in experiment_data:
                     for model_name in experiment_data.when:
-                        if model_name in service_dict:
-                            when.append(service_dict.get(model_name))
+                        if model_name in self.service_dict:
+                            when.append(self.service_dict.get(model_name))
                         else:
                             print("no found service from model name: %s" % model_name)
                 recommend_config.add_experiment(name=experiment_data.name,
@@ -267,7 +267,7 @@ class OnlineGenerator(object):
                                    condition=[
                                        Condition(left="%s.%s" % (iteminfo_service_name, self.item_key), type="left",
                                                  right="source_table_summary.%s" % self.item_key)])
-        random_recall_dict = self.add_random_recalls(feature_config)
+        random_recall_dict = self.add_random_recalls(feature_config, recommend_config)
         if self.configure.scenes:
             for data in self.configure.scenes:
                 scene_data = dictToObj(data)
@@ -329,19 +329,19 @@ class OnlineGenerator(object):
                                          fieldActions=user_profile_actions,
                                          output=[self.user_key, self.item_key, "item_score"])
 
-    def add_random_recalls(self, feature_config):
+    def add_random_recalls(self, feature_config, recommend_config):
         random_recall_dict = dict()
         if self.configure.random_models:
             model_info = self.configure.random_models[0]
             model_info = dictToObj(model_info)
             if not model_info.name:
                 raise ValueError("random_model model name must not be empty")
-            random_recall = self.add_one_random_recall(model_info, feature_config)
+            random_recall = self.add_one_random_recall(model_info, feature_config, recommend_config)
             if random_recall is not None:
                 random_recall_dict[model_info.name] = random_recall
         return random_recall_dict
 
-    def add_one_random_recall(self, model_info, feature_config):
+    def add_one_random_recall(self, model_info, feature_config, recommend_config):
         if model_info:
             key_name = model_info.keyName
             value_name = model_info.valueName
@@ -389,16 +389,21 @@ class OnlineGenerator(object):
                                              options={"algo-name": model_info.name},
                                              fieldActions=field_actions,
                                              output=[self.user_key, self.item_key, "score", "origin_scores"])
+            if "recallService" in model_info and model_info.recallService:
+                service_name = model_info.recallService
+                recommend_config.add_service(name=service_name, tasks=[random_task_name_3],
+                                             options={"maxReservation": 200})
+                self.service_dict[service_name] = service_name
             return random_task_name_3
         return None
 
-    def add_cf_recalls(self, service_dict, feature_config, recommend_config):
+    def add_cf_recalls(self, feature_config, recommend_config):
         if self.configure.cf_models:
             for model_info in self.configure.cf_models:
                 model_info = dictToObj(model_info)
-                self.add_one_cf_recall(model_info, service_dict, feature_config, recommend_config)
+                self.add_one_cf_recall(model_info, feature_config, recommend_config)
 
-    def add_one_cf_recall(self, model_info, service_dict, feature_config, recommend_config):
+    def add_one_cf_recall(self, model_info, feature_config, recommend_config):
         if model_info:
             if not model_info.name:
                 raise ValueError("cf_model model name must not be empty")
@@ -458,26 +463,32 @@ class OnlineGenerator(object):
                                              fieldActions=related_field_actions,
                                              output=[self.user_key, self.item_key, "score", "origin_scores"])
             service_name = "recall_%s" % model_info.name
+            if "recallService" in model_info and model_info.recallService:
+                service_name = model_info.recallService
             recommend_config.add_service(name=service_name, tasks=[cf_task_name_2],
                                          options={"maxReservation": 200})
-            service_dict[service_name] = service_name
+            self.service_dict[service_name] = service_name
             related_service_name = "related_%s" % model_info.name
+            if "relatedService" in model_info and model_info.relatedService:
+                related_service_name = model_info.relatedService
             recommend_config.add_service(name=related_service_name, tasks=[related_cf_task_name_2],
                                          options={"maxReservation": 200})
-            service_dict[related_service_name] = related_service_name
+            self.service_dict[related_service_name] = related_service_name
 
-    def add_rank_models(self, service_dict, feature_config, recommend_config):
+    def add_rank_models(self, feature_config, recommend_config):
         if self.configure.rank_models:
             for model_info in self.configure.rank_models:
                 model_info = dictToObj(model_info)
-                self.add_one_rank_recall(model_info, service_dict, feature_config, recommend_config)
+                self.add_one_rank_recall(model_info, feature_config, recommend_config)
 
-    def add_one_rank_recall(self, model_info, service_dict, feature_config, recommend_config):
+    def add_one_rank_recall(self, model_info, feature_config, recommend_config):
         if model_info:
             if not model_info.name or not model_info.model:
                 raise ValueError("rank_models model name or model must not be empty")
             rank_task_name_1 = "feature_rank_%s" % model_info.name
             service_name = "rank_%s" % model_info.name
+            if "rankService" in model_info and model_info.rankService:
+                service_name = model_info.rankService
             select_fields = list()
             select_fields.extend(["source_table_user.%s" % key for key in self.user_fields])
             select_fields.extend(["source_table_item.%s" % key for key in self.item_fields])
@@ -534,7 +545,7 @@ class OnlineGenerator(object):
                                                   {self.item_key: self.item_key_type},
                                                   {"score": "double"}, {"origin_scores": "map_str_double"}],
                                          tasks=[rank_task_name_2], options={"maxReservation": 200})
-            service_dict[service_name] = service_name
+            self.service_dict[service_name] = service_name
 
     def gen_server_config(self):
         feature_config = FeatureConfig(source=[Source(name="request"), ])
@@ -542,11 +553,11 @@ class OnlineGenerator(object):
         self.process_feature_sourceTable(feature_config)
         self.add_user_profile(feature_config)
         self.add_item_summary(feature_config)
-        service_dict = dict()
+        self.service_dict = dict()
         recommend_config = RecommendConfig()
-        self.add_cf_recalls(service_dict, feature_config, recommend_config)
-        self.add_rank_models(service_dict, feature_config, recommend_config)
-        recommend_experiments = self.process_expriments(service_dict, recommend_config)
+        self.add_cf_recalls(feature_config, recommend_config)
+        self.add_rank_models(feature_config, recommend_config)
+        recommend_experiments = self.process_expriments(recommend_config)
         layer_set = self.process_layers(recommend_experiments, recommend_config)
         self.process_scenes(layer_set, feature_config, recommend_config)
         online_configure = OnlineServiceConfig(feature_config, recommend_config)
