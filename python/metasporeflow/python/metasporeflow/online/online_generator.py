@@ -78,8 +78,9 @@ class OnlineGenerator(object):
         for name, info in dockers.items():
             info = dictToObj(info)
             volumes = []
-            for key, value in info.volumes.items():
-                volumes.append("%s/volumes/%s" % (os.getcwd(), value))
+            if "volumes" in info:
+                for key, value in info.volumes.items():
+                    volumes.append("%s/volumes/%s" % (os.getcwd(), value))
             if not volumes and str(name).startswith("model"):
                 volumes.append("%s/volumes/output/model:/data/models" % os.getcwd())
             online_docker_compose.add_service(name, "container_%s_service" % name,

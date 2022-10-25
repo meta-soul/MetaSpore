@@ -27,7 +27,7 @@ from metasporeflow.online.common import DumpToYaml
 
 
 def run_cmd(command):
-    ret = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf-8")
+    ret = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print(ret)
     return ret.returncode
 
