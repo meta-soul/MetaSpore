@@ -8,6 +8,7 @@ default = {
   "model_service": "model-k8s-service",
   "mongo_port": 27017,
   "mongo_service": "127.0.0.1",
+  'domain': "huawei.dmetasoul.com",
 }
 template = '''
 apiVersion: v1
@@ -32,7 +33,7 @@ metadata:
   name: recommend-ingress
 spec:
   rules:
-  - host: ${name}.huawei.dmetasoul.com
+  - host: ${name}.${domain}
     http:
       paths:
       - path: /

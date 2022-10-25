@@ -36,7 +36,7 @@ class OnlineK8sExecutor(object):
         print(consul_data)
         print(recommend_data)
         print(model_data)
-        print("*"*80)
+        print("*" * 80)
         self.k8s_consul(consul_data, "up")
         time.sleep(3)
         self.k8s_model(model_data, "up")
@@ -44,10 +44,12 @@ class OnlineK8sExecutor(object):
         self.k8s_recommend(recommend_data, "up")
         time.sleep(10)
         online_recommend_config = self._generator.gen_server_config()
-        consul_client = Consul("%s.huawei.dmetasoul.com" % consul_data.setdefault("name", "consul-k8s-service"), 80)
+        consul_client = Consul("%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
+                                          consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
         putServiceConfig(consul_client, online_recommend_config)
         time.sleep(3)
-        notifyRecommendService("%s.huawei.dmetasoul.com" % recommend_data.setdefault("name", "recommend-k8s-service"),
+        notifyRecommendService("%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                                          recommend_data.setdefault("domain", "huawei.dmetasoul.com")),
                                80)
 
     def execute_down(self, **kwargs):

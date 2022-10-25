@@ -2,6 +2,7 @@ default = {
   'port': 8500,
   'name': "consul-k8s-service",
   'image': "consul:1.13.1",
+  'domain': "huawei.dmetasoul.com",
 }
 template = '''
 apiVersion: networking.k8s.io/v1
@@ -10,7 +11,7 @@ metadata:
   name: consul-ingress
 spec:
   rules:
-  - host: ${name}.huawei.dmetasoul.com
+  - host: ${name}.${domain}
     http:
       paths:
       - path: /

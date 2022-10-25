@@ -10,6 +10,7 @@ spec:
       options:
         mongo_service: mongodb.saas-demo
         mongo_port: 27017
+        domain: "huawei.dmetasoul.com"
     model:
       image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1
       ports: [ 50000 ]
@@ -23,6 +24,8 @@ spec:
     consul:
       image: consul:1.13.1
       ports: [ 8500 ]
+      options:
+        domain: "huawei.dmetasoul.com"
   services:
     mongo:
       kind: MongoDB
