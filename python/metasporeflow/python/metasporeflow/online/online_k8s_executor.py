@@ -51,7 +51,7 @@ class OnlineK8sExecutor(object):
                                80)
 
     def execute_down(self, **kwargs):
-        consul_data, recommend_data, model_data = self._generator.gen_k8s_config
+        consul_data, recommend_data, model_data = self._generator.gen_k8s_config()
         if consul_data is None or recommend_data is None or model_data is None:
             print("k8s online service config is empty")
             return
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
 
     flow_executor = OnlineK8sExecutor(resources)
-    flow_executor.execute_up()
+    flow_executor.execute_down()
 
     widedeep_model_info = '''
     {
