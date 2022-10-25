@@ -16,12 +16,14 @@
 
 from .flow_executor import FlowExecutor
 from metasporeflow.online.online_k8s_executor import OnlineK8sExecutor
+from metasporeflow.offline.k8s_cluster_offline_executor import K8sClusterOfflineFlowExecutor
 
 
 class K8sClusterFlowExecutor(FlowExecutor):
     def __init__(self, resources):
         super(K8sClusterFlowExecutor, self).__init__(resources)
         self.online_executor = OnlineK8sExecutor(self._resources)
+        self.offline_executor = K8sClusterOfflineFlowExecutor(self._resources)
 
     async def execute_up(self):
         print(self._resources)
@@ -29,12 +31,18 @@ class K8sClusterFlowExecutor(FlowExecutor):
         self.online_executor.execute_up()
         print('online k8s cluster flow up')
         print('-------------------------------')
+        self.offline_executor.execute_up()
+        print('offline k8s cluster flow up')
+        print('-------------------------------')
         print('k8s cluster flow up')
 
     async def execute_down(self):
         print('-------------------------------')
         self.online_executor.execute_down()
         print('online k8s cluster flow down')
+        print('-------------------------------')
+        self.offline_executor.execute_down()
+        print('offline k8s cluster flow down')
         print('-------------------------------')
         print('k8s cluster flow down')
 
@@ -44,10 +52,16 @@ class K8sClusterFlowExecutor(FlowExecutor):
         print('online k8s cluster flow status:')
         self.online_executor.execute_status()
         print('-------------------------------')
+        print('offline k8s cluster flow status:')
+        self.offline_executor.execute_status()
+        print('-------------------------------')
 
     async def execute_reload(self):
         print('-------------------------------')
         self.online_executor.execute_reload()
         print('online k8s cluster flow reload')
+        print('-------------------------------')
+        self.offline_executor.execute_reload()
+        print('offline k8s cluster flow reload')
         print('-------------------------------')
         print('k8s cluster flow reload')

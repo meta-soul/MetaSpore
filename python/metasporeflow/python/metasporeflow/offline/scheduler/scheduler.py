@@ -27,12 +27,16 @@ class Scheduler(ABC):
         self.name = scheduler_conf.name
         self.type = scheduler_conf.kind
         self.cronExpr = scheduler_conf.data.cronExpr
+        self._scheduler_conf = scheduler_conf
         self._dag = self._get_dag(scheduler_conf.data.dag)
         self._dag_tasks: List[Task] = self._get_dag_tasks(tasks)
 
     @abstractmethod
     def publish(self):
         raise NotImplementedError
+
+    def destroy(self):
+        pass
 
     def _get_dag(self, dag_conf):
         tuples = []

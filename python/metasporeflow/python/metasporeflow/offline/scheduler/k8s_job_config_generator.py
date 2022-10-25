@@ -101,10 +101,9 @@ class CronJob:
     spec: CronJobSpec
 
 class K8sJobConfigGenerator(object):
-    def __init__(self, resources, job_command):
+    def __init__(self, scheduler_conf, job_command):
         from ...flows.metaspore_offline_flow import OfflineK8sCronjobScheduler
-        self._resources = resources
-        self._scheduler_conf = resources.find_by_type(OfflineK8sCronjobScheduler)
+        self._scheduler_conf = scheduler_conf
         self._k8s_namespace = self._scheduler_conf.data.namespace
         self._service_account_name = self._scheduler_conf.data.serviceAccountName
         self._cronjob_image = self._scheduler_conf.data.cronjobImage
