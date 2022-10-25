@@ -8,7 +8,7 @@ spec:
       image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0
       ports: [ 13013 ]
       options:
-        mongo_service: mongodb.xionghd
+        mongo_service: mongodb.saas-demo
         mongo_port: 27017
     model:
       image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1
