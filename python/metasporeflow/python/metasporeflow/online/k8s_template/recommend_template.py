@@ -9,12 +9,14 @@ default = {
   "mongo_port": 27017,
   "mongo_service": "127.0.0.1",
   'domain': "huawei.dmetasoul.com",
+  'namespace': "default",
 }
 template = '''
 apiVersion: v1
 kind: Service
 metadata:
   name: ${name}
+  namespace: ${namespace}
   labels:
     app: recommend
 spec:
@@ -31,6 +33,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: recommend-ingress
+  namespace: ${namespace}
 spec:
   rules:
   - host: ${name}.${domain}
@@ -49,6 +52,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: recommend
+  namespace: ${namespace}
 spec:
   replicas: 3
   selector:

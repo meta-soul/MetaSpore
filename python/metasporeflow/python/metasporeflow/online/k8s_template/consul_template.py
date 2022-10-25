@@ -3,12 +3,14 @@ default = {
   'name': "consul-k8s-service",
   'image': "consul:1.13.1",
   'domain': "huawei.dmetasoul.com",
+  'namespace': "default",
 }
 template = '''
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: consul-ingress
+  namespace: ${namespace}
 spec:
   rules:
   - host: ${name}.${domain}
@@ -27,6 +29,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: ${name}
+  namespace: ${namespace}
   labels:
     app: consul
 spec:
@@ -45,6 +48,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: consul-server-config
+  namespace: ${namespace}
 data:
 
 ---
@@ -52,6 +56,7 @@ apiVersion: policy/v1beta1
 kind: PodDisruptionBudget
 metadata:
   name: consul-server-budget
+  namespace: ${namespace}
 spec:
   selector:
     matchLabels:
@@ -63,6 +68,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: consul-server
+  namespace: ${namespace}
 spec:
   serviceName: ${name}
   replicas: 3

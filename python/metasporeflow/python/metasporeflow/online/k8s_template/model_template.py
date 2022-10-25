@@ -10,12 +10,14 @@ default = {
     'endpoint_url': 'http://obs.cn-southwest-2.myhuaweicloud.com',
     'docker_secret': "regcred",
     'aws_secret': "aws-secret",
+    'namespace': "default",
 }
 template = '''
 apiVersion: v1
 kind: Service
 metadata:
   name: ${name}
+  namespace: ${namespace}
   labels:
     app: model
 spec:
@@ -32,6 +34,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: aws-configmap
+  namespace: ${namespace}
 data:
   config: |
     [default]
@@ -46,6 +49,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: model-serving
+  namespace: ${namespace}
 spec:
   replicas: 3
   selector:
