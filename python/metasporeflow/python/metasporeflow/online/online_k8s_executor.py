@@ -122,8 +122,8 @@ class OnlineK8sExecutor(object):
             else:
                 print("%s k8s service create fail!" % service_name)
         elif command == "down":
-            if self.create_k8s_service(service_name, template, data):
-                print("%s k8s service delete successfully!"%service_name)
+            if self.delete_k8s_service(service_name, template, data):
+                print("%s k8s service delete successfully!" % service_name)
             else:
                 print("%s k8s service delete fail!" % service_name)
 
