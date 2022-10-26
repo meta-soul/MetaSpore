@@ -24,7 +24,8 @@ class OfflineK8sCronjobScheduler(Scheduler):
         super().__init__(scheduler_conf, tasks)
 
     def publish(self):
-        self._create_offline_cronjob()
+        # TODO: cf: use cronjob instead of batch job
+        #self._create_offline_cronjob()
         self._run_offline_batch_job_once()
 
     def destroy(self):
