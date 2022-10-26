@@ -75,7 +75,6 @@ spec:
   random_models:
     - name: pop
       bound: 10
-      model_info:
       recallService: recall_pop
       keyName: key
       valueName: value_list
