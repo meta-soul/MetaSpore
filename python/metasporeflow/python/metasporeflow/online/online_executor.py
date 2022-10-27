@@ -118,6 +118,7 @@ class OnlineLocalExecutor(object):
         if info["status"] != 'UP':
             return info
         info["service_status"] = healthRecommendService("localhost", recommend_port)
+        info["status"] = info["service_status"].setdefault("status", "DOWN")
         return info
 
     @staticmethod

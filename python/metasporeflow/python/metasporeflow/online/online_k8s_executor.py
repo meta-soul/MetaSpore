@@ -12,7 +12,7 @@ def is_k8s_active(service_name, namespace="saas-demo"):
     cmd = "echo $( kubectl describe -n {} service {} )".format(namespace, service_name)
     res = subprocess.run(cmd, shell=True, check=True,
                          capture_output=True, text=True)
-    return res.stdout.strip() == "true"
+    return res.stderr.strip() == ""
 
 def k8s_template_by_file(filename, data):
     with open(filename, 'r') as template_file:
@@ -28,9 +28,8 @@ def k8s_template(template_content, data):
 
 class OnlineK8sExecutor(object):
     def __init__(self, resources):
-        self._local_resource = resources.find_by_name("demo_metaspore_flow")
         self._online_resource = resources.find_by_name("online_local_flow")
-        self._generator = OnlineGenerator(resource=self._online_resource, local_resource=self._local_resource)
+        self._generator = OnlineGenerator(resource=self._online_resource)
         self._service_k8s_filename_template = "%s/k8s-%%s.yaml" % os.getcwd()
 
     def execute_up(self, **kwargs):
@@ -92,6 +91,7 @@ class OnlineK8sExecutor(object):
         info["service_status"] = healthRecommendService(
             "%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
                        recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+        info["status"] = info["service_status"].setdefault("status", "DOWN")
         return info
 
     @staticmethod
@@ -99,7 +99,7 @@ class OnlineK8sExecutor(object):
         generator = OnlineGenerator(resource=resource)
         consul_data, _, _ = generator.gen_k8s_config()
         if not is_k8s_active(consul_data["name"], consul_data.setdefault("namespace", "saas-demo")):
-            return False, "consul docker is not up!"
+            return False, "consul k8s service is not up!"
         try:
             online_recommend_config = generator.gen_server_config()
         except Exception as ex:
@@ -201,19 +201,6 @@ if __name__ == '__main__':
     print(type(online_flow))
     print(online_flow)
 
-
     flow_executor = OnlineK8sExecutor(resources)
-    flow_executor.execute_up()
+    print(flow_executor.execute_status())
 
-    widedeep_model_info = '''
-    {
-    "name": "amazonfashion_widedeep",
-    "service": "model-k8s-service",
-    "path": "s3://dmetasoul-bucket/qinyy/test-model-watched/amazonfashion_widedeep",
-    "version": "20221024",
-    "util_cmd": "aws s3 cp --recursive"
-    }
-    '''
-    consul_client = Consul("consul-k8s-service.huawei.dmetasoul.com", 80)
-    putConfigByKey(consul_client, widedeep_model_info, "dev/amazonfashion_widedeep")
-    

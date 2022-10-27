@@ -64,7 +64,7 @@ def healthRecommendService(host, port):
                 return {"satus": "DOWN", "resp": resp,
                         "msg": "health check request resp parser fail, ex:{}".format(ex.args)}
             if data is not None:
-                return {"satus": "DOWN", "resp": data, "msg": "health check successfully"}
+                return {"satus": "UP", "resp": data, "msg": "health check successfully"}
     return {"satus": "DOWN", "resp": None, "msg": "health check request fail, unknown"}
 
 
