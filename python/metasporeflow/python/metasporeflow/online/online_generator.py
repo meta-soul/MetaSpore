@@ -53,10 +53,6 @@ class OnlineGenerator(object):
         self.resource = kwargs.get("resource")
         if not self.resource or not isinstance(self.resource.data, OnlineFlow):
             raise ValueError("MetaSpore Online need input online configure data!")
-        self.local_resource = kwargs.get("local_resource")
-        if not self.local_resource or not self.local_resource.data:
-            raise ValueError("MetaSpore need input configure data!")
-        self.local_config = self.local_resource.data
         self.configure = self.resource.data
 
     def gen_docker_compose(self):

@@ -3,10 +3,16 @@ import subprocess
 import time
 from string import Template
 
-from metasporeflow.online.check_service import notifyRecommendService
+from metasporeflow.online.check_service import notifyRecommendService, healthRecommendService
 from metasporeflow.online.cloud_consul import putServiceConfig, Consul, putConfigByKey
 from metasporeflow.online.online_generator import OnlineGenerator
 
+
+def is_k8s_active(service_name, namespace="saas-demo"):
+    cmd = "echo $( kubectl describe -n {} service {} )".format(namespace, service_name)
+    res = subprocess.run(cmd, shell=True, check=True,
+                         capture_output=True, text=True)
+    return res.stdout.strip() == "true"
 
 def k8s_template_by_file(filename, data):
     with open(filename, 'r') as template_file:
@@ -32,7 +38,7 @@ class OnlineK8sExecutor(object):
         if consul_data is None or recommend_data is None or model_data is None:
             print("k8s online service config is empty")
             return
-        print("**********************************")
+        print("*" * 80)
         print(consul_data)
         print(recommend_data)
         print(model_data)
@@ -58,7 +64,53 @@ class OnlineK8sExecutor(object):
         self.k8s_consul(consul_data, "down")
 
     def execute_status(self, **kwargs):
-        pass
+        consul_data, recommend_data, model_data = self._generator.gen_k8s_config()
+        info = {"status": "UP"}
+        if not is_k8s_active(consul_data["name"], consul_data.setdefault("namespace", "saas-demo")):
+            info["status"] = "DOWN"
+            info["consul"] = "consul k8s service is not up!"
+        else:
+            info["consul"] = "consul k8s service:{} is up!".format(consul_data["name"])
+            info["consul_image"] = consul_data["image"]
+            info["consul_port"] = consul_data["port"]
+        if not is_k8s_active(recommend_data["name"], recommend_data.setdefault("namespace", "saas-demo")):
+            info["status"] = "DOWN"
+            info["recommend"] = "recommend k8s service is not up!"
+        else:
+            info["recommend"] = "recommend k8s service:{} is up!".format(recommend_data["name"])
+            info["recommend_image"] = recommend_data["image"]
+            info["recommend_port"] = recommend_data["port"]
+        if not is_k8s_active(model_data["name"], model_data.setdefault("namespace", "saas-demo")):
+            info["status"] = "DOWN"
+            info["model"] = "model k8s service is not up!"
+        else:
+            info["model"] = "model k8s service:{} is up!".format(model_data["name"])
+            info["model_image"] = model_data["image"]
+            info["model_port"] = model_data["port"]
+        if info["status"] != 'UP':
+            return info
+        info["service_status"] = healthRecommendService(
+            "%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                       recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+        return info
+
+    @staticmethod
+    def execute_update(resource):
+        generator = OnlineGenerator(resource=resource)
+        consul_data, _, _ = generator.gen_k8s_config()
+        if not is_k8s_active(consul_data["name"], consul_data.setdefault("namespace", "saas-demo")):
+            return False, "consul docker is not up!"
+        try:
+            online_recommend_config = generator.gen_server_config()
+        except Exception as ex:
+            return False, "recommend service config generate fail ex:{}!".format(ex.args)
+        consul_client = Consul("%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
+                                          consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+        try:
+            putServiceConfig(consul_client, online_recommend_config)
+        except Exception as ex:
+            return False, "put service config to consul fail ex:{}!".format(ex.args)
+        return True, "update config successfully!"
 
     def execute_reload(self, **kwargs):
         new_flow = kwargs.setdefault("resource", None)

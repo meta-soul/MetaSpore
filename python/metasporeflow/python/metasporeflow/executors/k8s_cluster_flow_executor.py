@@ -49,12 +49,10 @@ class K8sClusterFlowExecutor(FlowExecutor):
     async def execute_status(self):
         print('k8s cluster flow status:')
         print('-------------------------------')
-        print('online k8s cluster flow status:')
-        self.online_executor.execute_status()
-        print('-------------------------------')
-        print('offline k8s cluster flow status:')
-        self.offline_executor.execute_status()
-        print('-------------------------------')
+        return {
+            "online": self.online_executor.execute_status(),
+            "offline": self.offline_executor.execute_status(),
+        }
 
     async def execute_reload(self):
         print('-------------------------------')
@@ -65,3 +63,8 @@ class K8sClusterFlowExecutor(FlowExecutor):
         print('offline k8s cluster flow reload')
         print('-------------------------------')
         print('k8s cluster flow reload')
+
+    @staticmethod
+    async def execute_update(resource):
+        print(resource)
+        return OnlineK8sExecutor.execute_update(resource)
