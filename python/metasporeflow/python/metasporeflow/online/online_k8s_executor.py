@@ -47,10 +47,6 @@ class OnlineK8sExecutor(object):
         consul_client = Consul("%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
                                           consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
         putServiceConfig(consul_client, online_recommend_config)
-        time.sleep(3)
-        notifyRecommendService("%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
-                                          recommend_data.setdefault("domain", "huawei.dmetasoul.com")),
-                               80)
 
     def execute_down(self, **kwargs):
         consul_data, recommend_data, model_data = self._generator.gen_k8s_config()

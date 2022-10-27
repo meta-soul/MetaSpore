@@ -71,7 +71,7 @@ spec:
       containers:
       - name: recommend
         image: ${image}
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: ${port}
           name: http
@@ -91,6 +91,12 @@ spec:
         - name: SERVICE_PORT
           value: "${port}"
         command: ["java", "-Xmx2048M", "-Xms2048M", "-Xmn768M", "-XX:MaxMetaspaceSize=256M", "-XX:MetaspaceSize=256M", "-jar", "recommend-service-1.0-SNAPSHOT.jar"]
+        readinessProbe:
+          httpGet:
+            path: /actuator/pullConfig
+            port: ${port}
+          initialDelaySeconds: 10
+          periodSeconds: 60
         resources:
           limits:
             cpu: "2000m"
