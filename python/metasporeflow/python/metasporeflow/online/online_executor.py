@@ -115,10 +115,9 @@ class OnlineLocalExecutor(object):
             info["model"] = "model docker container:{} is up!".format(model_container_name)
             info["model_image"] = compose_info.services["model"].image
             info["model_port"] = compose_info.services["model"].ports[0]
-        if info["status"] != 'UP':
-            return info
-        info["service_status"] = healthRecommendService("localhost", recommend_port)
-        info["status"] = info["service_status"].setdefault("status", "DOWN")
+        if info["status"] == 'UP':
+            info["service_status"] = healthRecommendService("localhost", recommend_port)
+            info["status"] = info["service_status"].setdefault("status", "DOWN")
         return info
 
     @staticmethod

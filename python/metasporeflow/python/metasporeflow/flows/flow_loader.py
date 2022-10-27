@@ -56,3 +56,7 @@ class FlowLoader(object):
         resource_loader = self._create_resource_loader()
         resources = resource_loader.load(self._file_name)
         return resources
+
+    def load_resource(self, text):
+        resource_loader = self._create_resource_loader()
+        return resource_loader.load_resource(text)

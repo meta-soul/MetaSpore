@@ -86,12 +86,11 @@ class OnlineK8sExecutor(object):
             info["model"] = "model k8s service:{} is up!".format(model_data["name"])
             info["model_image"] = model_data["image"]
             info["model_port"] = model_data["port"]
-        if info["status"] != 'UP':
-            return info
-        info["service_status"] = healthRecommendService(
-            "%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
-                       recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
-        info["status"] = info["service_status"].setdefault("status", "DOWN")
+        if info["status"] == 'UP':
+            info["service_status"] = healthRecommendService(
+                "%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                           recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+            info["status"] = info["service_status"].setdefault("status", "DOWN")
         return info
 
     @staticmethod
@@ -194,6 +193,10 @@ if __name__ == '__main__':
     import asyncio
 
     flow_loader = FlowLoader()
+    with open('test/online_local_flow.yml') as input:
+        text = input.read()
+        online_resource = flow_loader.load_resource(text)
+        print(online_resource)
     flow_loader._file_name = 'test/metaspore-flow.yml'
     resources = flow_loader.load()
 
@@ -201,6 +204,7 @@ if __name__ == '__main__':
     print(type(online_flow))
     print(online_flow)
 
+    print(OnlineK8sExecutor.execute_update(online_flow))
+
     flow_executor = OnlineK8sExecutor(resources)
     print(flow_executor.execute_status())
-
