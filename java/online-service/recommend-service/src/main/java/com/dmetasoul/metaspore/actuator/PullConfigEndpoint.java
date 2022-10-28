@@ -20,7 +20,6 @@ public class PullConfigEndpoint {
 
     @ReadOperation
     public Collection<String> pull() {
-        log.info("contextRefresher: {}", pullContextRefresher.getClass());
         Set<String> keys = this.pullContextRefresher.pullConfig();
         return keys;
     }
