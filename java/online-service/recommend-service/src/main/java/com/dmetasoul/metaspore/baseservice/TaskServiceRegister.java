@@ -91,6 +91,8 @@ public class TaskServiceRegister {
      */
     private Map<String, Service> recommendServices;
 
+    private long timestamp;
+
     /**
      * 每次refresh配置，重新注册生成所有的服务任务bean实例
      */
@@ -143,6 +145,7 @@ public class TaskServiceRegister {
         layerMap.forEach((name, service) -> service.close());
         sceneMap.forEach((name, service) -> service.close());
         featureServiceManager.close();
+        log.info("refresh destroy bean!");
     }
 
     @SuppressWarnings("unchecked")
