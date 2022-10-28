@@ -1,7 +1,7 @@
 version: "3"
 services:
   mongo:
-    image: mongo:5.0
+    image: mongo:5.0@sha256:dc8252645a3f6bad272f54ae488767d270f7c26a8bba6d76d3be69e423fe2eba
     container_name: metaspore-local-mongodb
     restart: always
     ports:
@@ -11,7 +11,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: test_mongodb_123456
       MONGO_INITDB_DATABASE: jpa
   mysql:
-    image: mysql:5.7
+    image: mysql:5.7@sha256:3e704854fb64969e551bf2a17d4e804778d26848e3b61533a415c7dc5711f2e7
     container_name: metaspore-local-mysql
     restart: always
     volumes:
@@ -25,7 +25,7 @@ services:
       - 3306:3306
   front:
     container_name: metaspore-front
-    image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/ecommerce-vue-app:v1.0.0
+    image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/ecommerce-vue-app:v1.0.0@sha256:e3dc2cda9840980d34187c49c41308bd441ad90f270be2a1b90a87295876b4bc
     restart: always
     ports:
       - "41730:41730"

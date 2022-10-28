@@ -5,7 +5,7 @@ metadata:
 spec:
   dockers:
     recommend:
-      image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0
+      image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0@sha256:f62363f9dfc95ce7a4fcad59245292dc13135144fa5145de57e6c6ec5457913c
   services:
     mongo:
       host: 172.17.0.1
