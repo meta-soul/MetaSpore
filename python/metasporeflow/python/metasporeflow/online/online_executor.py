@@ -82,6 +82,10 @@ class OnlineLocalExecutor(object):
             print("online flow up fail!")
 
     def execute_down(self, **kwargs):
+        compose_info = self._generator.gen_docker_compose()
+        docker_compose = open(self._docker_compose_file, "w")
+        docker_compose.write(DumpToYaml(compose_info))
+        docker_compose.close()
         if run_cmd(["docker compose -f %s down" % self._docker_compose_file]) == 0:
             print("online flow down success!")
         else:
