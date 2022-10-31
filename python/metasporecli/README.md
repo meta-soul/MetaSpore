@@ -27,7 +27,7 @@ metaspore flow -h
 metasporecli can be installed using pip. We recommend the user to create a virtualenv to install metasporecli.
 
 ```bash
-python -m pip install metasporecli
+python3 -m pip install metasporecli
 ```
 
 The latest release of metasporecli can be found on PyPI [metasporecli: Command-line Interface for MetaSpore Flow Management](https://pypi.org/project/metasporecli/).
@@ -35,11 +35,11 @@ The latest release of metasporecli can be found on PyPI [metasporecli: Command-l
 ## Build
 
 ```bash
-python -m pip wheel .
+python3 -m pip wheel .
 ```
 
 metasporecli depends on [metasporeflow](https://github.com/meta-soul/MetaSpore/tree/main/python/metasporeflow), to build metasporecli with locally built metasporeflow, use the following command:
 
 ```bash
-python -m pip wheel . ../metasporeflow/metasporeflow-*-py3-none-any.whl
+python3 -m pip wheel . ../metasporeflow/metasporeflow-*-py3-none-any.whl
 ```
