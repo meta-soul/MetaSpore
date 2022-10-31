@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import subprocess
 from typing import Dict
 from ..resources.resource import Resource
 from .scheduler.scheduler_type import SchedulerType
@@ -33,17 +34,19 @@ class SchedulerManager:
         self._resources = resources
         self._schedulers_conf: Tuple[Resource] = resources.find_all(OfflineScheduler)
         self._tasks = tasks
-        self._schedulers: Dict[str, Scheduler] = self._get_schedulers()
+        self._schedulers: Dict[str, Scheduler] = None
 
     def start(self):
-        for scheduler in self._schedulers.values():
+        for scheduler in self._get_schedulers().values():
             scheduler.publish()
 
     def stop(self):
-        for scheduler in self._schedulers.values():
+        for scheduler in self._get_schedulers().values():
             scheduler.destroy()
 
     def _get_schedulers(self) -> Dict[str, Scheduler]:
+        if self._schedulers is not None:
+            return self._schedulers
         schedulers: Dict[str, Scheduler] = {}
         for scheduler_conf in self._schedulers_conf:
             scheduler_name = scheduler_conf.name
@@ -59,6 +62,7 @@ class SchedulerManager:
                 message = f"Invalid scheduler type: {scheduler_type}"
                 raise Exception(message)
             schedulers[scheduler_name] = scheduler
+        self._schedulers = schedulers
         return schedulers
 
     def _create_scheduler(self, scheduler_type, schedulers_conf):
@@ -68,7 +72,7 @@ class SchedulerManager:
             raise Exception('Invalid scheduler type')
 
 
-class LocalDockerSchedulerManager:
+class LocalDockerSchedulerManager(SchedulerManager):
 
     def __init__(self, resources, tasks):
         super().__init__(resources, tasks)
