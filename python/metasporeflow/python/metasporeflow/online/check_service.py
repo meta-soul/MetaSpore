@@ -52,20 +52,20 @@ def healthRecommendService(host, port):
     try:
         resp = requests.get('http://%s:%s/actuator/health' % (host, port))
     except Exception as ex:
-        return {"satus": "DOWN", "resp": None, "msg": "health check request fail, ex:{}".format(ex.args)}
+        return {"status": "DOWN", "resp": None, "msg": "health check request fail, ex:{}".format(ex.args)}
     if resp is not None:
         if resp.status_code != 200:
-            return {"satus": "DOWN", "resp": resp,
+            return {"status": "DOWN", "resp": resp,
                     "msg": "health check request fail, ret_code:{}".format(resp.status_code)}
         else:
             try:
                 data = resp.json()
             except Exception as ex:
-                return {"satus": "DOWN", "resp": resp,
+                return {"status": "DOWN", "resp": resp,
                         "msg": "health check request resp parser fail, ex:{}".format(ex.args)}
             if data is not None:
-                return {"satus": "UP", "resp": data, "msg": "health check successfully"}
-    return {"satus": "DOWN", "resp": None, "msg": "health check request fail, unknown"}
+                return {"status": "UP", "resp": data, "msg": "health check successfully"}
+    return {"status": "DOWN", "resp": None, "msg": "health check request fail, unknown"}
 
 
 if __name__ == "__main__":
