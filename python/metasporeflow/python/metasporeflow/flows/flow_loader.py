@@ -59,4 +59,4 @@ class FlowLoader(object):
 
     def load_resource(self, text):
         resource_loader = self._create_resource_loader()
-        return resource_loader.load_resource(text)
+        return resource_loader.load_text(text)

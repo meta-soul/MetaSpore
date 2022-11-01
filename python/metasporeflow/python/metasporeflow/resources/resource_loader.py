@@ -164,6 +164,15 @@ class ResourceLoader(object):
             message = "fail to load text: %s as resource" % (text,)
             raise RuntimeError(message) from ex
 
+    def load_text(self, text):
+        from .resource_manager import ResourceManager
+        resource_manager = ResourceManager()
+        resource = self.load_resource(text)
+        name = resource.metadata.name
+        resource_manager.add_resource(name, "text_{}_{}".format(name, resource.kind), resource.spec)
+        resource_manager.freeze()
+        return resource_manager
+
     def load_into(self, path, resource_manager):
         import os
         import collections
