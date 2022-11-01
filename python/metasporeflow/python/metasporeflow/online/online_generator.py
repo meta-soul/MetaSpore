@@ -541,7 +541,7 @@ class OnlineGenerator(object):
                                          tasks=[rank_task_name_2], options={"maxReservation": 200})
             self.service_dict[service_name] = service_name
 
-    def gen_server_config(self):
+    def gen_service_config(self):
         feature_config = FeatureConfig(source=[Source(name="request"), ])
         self.process_feature_source(feature_config)
         self.process_feature_sourceTable(feature_config)
@@ -555,5 +555,8 @@ class OnlineGenerator(object):
         recommend_experiments = self.process_expriments(recommend_config)
         layer_set = self.process_layers(recommend_experiments, recommend_config)
         self.process_scenes(layer_set, feature_config, recommend_config)
-        online_configure = OnlineServiceConfig(feature_config, recommend_config)
+        return OnlineServiceConfig(feature_config, recommend_config)
+
+    def gen_server_config(self):
+        online_configure = self.gen_service_config()
         return DumpToYaml(online_configure).encode("utf-8").decode("latin1")

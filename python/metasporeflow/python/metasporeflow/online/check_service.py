@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import json
 
 import requests
 import time
@@ -64,8 +65,44 @@ def healthRecommendService(host, port):
                 return {"status": "DOWN", "resp": resp,
                         "msg": "health check request resp parser fail, ex:{}".format(ex.args)}
             if data is not None:
-                return {"status": data.setdefault("status", "DOWN"), "resp": data, "msg": "health check successfully"}
+                status = data.setdefault("status", "DOWN")
+                if status == "OUT_OF_SERVICE":
+                    return {"status": "DOWN", "resp": data, "msg": "recommend has empty config"}
+                elif status == "DOWN":
+                    return {"status": "DOWN", "resp": data, "msg": "health check fail!"}
+                return {"status": status, "resp": data, "msg": "health check successfully"}
     return {"status": "DOWN", "resp": None, "msg": "health check request fail, unknown"}
+
+
+def tryRecommendService(host, port, scene, param=None):
+    if param is None:
+        param = {"user_id": "test"}
+    try:
+        resp = requests.post('http://%s:%s/service/recommend/%s' % (host, port, scene), data=json.dumps(param))
+    except Exception as ex:
+        return {"status": "DOWN", "resp": None, "msg": "request scene:{} fail, ex:{}".format(scene, ex.args)}
+    if resp is not None:
+        if resp.status_code != 200:
+            return {"status": "DOWN", "resp": resp,
+                    "msg": "request scene:{}, ret_code:{}".format(scene, resp.status_code)}
+        else:
+            try:
+                data = resp.json()
+            except Exception as ex:
+                return {"status": "DOWN", "resp": resp,
+                        "msg": "request scene:{} request resp parser fail, ex:{}".format(scene, ex.args)}
+            if data is not None:
+                data["timeRecords"] = None
+                code = data.setdefault("code", "UNKNOWN")
+                if code != "SUCCESS":
+                    return {"status": "DOWN", "resp": data, "msg": "recommend request scene: {} fail".format(scene)}
+                result = data.get("data", [])
+                if len(result) == 0:
+                    return {"status": 'DOWN', "resp": data,
+                            "msg": "recommend request scene: {} return empty result".format(scene)}
+                data["data"] = None
+                return {"status": 'UP', "resp": data, "msg": "recommend request scene: {} successfully".format(scene)}
+    return {"status": "DOWN", "resp": None, "msg": "recommend request scene: {} fail, unknown".format(scene)}
 
 
 if __name__ == "__main__":

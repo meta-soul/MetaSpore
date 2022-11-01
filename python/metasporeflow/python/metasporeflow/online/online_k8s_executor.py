@@ -3,7 +3,7 @@ import subprocess
 import time
 from string import Template
 
-from metasporeflow.online.check_service import notifyRecommendService, healthRecommendService
+from metasporeflow.online.check_service import notifyRecommendService, healthRecommendService, tryRecommendService
 from metasporeflow.online.cloud_consul import putServiceConfig, Consul, putConfigByKey
 from metasporeflow.online.online_generator import OnlineGenerator
 
@@ -68,34 +68,52 @@ class OnlineK8sExecutor(object):
         info = {"status": "UP"}
         if not is_k8s_active(consul_data["name"], consul_data.setdefault("namespace", "saas-demo")):
             info["status"] = "DOWN"
-            info["consul"] = "consul k8s service is not up!"
+            info["msg"] = "consul k8s service is not up!"
         else:
-            info["consul"] = "consul k8s service:{} is up!".format(consul_data["name"])
+            info["consul"] = "consul k8s service:{}".format(consul_data["name"])
             info["consul_image"] = consul_data["image"]
             info["consul_port"] = consul_data["port"]
             info["consul_namespace"] = consul_data.setdefault("namespace", "saas-demo")
         if not is_k8s_active(recommend_data["name"], recommend_data.setdefault("namespace", "saas-demo")):
             info["status"] = "DOWN"
-            info["recommend"] = "recommend k8s service is not up!"
+            info["msg"] = "recommend k8s service is not up!"
         else:
-            info["recommend"] = "recommend k8s service:{} is up!".format(recommend_data["name"])
+            info["recommend"] = "recommend k8s service:{}".format(recommend_data["name"])
             info["recommend_image"] = recommend_data["image"]
             info["recommend_port"] = recommend_data["port"]
             info["recommend_namespace"] = recommend_data.setdefault("namespace", "saas-demo")
         if not is_k8s_active(model_data["name"], model_data.setdefault("namespace", "saas-demo")):
             info["status"] = "DOWN"
-            info["model"] = "model k8s service is not up!"
+            info["msg"] = "model k8s service is not up!"
         else:
-            info["model"] = "model k8s service:{} is up!".format(model_data["name"])
+            info["model"] = "model k8s service:{}".format(model_data["name"])
             info["model_image"] = model_data["image"]
             info["model_port"] = model_data["port"]
             info["model_namespace"] = model_data.setdefault("namespace", "saas-demo")
         if info["status"] == 'UP':
-            info["service_status"] = healthRecommendService(
+            info["health_status"] = healthRecommendService(
                 "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
-                           recommend_data.setdefault("namespace", "saas-demo"),
-                           recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+                              recommend_data.setdefault("namespace", "saas-demo"),
+                              recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+            info["status"] = info["health_status"].setdefault("status", "DOWN")
+            if info["status"] == "DOWN":
+                info["msg"] = "healthcheck is not ok!"
+        if info["status"] == 'UP':
+            service_confog = self._generator.gen_service_config()
+            scenes = service_confog.recommend_service.scenes
+            if not scenes:
+                info["status"] = "DOWN"
+                info["msg"] = "scene is not config in recommend config!"
+                return info
+            info["service_status"] = tryRecommendService(
+                "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                              recommend_data.setdefault("namespace", "saas-demo"),
+                              recommend_data.setdefault("domain", "huawei.dmetasoul.com")),
+                80,
+                scenes[0])
             info["status"] = info["service_status"].setdefault("status", "DOWN")
+            if info["status"] == "DOWN":
+                info["msg"] = "request scene:{} fail!".format(scenes[0])
         return info
 
     @staticmethod
@@ -212,5 +230,5 @@ if __name__ == '__main__':
 
     flow_executor = OnlineK8sExecutor(resources)
     print(flow_executor.execute_status())
-    flow_executor.execute_up()
+    # flow_executor.execute_up()
     print(flow_executor.execute_status())
