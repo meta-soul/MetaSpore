@@ -36,7 +36,7 @@ metadata:
   namespace: ${namespace}
 spec:
   rules:
-  - host: ${name}.${domain}
+  - host: ${name}-${namespace}.${domain}
     http:
       paths:
       - path: /
