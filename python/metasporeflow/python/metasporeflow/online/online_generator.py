@@ -206,13 +206,13 @@ class OnlineGenerator(object):
                         if model_name in self.service_dict:
                             then.append(self.service_dict.get(model_name))
                         else:
-                            print("no found service from model name: %s" % model_name)
+                            raise ValueError("no found service from model name: %s" % model_name)
                 if "when" in experiment_data:
                     for model_name in experiment_data.when:
                         if model_name in self.service_dict:
                             when.append(self.service_dict.get(model_name))
                         else:
-                            print("no found service from model name: %s" % model_name)
+                            raise ValueError("no found service from model name: %s" % model_name)
                 recommend_config.add_experiment(name=experiment_data.name,
                                                 options={"maxReservation": 200}, chains=[
                         Chain(then=then, when=when, transforms=[
@@ -235,8 +235,7 @@ class OnlineGenerator(object):
                 experiments = list()
                 for experiment_name, rato in layer_config.data.items():
                     if experiment_name not in recommend_experiments:
-                        print("no experiment_name:%s found" % experiment_name)
-                        continue
+                        raise ValueError("no experiment_name:%s found" % experiment_name)
                     experiments.append(ExperimentItem(name=experiment_name, ratio=rato))
                 recommend_config.add_layer(name=layer_name, bucketizer="random", experiments=experiments)
                 layer_set.add(layer_name)
@@ -263,7 +262,7 @@ class OnlineGenerator(object):
                                    condition=[
                                        Condition(left="%s.%s" % (iteminfo_service_name, self.item_key), type="left",
                                                  right="source_table_summary.%s" % self.item_key)])
-        random_recall_dict = self.add_random_recalls(feature_config, recommend_config)
+        random_recall_dict = self.random_recall_dict
         if self.configure.scenes:
             for data in self.configure.scenes:
                 scene_data = dictToObj(data)
@@ -326,7 +325,7 @@ class OnlineGenerator(object):
                                          output=[self.user_key, self.item_key, "item_score"])
 
     def add_random_recalls(self, feature_config, recommend_config):
-        random_recall_dict = dict()
+        self.random_recall_dict = dict()
         if self.configure.random_models:
             model_info = self.configure.random_models[0]
             model_info = dictToObj(model_info)
@@ -334,8 +333,7 @@ class OnlineGenerator(object):
                 raise ValueError("random_model model name must not be empty")
             random_recall = self.add_one_random_recall(model_info, feature_config, recommend_config)
             if random_recall is not None:
-                random_recall_dict[model_info.name] = random_recall
-        return random_recall_dict
+                self.random_recall_dict[model_info.name] = random_recall
 
     def add_one_random_recall(self, model_info, feature_config, recommend_config):
         if model_info:
@@ -551,6 +549,7 @@ class OnlineGenerator(object):
         self.add_item_summary(feature_config)
         self.service_dict = dict()
         recommend_config = RecommendConfig()
+        self.add_random_recalls(feature_config, recommend_config)
         self.add_cf_recalls(feature_config, recommend_config)
         self.add_rank_models(feature_config, recommend_config)
         recommend_experiments = self.process_expriments(recommend_config)

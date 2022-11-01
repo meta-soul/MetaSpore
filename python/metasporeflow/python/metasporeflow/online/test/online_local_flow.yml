@@ -111,6 +111,8 @@ spec:
       then: [ recall_swing ]
     - name: experiment.related.swing
       then: [ related_swing ]
+    - name: experiment.recall.pop
+      then: [ recall_pop ]
     - name: experiment.rank.widedeep
       then: [ rank_widedeep ]
   layers:
