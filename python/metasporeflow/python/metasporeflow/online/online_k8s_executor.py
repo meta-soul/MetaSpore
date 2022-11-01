@@ -103,8 +103,9 @@ class OnlineK8sExecutor(object):
             online_recommend_config = generator.gen_server_config()
         except Exception as ex:
             return False, "recommend service config generate fail ex:{}!".format(ex.args)
-        consul_client = Consul("%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
-                                          consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+        consul_client = Consul("%s-%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
+                                             consul_data.setdefault("namespace", "saas-demo"),
+                                             consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
         try:
             putServiceConfig(consul_client, online_recommend_config)
         except Exception as ex:
