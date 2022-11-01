@@ -49,8 +49,9 @@ class OnlineK8sExecutor(object):
         self.k8s_recommend(recommend_data, "up")
         time.sleep(10)
         online_recommend_config = self._generator.gen_server_config()
-        consul_client = Consul("%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
-                                          consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+        consul_client = Consul("%s-%s.%s" % (consul_data.setdefault("name", "consul-k8s-service"),
+                                             consul_data.setdefault("namespace", "saas-demo"),
+                                             consul_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
         putServiceConfig(consul_client, online_recommend_config)
 
     def execute_down(self, **kwargs):
@@ -72,6 +73,7 @@ class OnlineK8sExecutor(object):
             info["consul"] = "consul k8s service:{} is up!".format(consul_data["name"])
             info["consul_image"] = consul_data["image"]
             info["consul_port"] = consul_data["port"]
+            info["consul_namespace"] = consul_data.setdefault("namespace", "saas-demo")
         if not is_k8s_active(recommend_data["name"], recommend_data.setdefault("namespace", "saas-demo")):
             info["status"] = "DOWN"
             info["recommend"] = "recommend k8s service is not up!"
@@ -79,6 +81,7 @@ class OnlineK8sExecutor(object):
             info["recommend"] = "recommend k8s service:{} is up!".format(recommend_data["name"])
             info["recommend_image"] = recommend_data["image"]
             info["recommend_port"] = recommend_data["port"]
+            info["recommend_namespace"] = recommend_data.setdefault("namespace", "saas-demo")
         if not is_k8s_active(model_data["name"], model_data.setdefault("namespace", "saas-demo")):
             info["status"] = "DOWN"
             info["model"] = "model k8s service is not up!"
@@ -86,9 +89,11 @@ class OnlineK8sExecutor(object):
             info["model"] = "model k8s service:{} is up!".format(model_data["name"])
             info["model_image"] = model_data["image"]
             info["model_port"] = model_data["port"]
+            info["model_namespace"] = model_data.setdefault("namespace", "saas-demo")
         if info["status"] == 'UP':
             info["service_status"] = healthRecommendService(
-                "%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                           recommend_data.setdefault("namespace", "saas-demo"),
                            recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
             info["status"] = info["service_status"].setdefault("status", "DOWN")
         return info
@@ -198,7 +203,6 @@ if __name__ == '__main__':
         text = input.read()
         online_resource = flow_loader.load_resource(text)
         print(online_resource)
-        print(OnlineK8sExecutor.execute_update(online_resource))
     flow_loader._file_name = 'test/metaspore-flow.yml'
     resources = flow_loader.load()
 
@@ -207,4 +211,6 @@ if __name__ == '__main__':
     print(online_flow)
 
     flow_executor = OnlineK8sExecutor(resources)
+    print(flow_executor.execute_status())
+    flow_executor.execute_up()
     print(flow_executor.execute_status())
