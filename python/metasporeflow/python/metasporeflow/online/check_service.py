@@ -78,7 +78,10 @@ def tryRecommendService(host, port, scene, param=None):
     if param is None:
         param = {"user_id": "test"}
     try:
-        resp = requests.post('http://%s:%s/service/recommend/%s' % (host, port, scene), data=json.dumps(param))
+        header = {
+            'Content-Type': 'application/json'
+        }
+        resp = requests.post('http://%s:%s/service/recommend/%s' % (host, port, scene), headers=header, data=json.dumps(param))
     except Exception as ex:
         return {"status": "DOWN", "resp": None, "msg": "request scene:{} fail, ex:{}".format(scene, ex.args)}
     if resp is not None:
@@ -107,4 +110,5 @@ def tryRecommendService(host, port, scene, param=None):
 
 if __name__ == "__main__":
     print("test")
-    notifyRecommendService()
+    data = tryRecommendService("recommend-k8s-service-saas-demo.huawei.dmetasoul.com", 80, "guess-you-like")
+    print(data)
