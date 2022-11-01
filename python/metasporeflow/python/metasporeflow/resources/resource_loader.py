@@ -165,13 +165,12 @@ class ResourceLoader(object):
             raise RuntimeError(message) from ex
 
     def load_text(self, text):
-        from .resource_manager import ResourceManager
-        resource_manager = ResourceManager()
+        from .resource import Resource
         resource = self.load_resource(text)
         name = resource.metadata.name
-        resource_manager.add_resource(name, "text_{}_{}".format(name, resource.kind), resource.spec)
-        resource_manager.freeze()
-        return resource_manager
+        return Resource(name=name, path="text_{}_{}".format(name, resource.kind), kind=resource.__class__.__name__,
+                        data=resource.spec)
+        return resource
 
     def load_into(self, path, resource_manager):
         import os

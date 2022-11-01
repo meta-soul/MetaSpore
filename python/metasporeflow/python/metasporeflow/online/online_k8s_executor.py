@@ -197,3 +197,13 @@ if __name__ == '__main__':
         text = input.read()
         online_resource = flow_loader.load_resource(text)
         print(online_resource)
+        print(OnlineK8sExecutor.execute_update(online_resource))
+    flow_loader._file_name = 'test/metaspore-flow.yml'
+    resources = flow_loader.load()
+
+    online_flow = resources.find_by_type(OnlineFlow)
+    print(type(online_flow))
+    print(online_flow)
+
+    flow_executor = OnlineK8sExecutor(resources)
+    print(flow_executor.execute_status())
