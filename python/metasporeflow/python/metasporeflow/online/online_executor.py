@@ -99,42 +99,46 @@ class OnlineLocalExecutor(object):
         recommend_port = compose_info.services["recommend"].ports[0]
         info = {"status": "UP"}
         if not is_container_active(consul_container_name):
-            info["status"] = "DOWN"
-            info["msg"] = "consul docker container is not up!"
+            info["status"] = "WAIT"
+            info["msg"] = "consul docker container wait to up!"
         else:
             info["consul"] = "consul docker container:{}".format(consul_container_name)
             info["consul_image"] = compose_info.services["consul"].image
             info["consul_port"] = compose_info.services["consul"].ports[0]
         if not is_container_active(recommend_container_name):
-            info["status"] = "DOWN"
-            info["msg"] = "recommend docker container is not up!"
+            info["status"] = "WAIT"
+            info["msg"] = "recommend docker container wait to up!"
         else:
             info["recommend"] = "recommend docker container:{}".format(recommend_container_name)
             info["recommend_image"] = compose_info.services["recommend"].image
             info["recommend_port"] = compose_info.services["recommend"].ports[0]
         if not is_container_active(model_container_name):
-            info["status"] = "DOWN"
-            info["msg"] = "model docker container is not up!"
+            info["status"] = "WAIT"
+            info["msg"] = "model docker container wait to up!"
         else:
             info["model"] = "model docker container:{}".format(model_container_name)
             info["model_image"] = compose_info.services["model"].image
             info["model_port"] = compose_info.services["model"].ports[0]
-        if info["status"] == 'UP':
-            info["health_status"] = healthRecommendService("localhost", recommend_port)
-            info["status"] = info["health_status"].setdefault("status", "DOWN")
-        if info["status"] == "DOWN":
-            info["msg"] = "healthcheck is not ok!"
-        if info["status"] == 'UP':
-            service_confog = self._generator.gen_service_config()
-            scenes = service_confog.recommend_service.scenes
-            if not scenes:
-                info["status"] = "DOWN"
-                info["msg"] = "scene is not config in recommend config!"
-                return info
-            info["service_status"] = tryRecommendService("localhost", recommend_port, scenes[0].name)
-            info["status"] = info["service_status"].setdefault("status", "DOWN")
-            if info["status"] == "DOWN":
-                info["msg"] = "request scene:{} fail!".format(scenes[0].name)
+        if "consul" not in info and "recommend" not in info and "model" not in info:
+            info["status"] = "DOWN"
+            info["msg"] = "consul, recommend, model docker container is not up!"
+        if info["status"] != 'UP':
+            return info
+        info["health_status"] = healthRecommendService("localhost", recommend_port)
+        info["status"] = info["health_status"].setdefault("status", "DOWN")
+        if info["status"] != 'UP':
+            info["msg"] = info["health_status"].get("msg", "healthcheck is not ok!")
+            return info
+        service_confog = self._generator.gen_service_config()
+        scenes = service_confog.recommend_service.scenes
+        if not scenes:
+            info["status"] = "DOWN"
+            info["msg"] = "scene is not config in recommend config!"
+            return info
+        info["service_status"] = tryRecommendService("localhost", recommend_port, scenes[0].name)
+        info["status"] = info["service_status"].setdefault("status", "DOWN")
+        if info["status"] != "UP":
+            info["msg"] = info["service_status"].get("msg", "request scene:{} fail!".format(scenes[0].name))
         return info
 
     @staticmethod

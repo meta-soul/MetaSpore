@@ -53,7 +53,7 @@ def healthRecommendService(host, port):
     try:
         resp = requests.get('http://%s:%s/actuator/health' % (host, port))
     except Exception as ex:
-        return {"status": "DOWN", "resp": None, "msg": "health check request fail, ex:{}".format(ex.args)}
+        return {"status": "WAIT", "resp": None, "msg": "wait recommend service up ok, request ex:{}".format(ex.args)}
     if resp is not None:
         if resp.status_code != 200:
             return {"status": "DOWN", "resp": resp,
@@ -67,7 +67,7 @@ def healthRecommendService(host, port):
             if data is not None:
                 status = data.setdefault("status", "DOWN")
                 if status == "OUT_OF_SERVICE":
-                    return {"status": "DOWN", "resp": data, "msg": "recommend has empty config"}
+                    return {"status": "WAIT", "resp": data, "msg": "recommend has empty config! wait config"}
                 elif status == "DOWN":
                     return {"status": "DOWN", "resp": data, "msg": "health check fail!"}
                 return {"status": status, "resp": data, "msg": "health check successfully"}
@@ -101,8 +101,8 @@ def tryRecommendService(host, port, scene, param=None):
                     return {"status": "DOWN", "resp": data, "msg": "recommend request scene: {} fail".format(scene)}
                 result = data.get("data", [])
                 if len(result) == 0:
-                    return {"status": 'DOWN', "resp": data,
-                            "msg": "recommend request scene: {} return empty result".format(scene)}
+                    return {"status": 'WAIT', "resp": data,
+                            "msg": "recommend request scene: {} return empty result, wait data load".format(scene)}
                 data["data"] = None
                 return {"status": 'UP', "resp": data, "msg": "recommend request scene: {} successfully".format(scene)}
     return {"status": "DOWN", "resp": None, "msg": "recommend request scene: {} fail, unknown".format(scene)}
