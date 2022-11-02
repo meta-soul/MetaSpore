@@ -56,8 +56,8 @@ def healthRecommendService(host, port):
         return {"status": "WAIT", "resp": None, "msg": "wait recommend service up ok, request ex:{}".format(ex.args)}
     if resp is not None:
         if resp.status_code != 200:
-            return {"status": "DOWN", "resp": resp,
-                    "msg": "health check request fail, ret_code:{}".format(resp.status_code)}
+            return {"status": "WAIT", "resp": resp,
+                    "msg": "health check wait service start!, ret_code:{}".format(resp.status_code)}
         else:
             try:
                 data = resp.json()
