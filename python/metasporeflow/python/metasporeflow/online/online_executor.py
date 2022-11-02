@@ -131,10 +131,10 @@ class OnlineLocalExecutor(object):
                 info["status"] = "DOWN"
                 info["msg"] = "scene is not config in recommend config!"
                 return info
-            info["service_status"] = tryRecommendService("localhost", recommend_port, scenes[0])
+            info["service_status"] = tryRecommendService("localhost", recommend_port, scenes[0].name)
             info["status"] = info["service_status"].setdefault("status", "DOWN")
             if info["status"] == "DOWN":
-                info["msg"] = "request scene:{} fail!".format(scenes[0])
+                info["msg"] = "request scene:{} fail!".format(scenes[0].name)
         return info
 
     @staticmethod
