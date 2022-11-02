@@ -8,7 +8,6 @@ default = {
     'watch_port': 8080,
     'consul_key': "dev/",
     'endpoint_url': 'http://obs.cn-southwest-2.myhuaweicloud.com',
-    'docker_secret': "regcred",
     'aws_secret': "aws-secret",
     'namespace': "default",
 }
@@ -65,8 +64,6 @@ spec:
       labels:
         app: model
     spec:
-      imagePullSecrets:
-      - name: ${docker_secret}
       containers:
       - name: model
         image: ${image}
