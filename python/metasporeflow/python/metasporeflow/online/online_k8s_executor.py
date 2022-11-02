@@ -67,53 +67,57 @@ class OnlineK8sExecutor(object):
         consul_data, recommend_data, model_data = self._generator.gen_k8s_config()
         info = {"status": "UP"}
         if not is_k8s_active(consul_data["name"], consul_data.setdefault("namespace", "saas-demo")):
-            info["status"] = "DOWN"
-            info["msg"] = "consul k8s service is not up!"
+            info["status"] = "WAIT"
+            info["msg"] = "consul k8s service wait to up!"
         else:
             info["consul"] = "consul k8s service:{}".format(consul_data["name"])
             info["consul_image"] = consul_data["image"]
             info["consul_port"] = consul_data["port"]
             info["consul_namespace"] = consul_data.setdefault("namespace", "saas-demo")
         if not is_k8s_active(recommend_data["name"], recommend_data.setdefault("namespace", "saas-demo")):
-            info["status"] = "DOWN"
-            info["msg"] = "recommend k8s service is not up!"
+            info["status"] = "WAIT"
+            info["msg"] = "recommend k8s service wait to up!"
         else:
             info["recommend"] = "recommend k8s service:{}".format(recommend_data["name"])
             info["recommend_image"] = recommend_data["image"]
             info["recommend_port"] = recommend_data["port"]
             info["recommend_namespace"] = recommend_data.setdefault("namespace", "saas-demo")
         if not is_k8s_active(model_data["name"], model_data.setdefault("namespace", "saas-demo")):
-            info["status"] = "DOWN"
-            info["msg"] = "model k8s service is not up!"
+            info["status"] = "WAIT"
+            info["msg"] = "model k8s service wait to up!"
         else:
             info["model"] = "model k8s service:{}".format(model_data["name"])
             info["model_image"] = model_data["image"]
             info["model_port"] = model_data["port"]
             info["model_namespace"] = model_data.setdefault("namespace", "saas-demo")
-        if info["status"] == 'UP':
-            info["health_status"] = healthRecommendService(
-                "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
-                              recommend_data.setdefault("namespace", "saas-demo"),
-                              recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
-            info["status"] = info["health_status"].setdefault("status", "DOWN")
-            if info["status"] == "DOWN":
-                info["msg"] = "healthcheck is not ok!"
-        if info["status"] == 'UP':
-            service_confog = self._generator.gen_service_config()
-            scenes = service_confog.recommend_service.scenes
-            if not scenes:
-                info["status"] = "DOWN"
-                info["msg"] = "scene is not config in recommend config!"
-                return info
-            info["service_status"] = tryRecommendService(
-                "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
-                              recommend_data.setdefault("namespace", "saas-demo"),
-                              recommend_data.setdefault("domain", "huawei.dmetasoul.com")),
-                80,
-                scenes[0].name)
-            info["status"] = info["service_status"].setdefault("status", "DOWN")
-            if info["status"] == "DOWN":
-                info["msg"] = "request scene:{} fail!".format(scenes[0].name)
+        if "consul" not in info and "recommend" not in info and "model" not in info:
+            info["status"] = "DOWN"
+            info["msg"] = "consul, recommend, model k8s service is not up!"
+        if info["status"] != 'UP':
+            return info
+        info["health_status"] = healthRecommendService(
+            "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                          recommend_data.setdefault("namespace", "saas-demo"),
+                          recommend_data.setdefault("domain", "huawei.dmetasoul.com")), 80)
+        info["status"] = info["health_status"].setdefault("status", "DOWN")
+        if info["status"] != 'UP':
+            info["msg"] = info["health_status"].get("msg", "healthcheck is not ok!")
+            return info
+        service_confog = self._generator.gen_service_config()
+        scenes = service_confog.recommend_service.scenes
+        if not scenes:
+            info["status"] = "DOWN"
+            info["msg"] = "scene is not config in recommend config!"
+            return info
+        info["service_status"] = tryRecommendService(
+            "%s-%s.%s" % (recommend_data.setdefault("name", "recommend-k8s-service"),
+                          recommend_data.setdefault("namespace", "saas-demo"),
+                          recommend_data.setdefault("domain", "huawei.dmetasoul.com")),
+            80,
+            scenes[0].name)
+        info["status"] = info["service_status"].setdefault("status", "DOWN")
+        if info["status"] != "UP":
+            info["msg"] = info["service_status"].get("msg", "request scene:{} fail!".format(scenes[0].name))
         return info
 
     @staticmethod
