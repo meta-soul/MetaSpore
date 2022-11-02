@@ -106,7 +106,7 @@ class K8sJobConfigGenerator(object):
         self._scheduler_conf = scheduler_conf
         self._k8s_namespace = self._scheduler_conf.data.namespace
         self._service_account_name = self._scheduler_conf.data.serviceAccountName
-        self._cronjob_image = self._scheduler_conf.data.cronjobImage
+        self._container_image = self._scheduler_conf.data.containerImage
         self._cronjob_schedule = self._scheduler_conf.data.cronExpr
         self._job_command = job_command
 
@@ -134,7 +134,7 @@ class K8sJobConfigGenerator(object):
             containers=(
                 ContainerSpec(
                     name='metasporeflow-offline-cronjob',
-                    image=self._cronjob_image,
+                    image=self._container_image,
                     imagePullPolicy='Always',
                     command=['/bin/bash', '-c', '--'],
                     args=[self._job_command],
@@ -179,7 +179,38 @@ class K8sJobConfigGenerator(object):
                     ]}},
             ],
         )
+        if self._scheduler_conf.data.sharedConfigVolume is not None:
+            conf = self._scheduler_conf.data.sharedConfigVolume
+            keys = self._get_configmap_keys(self._k8s_namespace, conf.configmap)
+            job_template_spec.containers[0].volumeMounts.append(
+                {'name': conf.name,
+                 'mountPath': conf.mountPath})
+            job_template_spec.volumes.append(
+                {'name': conf.name,
+                 'configMap': {
+                    'name': conf.configmap,
+                    'items': [
+                        {'key': key, 'path': key}
+                        for key in keys
+                    ]}})
         return job_template_spec
+
+    def _get_configmap_keys(self, k8s_namespace, configmap_name):
+        import json
+        import subprocess
+        try:
+            args = ['kubectl', 'get', 'configmap', '-n', k8s_namespace, configmap_name, '-o', 'json']
+            output = subprocess.check_output(args)
+        except subprocess.CalledProcessError:
+            print(f'configmap {configmap_name!r} is not found')
+            raise
+        keys = []
+        configmap = json.loads(output)
+        if 'data' in configmap:
+            keys.extend(configmap['data'].keys())
+        if 'binaryData' in configmap:
+            keys.extend(configmap['binaryData'].keys())
+        return tuple(keys)
 
     def _convert_to_yaml_text(self, conf):
         import cattrs

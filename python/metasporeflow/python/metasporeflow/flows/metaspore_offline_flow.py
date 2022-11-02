@@ -15,7 +15,7 @@
 #
 
 from attrs import frozen
-from typing import Tuple, Dict
+from typing import Tuple, Dict, Optional
 
 @frozen
 class OfflineLocalFlow:
@@ -32,10 +32,17 @@ class OfflineCrontabScheduler(OfflineScheduler):
     pass
 
 @frozen
+class SharedConfigVolume:
+    name: str
+    configmap: str
+    mountPath: str
+
+@frozen
 class OfflineK8sCronjobScheduler(OfflineScheduler):
     namespace: str
     serviceAccountName: str
-    cronjobImage: str
+    containerImage: str
+    sharedConfigVolume: Optional[SharedConfigVolume] = None
 
 @frozen
 class OfflineTask:
