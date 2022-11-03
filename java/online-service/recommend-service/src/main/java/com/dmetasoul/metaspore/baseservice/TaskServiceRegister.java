@@ -24,7 +24,6 @@ import com.dmetasoul.metaspore.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.dataservice.DataService;
 import com.dmetasoul.metaspore.dataservice.FeatureTask;
 import com.dmetasoul.metaspore.dataservice.SourceTableTask;
-import com.dmetasoul.metaspore.functions.Function;
 import com.dmetasoul.metaspore.datasource.DataSource;
 import com.dmetasoul.metaspore.recommend.Experiment;
 import com.dmetasoul.metaspore.recommend.Layer;

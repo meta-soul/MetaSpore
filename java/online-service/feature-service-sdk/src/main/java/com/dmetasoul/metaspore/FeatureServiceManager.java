@@ -1,13 +1,10 @@
 package com.dmetasoul.metaspore;
 
 import com.dmetasoul.metaspore.annotation.FeatureAnnotation;
-import com.dmetasoul.metaspore.configure.*;
-import com.dmetasoul.metaspore.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.dataservice.DataService;
-import com.dmetasoul.metaspore.dataservice.FeatureTask;
-import com.dmetasoul.metaspore.dataservice.SourceTableTask;
 import com.dmetasoul.metaspore.datasource.DataSource;
 import com.dmetasoul.metaspore.functions.Function;
+import com.dmetasoul.metaspore.relyservice.RelyService;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import lombok.Data;
@@ -15,7 +12,6 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
 import org.reflections.Reflections;
 
 import java.util.Map;
@@ -43,6 +39,8 @@ public class FeatureServiceManager implements AutoCloseable {
 
     private Map<String, Class<?>> featureLowerClassMap;
 
+    private Map<String, RelyService> relyServices;
+
     private UDFLoader udfLoader;
 
     public FeatureServiceManager() {
@@ -52,6 +50,7 @@ public class FeatureServiceManager implements AutoCloseable {
         featureLowerClassMap = Maps.newHashMap();
         udfLoader = new UDFLoader();
         beanMap = Maps.newHashMap();
+        relyServices = Maps.newHashMap();
     }
 
     public void addPackage(String packageName) {
@@ -120,6 +119,39 @@ public class FeatureServiceManager implements AutoCloseable {
             return dataSources.get(name);
         }
         return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getRelyService(String name, Class<?> cls) {
+        if (relyServices == null) relyServices = Maps.newHashMap();
+        RelyService relyService = relyServices.get(name);
+        if (relyService == null) {
+            return null;
+        }
+        if (!relyService.getClass().equals(cls)) {
+            log.warn("load rely service:{} type:{} is not match {}", name, relyService.getClass(), cls);
+            return null;
+        }
+        log.info("get rely service:{}", name);
+        return (T) relyServices;
+    }
+
+    @SuppressWarnings("unchecked")
+    @SneakyThrows
+    public <T> T getRelyServiceOrSet(String name, Class<?> cls, Map<String, Object> option) {
+        if (relyServices == null) relyServices = Maps.newHashMap();
+        RelyService relyService = relyServices.get(name);
+        if (relyService == null) {
+            relyService = (RelyService) cls.getConstructor().newInstance();
+            relyService.init(option);
+            relyServices.put(name, relyService);
+        }
+        if (!relyService.getClass().equals(cls)) {
+            log.error("load rely service:{} type:{} is not match {}", name, relyService.getClass(), cls);
+            throw new RuntimeException("load rely service type mot match at " + name);
+        }
+        log.info("load rely service:{}", name);
+        return (T) relyServices;
     }
 
     @SneakyThrows
@@ -195,5 +227,6 @@ public class FeatureServiceManager implements AutoCloseable {
             dataServices.clear();
         }
         udfLoader.close();
+        relyServices.forEach((name, service) -> service.close());
     }
 }

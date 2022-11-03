@@ -20,8 +20,11 @@ import com.dmetasoul.metaspore.common.CommonUtils;
 import com.dmetasoul.metaspore.configure.FieldInfo;
 import com.dmetasoul.metaspore.data.TableData;
 import com.dmetasoul.metaspore.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.relyservice.MilvusService;
+import com.dmetasoul.metaspore.relyservice.ModelServingService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import io.grpc.ManagedChannel;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.grpc.SearchResults;
 import io.milvus.param.ConnectParam;
@@ -50,20 +53,12 @@ public class MilvusSearchTask extends AlgoTransformTask {
     @Override
     public boolean initTask() {
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
-        String host = getOptionOrDefault("host", "localhost");
-        int port = getOptionOrDefault("port", 19530);
-        ConnectParam connectParam = ConnectParam.newBuilder()
-                .withHost(host)
-                .withPort(port)
-                .build();
-        milvusTemplate = new MilvusServiceClient(connectParam);
+        milvusTemplate = serviceManager.getRelyServiceOrSet(
+                MilvusService.genKey(algoTransform.getOptions()),
+                MilvusService.class,
+                algoTransform.getOptions());
         collectionName = getOptionOrDefault("collectionName", "");
         return true;
-    }
-
-    @Override
-    public void close() {
-        milvusTemplate.close();
     }
 
     @SuppressWarnings("unchecked")
