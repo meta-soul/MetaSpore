@@ -4,7 +4,7 @@ spring:
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
       config:
-        enabled: true
+        enabled: ${CONSUL_ENABLE:true}
         prefix: ${CONSUL_PREFIX:config}
         defaultContext: ${CONSUL_CONTEXT:recommend}
         data-key: ${CONSUL_KEY:data}

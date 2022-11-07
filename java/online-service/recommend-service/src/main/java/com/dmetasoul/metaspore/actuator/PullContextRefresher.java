@@ -1,5 +1,6 @@
 package com.dmetasoul.metaspore.actuator;
 
+import com.dmetasoul.metaspore.common.ServicePropertySource;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
@@ -9,23 +10,23 @@ import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
 import org.springframework.cloud.context.refresh.LegacyContextRefresher;
 import org.springframework.cloud.context.scope.refresh.RefreshScope;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.core.env.CompositePropertySource;
-import org.springframework.core.env.EnumerablePropertySource;
-import org.springframework.core.env.MutablePropertySources;
-import org.springframework.core.env.PropertySource;
+import org.springframework.core.env.*;
 
 import java.util.*;
+
 
 @Slf4j
 public class PullContextRefresher extends LegacyContextRefresher {
     private ConfigurableApplicationContext context;
     private RefreshScope scope;
+
     @Deprecated
     public PullContextRefresher(ConfigurableApplicationContext context, RefreshScope scope) {
         super(context, scope);
         this.context = context;
         this.scope = scope;
     }
+
     public PullContextRefresher(ConfigurableApplicationContext context, RefreshScope scope, RefreshAutoConfiguration.RefreshProperties properties) {
         super(context, scope, properties);
         this.context = context;
@@ -50,8 +51,7 @@ public class PullContextRefresher extends LegacyContextRefresher {
         for (String key : before.keySet()) {
             if (!after.containsKey(key)) {
                 result.put(key, null);
-            }
-            else if (!equal(before.get(key), after.get(key))) {
+            } else if (!equal(before.get(key), after.get(key))) {
                 result.put(key, after.get(key));
             }
         }
@@ -97,15 +97,42 @@ public class PullContextRefresher extends LegacyContextRefresher {
                 for (PropertySource<?> source : sources) {
                     extract(source, result);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 return;
             }
-        }
-        else if (parent instanceof EnumerablePropertySource) {
+        } else if (parent instanceof EnumerablePropertySource) {
             for (String key : ((EnumerablePropertySource<?>) parent).getPropertyNames()) {
                 result.put(key, parent.getProperty(key));
             }
+        }
+    }
+
+    public synchronized Set<String> updateConfig(String name, String config, ServicePropertySource.Format format) {
+        Map<String, Object> before = this.extract(this.context.getEnvironment().getPropertySources());
+        this.refreshEnvironmentFromConfig(name, config, format);
+        Set<String> keys = this.changes(before, this.extract(this.context.getEnvironment().getPropertySources())).keySet();
+        if (CollectionUtils.isNotEmpty(keys)) {
+            this.context.publishEvent(new EnvironmentChangeEvent(this.context, keys));
+            this.scope.refreshAll();
+            log.info("refresh config at:{} from keys： {}", name, keys);
+        }
+        log.info("Pull config at:{} from keys： {}", name, keys);
+        return keys;
+    }
+
+    public void refreshEnvironmentFromConfig(String name, String config, ServicePropertySource.Format format) {
+        ServicePropertySource<?> source = new ServicePropertySource<>(name, new Object());
+        source.updateConfigByString(config, format);
+        MutablePropertySources target = getContext().getEnvironment().getPropertySources();
+        if (!this.standardSources.contains(name)) {
+            if (target.contains(name)) {
+                log.warn("the PropertySource: {} will be replace!", name);
+                target.replace(name, source);
+            } else {
+                target.addFirst(source);
+            }
+        } else {
+            log.warn("the PropertySource: {} name must not exist in standardSources", name);
         }
     }
 }

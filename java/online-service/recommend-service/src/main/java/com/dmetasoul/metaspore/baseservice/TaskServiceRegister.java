@@ -147,6 +147,10 @@ public class TaskServiceRegister {
         log.info("refresh destroy bean!");
     }
 
+    public <T> T getRelyService(String name, Class<?> cls) {
+        return featureServiceManager.getRelyService(name, cls);
+    }
+
     @SuppressWarnings("unchecked")
     public <T> T getBean(String name, Class<?> cls, boolean hold) {
         T bean = (T) SpringBeanUtil.getBean(name);
