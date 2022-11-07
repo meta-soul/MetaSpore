@@ -101,6 +101,14 @@ public class S3Client {
     }
 
     @SneakyThrows
+    public static String downloadModelByShell(String model, String version, String s3Path, String localPath) {
+        Path target = Path.of(localPath, model, version);
+        String cmd = String.format("aws s3 sync --delete %s %s", s3Path, localPath);
+        Utils.runCmd(cmd, null);
+        return target.toString();
+    }
+
+    @SneakyThrows
     public static String downloadModel(String model, String version, String s3Path, String localPath) {
         Path target = Path.of(localPath, model, version);
         URI pathToBeDownloaded = new URI(s3Path);

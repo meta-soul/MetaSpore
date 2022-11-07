@@ -119,8 +119,9 @@ public class SageMakerController {
             if (dirPath.startsWith("s3://")) {
                 String localDir = CommonUtils.getField(req, "localDir", MODEL_DATA_PATH);
                 if (StringUtils.isEmpty(localDir)) localDir = MODEL_DATA_PATH;
-                // to do later
+                // to do aws sdk download later
                 // dirPath = S3Client.downloadModel(modelName, version, dirPath, localDir);
+                dirPath = S3Client.downloadModelByShell(modelName, version, dirPath, localDir);
                 info.put("localDirPath", dirPath);
             }
             ModelServingService modelServingService = taskServiceRegister.getRelyService(servingName, ModelServingService.class);
