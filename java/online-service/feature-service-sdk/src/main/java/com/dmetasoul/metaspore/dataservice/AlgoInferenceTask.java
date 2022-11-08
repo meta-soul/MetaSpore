@@ -58,11 +58,11 @@ public class AlgoInferenceTask extends AlgoTransformTask {
         modelName = getOptionOrDefault("modelName", DEFAULT_MODEL_NAME);
         targetKey = getOptionOrDefault("targetKey", TARGET_KEY);
         targetIndex = getOptionOrDefault("targetIndex", TARGET_INDEX);
-        ManagedChannel channel = serviceManager.getRelyServiceOrSet(
+        ModelServingService modelServingService = serviceManager.getRelyServiceOrSet(
                 ModelServingService.genKey(algoTransform.getOptions()),
                 ModelServingService.class,
                 algoTransform.getOptions());
-        client = PredictGrpc.newBlockingStub(channel);
+        client = PredictGrpc.newBlockingStub(modelServingService.getChannel());
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         algoName = getOptionOrDefault("algo-name", "two_tower");
         return true;

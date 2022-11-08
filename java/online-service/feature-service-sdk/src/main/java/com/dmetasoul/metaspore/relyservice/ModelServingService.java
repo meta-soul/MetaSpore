@@ -6,6 +6,7 @@ import com.dmetasoul.metaspore.serving.ServingClient;
 import io.grpc.ManagedChannel;
 import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
 import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
+import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@Data
 public class ModelServingService implements RelyService {
     protected ManagedChannel channel;
     @Override

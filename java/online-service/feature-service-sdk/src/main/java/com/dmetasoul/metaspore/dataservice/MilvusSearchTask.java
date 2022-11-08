@@ -53,10 +53,11 @@ public class MilvusSearchTask extends AlgoTransformTask {
     @Override
     public boolean initTask() {
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
-        milvusTemplate = serviceManager.getRelyServiceOrSet(
+        MilvusService milvusService = serviceManager.getRelyServiceOrSet(
                 MilvusService.genKey(algoTransform.getOptions()),
                 MilvusService.class,
                 algoTransform.getOptions());
+        milvusTemplate = milvusService.getMilvusTemplate();
         collectionName = getOptionOrDefault("collectionName", "");
         return true;
     }

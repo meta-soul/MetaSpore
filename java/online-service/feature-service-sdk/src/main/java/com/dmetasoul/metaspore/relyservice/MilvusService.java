@@ -3,9 +3,11 @@ package com.dmetasoul.metaspore.relyservice;
 import com.dmetasoul.metaspore.common.CommonUtils;
 import io.milvus.client.MilvusServiceClient;
 import io.milvus.param.ConnectParam;
+import lombok.Data;
 
 import java.util.Map;
 
+@Data
 public class MilvusService implements RelyService {
 
     private MilvusServiceClient milvusTemplate;
