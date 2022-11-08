@@ -151,7 +151,7 @@ public class FeatureServiceManager implements AutoCloseable {
             throw new RuntimeException("load rely service type mot match at " + name);
         }
         log.info("load rely service:{}", name);
-        return (T) relyServices;
+        return (T) relyService;
     }
 
     @SneakyThrows
