@@ -24,9 +24,11 @@ import com.dmetasoul.metaspore.common.ServicePropertySource;
 import com.dmetasoul.metaspore.data.ServiceResult;
 import com.dmetasoul.metaspore.recommend.Scene;
 import com.dmetasoul.metaspore.relyservice.ModelServingService;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -106,9 +108,25 @@ public class SageMakerController {
             }
             String servingName = CommonUtils.getField(req, "servingName");
             if (StringUtils.isEmpty(servingName)) {
-                String host = CommonUtils.getField(req, "host", "127.0.0.1");
-                int port = CommonUtils.getField(req, "port", 50000);
-                servingName = ModelServingService.genKey(host, port);
+                servingName = ModelServingService.genKey(req);
+            } else {
+                String[] parts = servingName.split(":");
+                if (parts.length == 2) {
+                    String host = parts[0];
+                    if (host.startsWith(ModelServingService.KEY_PREFEX)) {
+                        req.put("host", host.substring(ModelServingService.KEY_PREFEX.length()));
+                    }
+                    if (NumberUtils.isDigits(parts[1])) {
+                        req.put("port", NumberUtils.createInteger(parts[1]));
+                    }
+                }
+            }
+            ModelServingService modelServingService = taskServiceRegister.getFeatureServiceManager().getRelyServiceOrSet(
+                    servingName,
+                    ModelServingService.class,
+                    req);
+            if (modelServingService == null) {
+                return ServiceResult.of(-1, "serving get fail!").setInfo(req);
             }
             Map<String, Object> info = new java.util.HashMap<>(Map.of(
                     "servingName", servingName,
@@ -124,7 +142,6 @@ public class SageMakerController {
                 dirPath = S3Client.downloadModelByShell(modelName, version, dirPath, localDir);
                 info.put("localDirPath", dirPath);
             }
-            ModelServingService modelServingService = taskServiceRegister.getRelyService(servingName, ModelServingService.class);
             if (!modelServingService.LoadModel(modelName, version, dirPath)) {
                 return ServiceResult.of(-1, "serving load model resp fail!").setInfo(info);
             }

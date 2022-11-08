@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 @Data
 public class ModelServingService implements RelyService {
     protected ManagedChannel channel;
+    public static final String KEY_PREFEX = "modelserving_";
     @Override
     public void init(Map<String, Object> option) {
         this.channel = initManagedChannel(option);
@@ -30,11 +31,11 @@ public class ModelServingService implements RelyService {
         if (host.equalsIgnoreCase("localhost")) {
             host = "127.0.0.1";
         }
-        return String.format("modelserving_%s:%d", host, port);
+        return String.format("%s%s:%d", KEY_PREFEX, host, port);
     }
 
     public static String genKey(String host, int port) {
-        return String.format("modelserving_%s:%d", host, port);
+        return String.format("%s%s:%d", KEY_PREFEX, host, port);
     }
 
     public ManagedChannel initManagedChannel(Map<String, Object> option) {
