@@ -50,13 +50,13 @@ RUN python -m easy_install install pip
 RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
 RUN python -m pip config set global.extra-index-url https://pypi.org/simple
 RUN python -m pip install 'grpcio[protobuf]==1.47.2' pyarrow==7.0.0 numpy --no-cache-dir
-
+RUN python -m pip install aiohttp protobuf grpcio cattrs awscli==1.22.19 awscli_plugin_endpoint
 RUN apt-get install --fix-missing -y openjdk-11-jdk
 
 FROM ${SERVING_IMAGE} as serving_stage
 FROM ${RECOMMEND_IMAGE} as recommend_stage
 
-FROM serving_base as serving_release
+FROM serving_base as sagemaker_release
 COPY --from=serving_stage /opt/metaspore-serving/ /opt/metaspore-serving
 COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-service.jar
 

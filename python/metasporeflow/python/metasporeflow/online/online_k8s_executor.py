@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
     flow_executor = OnlineK8sExecutor(resources)
     print(flow_executor.execute_status())
-   # flow_executor.execute_up()
+    flow_executor.execute_up()
     print(flow_executor.execute_status())
 
     widedeep_model_info = '''
