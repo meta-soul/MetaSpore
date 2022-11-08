@@ -15,6 +15,7 @@
 //
 package com.dmetasoul.metaspore.dataservice;
 
+import com.dmetasoul.metaspore.common.ConvTools;
 import com.dmetasoul.metaspore.common.Utils;
 import com.dmetasoul.metaspore.configure.FieldInfo;
 import com.dmetasoul.metaspore.annotation.ServiceAnnotation;
@@ -87,8 +88,8 @@ public class ItemMatcherTask extends AlgoTransformTask {
                         } else {
                             map = CommonUtils.getObjectToMap(data);
                         }
-                        recallItem.add((String) map.get(itemField.getName()));
-                        recallWeight.add((Double) map.get(scoreField.getName()));
+                        recallItem.add(ConvTools.parseString(map.get(itemField.getName())));
+                        recallWeight.add(ConvTools.parseDouble(map.get(scoreField.getName())));
                     }
                     if (input.size() > 2) {
                         userProfile = input.get(2);
