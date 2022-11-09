@@ -117,7 +117,10 @@ class ResourceLoader(object):
                 source = yaml.load(text, Loader=loader_type)
             return source
         except Exception as ex:
-            message = "resource file %r is invalid" % (path,)
+            if path is not None:
+                message = "resource file %r is invalid" % (path,)
+            else:
+                message = "resource text %s is invalid" % (text,)
             raise RuntimeError(message) from ex
 
     def _load_raw_resource(self, path, text):
@@ -130,7 +133,10 @@ class ResourceLoader(object):
                 return raw_resource, wrapper_type
             except Exception as ex:
                 last_ex = ex
-        message = "fail to load %r as raw resource" % (path,)
+        if path is not None:
+            message = "fail to load path: %r as raw resource" % (path,)
+        else:
+            message = "fail to load text: %s as raw resource" % (text,)
         raise RuntimeError(message) from last_ex
 
     def _load_resource(self, path):
@@ -145,6 +151,26 @@ class ResourceLoader(object):
         except Exception as ex:
             message = "fail to load %r as resource" % (path,)
             raise RuntimeError(message) from ex
+
+    def load_resource(self, text):
+        import cattrs
+        raw_resource, wrapper_type = self._load_raw_resource(None, text)
+        context = self._create_context(raw_resource, self._context)
+        source = self._load_yaml(None, text, context)
+        try:
+            resource = cattrs.structure(source, wrapper_type)
+            return resource
+        except Exception as ex:
+            message = "fail to load text: %s as resource" % (text,)
+            raise RuntimeError(message) from ex
+
+    def load_text(self, text):
+        from .resource import Resource
+        resource = self.load_resource(text)
+        name = resource.metadata.name
+        return Resource(name=name, path="text_{}_{}".format(name, resource.kind), kind=resource.__class__.__name__,
+                        data=resource.spec)
+        return resource
 
     def load_into(self, path, resource_manager):
         import os

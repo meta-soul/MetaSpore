@@ -24,7 +24,6 @@ import com.dmetasoul.metaspore.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.dataservice.DataService;
 import com.dmetasoul.metaspore.dataservice.FeatureTask;
 import com.dmetasoul.metaspore.dataservice.SourceTableTask;
-import com.dmetasoul.metaspore.functions.Function;
 import com.dmetasoul.metaspore.datasource.DataSource;
 import com.dmetasoul.metaspore.recommend.Experiment;
 import com.dmetasoul.metaspore.recommend.Layer;
@@ -91,6 +90,8 @@ public class TaskServiceRegister {
      */
     private Map<String, Service> recommendServices;
 
+    private long timestamp;
+
     /**
      * 每次refresh配置，重新注册生成所有的服务任务bean实例
      */
@@ -143,6 +144,11 @@ public class TaskServiceRegister {
         layerMap.forEach((name, service) -> service.close());
         sceneMap.forEach((name, service) -> service.close());
         featureServiceManager.close();
+        log.info("refresh destroy bean!");
+    }
+
+    public <T> T getRelyService(String name, Class<?> cls) {
+        return featureServiceManager.getRelyService(name, cls);
     }
 
     @SuppressWarnings("unchecked")

@@ -28,9 +28,10 @@ class FlowLoader(object):
     def _get_resource_types(cls):
         from metasporeflow.online.online_flow import OnlineFlow
         from .metaspore_flow import MetaSporeFlow
-        from metasporeflow.flows.metaspore_oflline_flow import \
+        from metasporeflow.flows.metaspore_offline_flow import \
             OfflineScheduler, \
             OfflineCrontabScheduler, \
+            OfflineK8sCronjobScheduler, \
             OfflineTask, \
             OfflinePythonTask, \
             OfflineLocalFlow
@@ -39,6 +40,7 @@ class FlowLoader(object):
             OnlineFlow,
             OfflineScheduler,
             OfflineCrontabScheduler,
+            OfflineK8sCronjobScheduler,
             OfflineTask,
             OfflinePythonTask,
             OfflineLocalFlow,
@@ -54,3 +56,7 @@ class FlowLoader(object):
         resource_loader = self._create_resource_loader()
         resources = resource_loader.load(self._file_name)
         return resources
+
+    def load_resource(self, text):
+        resource_loader = self._create_resource_loader()
+        return resource_loader.load_text(text)

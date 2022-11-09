@@ -1,0 +1,135 @@
+apiVersion: metaspore/v1
+kind: OnlineFlow
+metadata:
+  name: online_local_flow
+spec:
+  dockers:
+    recommend:
+      image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/recommend-service:1.0.0
+      ports: [ 13013 ]
+      options:
+        mongo_service: mongodb.saas-demo
+        mongo_port: 27017
+        domain: "huawei.dmetasoul.com"
+        namespace: saas-demo
+    model:
+      image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1
+      ports: [ 50000 ]
+      options:
+        watch_image: swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/consul-watch-load:v1.0.0
+        watch_port: 8080
+        consul_key: dev/
+        endpoint_url: http://obs.cn-southwest-2.myhuaweicloud.com
+        docker_secret: regcred
+        aws_secret: aws-secret
+        namespace: saas-demo
+    consul:
+      image: consul:1.13.1
+      ports: [ 8500 ]
+      options:
+        domain: "huawei.dmetasoul.com"
+        namespace: saas-demo
+  services:
+    mongo:
+      kind: MongoDB
+      serviceName: mongo
+      collection: [ jpa ]
+      options:
+        uri: "mongodb://root:test_mongodb_123456@$${MONGO_HOST:172.17.0.1}:$${MONGO_PORT:27018}/jpa?authSource=admin"
+  source:
+    user_key_name: user_id
+    item_key_name: item_id
+    user_item_ids_name: user_bhv_item_seq
+    user_item_ids_split: "\u0001"
+    user:
+      table: amazonfashion_user_feature
+      serviceName: mongo
+      collection: jpa
+      columns:
+        - user_id: str
+        - user_bhv_item_seq: str
+    item:
+      table: amazonfashion_item_feature
+      serviceName: mongo
+      collection: jpa
+      columns:
+        - item_id: str
+        - brand: str
+        - category: str
+    summary:
+      table: amazonfashion_item_summary
+      serviceName: mongo
+      collection: jpa
+      columns:
+        - item_id: str
+        - brand: str
+        - category: str
+        - title: str
+        - description: str
+        - image: str
+        - url: str
+        - price: str
+    request:
+      - user_id: str
+      - item_id: str
+  random_models:
+    - name: pop
+      bound: 10
+      recallService: recall_pop
+      keyName: key
+      valueName: value_list
+      source:
+        table: amazonfashion_pop
+        serviceName: mongo
+        collection: jpa
+  cf_models:
+    - name: swing
+      recallService: recall_swing
+      relatedService: related_swing
+      keyName: key
+      valueName: value
+      source:
+        table: amazonfashion_swing
+        serviceName: mongo
+        collection: jpa
+  rank_models:
+    - name: widedeep
+      model: amazonfashion_widedeep
+      rankService: rank_widedeep
+      column_info:
+        - dnn_sparse: [ "user_id", "item_id", "brand", "category" ]
+        - lr_sparse: [ "user_id", "item_id", "category", "brand", "user_id#brand", "user_id#category" ]
+      cross_features:
+        - name: user_id#brand
+          join: "#"
+          fields: [ "user_id", "brand" ]
+        - name: user_id#category
+          join: "#"
+          fields: [ "user_id", "category" ]
+  experiments:
+    - name: experiment.recall.swing
+      then: [ recall_swing ]
+    - name: experiment.related.swing
+      then: [ related_swing ]
+    - name: experiment.recall.pop
+      then: [ recall_pop ]
+    - name: experiment.rank.widedeep
+      then: [ rank_widedeep ]
+  layers:
+    - name: layer.recall
+      data:
+        experiment.recall.swing: 1.0
+    - name: layer.related
+      data:
+        experiment.related.swing: 1.0
+    - name: layer.rank
+      data:
+        experiment.rank.widedeep: 1.0
+  scenes:
+    - name: guess-you-like
+      layers: [ layer.recall, layer.rank ]
+      additionalRecalls: [ pop ]
+    - name: looked-and-looked
+      layers: [ layer.related, layer.rank ]
+      additionalRecalls: [ pop ]
+

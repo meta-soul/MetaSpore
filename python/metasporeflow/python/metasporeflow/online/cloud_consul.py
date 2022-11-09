@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 import random
 import time
 import traceback
@@ -40,9 +41,12 @@ class Consul(object):
         self._consul.kv.delete(key)
 
 
-def putServiceConfig(config, host, port, prefix="config", context="recommend", data_key="data"):
-    client = Consul(host, port)
+def putServiceConfig(client, config, prefix="config", context="recommend", data_key="data"):
     key = "%s/%s/%s" % (prefix, context, data_key)
+    putConfigByKey(client, config, key)
+
+
+def putConfigByKey(client, config, key):
     max_wait = 300
     num = max_wait
     while num > 0 and not client.setConfig(key, config):

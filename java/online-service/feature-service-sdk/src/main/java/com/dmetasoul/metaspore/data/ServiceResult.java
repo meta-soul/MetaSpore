@@ -15,6 +15,7 @@
 //
 package com.dmetasoul.metaspore.data;
 
+import com.google.common.collect.Maps;
 import lombok.Data;
 
 import java.util.List;
@@ -30,12 +31,26 @@ public class ServiceResult {
     private String msg;
     private List<Map<String, Object>> data;
     private Map<String, Long> timeRecords;
+
+    private Map<String, Object> info;
     private String id;
 
     public ServiceResult addTimeRecord(Map<String, Long> timeRecords) {
         if (timeRecords != null) {
             this.timeRecords = timeRecords;
         }
+        return this;
+    }
+
+    public ServiceResult setInfo(Map<String, Object> data) {
+        if (this.info == null) this.info = Maps.newHashMap();
+        this.info.putAll(data);
+        return this;
+    }
+
+    public ServiceResult setInfo(String key, Object value) {
+        if (this.info == null) this.info = Maps.newHashMap();
+        this.info.put(key, value);
         return this;
     }
 

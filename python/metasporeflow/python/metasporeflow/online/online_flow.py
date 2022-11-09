@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from typing import Optional
 
 from attrs import frozen
@@ -21,16 +22,18 @@ from attrs import frozen
 @frozen
 class DockerInfo(object):
     image: Optional[str] = None
+    ports: Optional[list] = list()
+    volumes: Optional[dict] = dict()
     environment: Optional[dict] = dict()
-
+    options: Optional[dict] = dict()
 
 @frozen
 class ServiceInfo(object):
+    kind: Optional[str] = "mongodb"
+    options: Optional[dict] = dict()
+    collection: Optional[list] = list()
     host: Optional[str] = "172.17.0.1"
     port: Optional[int] = 27017
-    kind: Optional[str] = "mongodb"
-    collection: Optional[list] = list()
-    options: Optional[dict] = dict()
 
 
 @frozen
@@ -53,12 +56,19 @@ class RandomModelInfo(object):
     name: str
     bound: int
     source: DataSource
+    recallService: Optional[str] = None
+    keyName: Optional[str] = "key"
+    valueName: Optional[str] = "value_list"
 
 
 @frozen
 class CFModelInfo(object):
     name: str
     source: DataSource
+    recallService: Optional[str] = None
+    relatedService: Optional[str] = None
+    keyName: Optional[str] = "key"
+    valueName: Optional[str] = "value"
 
 
 @frozen
@@ -81,6 +91,7 @@ class RankModelInfo(object):
     model: str
     column_info: dict
     cross_features: list
+    rankService: Optional[str] = None
 
 
 @frozen
@@ -96,6 +107,26 @@ class FeatureInfo(object):
 
 
 @frozen
+class Experiment(object):
+    name: str
+    then: Optional[list] = list()
+    when: Optional[list] = list()
+
+
+@frozen
+class Layer(object):
+    name: str
+    data: Optional[dict] = dict()
+
+
+@frozen
+class Scene(object):
+    name: str
+    layers: Optional[list] = list()
+    additionalRecalls: Optional[list] = list()
+
+
+@frozen
 class OnlineFlow(object):
     source: Optional[FeatureInfo] = None
     random_models: Optional[list] = None
@@ -104,7 +135,6 @@ class OnlineFlow(object):
     rank_models: Optional[list] = None
     services: Optional[dict] = None
     dockers: Optional[dict] = None
-
-
-
-
+    scenes: Optional[list] = list()
+    experiments: Optional[list] = list()
+    layers: Optional[list] = list()

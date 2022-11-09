@@ -1,5 +1,0 @@
-python-consul2==0.1.5
-attrs==22.1.0
-cattrs==22.1.0
-ruamel.yaml==0.17.21
-requests==2.22.0
