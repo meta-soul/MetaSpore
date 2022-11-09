@@ -1,6 +1,9 @@
 package com.dmetasoul.metaspore.baseservice;
 
+import com.dmetasoul.metaspore.actuator.PullContextRefresher;
 import com.dmetasoul.metaspore.common.CommonUtils;
+import com.dmetasoul.metaspore.common.S3Client;
+import com.dmetasoul.metaspore.common.ServicePropertySource;
 import com.dmetasoul.metaspore.common.Utils;
 import com.dmetasoul.metaspore.configure.AlgoTransform;
 import com.dmetasoul.metaspore.configure.RecommendConfig;
@@ -15,19 +18,26 @@ import com.dmetasoul.metaspore.recommend.Experiment;
 import com.dmetasoul.metaspore.recommend.Layer;
 import com.dmetasoul.metaspore.recommend.Scene;
 import com.dmetasoul.metaspore.recommend.Service;
+import com.dmetasoul.metaspore.relyservice.ModelServingService;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.json.GsonJsonParser;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
+import javax.annotation.PostConstruct;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -35,11 +45,111 @@ import java.util.UUID;
 @Data
 @Component
 public class RecommendService {
+    private static final String INIT_MODEL_INFO = "init_model_info";
+    private static final String INIT_CONFIG = "init_config";
+    private static final String INIT_CONFIG_FORMAT = "init_config_format";
+
+    public static final String SPRING_CONFIG_NAME = "recommend-config";
+    public static final String MODEL_DATA_PATH;
+
+    static {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("windows")) {
+            MODEL_DATA_PATH = Path.of(System.getProperty("user.dir"), "/data/models").toString();
+        } else {
+            MODEL_DATA_PATH = "/data/models";
+        }
+    }
     @Autowired
     public TaskFlowConfig taskFlowConfig;
 
     @Autowired
     public TaskServiceRegister taskServiceRegister;
+
+    @Autowired
+    private PullContextRefresher pullContextRefresher;
+    @PostConstruct
+    public void initService() {
+        String initModelInfos = System.getenv(INIT_MODEL_INFO);
+        String initConfig = System.getenv(INIT_CONFIG);
+        String initConfigFormat = System.getenv(INIT_CONFIG_FORMAT);
+        if (StringUtils.isNotEmpty(initModelInfos)) {
+            try {
+                List<Object> modelInfos = new GsonJsonParser().parseList(initModelInfos);
+                notifyToLoadModel(modelInfos);
+            } catch (Exception ex) {
+                log.error("initModelInfos parser fail format is list json or load model fail!");
+            }
+        }
+        if (StringUtils.isNotEmpty(initConfig) && StringUtils.isNotEmpty(initConfigFormat)) {
+            updateConfig(SPRING_CONFIG_NAME, initConfig, initConfigFormat);
+        }
+    }
+
+    public Set<String> updateConfig(String configName, String config, String configFormat) {
+        ServicePropertySource.Format format = null;
+        if (configFormat.equalsIgnoreCase("yaml") || configFormat.equalsIgnoreCase("yml")) {
+            format = ServicePropertySource.Format.YAML;
+        } else if (configFormat.equalsIgnoreCase("properties") || configFormat.equalsIgnoreCase("prop")) {
+            format = ServicePropertySource.Format.PROPERTIES;
+        } else {
+            return null;
+        }
+        return this.pullContextRefresher.updateConfig(configName, config, format);
+    }
+
+    public Map<String, Boolean> notifyToLoadModel(List<Object> modelInfos) {
+        Map<String, Boolean> modelLoadStatus = Maps.newHashMap();
+        if (CollectionUtils.isEmpty(modelInfos)) {
+            return modelLoadStatus;
+        }
+        for (Object data : modelInfos) {
+            @SuppressWarnings("unchecked") Map<String, Object> info = (Map<String, Object>)data;
+            String modelName = CommonUtils.getField(info, "modelName");
+            String version = CommonUtils.getField(info, "version");
+            String dirPath = CommonUtils.getField(info, "dirPath");
+            if (StringUtils.isEmpty(modelName)) {
+                continue;
+            }
+            if (StringUtils.isEmpty(version) || StringUtils.isEmpty(dirPath)) {
+                modelLoadStatus.put(modelName, false);
+            }
+            String servingName = CommonUtils.getField(info, "servingName");
+            if (StringUtils.isEmpty(servingName)) {
+                servingName = ModelServingService.genKey(info);
+            } else {
+                String[] parts = servingName.split(":");
+                if (parts.length == 2) {
+                    String host = parts[0];
+                    if (host.startsWith(ModelServingService.KEY_PREFEX)) {
+                        info.put("host", host.substring(ModelServingService.KEY_PREFEX.length()));
+                    } else {
+                        info.put("host", host);
+                    }
+                    if (NumberUtils.isDigits(parts[1])) {
+                        info.put("port", NumberUtils.createInteger(parts[1]));
+                    }
+                }
+            }
+            if (dirPath.startsWith("s3://")) {
+                String localDir = CommonUtils.getField(info, "localDir", MODEL_DATA_PATH);
+                if (StringUtils.isEmpty(localDir)) localDir = MODEL_DATA_PATH;
+                // to do aws sdk download later
+                // dirPath = S3Client.downloadModel(modelName, version, dirPath, localDir);
+                dirPath = S3Client.downloadModelByShell(modelName, version, dirPath, localDir);
+                info.put("localDirPath", dirPath);
+            }
+            ModelServingService modelServingService = taskServiceRegister.getFeatureServiceManager().getRelyServiceOrSet(
+                    servingName,
+                    ModelServingService.class,
+                    info);
+            if (!modelServingService.LoadModel(modelName, version, dirPath)) {
+                modelLoadStatus.put(modelName, false);
+            }
+            modelLoadStatus.put(modelName, true);
+        }
+        return modelLoadStatus;
+    }
 
     @SuppressWarnings("unchecked")
     public ServiceResult getDataServiceResult(String task, Map<String, Object> req) {
