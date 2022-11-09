@@ -1,4 +1,4 @@
-FROM mysql:5.7
+FROM mysql:5.7@sha256:3e704854fb64969e551bf2a17d4e804778d26848e3b61533a415c7dc5711f2e7
 WORKDIR /docker-entrypoint-initdb.d
 COPY my.cnf /etc/mysql/conf.d/utf8mb4.cnf
 COPY ./sql/ /opt/sql/

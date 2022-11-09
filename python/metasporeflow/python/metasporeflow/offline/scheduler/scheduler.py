@@ -55,6 +55,7 @@ class Scheduler(ABC):
 
     def _get_dag_tasks(self, tasks: Dict[str, Task]) -> List[Task]:
         dag_tasks = []
-        for task in self._dag.nodes():
+        dag_sort_list = list(nx.topological_sort(self._dag))
+        for task in dag_sort_list:
             dag_tasks.append(tasks[task])
         return dag_tasks

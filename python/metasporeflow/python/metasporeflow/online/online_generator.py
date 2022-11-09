@@ -69,7 +69,7 @@ class OnlineGenerator(object):
                 break
         if no_mode_service:
             dockers["model"] = \
-                DockerInfo("swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1",
+                DockerInfo("swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1@sha256:99b62896bf2904b1e2814eb247e1e644f83b9c90128454d96261088bb24ec80a",
                            {})
         for name, info in dockers.items():
             info = dictToObj(info)

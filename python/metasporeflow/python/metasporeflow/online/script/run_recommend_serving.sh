@@ -73,6 +73,8 @@ serving_cmd="${serving_bin} ${serving_grpc_port_name} ${serving_grpc_port} ${ini
 echo "run serving_cmd" ${serving_cmd}
 serving_log_file="/opt/metaspore_serving.log"
 ${serving_cmd} > $serving_log_file 2>&1 &
+echo "please wait model serving start!"
+sleep 10s
 recommend_cmd="${recommend_base_cmd} ${recommend_args}"
 echo "run recommend_cmd" ${recommend_cmd}
 ${recommend_cmd}
