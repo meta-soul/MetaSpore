@@ -63,4 +63,4 @@ COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-serv
 ARG RUN_SCRIPT=script/run_recommend_serving.sh
 ADD ${RUN_SCRIPT} run_recommend_serving.sh
 EXPOSE ${SERVICE_PORT}
-CMD ["/bin/bash","run_recommend_serving.sh","-grpc_listen_port", "50000", "-init_load_path", "/data/models"]
+CMD ["/bin/bash","run_recommend_serving.sh","-grpc_listen_port", "50005", "-init_load_path", "/data/models"]
