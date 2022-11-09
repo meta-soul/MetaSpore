@@ -91,12 +91,12 @@ class OnlineDockerCompose(BaseDefaultConfig):
             service_kwargs["ports"] = kwargs.setdefault("ports", [8500, 8600, 8300])
             service_kwargs["environment"] = {'CONSUL_LOCAL_CONFIG': r"{\"skip_leave_on_interrupt\": true}"}
             service_kwargs["environment"].update(kwargs.setdefault("environment", {}))
-            service_kwargs["image"] = kwargs.setdefault("image", "consul:1.13.1")
+            service_kwargs["image"] = kwargs.setdefault("image", "consul:1.13.1@sha256:4f54d5ddb23771cf79d9ad543d1e258b7da802198bc5dbc3ff85992cc091a50e")
             service_kwargs["command"] = kwargs.setdefault("command",
                                                           "consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui")
         if str(name).startswith("model"):
             service_kwargs["ports"] = kwargs.setdefault("ports", [50000])
-            service_kwargs["image"] = kwargs.setdefault("image", "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1")
+            service_kwargs["image"] = kwargs.setdefault("image", "swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-serving-release:cpu-v1.0.1@sha256:99b62896bf2904b1e2814eb247e1e644f83b9c90128454d96261088bb24ec80a")
             service_kwargs["command"] = kwargs.setdefault("command", "/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port 50000 -init_load_path /data/models")
             service_kwargs["volumes"] = kwargs.setdefault("volumes", ["${DOCKER_VOLUME_DIRECTORY:-.}/volumes/serving_models:/data/models"])
         if str(name).startswith("mongo"):

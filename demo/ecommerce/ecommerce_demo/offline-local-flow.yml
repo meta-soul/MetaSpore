@@ -3,5 +3,5 @@ kind: OfflineLocalFlow
 metadata:
   name: offline_local_flow
 spec:
-  offlineLocalImage: 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-training-release:v1.1.1'
+  offlineLocalImage: 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/metaspore-training-release:v1.1.1@sha256:5bd836fbbb08ab1428cf4c5dfded9a40d5d64d1bd281b567e1e89c01f4924fcf'
   offlineLocalContainerName: 'metaspore_offline_flow'

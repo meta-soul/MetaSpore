@@ -167,6 +167,10 @@
             <artifactId>minlog</artifactId>
           </exclusion>
           <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.objenesis</groupId>
             <artifactId>objenesis</artifactId>
           </exclusion>
@@ -245,8 +249,8 @@
     </dependency>
     <dependency>
       <groupId>com.dmetasoul</groupId>
-      <artifactId>lakesoul</artifactId>
-      <version>2.0.1-spark-3.1.2</version>
+      <artifactId>lakesoul-spark</artifactId>
+      <version>2.1.1-spark-3.1.2</version>
       <exclusions>
         <exclusion>
           <groupId>org.scala-lang</groupId>
@@ -383,7 +387,55 @@
           <groupId>org.typelevel</groupId>
           <artifactId>*</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.github.luben</groupId>
+          <artifactId>zstd-jni</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.lz4</groupId>
+          <artifactId>lz4-java</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.xerial.snappy</groupId>
+          <artifactId>snappy-java</artifactId>
+        </exclusion>
       </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.mongodb.spark</groupId>
+      <artifactId>mongo-spark-connector_2.12</artifactId>
+      <version>3.0.2</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.scala-lang</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.spark</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.scalactic</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.scalatest</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.scalatestplus</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.scalacheck</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.31</version>
     </dependency>
   </dependencies>
   <build>
