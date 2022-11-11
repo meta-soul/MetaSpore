@@ -14,8 +14,24 @@ class ModelHandler(object):
 
     def __init__(self):
         self.initialized = False
-        self.recommend_host="127.0.0.1"
-        self.recommend_port=8080
+        self.recommend_host = "127.0.0.1"
+        self.recommend_port = 8080
+
+    def notify_model_path(self, model_dir):
+        model_path = os.path.join(model_dir, "models")
+        if not os.path.isdir(model_path):
+            raise RuntimeError("Missing model {} path.".format(model_path))
+        for model_name in os.listdir(model_path):
+            if not os.path.isdir(os.path.join(model_path, model_name)):
+                print("Missing model {}.".format(model_name))
+                continue
+            model_info = dict()
+            model_info["modelName"] = model_name
+            model_info["version"] = "1"
+            model_info["dirPath"] = os.path.join(model_path, model_name)
+            model_info["host"] = "127.0.0.1"
+            model_info["port"] = 50000
+            self.notifyLoadModel(model_info, self.recommend_host, self.recommend_port)
 
     def notify_model_info(self, model_dir, model_info_prefix):
         model_info_path = os.path.join(model_dir, "{}-{}".format(model_info_prefix, "model-info.json"))
@@ -74,7 +90,7 @@ class ModelHandler(object):
         # Contains the url parameter passed to the load request
         model_dir = properties.get("model_dir")
         self.set_service_config(model_dir, "recommend")
-        self.notify_model_info(model_dir, "recommend")
+        self.notify_model_path(model_dir)
         self.initialized = True
 
     def preprocess(self, request):
