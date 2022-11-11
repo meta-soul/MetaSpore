@@ -61,7 +61,8 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     unzip awscliv2.zip && \
     ./aws/install && \
     rm -f awscliv2.zip
-RUN pip --no-cache-dir install request multi-model-server \
+RUN pip --no-cache-dir install requests \
+                               multi-model-server \
                                sagemaker-inference \
                                retrying
 RUN apt-get install --fix-missing -y openjdk-11-jdk
