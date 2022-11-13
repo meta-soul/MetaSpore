@@ -8,24 +8,26 @@ import os
 import os
 import tarfile
 
-from python.metasporeflow.python.metasporeflow.online.online_generator import OnlineGenerator
+from metasporeflow.online.online_generator import OnlineGenerator
 
 
 class SageMakerExecutor(object):
     def __init__(self, resources):
         self._online_resource = resources.find_by_name("online_local_flow")
         self._generator = OnlineGenerator(resource=self._online_resource)
-        self.sm_client = boto3.client(service_name="sagemaker")
-        self.runtime_sm_client = boto3.client(service_name="sagemaker-runtime")
-        self.account_id = boto3.client("sts").get_caller_identity()["Account"]
-        self.region = boto3.Session().region_name
+        self.region = "cn-northwest-1"
+        self.sagemaker_session = Session(boto3.session.Session(region_name=self.region))
+        self.role = get_execution_role(sagemaker_session=self.sagemaker_session)
+        self.sm_client = boto3.client("sagemaker", self.region)
+        self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
+        self.account_id = boto3.client("sts", self.region).get_caller_identity()["Account"]
         self.bucket = "dmetasoul-test-bucket"
         self.prefix = "demo-multimodel-endpoint"
-        self.role = get_execution_role()
+        self.endpoint_map = dict()
 
-    async def create_model(self, model_name, endpoint_name=None):
+    def create_model(self, model_name, endpoint_name=None):
         model_url = "https://s3-{}.amazonaws.com/{}/{}/".format(self.region, self.bucket, self.prefix)
-        container = "{}.dkr.ecr.{}.amazonaws.com/{}:latest".format(
+        container = "{}.dkr.ecr.{}.amazonaws.com/{}:v1.0.0".format(
             self.account_id, self.region, "dmetasoul-repo/metaspore-sagemaker-release"
         )
 
@@ -34,13 +36,16 @@ class SageMakerExecutor(object):
         create_model_response = self.sm_client.create_model(
             ModelName=model_name, ExecutionRoleArn=self.role, Containers=[container]
         )
+        print("model resp:", create_model_response)
         print("Model Arn: " + create_model_response["ModelArn"])
         if not endpoint_name:
             endpoint_name = "endpoint-{}".format(model_name)
+        self.endpoint_map[endpoint_name] = model_name
+        print("model_url=", model_url)
         self.create_endpoint_config(endpoint_name, model_name)
 
     def create_endpoint_config(self, endpoint_name, model_name):
-        endpoint_config_name = "config_%s_%s" % (model_name, endpoint_name)
+        endpoint_config_name = "config-%s-%s" % (model_name, endpoint_name)
         create_endpoint_config_response = self.sm_client.create_endpoint_config(
             EndpointConfigName=endpoint_config_name,
             ProductionVariants=[
@@ -72,23 +77,21 @@ class SageMakerExecutor(object):
         elif not isinstance(request, list):
             print("request type is not match request list or dict")
             return []
+        print("endpoint map:", self.endpoint_map)
         response = self.runtime_sm_client.invoke_endpoint(
             EndpointName=endpoint_name,
-            ContentType="application/x-image",
-            TargetModel="resnet_18.tar.gz",  # this is the rest of the S3 path where the model artifacts are located
-            Body=request,
+            ContentType="application/json",
+            TargetModel="{}".format(self.endpoint_map.get(endpoint_name, "amazonfashion_widedeep")),
+            Body=json.dumps(request),
         )
         res = json.loads(response["Body"].read())
         print(*res, sep="\n")
         return res
 
     def add_model_to_s3(self, models):
-        s3 = boto3.resource("s3")
-        try:
-            s3.meta.client.head_bucket(Bucket=self.bucket)
-        except ClientError:
-            s3.create_bucket(Bucket=self.bucket, CreateBucketConfiguration={"LocationConstraint": self.region})
-        for model_name, s3_path in models:
+        s3 = boto3.resource('s3', self.region)
+        print("s3=", s3.Bucket(self.bucket).objects.all())
+        for model_name, s3_path in models.items():
             s3_bucket = s3_path.get("bucket", self.bucket)
             s3_prefix = s3_path.get("prefix")
             if not s3_prefix:
@@ -100,14 +103,20 @@ class SageMakerExecutor(object):
                 s3.Bucket(self.bucket).Object(key).upload_fileobj(file_obj)
 
     def process_model_info(self, model_name, model_bucket, model_prefix):
-        service_confog = self._generator.gen_service_config()
-        with open("data/{}/service-config.yaml".format(model_name), "w") as file:
+        model_path = "data/{}".format(model_name)
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        config_file = "{}/service-config.yaml".format(model_path)
+        service_confog = self._generator.gen_server_config()
+        with open(config_file, "w") as file:
             file.write(service_confog)
-        model_path = "data/models"
-        self.download_directory(model_bucket, model_prefix, model_path)
+        model_data_path = "{}/{}".format(model_path, model_name)
+        self.download_directory(model_bucket, model_prefix, model_data_path)
         tar_file = "data/{}.gz".format(model_name)
+        if not os.path.exists(os.path.dirname(tar_file)):
+            os.makedirs(os.path.dirname(tar_file))
         with tarfile.open(tar_file, "w:gz") as tar:
-            tar.add("{}/{}".format(model_path, model_name), arcname=".")
+            tar.add(model_path, arcname=".")
         return tar_file
 
     def download_directory(self, bucket_name, path, local_path):
@@ -115,7 +124,7 @@ class SageMakerExecutor(object):
             os.remove(local_path)
         if not os.path.exists(local_path):
             os.mkdir(local_path)
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource('s3', self.region)
         bucket = s3.Bucket(bucket_name)
         for obj in bucket.objects.filter(Prefix=path):
             local_file = os.path.join(local_path, obj.key)
@@ -132,20 +141,18 @@ if __name__ == "__main__":
     import asyncio
 
     flow_loader = FlowLoader()
-    flow_loader._file_name = 'test/metaspore-flow.yml'
+    flow_loader._file_name = '../test/metaspore-flow.yml'
     resources = flow_loader.load()
 
     online_flow = resources.find_by_type(OnlineFlow)
-    print(type(online_flow))
-    print(online_flow)
 
     executor = SageMakerExecutor(resources)
-    executor.add_model_to_s3({
-        "amazonfashion_widedeep": {
-            "bucket": "dmetasoul-test-bucket",
-            "prefix": "qinyy/test-model-watched/amazonfashion_widedeep"
-        }
-    })
-    executor.create_model("amazonfashion_widedeep", "recommend")
+    #executor.add_model_to_s3({
+    #    "amazonfashion-widedeep": {
+    #        "bucket": "dmetasoul-test-bucket",
+    #        "prefix": "qinyy/test-model-watched/amazonfashion_widedeep"
+    #    }
+    #})
+    #executor.create_model("amazonfashion-widedeep", "recommend")
     res = executor.invoke_endpoint("recommend", {"operator": "recommend", "user_id": "A1P62PK6QVH8LV"})
     # print(res)

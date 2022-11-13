@@ -8,7 +8,7 @@ class ModelHandler(object):
     def __init__(self):
         self.initialized = False
         self.recommend_host = "127.0.0.1"
-        self.recommend_port = 8080
+        self.recommend_port = 13013
 
     def notify_model_path(self, model_dir):
         model_path = os.path.join(model_dir, "models")
@@ -61,7 +61,7 @@ class ModelHandler(object):
         except Exception as ex:
             print("notify set config fail param:", params)
 
-    def notifyLoadModel(self, params, host="127.0.0.1", port=8080):
+    def notifyLoadModel(self, params, host="127.0.0.1", port=13013):
         try:
             params["operator"] = "loadmodel"
             if "servingName" not in params:
@@ -97,7 +97,7 @@ class ModelHandler(object):
                 print("request is not match")
         return input
 
-    def requestService(self, params, host="127.0.0.1", port=8080):
+    def requestService(self, params, host="127.0.0.1", port=13013):
         try:
             header = {
                 'Content-Type': 'application/json'

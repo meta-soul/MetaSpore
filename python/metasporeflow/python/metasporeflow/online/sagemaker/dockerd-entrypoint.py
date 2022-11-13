@@ -13,7 +13,7 @@ serving_grpc_port_name="-grpc_listen_port"
 serving_grpc_port=50000
 init_load_path_name="-init_load_path"
 init_load_path="/data/models"
-service_port=8080
+service_port=13013
 consul_enable="false"
 
 def _retry_if_error(exception):
@@ -35,7 +35,7 @@ async def _start_model_serving(grpc_listen_port, init_load_path):
     if os.path.isfile(init_load_path):
         os.remove(init_load_path)
     if not os.path.exists(init_load_path):
-        os.mkdir(init_load_path)
+        os.makedirs(init_load_path)
     serving_cmd="/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port {} -init_load_path {}".format(grpc_listen_port, init_load_path)
     subprocess.Popen(serving_cmd, shell=True, stdout=subprocess.PIPE)
 
@@ -44,7 +44,7 @@ def main():
     parser = argparse.ArgumentParser(description='recommend arguments')
     parser.add_argument('--grpc_listen_port', dest='grpc_listen_port', type=int, default=50000)
     parser.add_argument('--init_load_path', dest='init_load_path', type=str, default='/data/models')
-    parser.add_argument('--service_port', dest='service_port', type=int, default=8080)
+    parser.add_argument('--service_port', dest='service_port', type=int, default=13013)
     parser.add_argument('--consul_enable', dest='consul_enable', type=str, default="false")
     args = parser.parse_args()
     print("model_serving start!")

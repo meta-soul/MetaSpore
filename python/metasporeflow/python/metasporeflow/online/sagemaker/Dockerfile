@@ -48,20 +48,19 @@ RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install install pip
-RUN python -m pip config set global.index-url https://pypi.mirrors.ustc.edu.cn/simple/
-RUN python -m pip config set global.extra-index-url https://pypi.org/simple
-RUN python -m pip install 'grpcio[protobuf]==1.47.2' pyarrow==7.0.0 numpy --no-cache-dir
 RUN python -m pip install aiohttp protobuf grpcio cattrs
 
 FROM ${SERVING_IMAGE} as serving_stage
 FROM ${RECOMMEND_IMAGE} as recommend_stage
 
 FROM serving_base as sagemaker_release
+LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install && \
     rm -f awscliv2.zip
-RUN pip --no-cache-dir install requests \
+RUN pip install requests \
                                multi-model-server \
                                sagemaker-inference \
                                retrying
@@ -78,4 +77,4 @@ COPY model_handler.py /home/model-server/model_handler.py
 
 ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 
-CMD ["serve"]
+CMD ["--service_port=13013", "--init_load_path=/data/models", "--consul_enable=false", "--grpc_listen_port=50000"]
