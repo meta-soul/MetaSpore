@@ -54,11 +54,16 @@ FROM ${SERVING_IMAGE} as serving_stage
 FROM ${RECOMMEND_IMAGE} as recommend_stage
 
 FROM serving_base as sagemaker_release
+LABEL com.amazonaws.sagemaker.capabilities.multi-models=true
+LABEL com.amazonaws.sagemaker.capabilities.accept-bind-to-port=true
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
     unzip awscliv2.zip && \
     ./aws/install && \
     rm -f awscliv2.zip
-RUN pip install requests
+RUN pip install requests \
+                               multi-model-server \
+                               sagemaker-inference \
+                               retrying
 RUN apt-get install --fix-missing -y openjdk-11-jdk
 COPY --from=serving_stage /opt/metaspore-serving/ /opt/metaspore-serving
 COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-service.jar
@@ -66,6 +71,10 @@ COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-serv
 COPY dockerd-entrypoint.py /usr/local/bin/dockerd-entrypoint.py
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.py
 
+RUN mkdir -p /home/model-server/
+
+COPY model_handler.py /home/model-server/model_handler.py
+
 ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 
-CMD ["serve"]
+CMD ["--service_port=13013", "--init_load_path=/data/models", "--consul_enable=false", "--grpc_listen_port=50000"]

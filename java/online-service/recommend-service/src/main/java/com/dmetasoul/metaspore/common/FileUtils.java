@@ -3,6 +3,9 @@ package com.dmetasoul.metaspore.common;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * 文件处理工具类
@@ -41,7 +44,8 @@ public class FileUtils {
         }
     }
 
-    public static Boolean canRead(File file) {
+    public static Boolean canRead(String path) {
+        File file = new File(path);
         if (file.isDirectory()) {
             try {
                 File[] listFiles = file.listFiles();
@@ -53,6 +57,15 @@ public class FileUtils {
             return false;
         }
         return checkRead(file);
+    }
+
+    public static String readFile(String path, Charset encoding) throws IOException
+    {
+        if (!canRead(path)) {
+            return null;
+        }
+        byte[] encoded = Files.readAllBytes(Paths.get(path));
+        return new String(encoded, encoding);
     }
 
     private static boolean checkRead(File file) {

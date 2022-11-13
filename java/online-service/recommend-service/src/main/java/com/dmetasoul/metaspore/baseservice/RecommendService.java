@@ -1,10 +1,7 @@
 package com.dmetasoul.metaspore.baseservice;
 
 import com.dmetasoul.metaspore.actuator.PullContextRefresher;
-import com.dmetasoul.metaspore.common.CommonUtils;
-import com.dmetasoul.metaspore.common.S3Client;
-import com.dmetasoul.metaspore.common.ServicePropertySource;
-import com.dmetasoul.metaspore.common.Utils;
+import com.dmetasoul.metaspore.common.*;
 import com.dmetasoul.metaspore.configure.AlgoTransform;
 import com.dmetasoul.metaspore.configure.RecommendConfig;
 import com.dmetasoul.metaspore.configure.TaskFlowConfig;
@@ -34,6 +31,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
 import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -75,14 +76,20 @@ public class RecommendService {
         String initConfigFormat = System.getenv(INIT_CONFIG_FORMAT);
         if (StringUtils.isNotEmpty(initModelInfos)) {
             try {
-                List<Object> modelInfos = new GsonJsonParser().parseList(initModelInfos);
+                String content = FileUtils.readFile(initModelInfos, Charset.defaultCharset());
+                List<Object> modelInfos = new GsonJsonParser().parseList(content);
                 notifyToLoadModel(modelInfos);
             } catch (Exception ex) {
                 log.error("initModelInfos parser fail format is list json or load model fail!");
             }
         }
         if (StringUtils.isNotEmpty(initConfig) && StringUtils.isNotEmpty(initConfigFormat)) {
-            updateConfig(SPRING_CONFIG_NAME, initConfig, initConfigFormat);
+            try {
+                String content = FileUtils.readFile(initConfig, Charset.defaultCharset());
+                updateConfig(SPRING_CONFIG_NAME, content, initConfigFormat);
+            } catch (IOException ex) {
+                log.error("initConfig read fail! path:{}", initConfig);
+            }
         }
     }
 

@@ -1,58 +1,79 @@
+import json
 import os
 import shlex
 import subprocess
 import sys
 from subprocess import CalledProcessError
 import asyncio
-from retrying import retry
-from sagemaker_inference import model_server
 
-serving_bin="/opt/metaspore-serving/bin/metaspore-serving-bin"
-recommend_base_cmd="java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar /opt/recommend-service.jar"
-serving_grpc_port_name="-grpc_listen_port"
-serving_grpc_port=50000
-init_load_path_name="-init_load_path"
-init_load_path="/data/models"
-service_port=13013
-consul_enable="false"
-
-def _retry_if_error(exception):
-    return isinstance(exception, CalledProcessError or OSError)
+prefix = "/opt/ml/"
+config_name = "recommend-config.yaml"
+model_path = os.path.join(prefix, "model")
+model_info_file = os.path.join(prefix, "model-infos.json")
 
 
-@retry(stop_max_delay=1000 * 50, retry_on_exception=_retry_if_error)
-def _start_mms():
-    # by default the number of workers per model is 1, but we can configure it through the
-    # environment variable below if desired.
-    # os.environ['SAGEMAKER_MODEL_SERVER_WORKERS'] = '2'
-    model_server.start_model_server(handler_service="/home/model-server/model_handler.py:handle")
+def process_model_data():
+    config_path = os.path.join(prefix, config_name)
+    if not os.path.exists(config_path) and not os.path.isfile(config_path):
+        raise RuntimeError("no model config file in data!")
+    if not os.path.isdir(model_path):
+        print("no model found!")
+    elif not os.path.isfile(model_info_file):
+        model_infos = list()
+        for model_name in os.listdir(model_path):
+            model_info = dict()
+            model_info["modelName"] = model_name
+            model_info["version"] = "1"
+            model_info["dirPath"] = os.path.join(model_path, model_name)
+            model_info["host"] = "127.0.0.1"
+            model_info["port"] = 50000
+            model_infos.append(model_info)
+        with open(model_info_file, "w") as model_file:
+            model_file.write(json.dumps(model_infos))
+            model_file.flush()
+    return config_name, model_info_file
 
-async def _start_recommend_service(service_port, consul_enable):
-    recommend_base_cmd="java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar /opt/recommend-service.jar  --SERVICE_PORT={} --CONSUL_ENABLE={}".format(service_port, consul_enable)
+
+def serve():
+    config_name, model_info_file = process_model_data()
+    print("model_serving start!")
+    asyncio.run(_start_model_serving(50000, "/data/models"))
+    print("recommend service start!")
+    asyncio.run(_start_recommend_service(8080, "false", model_info_file, config_name))
+    print("model handle start!")
+
+
+async def _start_recommend_service(service_port, consul_enable, init_model_info="", init_config=""):
+    recommend_base_cmd = "java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar " \
+                         "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
+                         "--init_model_info={} --SERVICE_PORT={} --CONSUL_ENABLE={}".format(init_config,
+                                                                                            init_model_info,
+                                                                                            service_port,
+                                                                                            consul_enable)
     subprocess.Popen(recommend_base_cmd, shell=True, stdout=subprocess.PIPE)
+
 
 async def _start_model_serving(grpc_listen_port, init_load_path):
     if os.path.isfile(init_load_path):
         os.remove(init_load_path)
     if not os.path.exists(init_load_path):
         os.makedirs(init_load_path)
-    serving_cmd="/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port {} -init_load_path {}".format(grpc_listen_port, init_load_path)
+    serving_cmd = "/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port {} -init_load_path {}".format(
+        grpc_listen_port, init_load_path)
     subprocess.Popen(serving_cmd, shell=True, stdout=subprocess.PIPE)
 
+
+def train():
+    pass
+
+
 def main():
-    import argparse
-    parser = argparse.ArgumentParser(description='recommend arguments')
-    parser.add_argument('--grpc_listen_port', dest='grpc_listen_port', type=int, default=50000)
-    parser.add_argument('--init_load_path', dest='init_load_path', type=str, default='/data/models')
-    parser.add_argument('--service_port', dest='service_port', type=int, default=13013)
-    parser.add_argument('--consul_enable', dest='consul_enable', type=str, default="false")
-    args = parser.parse_args()
-    print("model_serving start!")
-    asyncio.run(_start_model_serving(args.grpc_listen_port, args.init_load_path))
-    print("recommend service start!")
-    asyncio.run(_start_recommend_service(args.service_port, args.consul_enable))
-    print("model handle start!")
-    _start_mms()
+    if sys.argv[1] == "train":
+        train()
+    elif sys.argv[1] == "serve":
+        serve()
+    else:
+        subprocess.check_call(shlex.split(" ".join(sys.argv[1:])))
 
     # prevent docker exit
     subprocess.call(["tail", "-f", "/dev/null"])
