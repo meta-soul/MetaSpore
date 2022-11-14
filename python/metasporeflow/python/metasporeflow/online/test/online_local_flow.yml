@@ -132,4 +132,12 @@ spec:
     - name: looked-and-looked
       layers: [ layer.related, layer.rank ]
       additionalRecalls: [ pop ]
+  sagemaker_info:
+    region: cn-northwest-1
+    bucket: dmetasoul-test-bucket
+    prefix: demo-recommend-service-endpoint
+    image: 132825542956.dkr.ecr.cn-northwest-1.amazonaws.com/dmetasoul-repo/metaspore-sagemaker-release:v1.0.0
+    version: v1.0.0
+    vpcSecurityGroupIds: ""
+    vpcSubnets: [ ]
 

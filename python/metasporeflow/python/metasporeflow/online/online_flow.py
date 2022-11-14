@@ -125,6 +125,15 @@ class Scene(object):
     layers: Optional[list] = list()
     additionalRecalls: Optional[list] = list()
 
+@frozen
+class SageMakerInfo(object):
+    region: Optional[str] = None
+    bucket: Optional[str] = None
+    prefix: Optional[str] = None
+    image: Optional[str] = None
+    version: Optional[str] = None
+    vpcSecurityGroupIds: Optional[str] = None
+    vpcSubnets: Optional[list] = list()
 
 @frozen
 class OnlineFlow(object):
@@ -138,3 +147,4 @@ class OnlineFlow(object):
     scenes: Optional[list] = list()
     experiments: Optional[list] = list()
     layers: Optional[list] = list()
+    sagemaker_info: Optional[SageMakerInfo] = None
