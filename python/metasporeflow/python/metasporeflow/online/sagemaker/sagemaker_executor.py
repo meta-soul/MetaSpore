@@ -10,6 +10,16 @@ import tarfile
 
 from metasporeflow.online.online_generator import OnlineGenerator
 
+class DateEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.date):
+            return obj.strftime("%Y-%m-%d")
+        elif isinstance(obj, datetime.datetime):
+            return obj.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(obj, decimal.Decimal):
+            return float(obj)
+        else:
+            return json.JSONEncoder.default(self, obj)
 
 class SageMakerExecutor(object):
     def __init__(self, resources):
@@ -25,21 +35,31 @@ class SageMakerExecutor(object):
         self.prefix = "demo-multimodel-endpoint"
         self.endpoint_map = dict()
 
-    def create_model(self, model_name, endpoint_name=None):
-        model_url = "https://s3-{}.amazonaws.com/{}/{}/".format(self.region, self.bucket, self.prefix)
+    def create_model(self, model_name, scene, key):
+        model_url = "s3://{}/{}".format(self.bucket, key)
         container = "{}.dkr.ecr.{}.amazonaws.com/{}:v1.0.0".format(
             self.account_id, self.region, "dmetasoul-repo/metaspore-sagemaker-release"
         )
 
-        container = {"Image": container, "ModelDataUrl": model_url, "Mode": "MultiModel"}
-
+        container = {"Image": container, "ModelDataUrl": model_url}
+        vpc_config = {
+            'SecurityGroupIds': ['sg-0123456789abcdef0'],
+            'Subnets': ['subnet-0123456789abcdef0','subnet-0123456789abcdef1']
+        }
         create_model_response = self.sm_client.create_model(
-            ModelName=model_name, ExecutionRoleArn=self.role, Containers=[container]
+            ModelName=model_name,
+            ExecutionRoleArn=self.role,
+            Containers=[container],
+        #    VpcConfig=vpc_config
         )
         print("model resp:", create_model_response)
         print("Model Arn: " + create_model_response["ModelArn"])
-        if not endpoint_name:
+        resp = self.sm_client.describe_model(ModelName=model_name)
+        print("model: {} resp: ".format(model_name) + json.dumps(resp, cls=DateEncoder))
+        if not scene:
             endpoint_name = "endpoint-{}".format(model_name)
+        else:
+            endpoint_name = scene
         self.endpoint_map[endpoint_name] = model_name
         print("model_url=", model_url)
         self.create_endpoint_config(endpoint_name, model_name)
@@ -50,15 +70,17 @@ class SageMakerExecutor(object):
             EndpointConfigName=endpoint_config_name,
             ProductionVariants=[
                 {
-                    "InstanceType": "ml.m5.xlarge",
-                    "InitialInstanceCount": 2,
+                    "InstanceType": "ml.m4.xlarge",
+                    "InitialInstanceCount": 1,
                     "InitialVariantWeight": 1,
                     "ModelName": model_name,
-                    "VariantName": "AllTraffic",
+                    "VariantName": "variant-name-1",
                 }
             ],
         )
         print("Endpoint config Arn: " + create_endpoint_config_response["EndpointConfigArn"])
+        resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config_name)
+        print("endpoint config: {} resp: ".format(endpoint_config_name) + json.dumps(resp, cls=DateEncoder))
         create_endpoint_response = self.sm_client.create_endpoint(
             EndpointName=endpoint_name, EndpointConfigName=endpoint_config_name
         )
@@ -72,47 +94,41 @@ class SageMakerExecutor(object):
         waiter.wait(EndpointName=endpoint_name)
 
     def invoke_endpoint(self, endpoint_name, request):
-        if isinstance(request, dict):
-            request = [request, ]
-        elif not isinstance(request, list):
-            print("request type is not match request list or dict")
-            return []
-        print("endpoint map:", self.endpoint_map)
+        resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
+        status = resp["EndpointStatus"]
+        print("Endpoint:" + endpoint_name + " Status: " + status)
+        print("Endpoint:" + endpoint_name + " resp: " + json.dumps(resp, cls=DateEncoder))
+        if not isinstance(request, dict):
+            print("request type is not match request dict")
+            return None
+        request_body = json.dumps(request)
         response = self.runtime_sm_client.invoke_endpoint(
             EndpointName=endpoint_name,
             ContentType="application/json",
-            TargetModel="{}".format(self.endpoint_map.get(endpoint_name, "amazonfashion_widedeep")),
-            Body=json.dumps(request),
+            Accept='application/json',
+            Body=request_body,
         )
         res = json.loads(response["Body"].read())
-        print(*res, sep="\n")
         return res
 
-    def add_model_to_s3(self, models):
+    def add_model_to_s3(self, scene, model_name, model_prefix):
         s3 = boto3.resource('s3', self.region)
-        print("s3=", s3.Bucket(self.bucket).objects.all())
-        for model_name, s3_path in models.items():
-            s3_bucket = s3_path.get("bucket", self.bucket)
-            s3_prefix = s3_path.get("prefix")
-            if not s3_prefix:
-                print("s3 prefix is empty at model: {}".format(model_name))
-                continue
-            model = self.process_model_info(model_name, s3_bucket, s3_prefix)
-            key = os.path.join(self.prefix, model)
-            with open(model, "rb") as file_obj:
-                s3.Bucket(self.bucket).Object(key).upload_fileobj(file_obj)
+        model = self.process_model_info(scene, model_name, self.bucket, model_prefix)
+        key = os.path.join(self.prefix, model)
+        with open(model, "rb") as file_obj:
+            s3.Bucket(self.bucket).Object(key).upload_fileobj(file_obj)
+        return key
 
-    def process_model_info(self, model_name, model_bucket, model_prefix):
-        model_path = "data/{}".format(model_name)
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-        config_file = "{}/service-config.yaml".format(model_path)
+    def process_model_info(self, scene, model_name, model_bucket, model_prefix):
+        config_file = "./service-config.yaml"
         service_confog = self._generator.gen_server_config()
         with open(config_file, "w") as file:
             file.write(service_confog)
-        model_data_path = "{}/{}".format(model_path, model_name)
-        self.download_directory(model_bucket, model_prefix, model_data_path)
-        tar_file = "data/{}.gz".format(model_name)
+        model_path = "model/{}".format(model_name)
+        if not os.path.exists(model_path):
+            os.makedirs(model_path)
+        self.download_directory(model_bucket, model_prefix, model_path)
+        tar_file = "data/{}.tar.gz".format(scene)
         if not os.path.exists(os.path.dirname(tar_file)):
             os.makedirs(os.path.dirname(tar_file))
         with tarfile.open(tar_file, "w:gz") as tar:
@@ -147,12 +163,13 @@ if __name__ == "__main__":
     online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
-    #executor.add_model_to_s3({
-    #    "amazonfashion-widedeep": {
-    #        "bucket": "dmetasoul-test-bucket",
-    #        "prefix": "qinyy/test-model-watched/amazonfashion_widedeep"
-    #    }
-    #})
-    #executor.create_model("amazonfashion-widedeep", "recommend")
-    res = executor.invoke_endpoint("recommend", {"operator": "recommend", "user_id": "A1P62PK6QVH8LV"})
-    # print(res)
+    #key = executor.add_model_to_s3("guess-you-like-2", "amazonfashion-widedeep-2", "qinyy/test-model-watched/amazonfashion_widedeep")
+    #executor.create_model("amazonfashion-widedeep-2", "guess-you-like-2", key)
+    resp = executor.sm_client.describe_model(ModelName="teat-recommend-1")
+    print("model: teat-recommend-1 resp: " + json.dumps(resp, cls=DateEncoder))
+    resp = executor.sm_client.describe_model(ModelName="amazonfashion-widedeep-2")
+    print("model: amazonfashion-widedeep-2 resp:" + json.dumps(resp, cls=DateEncoder))
+    resp = executor.sm_client.describe_model(ModelName="amazonfashion-widedeep")
+    print("model: amazonfashion-widedeep resp:" + json.dumps(resp, cls=DateEncoder))
+    res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    print(res)

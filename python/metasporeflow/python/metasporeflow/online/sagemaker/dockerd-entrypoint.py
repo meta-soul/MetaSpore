@@ -13,9 +13,16 @@ model_info_file = os.path.join(prefix, "model-infos.json")
 
 
 def process_model_data():
+    print("/opt/ml/:", os.path.exists(prefix))
+    if os.path.exists(prefix):
+        print("list:", os.listdir(prefix))
+    else:
+        print("list opt:", os.listdir("/opt"))
+        print("list root:", os.listdir("/root"))
     config_path = os.path.join(prefix, config_name)
     if not os.path.exists(config_path) and not os.path.isfile(config_path):
-        raise RuntimeError("no model config file in data!")
+        print("no model config file in data!", config_path)
+        return "", ""
     if not os.path.isdir(model_path):
         print("no model found!")
     elif not os.path.isfile(model_info_file):
