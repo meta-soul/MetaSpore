@@ -99,7 +99,7 @@ public class SageMakerController {
             try {
                 return recommendService.getDataServiceResult(task, request);
             } catch (Exception ex) {
-                return ServiceResult.of(-2, "service exec fail at " + ex.getMessage());
+                return ServiceResult.of(-2, "service exec fail");
             }
         } else if (operator.equalsIgnoreCase("recommend")) {
             Map<String, Object> request = CommonUtils.getField(req, "request");
@@ -115,9 +115,9 @@ public class SageMakerController {
                 return ServiceResult.of(-1, String.format("scene:%s is not support!", scene));
             }
             try {
-                return recommendService.getDataServiceResult(scene, request);
+                return recommendService.getRecommendResult(scene, request);
             } catch (Exception ex) {
-                return ServiceResult.of(-2, "service exec fail at " + ex.getMessage());
+                return ServiceResult.of(-2, "service exec fail");
             }
         } else if (operator.equalsIgnoreCase("itemSummary")) {
             Map<String, Object> request = CommonUtils.getField(req, "request");
@@ -132,7 +132,7 @@ public class SageMakerController {
             try {
                 return recommendService.itemSummary(item_key, id, request);
             } catch (Exception ex) {
-                return ServiceResult.of(-2, "service exec fail at " + ex.getMessage());
+                return ServiceResult.of(-2, "service exec fail");
             }
         }
         return ServiceResult.of(-1, "no method support to " + operator);
