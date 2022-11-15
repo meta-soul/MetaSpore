@@ -142,13 +142,14 @@ class SageMakerExecutor(object):
         return key
 
     def process_model_info(self, scene, model_paths):
-        config_file = "./service-config.yaml"
+        config_file = "data/recommend-config.yaml"
         service_confog = self._generator.gen_server_config()
+        if not os.path.exists(os.path.dirname(config_file)):
+            os.makedirs(os.path.dirname(config_file))
         with open(config_file, "w") as file:
             file.write(service_confog)
-        model_local_paths = list()
         for model_name, model_prefix in model_paths.items():
-            model_path = "model/{}".format(model_name)
+            model_path = "data/model/{}".format(model_name)
             if not os.path.exists(model_path):
                 os.makedirs(model_path)
             bucket = self.bucket
@@ -160,13 +161,10 @@ class SageMakerExecutor(object):
                 bucket = model_prefix[len("s3://"):idx]
                 model_prefix = model_prefix[idx + 1:]
             self.download_directory(bucket, model_prefix, model_path)
-            model_local_paths.append(model_path)
-        tar_file = "data/{}.tar.gz".format(scene)
-        if not os.path.exists(os.path.dirname(tar_file)):
-            os.makedirs(os.path.dirname(tar_file))
+        tar_file = "{}.tar.gz".format(scene)
         with tarfile.open(tar_file, "w:gz") as tar:
-            for model_local_path in model_local_paths:
-                tar.add(model_local_path, arcname=".")
+            tar.add(config_file, arcname=".")
+            tar.add("data", arcname=".")
         return tar_file
 
     def download_directory(self, bucket_name, path, local_path):
@@ -177,7 +175,7 @@ class SageMakerExecutor(object):
         s3 = boto3.resource('s3', self.region)
         bucket = s3.Bucket(bucket_name)
         for obj in bucket.objects.filter(Prefix=path):
-            local_file = os.path.join(local_path, obj.key)
+            local_file = os.path.join(local_path, obj.key[len(path):].lstrip("/"))
             if not os.path.exists(os.path.dirname(local_file)):
                 os.makedirs(os.path.dirname(local_file))
             key = obj.key
@@ -246,5 +244,6 @@ if __name__ == "__main__":
     executor = SageMakerExecutor(resources)
     #executor.execute_down()
     #executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    res = executor.invoke_endpoint("test-endpoint-123", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    print(res)
+    #res = executor.invoke_endpoint("test-endpoint-123", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    #print(res)
+    executor.process_model_info("guess-you-like", {"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
