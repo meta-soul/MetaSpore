@@ -38,7 +38,7 @@ def process_model_data():
         with open(model_info_file, "w") as model_file:
             model_file.write(json.dumps(model_infos))
             model_file.flush()
-    return config_name, model_info_file
+    return config_path, model_info_file
 
 
 def serve():

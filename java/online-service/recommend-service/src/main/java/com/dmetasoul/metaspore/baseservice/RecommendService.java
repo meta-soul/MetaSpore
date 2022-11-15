@@ -26,6 +26,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.json.GsonJsonParser;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
@@ -36,10 +37,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 
 @Slf4j
@@ -62,6 +60,8 @@ public class RecommendService {
         }
     }
     @Autowired
+    public ApplicationArguments applicationArgs;
+    @Autowired
     public TaskFlowConfig taskFlowConfig;
 
     @Autowired
@@ -69,18 +69,29 @@ public class RecommendService {
 
     @Autowired
     private PullContextRefresher pullContextRefresher;
+
+    public String getArgSingleValue(ApplicationArguments applicationArgs, String key) {
+        if (applicationArgs.containsOption(key)) {
+            List<String> list = applicationArgs.getOptionValues(key);
+            if (CollectionUtils.isNotEmpty(list)) {
+                return applicationArgs.getOptionValues(key).get(0);
+            }
+        }
+        return null;
+    }
+
     @PostConstruct
     public void initService() {
-        String initModelInfos = System.getenv(INIT_MODEL_INFO);
-        String initConfig = System.getenv(INIT_CONFIG);
-        String initConfigFormat = System.getenv(INIT_CONFIG_FORMAT);
+        String initModelInfos = getArgSingleValue(applicationArgs, INIT_MODEL_INFO);
+        String initConfig = getArgSingleValue(applicationArgs, INIT_CONFIG);
+        String initConfigFormat = getArgSingleValue(applicationArgs, INIT_CONFIG_FORMAT);
         if (StringUtils.isNotEmpty(initModelInfos)) {
             try {
                 String content = FileUtils.readFile(initModelInfos, Charset.defaultCharset());
                 List<Object> modelInfos = new GsonJsonParser().parseList(content);
                 notifyToLoadModel(modelInfos);
             } catch (Exception ex) {
-                log.error("initModelInfos parser fail format is list json or load model fail!");
+                log.error("initModelInfos :{} parser fail format is list json or load model fail!", initModelInfos);
             }
         }
         if (StringUtils.isNotEmpty(initConfig) && StringUtils.isNotEmpty(initConfigFormat)) {
