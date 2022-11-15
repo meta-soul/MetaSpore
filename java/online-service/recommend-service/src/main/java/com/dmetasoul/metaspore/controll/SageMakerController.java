@@ -96,7 +96,11 @@ public class SageMakerController {
             if (StringUtils.isEmpty(task)) {
                 return ServiceResult.of(-1, String.format("get feature task result need teskName: %s!", task));
             }
-            return recommendService.getDataServiceResult(task, request);
+            try {
+                return recommendService.getDataServiceResult(task, request);
+            } catch (Exception ex) {
+                return ServiceResult.of(-2, "service exec fail at " + ex.getMessage());
+            }
         } else if (operator.equalsIgnoreCase("recommend")) {
             Map<String, Object> request = CommonUtils.getField(req, "request");
             if (MapUtils.isEmpty(request)) {
@@ -110,7 +114,11 @@ public class SageMakerController {
             if (sceneService == null) {
                 return ServiceResult.of(-1, String.format("scene:%s is not support!", scene));
             }
-            return recommendService.getDataServiceResult(scene, request);
+            try {
+                return recommendService.getDataServiceResult(scene, request);
+            } catch (Exception ex) {
+                return ServiceResult.of(-2, "service exec fail at " + ex.getMessage());
+            }
         } else if (operator.equalsIgnoreCase("itemSummary")) {
             Map<String, Object> request = CommonUtils.getField(req, "request");
             if (MapUtils.isEmpty(request)) {
@@ -121,7 +129,11 @@ public class SageMakerController {
             if (StringUtils.isEmpty(id)) {
                 return ServiceResult.of(-1, String.format("itemSummary need %s: %s!", item_key, id));
             }
-            return recommendService.itemSummary(item_key, id, request);
+            try {
+                return recommendService.itemSummary(item_key, id, request);
+            } catch (Exception ex) {
+                return ServiceResult.of(-2, "service exec fail at " + ex.getMessage());
+            }
         }
         return ServiceResult.of(-1, "no method support to " + operator);
     }
