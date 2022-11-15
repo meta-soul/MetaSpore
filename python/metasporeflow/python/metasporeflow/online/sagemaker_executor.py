@@ -29,31 +29,38 @@ class SageMakerExecutor(object):
     def __init__(self, resources):
         self._online_resource = resources.find_by_name("online_local_flow")
         self._generator = OnlineGenerator(resource=self._online_resource)
-        self.configure = self.resource.data
+        self.configure = self._online_resource.data
         self.sagemaker_info = dictToObj(self.configure.sagemaker_info)
-        self.region = "cn-northwest-1" if "region" not in self.sagemaker_info else self.sagemaker_info.region
+        self.region = "cn-northwest-1" if self.sagemaker_info.region else self.sagemaker_info.region
         self.sagemaker_session = Session(boto3.session.Session(region_name=self.region))
         self.role = get_execution_role(sagemaker_session=self.sagemaker_session)
         self.sm_client = boto3.client("sagemaker", self.region)
         self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
         self.account_id = boto3.client("sts", self.region).get_caller_identity()["Account"]
-        self.bucket = "dmetasoul-test-bucket" if "bucket" not in self.sagemaker_info else self.sagemaker_info.bucket
-        self.prefix = "demo-multimodel-endpoint" if "prefix" not in self.sagemaker_info else self.sagemaker_info.prefix
+        self.bucket = "dmetasoul-test-bucket" if self.sagemaker_info.bucket else self.sagemaker_info.bucket
+        self.prefix = "demo-multimodel-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
 
     async def create_model(self, model_name, scene, key):
         model_url = "s3://{}/{}".format(self.bucket, key)
-        if "image" in self.sagemaker_info:
+        if self.sagemaker_info.image:
             container = self.sagemaker_info.image
         else:
-            version = "v1.0.0" if "version" not in self.sagemaker_info else self.sagemaker_info.version
+            version = "v1.0.1" if self.sagemaker_info.version else self.sagemaker_info.version
             container = "{}.dkr.ecr.{}.amazonaws.com/{}:{}".format(
                 self.account_id, self.region, "dmetasoul-repo/metaspore-sagemaker-release", version
             )
-        container = {"Image": container, "ModelDataUrl": model_url}
-        if "vpcSecurityGroupIds" in self.sagemaker_info and "vpcSubnets" in self.sagemaker_info and \
-                self.sagemaker_info.vpcSecurityGroupIds and self.sagemaker_info.vpcSubnets:
+        environment = dict()
+        environment["CONSUL_ENABLE"] = "false"
+        environment["SERVICE_PORT"] = "8080"
+        if self.sagemaker_info.options:
+            if "mongo_service" in self.sagemaker_info.options:
+                environment["MONGO_HOST"] = str(self.sagemaker_info.options["mongo_service"])
+            if "mongo_port" in self.sagemaker_info.options:
+                environment["MONGO_PORT"] = str(self.sagemaker_info.options["mongo_port"])
+        container = {"Image": container, "ModelDataUrl": model_url, "Environment": environment}
+        if self.sagemaker_info.vpcSecurityGroupIds and self.sagemaker_info.vpcSubnets:
             vpc_config = {
-                'SecurityGroupIds': self.sagemaker_info.vpcSecurityGroupIds,
+                'SecurityGroupIds': [self.sagemaker_info.vpcSecurityGroupIds,],
                 'Subnets': self.sagemaker_info.vpcSubnets
             }
             create_model_response = self.sm_client.create_model(
@@ -197,9 +204,9 @@ class SageMakerExecutor(object):
             scene_name = "recommend-service"
         else:
             scene_name = scenes[0].name
-        self.runtime_sm_client.delete_endpoint(scene_name)
-        self.runtime_sm_client.delete_endpoint_config("config-%s" % scene_name)
-        self.runtime_sm_client.delete_model("model-{}".format(scene_name))
+        self.sm_client.delete_endpoint(EndpointName=scene_name)
+        self.sm_client.delete_endpoint_config(EndpointConfigName="config-%s" % scene_name)
+        self.sm_client.delete_model(ModelName="model-{}".format(scene_name))
 
     def execute_status(self, **kwargs):
         service_confog = self._generator.gen_service_config()
@@ -237,12 +244,7 @@ if __name__ == "__main__":
     online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
-    # executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    resp = executor.sm_client.describe_model(ModelName="teat-recommend-1")
-    print("model: teat-recommend-1 resp: " + json.dumps(resp, cls=DateEncoder))
-    resp = executor.sm_client.describe_model(ModelName="amazonfashion-widedeep-2")
-    print("model: amazonfashion-widedeep-2 resp:" + json.dumps(resp, cls=DateEncoder))
-    resp = executor.sm_client.describe_model(ModelName="amazonfashion-widedeep")
-    print("model: amazonfashion-widedeep resp:" + json.dumps(resp, cls=DateEncoder))
-    res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    #executor.execute_down()
+    #executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    res = executor.invoke_endpoint("test-endpoint-123", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
     print(res)

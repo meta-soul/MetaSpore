@@ -134,6 +134,7 @@ class SageMakerInfo(object):
     version: Optional[str] = None
     vpcSecurityGroupIds: Optional[str] = None
     vpcSubnets: Optional[list] = list()
+    options: Optional[dict] = dict()
 
 @frozen
 class OnlineFlow(object):
