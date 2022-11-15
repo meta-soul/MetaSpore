@@ -57,12 +57,7 @@ async def _start_recommend_service(service_port, consul_enable, init_model_info=
                                                                                             init_model_info,
                                                                                             service_port,
                                                                                             consul_enable)
-    p = subprocess.Popen(recommend_base_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while p.poll() is None:
-        line = p.stdout.readline()
-        line = line.strip()
-        if line:
-            print('recommend log: {}'.format(line))
+    subprocess.Popen(recommend_base_cmd, shell=True, stdout=subprocess.PIPE)
 
 
 async def _start_model_serving(grpc_listen_port, init_load_path):
@@ -72,12 +67,7 @@ async def _start_model_serving(grpc_listen_port, init_load_path):
         os.makedirs(init_load_path)
     serving_cmd = "/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port {} -init_load_path {}".format(
         grpc_listen_port, init_load_path)
-    p = subprocess.Popen(serving_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    while p.poll() is None:
-        line = p.stdout.readline()
-        line = line.strip()
-        if line:
-            print('model_serving log: {}'.format(line))
+    subprocess.Popen(serving_cmd, shell=True, stdout=subprocess.PIPE)
 
 
 def train():
