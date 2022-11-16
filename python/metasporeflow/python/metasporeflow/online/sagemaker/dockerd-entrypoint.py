@@ -10,7 +10,7 @@ prefix = "/opt/ml/"
 config_name = "recommend-config.yaml"
 model_path = os.path.join(prefix, "model")
 model_info_file = os.path.join(prefix, "model-infos.json")
-
+config_path = os.path.join(prefix, config_name)
 
 def process_model_data():
     print("/opt/ml/:", os.path.exists(prefix))
@@ -19,7 +19,6 @@ def process_model_data():
     else:
         print("list opt:", os.listdir("/opt"))
         print("list root:", os.listdir("/root"))
-    config_path = os.path.join(prefix, config_name)
     if not os.path.exists(config_path) and not os.path.isfile(config_path):
         print("no model config file in data!", config_path)
         return "", ""
@@ -50,7 +49,8 @@ def serve():
     print("model handle start!")
 
 
-async def _start_recommend_service(service_port, consul_enable, init_model_info="", init_config=""):
+async def _start_recommend_service(service_port, consul_enable, init_model_info=model_info_file,
+                                   init_config=config_path):
     recommend_base_cmd = "java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar " \
                          "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
                          "--init_model_info={}".format(init_config, init_model_info)
