@@ -136,7 +136,7 @@ spec:
     region: cn-northwest-1
     bucket: dmetasoul-test-bucket
     prefix: demo-recommend-service-endpoint
-    image: 132825542956.dkr.ecr.cn-northwest-1.amazonaws.com/dmetasoul-repo/metaspore-sagemaker-release:v1.0.1
+    image: 132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo/metaspore-sagemaker-release:v1.0.1
     version: v1.0.0
     options:
       mongo_service: "172.31.47.204"

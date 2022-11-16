@@ -38,7 +38,7 @@ class SageMakerExecutor(object):
         self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
         self.account_id = boto3.client("sts", self.region).get_caller_identity()["Account"]
         self.bucket = "dmetasoul-test-bucket" if self.sagemaker_info.bucket else self.sagemaker_info.bucket
-        self.prefix = "demo-multimodel-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
+        self.prefix = "demo-metaspore-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
 
     async def create_model(self, model_name, scene, key):
         model_url = "s3://{}/{}".format(self.bucket, key)
@@ -46,7 +46,7 @@ class SageMakerExecutor(object):
             container = self.sagemaker_info.image
         else:
             version = "v1.0.1" if self.sagemaker_info.version else self.sagemaker_info.version
-            container = "{}.dkr.ecr.{}.amazonaws.com/{}:{}".format(
+            container = "{}.dkr.ecr.{}.amazonaws.com.cn/{}:{}".format(
                 self.account_id, self.region, "dmetasoul-repo/metaspore-sagemaker-release", version
             )
         environment = dict()
@@ -142,14 +142,12 @@ class SageMakerExecutor(object):
         return key
 
     def process_model_info(self, scene, model_paths):
-        config_file = "data/recommend-config.yaml"
+        config_file = "recommend-config.yaml"
         service_confog = self._generator.gen_server_config()
-        if not os.path.exists(os.path.dirname(config_file)):
-            os.makedirs(os.path.dirname(config_file))
         with open(config_file, "w") as file:
             file.write(service_confog)
         for model_name, model_prefix in model_paths.items():
-            model_path = "data/model/{}".format(model_name)
+            model_path = "model/{}".format(model_name)
             if not os.path.exists(model_path):
                 os.makedirs(model_path)
             bucket = self.bucket
@@ -163,8 +161,8 @@ class SageMakerExecutor(object):
             self.download_directory(bucket, model_prefix, model_path)
         tar_file = "{}.tar.gz".format(scene)
         with tarfile.open(tar_file, "w:gz") as tar:
-            tar.add(config_file, arcname=".")
-            tar.add("data", arcname=".")
+            tar.add(config_file)
+            tar.add("model")
         return tar_file
 
     def download_directory(self, bucket_name, path, local_path):
@@ -191,6 +189,7 @@ class SageMakerExecutor(object):
             scene_name = "recommend-service"
         else:
             scene_name = scenes[0].name
+        scene_name = "cn-1-" + scene_name
         model_data_path = self.add_model_to_s3(scene_name, model_path)
         asyncio.run(self.create_model("model-{}".format(scene_name), scene_name, model_data_path))
 
@@ -244,6 +243,6 @@ if __name__ == "__main__":
     executor = SageMakerExecutor(resources)
     #executor.execute_down()
     #executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    #res = executor.invoke_endpoint("test-endpoint-123", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    #print(res)
-    executor.process_model_info("guess-you-like", {"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    res = executor.invoke_endpoint("cn-1-guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    print(res)
+    #executor.process_model_info("guess-you-like", {"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
