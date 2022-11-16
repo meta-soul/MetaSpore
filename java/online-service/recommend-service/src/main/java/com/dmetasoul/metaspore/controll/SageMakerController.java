@@ -99,6 +99,7 @@ public class SageMakerController {
             try {
                 return recommendService.getDataServiceResult(task, request);
             } catch (Exception ex) {
+                log.error("feature exception: ", ex);
                 return ServiceResult.of(-2, "service exec fail");
             }
         } else if (operator.equalsIgnoreCase("recommend")) {
@@ -117,6 +118,7 @@ public class SageMakerController {
             try {
                 return recommendService.getRecommendResult(scene, request);
             } catch (Exception ex) {
+                log.error("recommend exception: ", ex);
                 return ServiceResult.of(-2, "service exec fail");
             }
         } else if (operator.equalsIgnoreCase("itemSummary")) {
@@ -132,6 +134,7 @@ public class SageMakerController {
             try {
                 return recommendService.itemSummary(item_key, id, request);
             } catch (Exception ex) {
+                log.error("itemsummary exception: ", ex);
                 return ServiceResult.of(-2, "service exec fail");
             }
         }
