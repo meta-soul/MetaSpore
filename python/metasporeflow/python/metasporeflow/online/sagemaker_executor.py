@@ -143,7 +143,17 @@ class SageMakerExecutor(object):
 
     def process_model_info(self, scene, model_paths):
         config_file = "recommend-config.yaml"
-        service_confog = self._generator.gen_server_config()
+        config_object = self._generator.gen_service_config()
+        if self.sagemaker_info.options:
+            for source in config_object.feature_service.source:
+                if source.kind == "MongoDB":
+                    source.options["uri"] = self.sagemaker_info.options.get("uri",
+                                                                            "mongodb://root:test_mongodb_123456@{}:{}/jpa?authSource=admin".format(
+                                                                                self.sagemaker_info.options.get(
+                                                                                    "mongo_service", "172.31.47.204"),
+                                                                                self.sagemaker_info.options.get(
+                                                                                    "mongo_port", 57017)))
+        service_confog = self._generator.gen_server_config2(config_object)
         with open(config_file, "w") as file:
             file.write(service_confog)
         model_info_file = "model-infos.json"
