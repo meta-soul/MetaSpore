@@ -156,6 +156,8 @@ class SageMakerExecutor(object):
         service_confog = self._generator.gen_server_config2(config_object)
         with open(config_file, "w") as file:
             file.write(service_confog)
+        model_info_file = "model-infos.json"
+        model_infos = list()
         for model_name, model_prefix in model_paths.items():
             model_path = "model/{}".format(model_name)
             if not os.path.exists(model_path):
@@ -169,11 +171,14 @@ class SageMakerExecutor(object):
                 bucket = model_prefix[len("s3://"):idx]
                 model_prefix = model_prefix[idx + 1:]
             self.download_directory(bucket, model_prefix, model_path)
+            model_infos.append({"modelName": model_name, "version": "1", "dirPath": os.path.join("/opt/ml/", model_path), "host": "127.0.0.1", "port": 50000})
+        with open(model_info_file, "w") as model_file:
+            model_file.write(json.dumps(model_infos))
         tar_file = "{}.tar.gz".format(scene)
         with tarfile.open(tar_file, "w:gz") as tar:
             tar.add(config_file)
             tar.add("model")
-            tar.add("model-infos.json")
+            tar.add(model_info_file)
         return tar_file
 
     def download_directory(self, bucket_name, path, local_path):
