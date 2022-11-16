@@ -46,6 +46,7 @@ public class FileUtils {
 
     public static Boolean canRead(String path) {
         File file = new File(path);
+        log.error("file :{} info: {}, path:{}", path, file.isFile(), file.getAbsolutePath());
         if (file.isDirectory()) {
             try {
                 File[] listFiles = file.listFiles();

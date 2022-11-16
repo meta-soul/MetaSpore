@@ -10,6 +10,7 @@ prefix = "/opt/ml/"
 config_name = "recommend-config.yaml"
 model_path = os.path.join(prefix, "model")
 model_info_file = os.path.join(prefix, "model-infos.json")
+config_path = os.path.join(prefix, config_name)
 
 
 def process_model_data():
@@ -50,12 +51,21 @@ def serve():
     print("model handle start!")
 
 
-async def _start_recommend_service(service_port, consul_enable, init_model_info="", init_config=""):
+async def _start_recommend_service(service_port, consul_enable, init_model_info=model_info_file, init_config=config_path):
+    config_name, model_info_file = process_model_data()
     recommend_base_cmd = "java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar " \
                          "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
                          "--init_model_info={}".format(init_config, init_model_info)
     print("recommend_base_cmd:", recommend_base_cmd)
-    subprocess.Popen(recommend_base_cmd, shell=True, env={"SERVICE_PORT": service_port, "CONSUL_ENABLE": consul_enable})
+    subprocess.Popen(recommend_base_cmd, shell=True, env={
+        "SERVICE_PORT": str(service_port),
+        "CONSUL_ENABLE": str(consul_enable),
+        "init_model_info": init_model_info,
+        "init_config": init_config,
+        "init_config_format": "yaml",
+        "MONGO_HOST": os.getenv("MONGO_HOST", "172.31.47.204"),
+        "MONGO_PORT": os.getenv("MONGO_PORT", "57017"),
+    })
 
 
 async def _start_model_serving(grpc_listen_port, init_load_path):

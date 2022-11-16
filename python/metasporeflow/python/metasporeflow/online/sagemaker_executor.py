@@ -163,6 +163,7 @@ class SageMakerExecutor(object):
         with tarfile.open(tar_file, "w:gz") as tar:
             tar.add(config_file)
             tar.add("model")
+            tar.add("model-infos.json")
         return tar_file
 
     def download_directory(self, bucket_name, path, local_path):
@@ -189,7 +190,6 @@ class SageMakerExecutor(object):
             scene_name = "recommend-service"
         else:
             scene_name = scenes[0].name
-        scene_name = "cn-1-" + scene_name
         model_data_path = self.add_model_to_s3(scene_name, model_path)
         asyncio.run(self.create_model("model-{}".format(scene_name), scene_name, model_data_path))
 
@@ -201,9 +201,12 @@ class SageMakerExecutor(object):
             scene_name = "recommend-service"
         else:
             scene_name = scenes[0].name
-        self.sm_client.delete_endpoint(EndpointName=scene_name)
-        self.sm_client.delete_endpoint_config(EndpointConfigName="config-%s" % scene_name)
-        self.sm_client.delete_model(ModelName="model-{}".format(scene_name))
+        try:
+            self.sm_client.delete_endpoint(EndpointName=scene_name)
+            self.sm_client.delete_endpoint_config(EndpointConfigName="config-%s" % scene_name)
+            self.sm_client.delete_model(ModelName="model-{}".format(scene_name))
+        except:
+            print("the model or config or endpoint is not exist! or endpoint is creating")
 
     def execute_status(self, **kwargs):
         service_confog = self._generator.gen_service_config()
@@ -241,8 +244,11 @@ if __name__ == "__main__":
     online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
-    #executor.execute_down()
-    #executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    res = executor.invoke_endpoint("cn-1-guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    print(res)
+    executor.execute_down()
+    executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    #with open("recommend-config.yaml") as config_file:
+    #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
+    #    print(res)
+    #res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    #print(res)
     #executor.process_model_info("guess-you-like", {"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})

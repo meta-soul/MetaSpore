@@ -70,12 +70,22 @@ public class RecommendService {
     @Autowired
     private PullContextRefresher pullContextRefresher;
 
+
     public String getArgSingleValue(ApplicationArguments applicationArgs, String key) {
         if (applicationArgs.containsOption(key)) {
             List<String> list = applicationArgs.getOptionValues(key);
             if (CollectionUtils.isNotEmpty(list)) {
-                return applicationArgs.getOptionValues(key).get(0);
+                String value = applicationArgs.getOptionValues(key).get(0);
+                if (StringUtils.isNotEmpty(value)) {
+                    log.info("read args: {}, value:{} form argument!", key, list);
+		    return value;
+		}
             }
+        }
+        String value = System.getProperty(key);
+        if (StringUtils.isNotEmpty(value)) {
+            log.info("read args: {} form env!", key);
+            return value;
         }
         return null;
     }
@@ -85,6 +95,9 @@ public class RecommendService {
         String initModelInfos = getArgSingleValue(applicationArgs, INIT_MODEL_INFO);
         String initConfig = getArgSingleValue(applicationArgs, INIT_CONFIG);
         String initConfigFormat = getArgSingleValue(applicationArgs, INIT_CONFIG_FORMAT);
+	log.error("initModelInfos:{}", initModelInfos);
+        log.error("initConfig:{}", initConfig);
+        log.error("initConfigFormat:{}", initConfigFormat);
         if (StringUtils.isNotEmpty(initModelInfos)) {
             try {
                 String content = FileUtils.readFile(initModelInfos, Charset.defaultCharset());
