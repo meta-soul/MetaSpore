@@ -60,9 +60,8 @@ public class FileUtils {
 
     public static Boolean canRead(String path) {
         File file = new File(path);
-        log.error("file :{} info isfile: {}, isdir:{}, path:{}", path, file.isFile(), file.isDirectory(), file.getAbsolutePath());
         if (file.isDirectory()) {
-            printTree(file, "");
+            //printTree(file, "");
             try {
                 File[] listFiles = file.listFiles();
                 return listFiles != null;
@@ -77,13 +76,6 @@ public class FileUtils {
 
     public static String readFile(String path, Charset encoding) throws IOException
     {
-        canRead("./input");
-        canRead("/opt");
-        canRead("/input");
-        canRead("./model");
-        canRead("./");
-        canRead("../");
-
         if (!canRead(path)) {
             return null;
         }
