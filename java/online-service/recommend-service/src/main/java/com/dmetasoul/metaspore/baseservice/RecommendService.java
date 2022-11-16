@@ -4,6 +4,7 @@ import com.dmetasoul.metaspore.actuator.PullContextRefresher;
 import com.dmetasoul.metaspore.common.*;
 import com.dmetasoul.metaspore.configure.AlgoTransform;
 import com.dmetasoul.metaspore.configure.RecommendConfig;
+import com.dmetasoul.metaspore.configure.ServiceConfig;
 import com.dmetasoul.metaspore.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.data.DataContext;
 import com.dmetasoul.metaspore.data.DataResult;
@@ -32,8 +33,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -70,16 +69,19 @@ public class RecommendService {
     @Autowired
     private PullContextRefresher pullContextRefresher;
 
+    @Autowired
+    private ServiceConfig serviceConfig;
 
-    public String getArgSingleValue(ApplicationArguments applicationArgs, String key) {
+
+    public String getArgSingleValue(ApplicationArguments applicationArgs, String key, String defaultValue) {
         if (applicationArgs.containsOption(key)) {
             List<String> list = applicationArgs.getOptionValues(key);
             if (CollectionUtils.isNotEmpty(list)) {
                 String value = applicationArgs.getOptionValues(key).get(0);
                 if (StringUtils.isNotEmpty(value)) {
                     log.info("read args: {}, value:{} form argument!", key, list);
-		    return value;
-		}
+		            return value;
+		        }
             }
         }
         String value = System.getProperty(key);
@@ -87,17 +89,14 @@ public class RecommendService {
             log.info("read args: {} form env!", key);
             return value;
         }
-        return null;
+        return defaultValue;
     }
 
     @PostConstruct
     public void initService() {
-        String initModelInfos = getArgSingleValue(applicationArgs, INIT_MODEL_INFO);
-        String initConfig = getArgSingleValue(applicationArgs, INIT_CONFIG);
-        String initConfigFormat = getArgSingleValue(applicationArgs, INIT_CONFIG_FORMAT);
-	log.error("initModelInfos:{}", initModelInfos);
-        log.error("initConfig:{}", initConfig);
-        log.error("initConfigFormat:{}", initConfigFormat);
+        String initModelInfos = getArgSingleValue(applicationArgs, INIT_MODEL_INFO, serviceConfig.getInitModelInfo());
+        String initConfig = getArgSingleValue(applicationArgs, INIT_CONFIG, serviceConfig.getInitConfig());
+        String initConfigFormat = getArgSingleValue(applicationArgs, INIT_CONFIG_FORMAT, serviceConfig.getInitConfigFormat());
         if (StringUtils.isNotEmpty(initModelInfos)) {
             try {
                 String content = FileUtils.readFile(initModelInfos, Charset.defaultCharset());
