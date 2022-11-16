@@ -53,11 +53,9 @@ def serve():
 async def _start_recommend_service(service_port, consul_enable, init_model_info="", init_config=""):
     recommend_base_cmd = "java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar " \
                          "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
-                         "--init_model_info={} --SERVICE_PORT={} --CONSUL_ENABLE={}".format(init_config,
-                                                                                            init_model_info,
-                                                                                            service_port,
-                                                                                            consul_enable)
-    subprocess.Popen(recommend_base_cmd, shell=True, stdout=subprocess.PIPE)
+                         "--init_model_info={}".format(init_config, init_model_info)
+    print("recommend_base_cmd:", recommend_base_cmd)
+    subprocess.Popen(recommend_base_cmd, shell=True, env={"SERVICE_PORT": service_port, "CONSUL_ENABLE": consul_enable})
 
 
 async def _start_model_serving(grpc_listen_port, init_load_path):
@@ -67,7 +65,7 @@ async def _start_model_serving(grpc_listen_port, init_load_path):
         os.makedirs(init_load_path)
     serving_cmd = "/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port {} -init_load_path {}".format(
         grpc_listen_port, init_load_path)
-    subprocess.Popen(serving_cmd, shell=True, stdout=subprocess.PIPE)
+    subprocess.Popen(serving_cmd, shell=True)
 
 
 def train():
