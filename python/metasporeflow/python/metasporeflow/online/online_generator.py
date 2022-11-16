@@ -560,3 +560,6 @@ class OnlineGenerator(object):
     def gen_server_config(self):
         online_configure = self.gen_service_config()
         return DumpToYaml(online_configure).encode("utf-8").decode("latin1")
+
+    def gen_server_config2(self, online_configure):
+        return DumpToYaml(online_configure).encode("utf-8").decode("latin1")

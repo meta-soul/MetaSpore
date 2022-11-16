@@ -143,4 +143,5 @@ spec:
     options:
       mongo_service: "172.31.47.204"
       mongo_port: 57017
+      uri: "mongodb://root:test_mongodb_123456@$${MONGO_HOST:172.31.47.204}:$${MONGO_PORT:57017}/jpa?authSource=admin"
 
