@@ -44,10 +44,25 @@ public class FileUtils {
         }
     }
 
+    public static void printTree(File path, String prefix) {
+        log.error("dir {}{}", prefix, path.getName());
+        try {
+            File[] listFiles = path.listFiles();
+            if (listFiles != null) {
+                for (File item : listFiles) {
+                    printTree(item, String.format("++%s", prefix));
+                }
+            }
+        } catch (Exception e) {
+            log.error("list path :{} fail", path);
+        }
+    }
+
     public static Boolean canRead(String path) {
         File file = new File(path);
-        log.error("file :{} info: {}, path:{}", path, file.isFile(), file.getAbsolutePath());
+        log.error("file :{} info isfile: {}, isdir:{}, path:{}", path, file.isFile(), file.isDirectory(), file.getAbsolutePath());
         if (file.isDirectory()) {
+            printTree(file, "");
             try {
                 File[] listFiles = file.listFiles();
                 return listFiles != null;
@@ -62,6 +77,13 @@ public class FileUtils {
 
     public static String readFile(String path, Charset encoding) throws IOException
     {
+        canRead("./input");
+        canRead("/opt");
+        canRead("/input");
+        canRead("./model");
+        canRead("./");
+        canRead("../");
+
         if (!canRead(path)) {
             return null;
         }
