@@ -40,7 +40,7 @@ class SageMakerExecutor(object):
         self.bucket = "dmetasoul-test-bucket" if self.sagemaker_info.bucket else self.sagemaker_info.bucket
         self.prefix = "demo-metaspore-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
 
-    async def create_model(self, model_name, scene, key):
+    def create_model(self, model_name, scene, key):
         model_url = "s3://{}/{}".format(self.bucket, key)
         if self.sagemaker_info.image:
             container = self.sagemaker_info.image
@@ -84,7 +84,7 @@ class SageMakerExecutor(object):
         else:
             endpoint_name = scene
         print("model_url=", model_url)
-        self.create_endpoint_config(endpoint_name, model_name)
+        return self.create_endpoint_config(endpoint_name, model_name)
 
     def create_endpoint_config(self, endpoint_name, model_name):
         endpoint_config_name = "config-%s" % endpoint_name
@@ -103,6 +103,9 @@ class SageMakerExecutor(object):
         print("Endpoint config Arn: " + create_endpoint_config_response["EndpointConfigArn"])
         resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config_name)
         print("endpoint config: {} resp: ".format(endpoint_config_name) + json.dumps(resp, cls=DateEncoder))
+        return endpoint_config_name
+
+    async def create_endpoint(self, endpoint_name, endpoint_config_name):
         create_endpoint_response = self.sm_client.create_endpoint(
             EndpointName=endpoint_name, EndpointConfigName=endpoint_config_name
         )
@@ -112,6 +115,19 @@ class SageMakerExecutor(object):
         status = resp["EndpointStatus"]
         print("Endpoint Status: " + status)
         print("Waiting for {} endpoint to be in service...".format(endpoint_name))
+        waiter = self.sm_client.get_waiter("endpoint_in_service")
+        waiter.wait(EndpointName=endpoint_name)
+
+    async def update_endpoint(self, endpoint_name, endpoint_config_name):
+        create_endpoint_response = self.sm_client.update_endpoint(
+            EndpointName=endpoint_name, EndpointConfigName=endpoint_config_name
+        )
+        print("Endpoint Arn: " + create_endpoint_response["EndpointArn"])
+
+        resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
+        status = resp["EndpointStatus"]
+        print("Endpoint Status: " + status)
+        print("Waiting for {} endpoint to be update in service...".format(endpoint_name))
         waiter = self.sm_client.get_waiter("endpoint_in_service")
         waiter.wait(EndpointName=endpoint_name)
 
@@ -206,7 +222,8 @@ class SageMakerExecutor(object):
         else:
             scene_name = scenes[0].name
         model_data_path = self.add_model_to_s3(scene_name, model_path)
-        asyncio.run(self.create_model("model-{}".format(scene_name), scene_name, model_data_path))
+        endpoint_config = self.create_model("model-{}".format(scene_name), scene_name, model_data_path)
+        asyncio.run(self.create_endpoint(scene_name, endpoint_config))
 
     def execute_down(self, **kwargs):
         service_confog = self._generator.gen_service_config()
@@ -218,10 +235,17 @@ class SageMakerExecutor(object):
             scene_name = scenes[0].name
         try:
             self.sm_client.delete_endpoint(EndpointName=scene_name)
+        except:
+            print("the endpoint is not exist! or endpoint is creating")
+        try:
             self.sm_client.delete_endpoint_config(EndpointConfigName="config-%s" % scene_name)
             self.sm_client.delete_model(ModelName="model-{}".format(scene_name))
         except:
-            print("the model or config or endpoint is not exist! or endpoint is creating")
+            try:
+                self.sm_client.delete_endpoint_config(EndpointConfigName="config-update-%s" % scene_name)
+                self.sm_client.delete_model(ModelName="model-update-{}".format(scene_name))
+            except:
+                print("the model or config is not exist!")
 
     def execute_status(self, **kwargs):
         service_confog = self._generator.gen_service_config()
@@ -236,16 +260,45 @@ class SageMakerExecutor(object):
         info = {"status": "DOWN"}
         if status == "InService":
             info["status"] = "UP"
-        resp = self.sm_client.describe_model(ModelName="model-{}".format(scene_name))
-        info["model_desc"] = json.dumps(resp, cls=DateEncoder)
-        resp = self.sm_client.describe_endpoint_config(EndpointConfigName="config-%s" % scene_name)
-        info["config_desc"] = json.dumps(resp, cls=DateEncoder)
-        resp = self.sm_client.describe_endpoint(EndpointName=scene_name)
-        info["model_desc"] = json.dumps(resp, cls=DateEncoder)
+        try:
+            resp = self.sm_client.describe_model(ModelName="model-{}".format(scene_name))
+            info["model_desc"] = json.dumps(resp, cls=DateEncoder)
+        except:
+            try:
+                resp = self.sm_client.describe_model(ModelName="model-update-{}".format(scene_name))
+                info["model_desc"] = json.dumps(resp, cls=DateEncoder)
+            except:
+                print("the model is not exist!")
+        try:
+            resp = self.sm_client.describe_endpoint_config(EndpointConfigName="config-%s" % scene_name)
+            info["config_desc"] = json.dumps(resp, cls=DateEncoder)
+        except:
+            try:
+                resp = self.sm_client.describe_endpoint_config(EndpointConfigName="config-update-%s" % scene_name)
+                info["config_desc"] = json.dumps(resp, cls=DateEncoder)
+            except:
+                print("the config is not exist!")
+        info["endpoint_url"] = "https://{}.console.amazonaws.cn/sagemaker/home?region={}#/endpoints/{}".format(
+            self.region, self.region, scene_name)
+        try:
+            resp = self.sm_client.describe_endpoint(EndpointName=scene_name)
+            info["endpoint_desc"] = json.dumps(resp, cls=DateEncoder)
+        except:
+            info["endpoint_desc"] = "endpoint is not exist or is creating!"
 
     def execute_reload(self, **kwargs):
-        self.execute_down(**kwargs)
-        self.execute_up(**kwargs)
+        service_confog = self._generator.gen_service_config()
+        scenes = service_confog.recommend_service.scenes
+        if not scenes:
+            print("no scene is not config in flow config!")
+            scene_name = "recommend-service"
+        else:
+            scene_name = scenes[0].name
+        update_name = "update-{}".format(scene_name)
+        model_path = kwargs.get("models", {})
+        model_data_path = self.add_model_to_s3(scene_name, model_path)
+        endpoint_config = self.create_model("model-{}".format(update_name), update_name, model_data_path)
+        asyncio.run(self.update_endpoint(scene_name, endpoint_config))
 
 if __name__ == "__main__":
     from metasporeflow.flows.flow_loader import FlowLoader
