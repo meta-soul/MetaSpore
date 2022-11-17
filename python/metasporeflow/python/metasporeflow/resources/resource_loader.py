@@ -170,7 +170,6 @@ class ResourceLoader(object):
         name = resource.metadata.name
         return Resource(name=name, path="text_{}_{}".format(name, resource.kind), kind=resource.__class__.__name__,
                         data=resource.spec)
-        return resource
 
     def load_into(self, path, resource_manager):
         import os

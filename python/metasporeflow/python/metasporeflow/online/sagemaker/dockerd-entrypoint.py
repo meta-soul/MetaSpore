@@ -6,19 +6,13 @@ import sys
 from subprocess import CalledProcessError
 import asyncio
 
-prefix = "/opt/ml/"
+prefix = "/opt/ml/model/"
 config_name = "recommend-config.yaml"
 model_path = os.path.join(prefix, "model")
 model_info_file = os.path.join(prefix, "model-infos.json")
 config_path = os.path.join(prefix, config_name)
 
 def process_model_data():
-    print("/opt/ml/:", os.path.exists(prefix))
-    if os.path.exists(prefix):
-        print("list:", os.listdir(prefix))
-    else:
-        print("list opt:", os.listdir("/opt"))
-        print("list root:", os.listdir("/root"))
     if not os.path.exists(config_path) and not os.path.isfile(config_path):
         print("no model config file in data!", config_path)
         return "", ""
@@ -58,11 +52,6 @@ async def _start_recommend_service(service_port, consul_enable, init_model_info=
     subprocess.Popen(recommend_base_cmd, shell=True, env={
         "SERVICE_PORT": str(service_port),
         "CONSUL_ENABLE": str(consul_enable),
-        "init_model_info": init_model_info,
-        "init_config": init_config,
-        "init_config_format": "yaml",
-        "MONGO_HOST": os.getenv("MONGO_HOST", "172.31.47.204"),
-        "MONGO_PORT": os.getenv("MONGO_PORT", "57017"),
     })
 
 

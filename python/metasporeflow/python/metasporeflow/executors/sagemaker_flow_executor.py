@@ -69,4 +69,8 @@ class SageMakerFlowExecutor(FlowExecutor):
     @staticmethod
     async def execute_update(resource):
         print(resource)
-        return SageMakerExecutor.execute_update(resource)
+        from metasporeflow.resources.resource_manager import ResourceManager
+        resource_manager = ResourceManager()
+        resource_manager.add_resource("online_local_flow", "update_content", resource)
+        online_executor = SageMakerExecutor(resource_manager)
+        return online_executor.execute_update(resource)
