@@ -16,8 +16,7 @@
 
 import subprocess
 from .scheduler import Scheduler
-# TODO: generate sagemaker entrypoint
-#from .k8s_job_config_generator import K8sJobConfigGenerator
+from .sage_maker_entrypoint_generator import SageMakerEntrypointGenerator
 from ..utils.file_util import FileUtil
 
 class OfflineSageMakerScheduler(Scheduler):
@@ -28,6 +27,10 @@ class OfflineSageMakerScheduler(Scheduler):
         # TODO: cf: use cronjob instead of batch job
         #self._create_offline_cronjob()
         #self._run_offline_batch_job_once()
+
+        generator = SageMakerEntrypointGenerator(self._dag_tasks)
+        print(generator.generate_entrypoint())
+
         print('sagemaker offline flow published')
 
     def destroy(self):
