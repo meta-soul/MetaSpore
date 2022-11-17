@@ -43,6 +43,7 @@ class SageMakerExecutor(object):
         self.now_str = datetime.datetime.strftime(self.now_time, "%Y-%m-%d-%H-%M-%S")
         self._online_resource = resources.find_by_name("online_local_flow")
         self._generator = OnlineGenerator(resource=self._online_resource)
+        self.server_config = self._generator.gen_server_config()
         self.configure = self._online_resource.data
         self.sagemaker_info = dictToObj(self.configure.sagemaker_info)
         self.region = "cn-northwest-1" if self.sagemaker_info.region else self.sagemaker_info.region
@@ -116,7 +117,7 @@ class SageMakerExecutor(object):
         print("endpoint config: {} resp: ".format(endpoint_config_name) + json.dumps(resp, cls=DateEncoder))
         return endpoint_config_name
 
-    async def create_endpoint(self, endpoint_name, endpoint_config_name):
+    def create_endpoint(self, endpoint_name, endpoint_config_name):
         create_endpoint_response = self.sm_client.create_endpoint(
             EndpointName=endpoint_name, EndpointConfigName=endpoint_config_name
         )
@@ -129,7 +130,7 @@ class SageMakerExecutor(object):
         waiter = self.sm_client.get_waiter("endpoint_in_service")
         waiter.wait(EndpointName=endpoint_name)
 
-    async def update_endpoint(self, endpoint_name, endpoint_config_name):
+    def update_endpoint(self, endpoint_name, endpoint_config_name):
         create_endpoint_response = self.sm_client.update_endpoint(
             EndpointName=endpoint_name, EndpointConfigName=endpoint_config_name
         )
@@ -140,6 +141,7 @@ class SageMakerExecutor(object):
         print("Endpoint Status: " + status)
         print("Waiting for {} endpoint to be update in service...".format(endpoint_name))
         waiter = self.sm_client.get_waiter("endpoint_in_service")
+        print("waiter config:", waiter.config)
         waiter.wait(EndpointName=endpoint_name)
 
     def invoke_endpoint(self, endpoint_name, request):
@@ -171,7 +173,7 @@ class SageMakerExecutor(object):
     def process_model_info(self, scene, model_paths):
         config_file = "recommend-config.yaml"
         with open(config_file, "w") as file:
-            file.write(self._generator.gen_server_config())
+            file.write(self.server_config)
         model_info_file = "model-infos.json"
         model_infos = list()
         for model_name, model_prefix in model_paths.items():
@@ -217,7 +219,7 @@ class SageMakerExecutor(object):
         scene_name = self.get_scene_name()
         model_data_path = self.add_model_to_s3(scene_name, model_path)
         endpoint_config = self.create_model(scene_name, model_data_path)
-        asyncio.run(self.create_endpoint(scene_name, endpoint_config))
+        self.create_endpoint(scene_name, endpoint_config)
 
     def execute_down(self, **kwargs):
         scene_name = self.get_scene_name()
@@ -253,7 +255,7 @@ class SageMakerExecutor(object):
             info["endpoint_url"] = "https://{}.console.amazonaws.cn/sagemaker/home?region={}#/endpoints/{}".format(
                 self.region, self.region, scene_name)
             info["endpoint_status"] = resp["EndpointStatus"]
-            if info["endpoint_status"] == "InService":
+            if info["endpoint_status"] == "InService" or info["endpoint_status"] == 'Updating':
                 info["status"] = "UP"
         except:
             info["endpoint_status"] = "NOT_EXIST"
@@ -293,43 +295,62 @@ class SageMakerExecutor(object):
 
     def execute_update(self):
         scene_name = self.get_scene_name()
-        try:
-            resp = self.sm_client.describe_endpoint(EndpointName=scene_name)
-            if resp["EndpointStatus"] != "InService":
-                return False, "endpoint: {} is not up!".format(scene_name)
-            endpoint_config = resp["EndpointConfigName"]
-            config_resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config)
-            products = config_resp['ProductionVariants']
-            if not products:
-                return False, "endpoint: {} model info describe fail!".format(scene_name)
-            model_name = products[0].get("ModelName")
-            if not model_name:
-                return False, "endpoint: {} get model_name is empty fail!".format(scene_name)
-            model_resp = self.sm_client.describe_model(ModelName=model_name)
-            model_data_url = model_resp.get('PrimaryContainer', {}).get("ModelDataUrl")
+        resp = self.sm_client.describe_endpoint(EndpointName=scene_name)
+        if resp["EndpointStatus"] != "InService":
+            return False, "endpoint: {} is not up!".format(scene_name)
+        endpoint_config = resp["EndpointConfigName"]
+        config_resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config)
+        products = config_resp['ProductionVariants']
+        if not products:
+            return False, "endpoint: {} model info describe fail!".format(scene_name)
+        model_name = products[0].get("ModelName")
+        if not model_name:
+            return False, "endpoint: {} get model_name is empty fail!".format(scene_name)
+        model_resp = self.sm_client.describe_model(ModelName=model_name)
+        print("model_resp:", model_resp)
+        model_data_url = model_resp.get('PrimaryContainer', {}).get("ModelDataUrl")
+        if not model_data_url:
+            if not model_resp.get('Containers', []):
+                return False, "endpoint: {} get model_data_url is empty no Containers fail!".format(scene_name)
+            model_data_url = model_resp.get('Containers', [])[0].get("ModelDataUrl")
             if not model_data_url:
                 return False, "endpoint: {} get model_data_url is empty fail!".format(scene_name)
-            data_file = SageMakerExecutor.download_file(self.region, model_data_url, "update_data")
-            generator = OnlineGenerator(resource=self._online_resource)
-            online_recommend_config = generator.gen_server_config()
-            config_file = "recommend-config.yaml"
-            with open(config_file, "w") as file:
-                file.write(online_recommend_config)
-            with tarfile.open(data_file, "a:gz") as tar:
-                tar.add(config_file)
-            new_data_url = os.path.join(self.prefix, os.path.basename(data_file))
-            s3 = boto3.resource('s3', self.region)
-            with open(data_file, "rb") as file_obj:
-                s3.Bucket(self.bucket).Object(new_data_url).upload_fileobj(file_obj)
-            endpoint_config = self.create_model(scene_name, new_data_url)
-            asyncio.run(self.update_endpoint(scene_name, endpoint_config))
-        except Exception as ex:
-            print("Exception:", ex)
-            return False, "endpoint: {} update except!".format(scene_name)
+        data_file = self.download_file(model_data_url, "update_data")
+        config_file = "recommend-config.yaml"
+        model_info_file = "model-infos.json"
+        with tarfile.open(data_file, "r:gz") as tar:
+            if os.path.exists(model_info_file):
+                os.remove(model_info_file)
+            if os.path.exists("model"):
+                import shutil
+                shutil.rmtree("model")
+            tar.extractall(".")
+        with open(config_file, "w") as file:
+            file.write(self.server_config)
+        with tarfile.open(data_file, "w:gz") as tar:
+            tar.add(config_file)
+            if os.path.exists("model"):
+                tar.add("model")
+            if os.path.exists(model_info_file):
+                tar.add(model_info_file)
+        new_data_url = os.path.join(self.prefix, os.path.basename(data_file))
+        print("new_data_url:", new_data_url)
+        s3 = boto3.resource('s3', self.region)
+        with open(data_file, "rb") as file_obj:
+            s3.Bucket(self.bucket).Object(new_data_url).upload_fileobj(file_obj)
+        endpoint_config = self.create_model(scene_name, new_data_url)
+        self.update_endpoint(scene_name, endpoint_config)
         return True, "update config successfully!"
 
     def get_scene_name(self):
-        return get_scene_name(self._generator)
+        service_config = self._generator.gen_service_config()
+        scenes = service_config.recommend_service.scenes
+        if not scenes:
+            print("no scene is not config in flow config!")
+            scene_name = "recommend-service"
+        else:
+            scene_name = scenes[0].name
+        return scene_name
 
     def download_file(self, file_path, local_path):
         if os.path.isfile(local_path):
@@ -364,11 +385,15 @@ if __name__ == "__main__":
     online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
+    print(executor.execute_update())
+    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    #executor.execute_reload(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    #print(executor.execute_status())
     #executor.execute_down()
     #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     #with open("recommend-config.yaml") as config_file:
     #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
     #    print(res)
-    res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    print(res)
+    #res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    #print(res)
     #executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
