@@ -159,19 +159,8 @@ class SageMakerExecutor(object):
 
     def process_model_info(self, scene, model_paths):
         config_file = "recommend-config.yaml"
-        config_object = self._generator.gen_service_config()
-        if self.sagemaker_info.options:
-            for source in config_object.feature_service.source:
-                if source.kind == "MongoDB":
-                    source.options["uri"] = self.sagemaker_info.options.get("uri",
-                                                                            "mongodb://root:test_mongodb_123456@{}:{}/jpa?authSource=admin".format(
-                                                                                self.sagemaker_info.options.get(
-                                                                                    "mongo_service", "172.31.47.204"),
-                                                                                self.sagemaker_info.options.get(
-                                                                                    "mongo_port", 57017)))
-        service_confog = self._generator.gen_server_config2(config_object)
         with open(config_file, "w") as file:
-            file.write(service_confog)
+            file.write(self._generator.gen_server_config())
         model_info_file = "model-infos.json"
         model_infos = list()
         for model_name, model_prefix in model_paths.items():
@@ -187,7 +176,7 @@ class SageMakerExecutor(object):
                 bucket = model_prefix[len("s3://"):idx]
                 model_prefix = model_prefix[idx + 1:]
             self.download_directory(bucket, model_prefix, model_path)
-            model_infos.append({"modelName": model_name, "version": "1", "dirPath": os.path.join("/opt/ml/", model_path), "host": "127.0.0.1", "port": 50000})
+            model_infos.append({"modelName": model_name, "version": "1", "dirPath": os.path.join("/opt/ml/model/", model_path), "host": "127.0.0.1", "port": 50000})
         with open(model_info_file, "w") as model_file:
             model_file.write(json.dumps(model_infos))
         tar_file = "{}.tar.gz".format(scene)
@@ -312,11 +301,11 @@ if __name__ == "__main__":
     online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
-    executor.execute_down()
-    executor.execute_up(models={"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    #executor.execute_down()
+    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     #with open("recommend-config.yaml") as config_file:
     #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
     #    print(res)
-    #res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    #print(res)
-    #executor.process_model_info("guess-you-like", {"amazonfashion-widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    print(res)
+    #executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})

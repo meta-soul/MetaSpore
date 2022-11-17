@@ -35,7 +35,7 @@ spec:
       serviceName: mongo
       collection: [ jpa ]
       options:
-        uri: "mongodb://root:test_mongodb_123456@$${MONGO_HOST:172.17.0.1}:$${MONGO_PORT:27018}/jpa?authSource=admin"
+        uri: "mongodb://root:test_mongodb_123456@$${MONGO_HOST:172.31.47.204}:$${MONGO_PORT:57017}/jpa?authSource=admin"
   source:
     user_key_name: user_id
     item_key_name: item_id
@@ -140,8 +140,4 @@ spec:
     version: v1.0.0
     vpcSecurityGroupIds: "sg-0591dc992da770187"
     vpcSubnets: ["subnet-07dc05d9e0981354d", "subnet-07814fe0d0a5e989c", "subnet-0999ff9ab32290a95"]
-    options:
-      mongo_service: "172.31.47.204"
-      mongo_port: 57017
-      uri: "mongodb://root:test_mongodb_123456@$${MONGO_HOST:172.31.47.204}:$${MONGO_PORT:57017}/jpa?authSource=admin"
 
