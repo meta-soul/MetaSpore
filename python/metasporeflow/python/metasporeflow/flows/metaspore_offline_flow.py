@@ -45,6 +45,10 @@ class OfflineK8sCronjobScheduler(OfflineScheduler):
     sharedConfigVolume: Optional[SharedConfigVolume] = None
 
 @frozen
+class OfflineSageMakerScheduler(OfflineScheduler):
+    pass
+
+@frozen
 class OfflineTask:
     scriptPath: str
     configPath: str

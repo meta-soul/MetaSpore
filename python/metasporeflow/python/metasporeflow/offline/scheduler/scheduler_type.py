@@ -20,3 +20,4 @@ from enum import Enum
 class SchedulerType(Enum):
     OfflineCrontabScheduler = "OfflineCrontabScheduler"
     OfflineK8sCronjobScheduler = "OfflineK8sCronjobScheduler"
+    OfflineSageMakerScheduler = "OfflineSageMakerScheduler"
