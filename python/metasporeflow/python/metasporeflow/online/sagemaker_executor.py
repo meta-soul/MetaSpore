@@ -244,7 +244,7 @@ class SageMakerExecutor(object):
         for item in models.get('Models', []):
             if item.get("ModelName"):
                 print("delete model:", item.get("ModelName"))
-                self.sm_client.delete_model(EndpointConfigName=item.get("ModelName"))
+                self.sm_client.delete_model(ModelName=item.get("ModelName"))
 
     def execute_status(self, **kwargs):
         scene_name = self.get_scene_name()
@@ -386,7 +386,7 @@ if __name__ == "__main__":
     executor = SageMakerExecutor(resources)
     #print(executor.execute_update())
     executor.execute_down()
-    executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     #executor.execute_reload(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     print(executor.execute_status())
     #executor.execute_down()
