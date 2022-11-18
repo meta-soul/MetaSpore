@@ -128,7 +128,8 @@ class SageMakerExecutor(object):
         print("Endpoint Status: " + status)
         print("Waiting for {} endpoint to be in service...".format(endpoint_name))
         waiter = self.sm_client.get_waiter("endpoint_in_service")
-        waiter.wait(EndpointName=endpoint_name)
+        waiter.wait(EndpointName=endpoint_name, WaiterConfig={"Delay": 1, "MaxAttempts": 20*60})
+        print("{} endpoint create successfully, is in service...".format(endpoint_name))
 
     def update_endpoint(self, endpoint_name, endpoint_config_name):
         create_endpoint_response = self.sm_client.update_endpoint(
@@ -141,8 +142,8 @@ class SageMakerExecutor(object):
         print("Endpoint Status: " + status)
         print("Waiting for {} endpoint to be update in service...".format(endpoint_name))
         waiter = self.sm_client.get_waiter("endpoint_in_service")
-        print("waiter config:", waiter.config)
-        waiter.wait(EndpointName=endpoint_name)
+        waiter.wait(EndpointName=endpoint_name, WaiterConfig={"Delay": 1, "MaxAttempts": 20*60})
+        print("{} endpoint update successfully is in service...".format(endpoint_name))
 
     def invoke_endpoint(self, endpoint_name, request):
         resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
@@ -227,25 +228,23 @@ class SageMakerExecutor(object):
             self.sm_client.delete_endpoint(EndpointName=scene_name)
         except:
             print("the endpoint is not exist! or endpoint is creating")
-        try:
-            configs = self.sm_client.list_endpoint_configs(
-                SortBy='CreationTime',
-                SortOrder='Ascending',
-                NameContains="{}-config-".format(scene_name)
-            )
-            for item in configs.get('EndpointConfigs', []):
-                if item.get("EndpointConfigName"):
-                    self.sm_client.delete_endpoint_config(EndpointConfigName=item.get("EndpointConfigName"))
-            models = self.sm_client.list_models(
-                SortBy='CreationTime',
-                SortOrder='Ascending',
-                NameContains="{}-model-".format(scene_name)
-            )
-            for item in models.get('Models', []):
-                if item.get("ModelName"):
-                    self.sm_client.delete_model(EndpointConfigName=item.get("ModelName"))
-        except:
-            print("the model or config is down fail!")
+        configs = self.sm_client.list_endpoint_configs(
+            SortBy='CreationTime',
+            SortOrder='Ascending',
+            NameContains="{}-config-".format(scene_name)
+        )
+        for item in configs.get('EndpointConfigs', []):
+            if item.get("EndpointConfigName"):
+                self.sm_client.delete_endpoint_config(EndpointConfigName=item.get("EndpointConfigName"))
+        models = self.sm_client.list_models(
+            SortBy='CreationTime',
+            SortOrder='Ascending',
+            NameContains="{}-model-".format(scene_name)
+        )
+        for item in models.get('Models', []):
+            if item.get("ModelName"):
+                print("delete model:", item.get("ModelName"))
+                self.sm_client.delete_model(EndpointConfigName=item.get("ModelName"))
 
     def execute_status(self, **kwargs):
         scene_name = self.get_scene_name()
@@ -385,15 +384,16 @@ if __name__ == "__main__":
     online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
-    print(executor.execute_update())
-    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    #print(executor.execute_update())
+    executor.execute_down()
+    executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     #executor.execute_reload(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    #print(executor.execute_status())
+    print(executor.execute_status())
     #executor.execute_down()
     #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     #with open("recommend-config.yaml") as config_file:
     #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
     #    print(res)
-    #res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    #print(res)
+    res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    print(res)
     #executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})

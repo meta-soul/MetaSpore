@@ -90,6 +90,10 @@ public class ItemMatcherTask extends AlgoTransformTask {
                         }
                         recallItem.add(ConvTools.parseString(map.get(itemField.getName())));
                         recallWeight.add(ConvTools.parseDouble(map.get(scoreField.getName())));
+			if (ConvTools.parseDouble(map.get(scoreField.getName())) == null) {
+			    log.info("scoreField field: {}, itemfield: {}, field: {}, struct:{}", scoreField.toString(), itemField.toString(), children.toString(), field.toString());
+			    log.info("scoreField has null: {}, value: {}, data: {}", scoreField.getName(), map.get(scoreField.getName()), data);
+			}
                     }
                     if (input.size() > 2) {
                         userProfile = input.get(2);
@@ -107,7 +111,12 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 }
                 for (int j = 0; j < recallItem.size(); ++j) {
                     String itemId = recallItem.get(j);
-                    Double itemScore = CommonUtils.get(recallWeight, j, 1.0) * userProfileWeight;
+                    log.info("itemScore recallWeight: {}, userProfileWeight: {}", recallWeight, userProfileWeight);
+                    Double weight = CommonUtils.get(recallWeight, j, 1.0);
+                    if (weight == null) {
+                        weight = 1.0;
+                    }
+                    Double itemScore = weight * userProfileWeight;
                     if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
                         itemToItemScore.put(itemId, itemScore);
                     }

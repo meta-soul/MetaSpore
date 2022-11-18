@@ -340,7 +340,7 @@ class OnlineGenerator(object):
             key_name = model_info.keyName
             value_name = model_info.valueName
             if "columns" not in model_info.source:
-                columns = [{key_name: "int"}, {value_name: {"list_struct": {"item_id": "str", "score": "double"}}}]
+                columns = [{key_name: "int"}, {value_name: {"list_struct": [{"item_id": "str"}, {"score": "double"}]}}]
             else:
                 columns = model_info.source.columns
             if not columns_has_key(columns, key_name):
@@ -404,7 +404,7 @@ class OnlineGenerator(object):
             key_name = model_info.keyName
             value_name = model_info.valueName
             if "columns" not in model_info.source:
-                columns = [{key_name: "str"}, {value_name: {"list_struct": {"_1": "str", "_2": "double"}}}]
+                columns = [{key_name: "str"}, {value_name: {"list_struct": [{"_1": "str"}, {"_2": "double"}]}}]
             else:
                 columns = model_info.source.columns
             if not columns_has_key(columns, key_name):
