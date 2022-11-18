@@ -34,4 +34,5 @@ class SageMakerEntrypointGenerator(object):
         for task in self._dag_tasks:
             string += '\n%s' % task.execute
         string += '\n\necho "MetaSpore Offline Flow done"'
+        string += '\n'
         return string

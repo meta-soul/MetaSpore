@@ -23,10 +23,11 @@ from metasporeflow.offline.task.task import Task
 
 
 class Scheduler(ABC):
-    def __init__(self, scheduler_conf, tasks: Dict[str, Task]):
+    def __init__(self, resources, scheduler_conf, tasks: Dict[str, Task]):
         self.name = scheduler_conf.name
         self.type = scheduler_conf.kind
         self.cronExpr = scheduler_conf.data.cronExpr
+        self._resources = resources
         self._scheduler_conf = scheduler_conf
         self._dag = self._get_dag(scheduler_conf.data.dag)
         self._dag_tasks: List[Task] = self._get_dag_tasks(tasks)

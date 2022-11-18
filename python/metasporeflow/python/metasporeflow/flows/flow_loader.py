@@ -28,6 +28,7 @@ class FlowLoader(object):
     def _get_resource_types(cls):
         from metasporeflow.online.online_flow import OnlineFlow
         from .metaspore_flow import MetaSporeFlow
+        from .sage_maker_config import SageMakerConfig
         from metasporeflow.flows.metaspore_offline_flow import \
             OfflineScheduler, \
             OfflineCrontabScheduler, \
@@ -38,6 +39,7 @@ class FlowLoader(object):
             OfflineLocalFlow
         resource_types = (
             MetaSporeFlow,
+            SageMakerConfig,
             OnlineFlow,
             OfflineScheduler,
             OfflineCrontabScheduler,

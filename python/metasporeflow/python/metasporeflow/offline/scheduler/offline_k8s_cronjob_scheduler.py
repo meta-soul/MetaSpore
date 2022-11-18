@@ -20,8 +20,8 @@ from .k8s_job_config_generator import K8sJobConfigGenerator
 from ..utils.file_util import FileUtil
 
 class OfflineK8sCronjobScheduler(Scheduler):
-    def __init__(self, scheduler_conf, tasks):
-        super().__init__(scheduler_conf, tasks)
+    def __init__(self, resources, scheduler_conf, tasks):
+        super().__init__(resources, scheduler_conf, tasks)
 
     def publish(self):
         # TODO: cf: use cronjob instead of batch job

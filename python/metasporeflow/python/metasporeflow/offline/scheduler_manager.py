@@ -56,13 +56,13 @@ class SchedulerManager:
             scheduler = None
             if scheduler_type == SchedulerType.OfflineCrontabScheduler.value:
                 scheduler = OfflineCrontabScheduler(
-                    scheduler_conf, self._tasks, self._offline_local_container_name)
+                    self._resources, scheduler_conf, self._tasks, self._offline_local_container_name)
             elif scheduler_type == SchedulerType.OfflineK8sCronjobScheduler.value:
                 scheduler = OfflineK8sCronjobScheduler(
-                    scheduler_conf, self._tasks)
+                    self._resources, scheduler_conf, self._tasks)
             elif scheduler_type == SchedulerType.OfflineSageMakerScheduler.value:
                 scheduler = OfflineSageMakerScheduler(
-                    scheduler_conf, self._tasks)
+                    self._resources, scheduler_conf, self._tasks)
             else:
                 message = f"Invalid scheduler type: {scheduler_type}"
                 raise Exception(message)

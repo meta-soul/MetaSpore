@@ -46,7 +46,7 @@ class OfflineK8sCronjobScheduler(OfflineScheduler):
 
 @frozen
 class OfflineSageMakerScheduler(OfflineScheduler):
-    pass
+    configDir: Optional[str] = None
 
 @frozen
 class OfflineTask:
