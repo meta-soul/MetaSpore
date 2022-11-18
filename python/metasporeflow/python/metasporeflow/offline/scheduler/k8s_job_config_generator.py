@@ -102,7 +102,6 @@ class CronJob:
 
 class K8sJobConfigGenerator(object):
     def __init__(self, scheduler_conf, job_command):
-        from ...flows.metaspore_offline_flow import OfflineK8sCronjobScheduler
         self._scheduler_conf = scheduler_conf
         self._k8s_namespace = self._scheduler_conf.data.namespace
         self._service_account_name = self._scheduler_conf.data.serviceAccountName

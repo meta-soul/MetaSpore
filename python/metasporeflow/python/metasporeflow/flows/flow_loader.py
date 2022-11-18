@@ -32,6 +32,7 @@ class FlowLoader(object):
             OfflineScheduler, \
             OfflineCrontabScheduler, \
             OfflineK8sCronjobScheduler, \
+            OfflineSageMakerScheduler, \
             OfflineTask, \
             OfflinePythonTask, \
             OfflineLocalFlow
@@ -41,6 +42,7 @@ class FlowLoader(object):
             OfflineScheduler,
             OfflineCrontabScheduler,
             OfflineK8sCronjobScheduler,
+            OfflineSageMakerScheduler,
             OfflineTask,
             OfflinePythonTask,
             OfflineLocalFlow,
