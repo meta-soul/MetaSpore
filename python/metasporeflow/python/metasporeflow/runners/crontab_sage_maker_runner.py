@@ -171,6 +171,17 @@ class CrontabSageMakerRunner(object):
         print(job_name)
 
     def run(self):
+        import os
+        #import io
+        #import sys
+        #import datetime
+        #tag = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        #stdout_path = os.path.expanduser('~/stdout%s.txt' % tag)
+        #stderr_path = os.path.expanduser('~/stderr%s.txt' % tag)
+        #sys.stdout = io.open(stdout_path, 'a')
+        #sys.stderr = io.open(stderr_path, 'a')
+        os.environ['AWS_DEFAULT_REGION'] = 'cn-northwest-1'
+
         self._parse_args()
         self._load_sage_maker_config()
         self._create_training_job()
