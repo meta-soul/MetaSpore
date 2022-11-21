@@ -4,11 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metasporecli"
-<<<<<<< HEAD
-version = "0.1.3"
-=======
 version = "0.2.0"
->>>>>>> fa9fe8cdc5ca8f57be767534d642e66a354de0c7
 authors = [
   { name="DMetaSoul", email="opensource@dmetasoul.com" },
 ]
