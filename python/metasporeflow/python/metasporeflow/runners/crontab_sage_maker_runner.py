@@ -17,6 +17,7 @@
 class CrontabSageMakerRunner(object):
     def __init__(self):
         self._scene_name = None
+        self._resources = None
         self._sage_maker_config = None
 
     def _parse_args(self):
@@ -35,9 +36,9 @@ class CrontabSageMakerRunner(object):
         return scene_dir
 
     @property
-    def _sage_maker_config_path(self):
+    def _flow_config_path(self):
         import os
-        config_path = os.path.join(self._scene_dir, 'sage_maker_config.yml')
+        config_path = os.path.join(self._scene_dir, 'metaspore-flow.dat')
         return config_path
 
     @property
@@ -54,19 +55,17 @@ class CrontabSageMakerRunner(object):
         config_dir = os.path.join(flow_dir, 'scene', self._scene_name)
         return config_dir
 
-    def _load_sage_maker_config(self):
+    def _load_flow_config(self):
         import os
-        from metasporeflow.resources.resource_loader import ResourceLoader
+        from metasporeflow.resources.resource_manager import ResourceManager
         from metasporeflow.flows.sage_maker_config import SageMakerConfig
-        config_path = self._sage_maker_config_path
+        config_path = self._flow_config_path
         if not os.path.isfile(config_path):
-            message = 'SageMaker config of scene %r not found' % self._scene_name
+            message = 'MetaSpore flow config of scene %r not found' % self._scene_name
             print(message)
             raise SystemExit(1)
-        resource_loader = ResourceLoader('metaspore', (SageMakerConfig,))
-        resources = resource_loader.load(config_path)
-        resource = resources.find_by_type(SageMakerConfig)
-        self._sage_maker_config = resource.data
+        self._resources = ResourceManager.load(config_path)
+        self._sage_maker_config = self._resources.find_by_type(SageMakerConfig).data
 
     def _get_fresh_training_job_name(self):
         import io
@@ -214,7 +213,7 @@ class CrontabSageMakerRunner(object):
         os.environ['AWS_DEFAULT_REGION'] = 'cn-northwest-1'
 
         self._parse_args()
-        self._load_sage_maker_config()
+        self._load_flow_config()
         self._create_training_job()
 
 def main():

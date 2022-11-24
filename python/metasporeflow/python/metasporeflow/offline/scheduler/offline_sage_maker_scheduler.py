@@ -25,13 +25,13 @@ class OfflineSageMakerScheduler(Scheduler):
 
     def publish(self):
         self._upload_config()
-        self._save_sage_maker_config()
+        self._save_flow_config()
         self._install_crontab()
         # TODO: cf: run the first job
 
     def destroy(self):
         self._uninstall_crontab()
-        self._clear_sage_maker_config()
+        self._clear_flow_config()
         self._clear_config()
 
     @property
@@ -91,12 +91,12 @@ class OfflineSageMakerScheduler(Scheduler):
         return config_dir
 
     @property
-    def _sage_maker_config_path(self):
+    def _flow_config_path(self):
         import os
         home_dir = os.path.expanduser('~')
         flow_dir = os.path.join(home_dir, '.metaspore', 'flow')
         scene_dir = os.path.join(flow_dir, 'scene', self._scene_name)
-        config_path = os.path.join(scene_dir, 'sage_maker_config.yml')
+        config_path = os.path.join(scene_dir, 'metaspore-flow.dat')
         return config_path
 
     def _ensure_trailing_slash(self, path):
@@ -130,37 +130,21 @@ class OfflineSageMakerScheduler(Scheduler):
         args = ['aws', 's3', 'rm', '--recursive', s3_path]
         subprocess.check_call(args)
 
-    def _get_sage_maker_config_yaml(self):
-        import cattrs
-        import yaml
-        from metasporeflow.flows.sage_maker_config import SageMakerConfig
-        sage_maker_resource = self._resources.find_by_type(SageMakerConfig)
-        sage_maker_config = dict(
-            apiVersion='metaspore/v1',
-            kind='SageMakerConfig',
-            metadata=dict(name=sage_maker_resource.name),
-            spec=cattrs.unstructure(sage_maker_resource.data),
-        )
-        yaml_text = yaml.dump(sage_maker_config, sort_keys=False)
-        return yaml_text
-
-    def _save_sage_maker_config(self):
+    def _save_flow_config(self):
         import io
         import os
-        config_path = self._sage_maker_config_path
+        config_path = self._flow_config_path
         config_dir = os.path.dirname(config_path)
         if not os.path.isdir(config_dir):
             os.makedirs(config_dir)
-        config_yaml = self._get_sage_maker_config_yaml()
-        print('Save SageMaker config to %s ...' % config_path)
-        with io.open(config_path, 'w') as fout:
-            print(config_yaml, file=fout, end='')
+        print('Save MetaSpore flow config to %s ...' % config_path)
+        self._resources.save(config_path)
 
-    def _clear_sage_maker_config(self):
+    def _clear_flow_config(self):
         import os
-        config_path = self._sage_maker_config_path
+        config_path = self._flow_config_path
         config_dir = os.path.dirname(config_path)
-        print('Clear SageMaker config %s ...' % config_path)
+        print('Clear MetaSpore flow config %s ...' % config_path)
         if os.path.isfile(config_path):
             os.remove(config_path)
         if os.path.isdir(config_dir) and not os.listdir(config_dir):
