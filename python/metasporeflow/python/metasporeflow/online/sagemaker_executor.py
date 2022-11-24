@@ -50,6 +50,33 @@ class SageMakerExecutor(object):
         role = resource.data.roleArn
         return role
 
+    def _get_endpoint_status(self, endpoint_name):
+        import boto3
+        import botocore
+        client = boto3.client('sagemaker')
+        try:
+            response = client.describe_endpoint(EndpointName=endpoint_name)
+        except botocore.exceptions.ClientError as ex:
+            message = "training job %r not found" % job_name
+            raise RuntimeError(message) from ex
+        status = response['EndpointStatus']
+        return status
+
+    def _wait_endpoint(self, endpoint_name):
+        import time
+        counter = 0
+        while True:
+            status = self._get_endpoint_status(endpoint_name)
+            if counter > 7200:
+                message = 'fail to wait endpoint %r' % endpoint_name
+                raise RuntimeError(message)
+            if counter % 60 == 0:
+                print('Wait endpoint %r ... [%s]' % (endpoint_name, status))
+            if status in ('InService', 'Failed'):
+                return status
+            time.sleep(1)
+            counter += 1
+
     def create_model(self, scene, key):
         model_name = "{}-model-{}".format(scene, self.now_str)
         model_url = "s3://{}/{}".format(self.bucket, key)
@@ -122,8 +149,8 @@ class SageMakerExecutor(object):
         status = resp["EndpointStatus"]
         print("Endpoint Status: " + status)
         print("Waiting for {} endpoint to be in service...".format(endpoint_name))
-        waiter = self.sm_client.get_waiter("endpoint_in_service")
-        waiter.wait(EndpointName=endpoint_name, WaiterConfig={"Delay": 1, "MaxAttempts": 20*60})
+        status = self._wait_endpoint(endpoint_name)
+        print("Endpoint Status: " + status)
         print("{} endpoint create successfully, is in service...".format(endpoint_name))
 
     def update_endpoint(self, endpoint_name, endpoint_config_name):
@@ -136,8 +163,8 @@ class SageMakerExecutor(object):
         status = resp["EndpointStatus"]
         print("Endpoint Status: " + status)
         print("Waiting for {} endpoint to be update in service...".format(endpoint_name))
-        waiter = self.sm_client.get_waiter("endpoint_in_service")
-        waiter.wait(EndpointName=endpoint_name, WaiterConfig={"Delay": 1, "MaxAttempts": 20*60})
+        status = self._wait_endpoint(endpoint_name)
+        print("Endpoint Status: " + status)
         print("{} endpoint update successfully is in service...".format(endpoint_name))
 
     def invoke_endpoint(self, endpoint_name, request):
