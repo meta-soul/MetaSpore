@@ -187,6 +187,14 @@ class CrontabSageMakerRunner(object):
             time.sleep(1)
             counter += 1
 
+    def _update_online_service(self):
+        from metasporeflow.online.sagemaker_executor import SageMakerExecutor
+        executor = SageMakerExecutor(self._resources)
+        models = dict(
+            amazonfashion_widedeep='s3://dmetasoul-test-bucket/demo/demo_metaspore_flow/ecommerce/output/model/ctr/nn/widedeep/model_export/amazonfashion_widedeep/'
+        )
+        executor.execute_reload(models=models)
+
     def _create_training_job(self):
         import boto3
         job_name, job_config = self._create_training_job_config()
@@ -198,7 +206,7 @@ class CrontabSageMakerRunner(object):
         status = self._wait_training_job(job_name)
         print('status: %s' % status)
         if status == 'Completed':
-            pass
+            self._update_online_service()
 
     def run(self):
         import os

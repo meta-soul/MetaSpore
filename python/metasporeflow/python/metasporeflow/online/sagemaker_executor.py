@@ -9,7 +9,6 @@ import time
 import os
 import os
 import tarfile
-import asyncio
 
 from metasporeflow.online.online_generator import OnlineGenerator
 
@@ -52,7 +51,7 @@ class SageMakerExecutor(object):
 
     def _endpoint_exists(self, endpoint_name):
         try:
-            _response = client.describe_endpoint(EndpointName=endpoint_name)
+            _response = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
             return True
         except botocore.exceptions.ClientError:
             return False
@@ -325,7 +324,7 @@ class SageMakerExecutor(object):
         model_path = kwargs.get("models", {})
         model_data_path = self.add_model_to_s3(scene_name, model_path)
         endpoint_config = self.create_model(scene_name, model_data_path)
-        asyncio.run(self.create_or_update_endpoint(scene_name, endpoint_config))
+        self.create_or_update_endpoint(scene_name, endpoint_config)
 
     def execute_update(self):
         scene_name = self.get_scene_name()
@@ -407,7 +406,6 @@ class SageMakerExecutor(object):
 if __name__ == "__main__":
     from metasporeflow.flows.flow_loader import FlowLoader
     from metasporeflow.online.online_flow import OnlineFlow
-    import asyncio
 
     flow_loader = FlowLoader()
     #flow_loader._file_name = 'metaspore-flow.yml'
