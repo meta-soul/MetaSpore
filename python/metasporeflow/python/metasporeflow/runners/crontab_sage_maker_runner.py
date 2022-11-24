@@ -161,6 +161,33 @@ class CrontabSageMakerRunner(object):
         )
         return job_name, job_config
 
+    def _get_training_job_status(self, job_name):
+        import boto3
+        import botocore
+        client = boto3.client('sagemaker')
+        try:
+            response = client.describe_training_job(TrainingJobName=job_name)
+        except botocore.exceptions.ClientError as ex:
+            message = "training job %r not found" % job_name
+            raise RuntimeError(message) from ex
+        status = response['TrainingJobStatus']
+        return status
+
+    def _wait_training_job(self, job_name):
+        import time
+        counter = 0
+        while True:
+            status = self._get_training_job_status(job_name)
+            if counter > 7200:
+                message = 'fail to wait training job %r' % job_name
+                raise RuntimeError(message)
+            if counter % 60 == 0:
+                print('Wait training job %r ... [%s]' % (job_name, status))
+            if status in ('Completed', 'Failed', 'Stopped'):
+                return status
+            time.sleep(1)
+            counter += 1
+
     def _create_training_job(self):
         import boto3
         job_name, job_config = self._create_training_job_config()
@@ -169,6 +196,8 @@ class CrontabSageMakerRunner(object):
         self._record_training_job_name(job_name)
         print('response: %s' % response)
         print(job_name)
+        status = self._wait_training_job(job_name)
+        print('status: %s' % status)
 
     def run(self):
         import os
