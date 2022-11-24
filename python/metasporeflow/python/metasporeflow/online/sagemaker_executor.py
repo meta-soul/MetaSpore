@@ -50,6 +50,13 @@ class SageMakerExecutor(object):
         role = resource.data.roleArn
         return role
 
+    def _endpoint_exists(self, endpoint_name):
+        try:
+            _response = client.describe_endpoint(EndpointName=endpoint_name)
+            return True
+        except botocore.exceptions.ClientError:
+            return False
+
     def _get_endpoint_status(self, endpoint_name):
         import boto3
         import botocore
@@ -167,6 +174,12 @@ class SageMakerExecutor(object):
         print("Endpoint Status: " + status)
         print("{} endpoint update successfully is in service...".format(endpoint_name))
 
+    def create_or_update_endpoint(self, endpoint_name, endpoint_config_name):
+        if self._endpoint_exists(endpoint_name):
+            self.update_endpoint(endpoint_name, endpoint_config_name)
+        else:
+            self.create_endpoint(endpoint_name, endpoint_config_name)
+
     def invoke_endpoint(self, endpoint_name, request):
         resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
         status = resp["EndpointStatus"]
@@ -242,7 +255,7 @@ class SageMakerExecutor(object):
         scene_name = self.get_scene_name()
         model_data_path = self.add_model_to_s3(scene_name, model_path)
         endpoint_config = self.create_model(scene_name, model_data_path)
-        self.create_endpoint(scene_name, endpoint_config)
+        self.create_or_update_endpoint(scene_name, endpoint_config)
 
     def execute_down(self, **kwargs):
         scene_name = self.get_scene_name()
@@ -312,7 +325,7 @@ class SageMakerExecutor(object):
         model_path = kwargs.get("models", {})
         model_data_path = self.add_model_to_s3(scene_name, model_path)
         endpoint_config = self.create_model(scene_name, model_data_path)
-        asyncio.run(self.update_endpoint(scene_name, endpoint_config))
+        asyncio.run(self.create_or_update_endpoint(scene_name, endpoint_config))
 
     def execute_update(self):
         scene_name = self.get_scene_name()
@@ -360,7 +373,7 @@ class SageMakerExecutor(object):
         with open(data_file, "rb") as file_obj:
             s3.Bucket(self.bucket).Object(new_data_url).upload_fileobj(file_obj)
         endpoint_config = self.create_model(scene_name, new_data_url)
-        self.update_endpoint(scene_name, endpoint_config)
+        self.create_or_update_endpoint(scene_name, endpoint_config)
         return True, "update config successfully!"
 
     def get_scene_name(self):

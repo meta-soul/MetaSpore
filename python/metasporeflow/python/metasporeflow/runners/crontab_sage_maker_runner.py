@@ -198,6 +198,8 @@ class CrontabSageMakerRunner(object):
         print(job_name)
         status = self._wait_training_job(job_name)
         print('status: %s' % status)
+        if status == 'Completed':
+            pass
 
     def run(self):
         import os
