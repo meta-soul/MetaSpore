@@ -3,7 +3,6 @@ import json
 
 from metasporeflow.online.common import dictToObj
 
-from sagemaker import get_execution_role, Session, image_uris
 import boto3
 import datetime
 import time
@@ -26,34 +25,30 @@ class DateEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
 
 
-def get_scene_name(generator):
-    service_config = generator.gen_service_config()
-    scenes = service_config.recommend_service.scenes
-    if not scenes:
-        print("no scene is not config in flow config!")
-        scene_name = "recommend-service"
-    else:
-        scene_name = scenes[0].name
-    return scene_name
-
-
 class SageMakerExecutor(object):
     def __init__(self, resources):
+        from metasporeflow.online.online_flow import OnlineFlow
         self.now_time = datetime.datetime.now()
         self.now_str = datetime.datetime.strftime(self.now_time, "%Y-%m-%d-%H-%M-%S")
-        self._online_resource = resources.find_by_name("online_local_flow")
+        self._resources = resources
+        self._online_resource = resources.find_by_type(OnlineFlow)
         self._generator = OnlineGenerator(resource=self._online_resource)
         self.server_config = self._generator.gen_server_config()
         self.configure = self._online_resource.data
         self.sagemaker_info = dictToObj(self.configure.sagemaker_info)
         self.region = "cn-northwest-1" if self.sagemaker_info.region else self.sagemaker_info.region
-        self.sagemaker_session = Session(boto3.session.Session(region_name=self.region))
-        self.role = get_execution_role(sagemaker_session=self.sagemaker_session)
+        self.role = self._get_iam_role()
         self.sm_client = boto3.client("sagemaker", self.region)
         self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
         self.account_id = boto3.client("sts", self.region).get_caller_identity()["Account"]
         self.bucket = "dmetasoul-test-bucket" if self.sagemaker_info.bucket else self.sagemaker_info.bucket
         self.prefix = "demo-metaspore-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
+
+    def _get_iam_role(self):
+        from metasporeflow.flows.sage_maker_config import SageMakerConfig
+        resource = self._resources.find_by_type(SageMakerConfig)
+        role = resource.data.roleArn
+        return role
 
     def create_model(self, scene, key):
         model_name = "{}-model-{}".format(scene, self.now_str)
@@ -231,7 +226,7 @@ class SageMakerExecutor(object):
         configs = self.sm_client.list_endpoint_configs(
             SortBy='CreationTime',
             SortOrder='Ascending',
-            NameContains="{}-config-".format(scene_name)
+            NameContains="{}-config".format(scene_name)
         )
         for item in configs.get('EndpointConfigs', []):
             if item.get("EndpointConfigName"):
@@ -342,13 +337,10 @@ class SageMakerExecutor(object):
         return True, "update config successfully!"
 
     def get_scene_name(self):
-        service_config = self._generator.gen_service_config()
-        scenes = service_config.recommend_service.scenes
-        if not scenes:
-            print("no scene is not config in flow config!")
-            scene_name = "recommend-service"
-        else:
-            scene_name = scenes[0].name
+        import re
+        from metasporeflow.flows.metaspore_flow import MetaSporeFlow
+        flow_resource = self._resources.find_by_type(MetaSporeFlow)
+        scene_name = re.sub('[^A-Za-z0-9]', '-', flow_resource.name)
         return scene_name
 
     def download_file(self, file_path, local_path):
@@ -378,10 +370,9 @@ if __name__ == "__main__":
     import asyncio
 
     flow_loader = FlowLoader()
-    flow_loader._file_name = 'test/metaspore-flow.yml'
+    #flow_loader._file_name = 'metaspore-flow.yml'
     resources = flow_loader.load()
-
-    online_flow = resources.find_by_type(OnlineFlow)
+    #online_flow = resources.find_by_type(OnlineFlow)
 
     executor = SageMakerExecutor(resources)
     #print(executor.execute_update())
@@ -390,10 +381,13 @@ if __name__ == "__main__":
     #executor.execute_reload(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     print(executor.execute_status())
     #executor.execute_down()
-    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+
+    executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     #with open("recommend-config.yaml") as config_file:
     #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
     #    print(res)
-    res = executor.invoke_endpoint("guess-you-like", {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+
+    endpoint_name = executor.get_scene_name()
+    res = executor.invoke_endpoint(endpoint_name, {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
     print(res)
     #executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
