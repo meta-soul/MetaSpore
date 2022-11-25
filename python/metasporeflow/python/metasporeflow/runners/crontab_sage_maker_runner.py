@@ -19,6 +19,7 @@ class CrontabSageMakerRunner(object):
         self._scene_name = None
         self._resources = None
         self._sage_maker_config = None
+        self._training_job_name = None
 
     def _parse_args(self):
         import argparse
@@ -26,6 +27,8 @@ class CrontabSageMakerRunner(object):
         parser.add_argument('-s', '--scene', type=str, required=True, help='scene name')
         args = parser.parse_args()
         self._scene_name = args.scene
+        self._load_flow_config()
+        self._set_training_job_name()
 
     @property
     def _scene_dir(self):
@@ -61,15 +64,14 @@ class CrontabSageMakerRunner(object):
         self._resources = ResourceManager.load(config_path)
         self._sage_maker_config = self._resources.find_by_type(SageMakerConfig).data
 
-    def _get_fresh_training_job_name(self):
+    def _set_training_job_name(self):
         import re
         scene_name = re.sub('[^A-Za-z0-9]', '-', self._scene_name)
         time_tag = datetime.datetime.now().strftime('%Y%m%d-%H%M')
-        job_name = 'metaspore-flow-scene-%s-run-%%s-offline' % (scene_name, time_tag)
-        return job_name
+        training_job_name = 'metaspore-flow-scene-%s-run-%%s-offline' % (scene_name, time_tag)
+        self._training_job_name = training_job_name
 
     def _create_training_job_config(self):
-        job_name = self._get_fresh_training_job_name()
         repo_url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo'
         # TODO: cf: check this later
         docker_image = '%s/metaspore-spark-training-release:v1.1.1-sagemaker-entrypoint' % repo_url
@@ -83,7 +85,7 @@ class CrontabSageMakerRunner(object):
         channel_name = 'metaspore'
         metaspore_entrypoint = 'bash /opt/ml/input/data/%s/custom_entrypoint.sh' % channel_name
         job_config = dict(
-            TrainingJobName=job_name,
+            TrainingJobName=self._training_job_name,
             AlgorithmSpecification={
                 'TrainingImage': docker_image,
                 'TrainingInputMode': 'Pipe',
@@ -134,7 +136,7 @@ class CrontabSageMakerRunner(object):
                 'MaximumRetryAttempts': 1
             }
         )
-        return job_name, job_config
+        return job_config
 
     def _get_training_job_status(self, job_name):
         import boto3
@@ -173,12 +175,11 @@ class CrontabSageMakerRunner(object):
 
     def _create_training_job(self):
         import boto3
-        job_name, job_config = self._create_training_job_config()
+        job_config = self._create_training_job_config()
         sagemaker_client = boto3.client('sagemaker')
         response = sagemaker_client.create_training_job(**job_config)
         print('response: %s' % response)
-        print(job_name)
-        status = self._wait_training_job(job_name)
+        status = self._wait_training_job(self._training_job_name)
         print('status: %s' % status)
         if status == 'Completed':
             self._update_online_service()
@@ -198,7 +199,6 @@ class CrontabSageMakerRunner(object):
             sys.stderr = io.open(stderr_path, 'a')
 
         self._parse_args()
-        self._load_flow_config()
         self._create_training_job()
 
 def main():
