@@ -42,12 +42,6 @@ class CrontabSageMakerRunner(object):
         return config_path
 
     @property
-    def _last_offline_job_path(self):
-        import os
-        job_name_path = os.path.join(self._scene_dir, 'last_offline.job')
-        return job_name_path
-
-    @property
     def _s3_config_dir(self):
         import os
         s3_work_dir = self._sage_maker_config.s3WorkDir
@@ -68,29 +62,11 @@ class CrontabSageMakerRunner(object):
         self._sage_maker_config = self._resources.find_by_type(SageMakerConfig).data
 
     def _get_fresh_training_job_name(self):
-        import io
-        import os
         import re
         scene_name = re.sub('[^A-Za-z0-9]', '-', self._scene_name)
-        template = 'metaspore-flow-scene-%s-run-%%d-offline' % scene_name
-        job_name_path = self._last_offline_job_path
-        if not os.path.isfile(job_name_path):
-            job_name = template % 1
-            return job_name
-        with io.open(job_name_path) as fin:
-            text = fin.read()
-        last_job_name = text.strip()
-        last_job_index = last_job_name.split('-')[-2]
-        job_index = int(last_job_index) + 1
-        job_name = template % job_index
+        time_tag = datetime.datetime.now().strftime('%Y%m%d-%H%M')
+        job_name = 'metaspore-flow-scene-%s-run-%%s-offline' % (scene_name, time_tag)
         return job_name
-
-    def _record_training_job_name(self, job_name):
-        import io
-        import os
-        job_name_path = self._last_offline_job_path
-        with io.open(job_name_path, 'w') as fout:
-            print(job_name, file=fout)
 
     def _create_training_job_config(self):
         job_name = self._get_fresh_training_job_name()
@@ -200,7 +176,6 @@ class CrontabSageMakerRunner(object):
         job_name, job_config = self._create_training_job_config()
         sagemaker_client = boto3.client('sagemaker')
         response = sagemaker_client.create_training_job(**job_config)
-        self._record_training_job_name(job_name)
         print('response: %s' % response)
         print(job_name)
         status = self._wait_training_job(job_name)
