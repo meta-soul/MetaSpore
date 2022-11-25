@@ -59,7 +59,7 @@ class OfflineSageMakerScheduler(Scheduler):
         module_name = 'metasporeflow.runners.crontab_sage_maker_runner'
         scene_name = self._scene_name
         python = sys.executable
-        crontab_command = '%s -m %s --scene %s' % (python, module_name, scene_name)
+        crontab_command = '%s -m %s --scene %s --redirect-stdio' % (python, module_name, scene_name)
         return crontab_command
 
     @property

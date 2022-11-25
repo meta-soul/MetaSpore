@@ -20,15 +20,8 @@ class CrontabSageMakerRunner(object):
         self._resources = None
         self._sage_maker_config = None
         self._training_job_name = None
-
-    def _parse_args(self):
-        import argparse
-        parser = argparse.ArgumentParser(description='runner for MetaSpore Flow crontab SageMaker entry')
-        parser.add_argument('-s', '--scene', type=str, required=True, help='scene name')
-        args = parser.parse_args()
-        self._scene_name = args.scene
-        self._load_flow_config()
-        self._set_training_job_name()
+        self._redirect_logs = None
+        self._pid_fout = None
 
     @property
     def _scene_dir(self):
@@ -37,6 +30,12 @@ class CrontabSageMakerRunner(object):
         flow_dir = os.path.join(home_dir, '.metaspore', 'flow')
         scene_dir = os.path.join(flow_dir, 'scene', self._scene_name)
         return scene_dir
+
+    @property
+    def _pid_path(self):
+        import os
+        pid_path = os.path.join(self._scene_dir, 'metaspore-flow.pid')
+        return pid_path
 
     @property
     def _flow_config_path(self):
@@ -52,6 +51,26 @@ class CrontabSageMakerRunner(object):
         config_dir = os.path.join(flow_dir, 'scene', self._scene_name)
         return config_dir
 
+    @property
+    def _logs_dir(self):
+        import os
+        logs_dir_path = os.path.join(self._scene_dir, 'logs')
+        return logs_dir_path
+
+    @property
+    def _stdout_path(self):
+        import os
+        stdout_file_name = '%s.stdout' % self._training_job_name
+        stdout_path = os.path.join(self._logs_dir, stdout_file_name)
+        return stdout_path
+
+    @property
+    def _stderr_path(self):
+        import os
+        stderr_file_name = '%s.stderr' % self._training_job_name
+        stderr_path = os.path.join(self._logs_dir, stderr_file_name)
+        return stderr_path
+
     def _load_flow_config(self):
         import os
         from metasporeflow.resources.resource_manager import ResourceManager
@@ -66,10 +85,80 @@ class CrontabSageMakerRunner(object):
 
     def _set_training_job_name(self):
         import re
+        import datetime
         scene_name = re.sub('[^A-Za-z0-9]', '-', self._scene_name)
         time_tag = datetime.datetime.now().strftime('%Y%m%d-%H%M')
-        training_job_name = 'metaspore-flow-scene-%s-run-%%s-offline' % (scene_name, time_tag)
+        training_job_name = '%s-%s-train' % (scene_name, time_tag)
         self._training_job_name = training_job_name
+
+    def _parse_args(self):
+        import argparse
+        parser = argparse.ArgumentParser(description='runner for MetaSpore Flow crontab SageMaker entry')
+        parser.add_argument('-s', '--scene', type=str, required=True,
+            help='scene name')
+        parser.add_argument('-r', '--redirect-stdio', action='store_true',
+            help='redirect stdout and stderr to logs dir')
+        args = parser.parse_args()
+        self._scene_name = args.scene
+        self._redirect_logs = args.redirect_stdio
+        self._load_flow_config()
+        self._set_training_job_name()
+
+    def _check_unique(self):
+        import os
+        import fcntl
+        pid = os.getpid()
+        fd = os.open(self._pid_path, os.O_CREAT | os.O_RDWR, 0o666)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            print('Job is already running.')
+            raise SystemExit
+        self._pid_fout = os.fdopen(fd, 'w')
+        print(pid, file=self._pid_fout)
+        self._pid_fout.flush()
+
+    def _prune_logs(self):
+        import os
+        import time
+        if not os.path.isdir(self._logs_dir):
+            return
+        cut = time.time() - 7 * 24 * 3600
+        for file_name in os.listdir(self._logs_dir):
+            file_path = os.path.join(self._logs_dir, file_name)
+            mtime = os.path.getmtime(file_path)
+            if mtime < cut:
+                try:
+                    os.remove(file_path)
+                except OSError:
+                    pass
+
+    def _redirect_stdio(self):
+        import io
+        import os
+        import sys
+        if not self._redirect_logs:
+            return
+        if not os.path.isdir(self._logs_dir):
+            os.makedirs(self._logs_dir)
+        sys.stdout = io.open(self._stdout_path, 'w')
+        sys.stderr = io.open(self._stderr_path, 'w')
+
+    def __enter__(self):
+        self._check_unique()
+        self._prune_logs()
+        self._redirect_stdio()
+
+    def __exit__(self, _exc_type, _exc_value, _traceback):
+        import os
+        import sys
+        self._pid_fout.close()
+        try:
+            os.remove(self._pid_path)
+        except OSError:
+            pass
+        sys.stdout.flush()
+        sys.stderr.flush()
 
     def _create_training_job_config(self):
         repo_url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo'
@@ -185,21 +274,13 @@ class CrontabSageMakerRunner(object):
             self._update_online_service()
 
     def run(self):
+        # TODO: cf: check this later
         import os
         os.environ['AWS_DEFAULT_REGION'] = 'cn-northwest-1'
 
-        if 0:
-            import io
-            import sys
-            import datetime
-            tag = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-            stdout_path = os.path.expanduser('~/stdout%s.txt' % tag)
-            stderr_path = os.path.expanduser('~/stderr%s.txt' % tag)
-            sys.stdout = io.open(stdout_path, 'a')
-            sys.stderr = io.open(stderr_path, 'a')
-
         self._parse_args()
-        self._create_training_job()
+        with self:
+            self._create_training_job()
 
 def main():
     runner = CrontabSageMakerRunner()
