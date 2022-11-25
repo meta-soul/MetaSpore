@@ -50,6 +50,7 @@ class SageMakerExecutor(object):
         return role
 
     def _endpoint_exists(self, endpoint_name):
+        import botocore
         try:
             _response = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
             return True
