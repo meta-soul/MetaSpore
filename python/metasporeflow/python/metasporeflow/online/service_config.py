@@ -124,7 +124,7 @@ class Feature(BaseDefaultConfig):
         super().__init__(**kwargs)
 
     def to_dict(self):
-        from_tables = self.dict_data.pop("depend")
+        from_tables = self.dict_data.pop("depend", [])
         self.dict_data["from"] = from_tables
         if self.condition:
             self.dict_data["condition"] = [x.to_dict() for x in self.condition]
