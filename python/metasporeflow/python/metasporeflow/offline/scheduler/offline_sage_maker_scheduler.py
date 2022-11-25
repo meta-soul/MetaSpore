@@ -27,7 +27,7 @@ class OfflineSageMakerScheduler(Scheduler):
         self._upload_config()
         self._save_flow_config()
         self._install_crontab()
-        # TODO: cf: run the first job
+        self._run_job_once()
 
     def destroy(self):
         self._uninstall_crontab()
@@ -195,3 +195,12 @@ class OfflineSageMakerScheduler(Scheduler):
         new_spec = self._filter_crontab_spec(old_spec)
         print('Uninstall crontab command %r ...' % self._crontab_command)
         self._update_crontab(new_spec)
+
+    def _run_job_once(self):
+        import shlex
+        import subprocess
+        command = self._crontab_command
+        args = shlex.split(command)
+        assert args and args[-1] == '--redirect-stdio'
+        args.pop() # pop --redirect-stdio
+        subprocess.check_call(args)
