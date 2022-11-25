@@ -15,38 +15,31 @@
 #
 
 from .flow_executor import FlowExecutor
-# TODO: online
-#from metasporeflow.online.online_sage_maker_executor import OnlineSageMakerExecutor
+from metasporeflow.online.sagemaker_executor import SageMakerExecutor
 from metasporeflow.offline.sage_maker_offline_executor import SageMakerOfflineFlowExecutor
 
 
 class SageMakerFlowExecutor(FlowExecutor):
     def __init__(self, resources):
         super(SageMakerFlowExecutor, self).__init__(resources)
-        # TODO: online
-        #self.online_executor = OnlineSageMakerExecutor(self._resources)
+        self.online_executor = SageMakerExecutor(self._resources)
         self.offline_executor = SageMakerOfflineFlowExecutor(self._resources)
 
     async def execute_up(self):
         print(self._resources)
         print('-------------------------------')
-        # TODO: online
-        #self.online_executor.execute_up()
-        #print('online sagemaker flow up')
-        #print('-------------------------------')
+        # For SageMaker, ``online_executor.execute_up`` will be called by ``offline_executor``.
         self.offline_executor.execute_up()
-        print('offline sagemaker flow up')
         print('-------------------------------')
         print('sagemaker flow up')
 
     async def execute_down(self):
         print('-------------------------------')
-        # TODO: online
-        #self.online_executor.execute_down()
-        #print('online sagemaker flow down')
-        #print('-------------------------------')
         self.offline_executor.execute_down()
         print('offline sagemaker flow down')
+        print('-------------------------------')
+        self.online_executor.execute_down()
+        print('online sagemaker flow down')
         print('-------------------------------')
         print('sagemaker flow down')
 
@@ -60,11 +53,8 @@ class SageMakerFlowExecutor(FlowExecutor):
 
     async def execute_reload(self):
         print('-------------------------------')
-        # TODO: online
-        #self.online_executor.execute_reload()
-        #print('online sagemaker flow reload')
-        #print('-------------------------------')
-        self.offline_executor.execute_reload()
+        # The implementation of ``reload`` is the same as ``up`` for the moment.
+        self.offline_executor.execute_up()
         print('offline sagemaker flow reload')
         print('-------------------------------')
         print('sagemaker flow reload')
@@ -72,4 +62,8 @@ class SageMakerFlowExecutor(FlowExecutor):
     @staticmethod
     async def execute_update(resource):
         print(resource)
-        return OnlineSageMakerExecutor.execute_update(resource)
+        from metasporeflow.resources.resource_manager import ResourceManager
+        resource_manager = ResourceManager()
+        resource_manager.add_resource("online_local_flow", "update_content", resource)
+        online_executor = SageMakerExecutor(resource_manager)
+        return online_executor.execute_update(resource)

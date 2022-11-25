@@ -28,7 +28,7 @@ class SageMakerExecutor(object):
     def __init__(self, resources):
         from metasporeflow.online.online_flow import OnlineFlow
         self.now_time = datetime.datetime.now()
-        self.now_str = datetime.datetime.strftime(self.now_time, "%Y-%m-%d-%H-%M-%S")
+        self.now_str = datetime.datetime.strftime(self.now_time, "%Y%m%d-%H%M%S")
         self._resources = resources
         self._online_resource = resources.find_by_type(OnlineFlow)
         self._generator = OnlineGenerator(resource=self._online_resource)
