@@ -44,6 +44,18 @@ class CrontabSageMakerRunner(object):
         return config_path
 
     @property
+    def _aws_region(self):
+        import re
+        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
+        s3_endpoint = self._sage_maker_config.s3Endpoint
+        match = re.match(pattern, s3_endpoint)
+        if match is None:
+            message = 'invalid s3 endpoint %r' % s3_endpoint
+            raise RuntimeError(message)
+        aws_region = match.group(1)
+        return aws_region
+
+    @property
     def _s3_config_dir(self):
         import os
         s3_work_dir = self._sage_maker_config.s3WorkDir
@@ -91,6 +103,10 @@ class CrontabSageMakerRunner(object):
         training_job_name = '%s-%s-train' % (scene_name, time_tag)
         self._training_job_name = training_job_name
 
+    def _set_aws_region(self):
+        import os
+        os.environ['AWS_DEFAULT_REGION'] = self._aws_region
+
     def _parse_args(self):
         import argparse
         parser = argparse.ArgumentParser(description='runner for MetaSpore Flow crontab SageMaker entry')
@@ -103,6 +119,7 @@ class CrontabSageMakerRunner(object):
         self._redirect_logs = args.redirect_stdio
         self._load_flow_config()
         self._set_training_job_name()
+        self._set_aws_region()
 
     def _check_unique(self):
         import os
@@ -275,10 +292,6 @@ class CrontabSageMakerRunner(object):
             self._update_online_service()
 
     def run(self):
-        # TODO: cf: check this later
-        import os
-        os.environ['AWS_DEFAULT_REGION'] = 'cn-northwest-1'
-
         self._parse_args()
         with self:
             self._create_training_job()

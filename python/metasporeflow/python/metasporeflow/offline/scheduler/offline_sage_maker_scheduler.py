@@ -24,12 +24,14 @@ class OfflineSageMakerScheduler(Scheduler):
         super().__init__(resources, scheduler_conf, tasks)
 
     def publish(self):
+        self._set_aws_region()
         self._upload_config()
         self._save_flow_config()
         self._install_crontab()
         self._run_job_once()
 
     def destroy(self):
+        self._set_aws_region()
         self._uninstall_crontab()
         self._clear_flow_config()
         self._clear_config()
@@ -42,10 +44,29 @@ class OfflineSageMakerScheduler(Scheduler):
         return scene_name
 
     @property
-    def _s3_work_dir(self):
+    def _sage_maker_config(self):
         from metasporeflow.flows.sage_maker_config import SageMakerConfig
         sage_maker_resource = self._resources.find_by_type(SageMakerConfig)
-        s3_work_dir = sage_maker_resource.data.s3WorkDir
+        sage_maker_config = sage_maker_resource.data
+        return sage_maker_config
+
+    @property
+    def _aws_region(self):
+        import re
+        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
+        sage_maker_config = self._sage_maker_config
+        s3_endpoint = sage_maker_config.s3Endpoint
+        match = re.match(pattern, s3_endpoint)
+        if match is None:
+            message = 'invalid s3 endpoint %r' % s3_endpoint
+            raise RuntimeError(message)
+        aws_region = match.group(1)
+        return aws_region
+
+    @property
+    def _s3_work_dir(self):
+        sage_maker_config = self._sage_maker_config
+        s3_work_dir = sage_maker_config.s3WorkDir
         return s3_work_dir
 
     @property
@@ -104,6 +125,10 @@ class OfflineSageMakerScheduler(Scheduler):
             return path
         else:
             return path + '/'
+
+    def _set_aws_region(self):
+        import os
+        os.environ['AWS_DEFAULT_REGION'] = self._aws_region
 
     def _generate_entrypoint(self, s3_config_dir_path):
         import os
