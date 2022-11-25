@@ -141,8 +141,9 @@ class CrontabSageMakerRunner(object):
             return
         if not os.path.isdir(self._logs_dir):
             os.makedirs(self._logs_dir)
-        sys.stdout = io.open(self._stdout_path, 'w')
-        sys.stderr = io.open(self._stderr_path, 'w')
+        # Pass ``buffering=1`` for line buffering.
+        sys.stdout = io.open(self._stdout_path, 'w', buffering=1)
+        sys.stderr = io.open(self._stderr_path, 'w', buffering=1)
 
     def __enter__(self):
         self._check_unique()
