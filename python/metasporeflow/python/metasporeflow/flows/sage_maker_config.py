@@ -20,7 +20,7 @@ from typing import Tuple
 @frozen
 class SageMakerConfig:
     roleArn: str
-    securityGroups: Tuple[str]
-    subnets: Tuple[str]
+    securityGroups: Tuple[str, ...]
+    subnets: Tuple[str, ...]
     s3Endpoint: str
     s3WorkDir: str
