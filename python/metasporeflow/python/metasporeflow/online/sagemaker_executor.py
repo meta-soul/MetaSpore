@@ -35,7 +35,7 @@ class SageMakerExecutor(object):
         self.server_config = self._generator.gen_server_config()
         self.configure = self._online_resource.data
         self.sagemaker_info = dictToObj(self.configure.sagemaker_info)
-        self.region = "cn-northwest-1" if self.sagemaker_info.region else self.sagemaker_info.region
+        self.region = self._get_aws_region()
         self.role = self._get_iam_role()
         self.sm_client = boto3.client("sagemaker", self.region)
         self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
@@ -43,11 +43,37 @@ class SageMakerExecutor(object):
         self.bucket = "dmetasoul-test-bucket" if self.sagemaker_info.bucket else self.sagemaker_info.bucket
         self.prefix = "demo-metaspore-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
 
-    def _get_iam_role(self):
+    def _get_sage_maker_config(self):
         from metasporeflow.flows.sage_maker_config import SageMakerConfig
         resource = self._resources.find_by_type(SageMakerConfig)
-        role = resource.data.roleArn
+        config = resource.data
+        return config
+
+    def _get_iam_role(self):
+        config = self._get_sage_maker_config()
+        role = config.roleArn
         return role
+
+    def _get_s3_endpoint(self):
+        config = self._get_sage_maker_config()
+        s3_endpoint = config.s3Endpoint
+        return s3_endpoint
+
+    def _get_aws_region(self):
+        import re
+        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
+        s3_endpoint = self._get_s3_endpoint()
+        match = re.match(pattern, s3_endpoint)
+        if match is None:
+            message = 'invalid s3 endpoint %r' % s3_endpoint
+            raise RuntimeError(message)
+        aws_region = match.group(1)
+        return aws_region
+
+    def _get_container_image(self):
+        url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn'
+        url += '/dmetasoul-repo/metaspore-sagemaker-release:v1.0.1'
+        return url
 
     def _endpoint_exists(self, endpoint_name):
         import botocore
@@ -87,13 +113,7 @@ class SageMakerExecutor(object):
     def create_model(self, scene, key):
         model_name = "{}-model-{}".format(scene, self.now_str)
         model_url = "s3://{}/{}".format(self.bucket, key)
-        if self.sagemaker_info.image:
-            container = self.sagemaker_info.image
-        else:
-            version = "v1.0.1" if self.sagemaker_info.version else self.sagemaker_info.version
-            container = "{}.dkr.ecr.{}.amazonaws.com.cn/{}:{}".format(
-                self.account_id, self.region, "dmetasoul-repo/metaspore-sagemaker-release", version
-            )
+        container_image = self._get_container_image()
         environment = dict()
         environment["CONSUL_ENABLE"] = "false"
         environment["SERVICE_PORT"] = "8080"
@@ -102,11 +122,12 @@ class SageMakerExecutor(object):
                 environment["MONGO_HOST"] = str(self.sagemaker_info.options["mongo_service"])
             if "mongo_port" in self.sagemaker_info.options:
                 environment["MONGO_PORT"] = str(self.sagemaker_info.options["mongo_port"])
-        container = {"Image": container, "ModelDataUrl": model_url, "Environment": environment}
-        if self.sagemaker_info.vpcSecurityGroupIds and self.sagemaker_info.vpcSubnets:
+        container = {"Image": container_image, "ModelDataUrl": model_url, "Environment": environment}
+        config = self._get_sage_maker_config()
+        if config.securityGroups and config.subnets:
             vpc_config = {
-                'SecurityGroupIds': [self.sagemaker_info.vpcSecurityGroupIds,],
-                'Subnets': self.sagemaker_info.vpcSubnets
+                'SecurityGroupIds': config.securityGroups,
+                'Subnets': config.subnets,
             }
             create_model_response = self.sm_client.create_model(
                 ModelName=model_name,
