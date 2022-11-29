@@ -6,8 +6,10 @@ from metasporeflow.online.common import dictToObj
 import boto3
 import datetime
 import time
+import re
 import os
-import os
+import shutil
+import tempfile
 import tarfile
 
 from metasporeflow.online.online_generator import OnlineGenerator
@@ -28,7 +30,7 @@ class SageMakerExecutor(object):
     def __init__(self, resources):
         from metasporeflow.online.online_flow import OnlineFlow
         self.now_time = datetime.datetime.now()
-        self.now_str = datetime.datetime.strftime(self.now_time, "%Y%m%d-%H%M%S")
+        self.model_version = datetime.datetime.strftime(self.now_time, "%Y%m%d-%H%M%S")
         self._resources = resources
         self._online_resource = resources.find_by_type(OnlineFlow)
         self._generator = OnlineGenerator(resource=self._online_resource)
@@ -40,8 +42,19 @@ class SageMakerExecutor(object):
         self.sm_client = boto3.client("sagemaker", self.region)
         self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
         self.account_id = boto3.client("sts", self.region).get_caller_identity()["Account"]
-        self.bucket = "dmetasoul-test-bucket" if self.sagemaker_info.bucket else self.sagemaker_info.bucket
-        self.prefix = "demo-metaspore-endpoint" if self.sagemaker_info.prefix else self.sagemaker_info.prefix
+        self.bucket, self.prefix = self._get_bucket_and_prefix()
+
+    def _get_scene_name(self):
+        import re
+        from metasporeflow.flows.metaspore_flow import MetaSporeFlow
+        flow_resource = self._resources.find_by_type(MetaSporeFlow)
+        scene_name = flow_resource.name
+        return scene_name
+
+    def _get_endpoint_name(self):
+        scene_name = self._get_scene_name()
+        endpoint_name = re.sub('[^A-Za-z0-9]', '-', scene_name)
+        return endpoint_name
 
     def _get_sage_maker_config(self):
         from metasporeflow.flows.sage_maker_config import SageMakerConfig
@@ -59,6 +72,20 @@ class SageMakerExecutor(object):
         s3_endpoint = config.s3Endpoint
         return s3_endpoint
 
+    def _get_s3_work_dir(self):
+        config = self._get_sage_maker_config()
+        s3_work_dir = config.s3WorkDir
+        return s3_work_dir
+
+    def _get_serving_dir(self):
+        s3_work_dir = self._get_s3_work_dir()
+        scene_name = self._get_scene_name()
+        flow_dir = os.path.join(s3_work_dir, 'flow')
+        scene_dir = os.path.join(flow_dir, 'scene', scene_name)
+        model_dir = os.path.join(scene_dir, 'model')
+        serving_dir = os.path.join(model_dir, 'serving')
+        return serving_dir
+
     def _get_aws_region(self):
         import re
         pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
@@ -69,6 +96,14 @@ class SageMakerExecutor(object):
             raise RuntimeError(message)
         aws_region = match.group(1)
         return aws_region
+
+    def _get_bucket_and_prefix(self):
+        from urllib.parse import urlparse
+        serving_dir = self._get_serving_dir()
+        results = urlparse(serving_dir, allow_fragments=False)
+        bucket = results.netloc
+        prefix = results.path.strip('/') + '/'
+        return bucket, prefix
 
     def _get_container_image(self):
         url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn'
@@ -110,8 +145,8 @@ class SageMakerExecutor(object):
             time.sleep(1)
             counter += 1
 
-    def create_model(self, scene, key):
-        model_name = "{}-model-{}".format(scene, self.now_str)
+    def create_model(self, endpoint_name, key):
+        model_name = "{}-model-{}".format(endpoint_name, self.model_version)
         model_url = "s3://{}/{}".format(self.bucket, key)
         container_image = self._get_container_image()
         environment = dict()
@@ -146,10 +181,10 @@ class SageMakerExecutor(object):
         resp = self.sm_client.describe_model(ModelName=model_name)
         print("model: {} resp: ".format(model_name) + json.dumps(resp, cls=DateEncoder))
         print("model_url=", model_url)
-        return self.create_endpoint_config(scene, model_name)
+        return self.create_endpoint_config(endpoint_name, model_name)
 
     def create_endpoint_config(self, endpoint_name, model_name):
-        endpoint_config_name = "{}-config-{}".format(endpoint_name, self.now_str)
+        endpoint_config_name = "{}-config-{}".format(endpoint_name, self.model_version)
         create_endpoint_config_response = self.sm_client.create_endpoint_config(
             EndpointConfigName=endpoint_config_name,
             ProductionVariants=[
@@ -219,23 +254,31 @@ class SageMakerExecutor(object):
         res = json.loads(response["Body"].read())
         return res
 
-    def add_model_to_s3(self, scene, model_path):
-        s3 = boto3.resource('s3', self.region)
-        model = self.process_model_info(scene, model_path)
-        key = os.path.join(self.prefix, model)
-        with open(model, "rb") as file_obj:
-            s3.Bucket(self.bucket).Object(key).upload_fileobj(file_obj)
-        return key
+    def add_model_to_s3(self, endpoint_name, model_paths):
+        temp_dir = tempfile.mkdtemp()
+        try:
+            s3 = boto3.resource('s3', self.region)
+            model = self.process_model_info(endpoint_name, model_paths, temp_dir)
+            key = os.path.join(self.prefix, os.path.basename(model))
+            with open(model, "rb") as file_obj:
+                s3.Bucket(self.bucket).Object(key).upload_fileobj(file_obj)
+            return key
+        finally:
+            shutil.rmtree(temp_dir)
 
-    def process_model_info(self, scene, model_paths):
-        config_file = "recommend-config.yaml"
+    def process_model_info(self, endpoint_name, model_paths, temp_dir):
+        tarball_dir = os.path.join(temp_dir, "tarball_dir")
+        os.makedirs(tarball_dir)
+        config_file = os.path.join(tarball_dir, "recommend-config.yaml")
         with open(config_file, "w") as file:
             file.write(self.server_config)
-        model_info_file = "model-infos.json"
+        model_info_file = os.path.join(tarball_dir, "model-infos.json")
         model_infos = list()
         for model_name, model_prefix in model_paths.items():
-            model_path = "model/{}".format(model_name)
-            if not os.path.exists(model_path):
+            rel_model_path = os.path.join("model", model_name)
+            rt_model_path = os.path.join("/opt/ml/model", rel_model_path)
+            model_path = os.path.join(tarball_dir, rel_model_path)
+            if not os.path.isdir(model_path):
                 os.makedirs(model_path)
             bucket = self.bucket
             if model_prefix.startswith("s3://"):
@@ -246,42 +289,50 @@ class SageMakerExecutor(object):
                 bucket = model_prefix[len("s3://"):idx]
                 model_prefix = model_prefix[idx + 1:]
             self.download_directory(bucket, model_prefix, model_path)
-            model_infos.append({"modelName": model_name, "version": "1", "dirPath": os.path.join("/opt/ml/model/", model_path), "host": "127.0.0.1", "port": 50000})
+            model_info = dict(
+                modelName=model_name,
+                version="1",
+                dirPath=rt_model_path,
+                host="127.0.0.1",
+                port=50000,
+            )
+            model_infos.append(model_info)
         with open(model_info_file, "w") as model_file:
-            model_file.write(json.dumps(model_infos))
-        tar_file = "{}.tar.gz".format(scene)
-        with tarfile.open(tar_file, "w:gz") as tar:
-            tar.add(config_file)
-            tar.add("model")
-            tar.add(model_info_file)
-        return tar_file
+            json.dump(model_infos, model_file)
+            print(file=model_file)
+        tarball_name = "%s-%s.tar.gz" % (endpoint_name, self.model_version)
+        tarball_path = os.path.join(temp_dir, tarball_name)
+        with tarfile.open(tarball_path, "w:gz") as tar:
+            for name in os.listdir(tarball_dir):
+                path = os.path.join(tarball_dir, name)
+                tar.add(path, name)
+        shutil.rmtree(tarball_dir)
+        return tarball_path
 
     def download_directory(self, bucket_name, path, local_path):
-        if os.path.isfile(local_path):
-            os.remove(local_path)
-        if not os.path.exists(local_path):
+        if not os.path.isdir(local_path):
             os.mkdir(local_path)
         s3 = boto3.resource('s3', self.region)
         bucket = s3.Bucket(bucket_name)
         for obj in bucket.objects.filter(Prefix=path):
             local_file = os.path.join(local_path, obj.key[len(path):].lstrip("/"))
-            if not os.path.exists(os.path.dirname(local_file)):
+            if not os.path.isdir(os.path.dirname(local_file)):
                 os.makedirs(os.path.dirname(local_file))
             key = obj.key
             print(f'Downloading {key}')
             bucket.download_file(key, local_file)
 
     def execute_up(self, **kwargs):
-        model_path = kwargs.get("models", {})
-        scene_name = self.get_scene_name()
-        model_data_path = self.add_model_to_s3(scene_name, model_path)
-        endpoint_config = self.create_model(scene_name, model_data_path)
-        self.create_or_update_endpoint(scene_name, endpoint_config)
+        model_paths = kwargs.get("models", {})
+        endpoint_name = self._get_endpoint_name()
+        model_data_path = self.add_model_to_s3(endpoint_name, model_paths)
+        endpoint_config = self.create_model(endpoint_name, model_data_path)
+        self.create_or_update_endpoint(endpoint_name, endpoint_config)
 
     def execute_down(self, **kwargs):
-        scene_name = self.get_scene_name()
+        endpoint_name = self._get_endpoint_name()
         try:
-            self.sm_client.delete_endpoint(EndpointName=scene_name)
+            self.sm_client.delete_endpoint(EndpointName=endpoint_name)
         except:
             print("the endpoint is not exist! or endpoint is creating")
         next_token = ''
@@ -289,7 +340,7 @@ class SageMakerExecutor(object):
             configs = self.sm_client.list_endpoint_configs(
                 SortBy='CreationTime',
                 SortOrder='Ascending',
-                NameContains="{}-config".format(scene_name),
+                NameContains="{}-config".format(endpoint_name),
                 MaxResults=20,
                 NextToken=next_token,
             )
@@ -303,7 +354,7 @@ class SageMakerExecutor(object):
             models = self.sm_client.list_models(
                 SortBy='CreationTime',
                 SortOrder='Ascending',
-                NameContains="{}-model-".format(scene_name),
+                NameContains="{}-model-".format(endpoint_name),
                 MaxResults=20,
                 NextToken=next_token,
             )
@@ -314,12 +365,12 @@ class SageMakerExecutor(object):
             next_token = models.get('NextToken')
 
     def execute_status(self, **kwargs):
-        scene_name = self.get_scene_name()
+        endpoint_name = self._get_endpoint_name()
         info = {"status": "DOWN"}
         try:
-            resp = self.sm_client.describe_endpoint(EndpointName=scene_name)
+            resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
             info["endpoint_url"] = "https://{}.console.amazonaws.cn/sagemaker/home?region={}#/endpoints/{}".format(
-                self.region, self.region, scene_name)
+                self.region, self.region, endpoint_name)
             info["endpoint_status"] = resp["EndpointStatus"]
             if info["endpoint_status"] == "InService" or info["endpoint_status"] == 'Updating':
                 info["status"] = "UP"
@@ -327,13 +378,13 @@ class SageMakerExecutor(object):
             info["endpoint_status"] = "NOT_EXIST"
             print("the endpoint is not exist! or endpoint is creating")
         if info.get('status', "DOWN") != "UP":
-            info["msg"] = "endpoint {} is not InService!".format(scene_name)
+            info["msg"] = "endpoint {} is not InService!".format(endpoint_name)
             return info
         try:
             configs = self.sm_client.list_endpoint_configs(
                 SortBy='CreationTime',
                 SortOrder='Descending',
-                NameContains="{}-config-".format(scene_name)
+                NameContains="{}-config-".format(endpoint_name)
             )
             info["endpoint_config_list"] = list()
             for item in configs.get('EndpointConfigs', []):
@@ -342,7 +393,7 @@ class SageMakerExecutor(object):
             models = self.sm_client.list_models(
                 SortBy='CreationTime',
                 SortOrder='Descending',
-                NameContains="{}-model-".format(scene_name)
+                NameContains="{}-model-".format(endpoint_name)
             )
             info["model_list"] = list()
             for item in models.get('Models', []):
@@ -353,34 +404,37 @@ class SageMakerExecutor(object):
         return info
 
     def execute_reload(self, **kwargs):
-        scene_name = self.get_scene_name()
-        model_path = kwargs.get("models", {})
-        model_data_path = self.add_model_to_s3(scene_name, model_path)
-        endpoint_config = self.create_model(scene_name, model_data_path)
-        self.create_or_update_endpoint(scene_name, endpoint_config)
+        endpoint_name = self._get_endpoint_name()
+        model_paths = kwargs.get("models", {})
+        model_data_path = self.add_model_to_s3(endpoint_name, model_paths)
+        endpoint_config = self.create_model(endpoint_name, model_data_path)
+        self.create_or_update_endpoint(endpoint_name, endpoint_config)
 
     def execute_update(self):
-        scene_name = self.get_scene_name()
-        resp = self.sm_client.describe_endpoint(EndpointName=scene_name)
+        message = "execute_update is not supported by SageMaker"
+        raise RuntimeError(message)
+
+        endpoint_name = self._get_endpoint_name()
+        resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
         if resp["EndpointStatus"] != "InService":
-            return False, "endpoint: {} is not up!".format(scene_name)
+            return False, "endpoint: {} is not up!".format(endpoint_name)
         endpoint_config = resp["EndpointConfigName"]
         config_resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config)
         products = config_resp['ProductionVariants']
         if not products:
-            return False, "endpoint: {} model info describe fail!".format(scene_name)
+            return False, "endpoint: {} model info describe fail!".format(endpoint_name)
         model_name = products[0].get("ModelName")
         if not model_name:
-            return False, "endpoint: {} get model_name is empty fail!".format(scene_name)
+            return False, "endpoint: {} get model_name is empty fail!".format(endpoint_name)
         model_resp = self.sm_client.describe_model(ModelName=model_name)
         print("model_resp:", model_resp)
         model_data_url = model_resp.get('PrimaryContainer', {}).get("ModelDataUrl")
         if not model_data_url:
             if not model_resp.get('Containers', []):
-                return False, "endpoint: {} get model_data_url is empty no Containers fail!".format(scene_name)
+                return False, "endpoint: {} get model_data_url is empty no Containers fail!".format(endpoint_name)
             model_data_url = model_resp.get('Containers', [])[0].get("ModelDataUrl")
             if not model_data_url:
-                return False, "endpoint: {} get model_data_url is empty fail!".format(scene_name)
+                return False, "endpoint: {} get model_data_url is empty fail!".format(endpoint_name)
         data_file = self.download_file(model_data_url, "update_data")
         config_file = "recommend-config.yaml"
         model_info_file = "model-infos.json"
@@ -388,7 +442,6 @@ class SageMakerExecutor(object):
             if os.path.exists(model_info_file):
                 os.remove(model_info_file)
             if os.path.exists("model"):
-                import shutil
                 shutil.rmtree("model")
             tar.extractall(".")
         with open(config_file, "w") as file:
@@ -404,16 +457,9 @@ class SageMakerExecutor(object):
         s3 = boto3.resource('s3', self.region)
         with open(data_file, "rb") as file_obj:
             s3.Bucket(self.bucket).Object(new_data_url).upload_fileobj(file_obj)
-        endpoint_config = self.create_model(scene_name, new_data_url)
-        self.create_or_update_endpoint(scene_name, endpoint_config)
+        endpoint_config = self.create_model(endpoint_name, new_data_url)
+        self.create_or_update_endpoint(endpoint_name, endpoint_config)
         return True, "update config successfully!"
-
-    def get_scene_name(self):
-        import re
-        from metasporeflow.flows.metaspore_flow import MetaSporeFlow
-        flow_resource = self._resources.find_by_type(MetaSporeFlow)
-        scene_name = re.sub('[^A-Za-z0-9]', '-', flow_resource.name)
-        return scene_name
 
     def download_file(self, file_path, local_path):
         if os.path.isfile(local_path):
@@ -458,7 +504,7 @@ if __name__ == "__main__":
     #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
     #    print(res)
 
-    endpoint_name = executor.get_scene_name()
+    endpoint_name = executor._get_endpoint_name()
     res = executor.invoke_endpoint(endpoint_name, {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
     print(res)
     #executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
