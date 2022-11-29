@@ -108,7 +108,7 @@ class OfflineSageMakerScheduler(Scheduler):
         scene_name = self._scene_name
         s3_work_dir = self._s3_work_dir
         flow_dir = os.path.join(s3_work_dir, 'flow')
-        config_dir = os.path.join(flow_dir, 'scene', scene_name)
+        config_dir = os.path.join(flow_dir, 'scene', scene_name, 'config')
         return config_dir
 
     @property

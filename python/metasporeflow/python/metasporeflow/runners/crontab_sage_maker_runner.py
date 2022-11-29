@@ -19,6 +19,7 @@ class CrontabSageMakerRunner(object):
         self._scene_name = None
         self._resources = None
         self._sage_maker_config = None
+        self._model_version = None
         self._training_job_name = None
         self._redirect_logs = None
         self._pid_fout = None
@@ -60,7 +61,7 @@ class CrontabSageMakerRunner(object):
         import os
         s3_work_dir = self._sage_maker_config.s3WorkDir
         flow_dir = os.path.join(s3_work_dir, 'flow')
-        config_dir = os.path.join(flow_dir, 'scene', self._scene_name)
+        config_dir = os.path.join(flow_dir, 'scene', self._scene_name, 'config')
         return config_dir
 
     @property
@@ -95,12 +96,14 @@ class CrontabSageMakerRunner(object):
         self._resources = ResourceManager.load(config_path)
         self._sage_maker_config = self._resources.find_by_type(SageMakerConfig).data
 
+    def _set_model_version(self):
+        import datetime
+        self._model_version = datetime.datetime.now().strftime('%Y%m%d-%H%M')
+
     def _set_training_job_name(self):
         import re
-        import datetime
         scene_name = re.sub('[^A-Za-z0-9]', '-', self._scene_name)
-        time_tag = datetime.datetime.now().strftime('%Y%m%d-%H%M')
-        training_job_name = '%s-%s-train' % (scene_name, time_tag)
+        training_job_name = '%s-%s-train' % (scene_name, self._model_version)
         self._training_job_name = training_job_name
 
     def _set_aws_region(self):
@@ -118,6 +121,7 @@ class CrontabSageMakerRunner(object):
         self._scene_name = args.scene
         self._redirect_logs = args.redirect_stdio
         self._load_flow_config()
+        self._set_model_version()
         self._set_training_job_name()
         self._set_aws_region()
 
@@ -186,6 +190,7 @@ class CrontabSageMakerRunner(object):
         security_groups = self._sage_maker_config.securityGroups
         subnets = self._sage_maker_config.subnets
         s3_endpoint = self._sage_maker_config.s3Endpoint
+        s3_work_dir = self._sage_maker_config.s3WorkDir
         s3_config_dir = self._s3_config_dir
         # TODO: cf: check this later
         s3_output_path = 's3://dmetasoul-test-bucket/demo/sg-demo/ecommerce/output/model/ctr/nn/widedeep/model_export/amazonfashion_widedeep/'
@@ -235,6 +240,13 @@ class CrontabSageMakerRunner(object):
             Environment={
                 'AWS_ENDPOINT': s3_endpoint,
                 'METASPORE_ENTRYPOINT': metaspore_entrypoint,
+                'METASPORE_FLOW_S3_WORK_DIR': s3_work_dir,
+                'METASPORE_FLOW_SCENE_NAME': self._scene_name,
+                # NOTE: only one NN model is supported for the moment
+                'METASPORE_FLOW_MODEL_NAME': 'amazonfashion_widedeep',
+                'METASPORE_FLOW_MODEL_VERSION': self._model_version,
+                # NOTE: incremental training is not supported for the moment
+                'METASPORE_FLOW_LAST_MODEL_VERSION': '',
                 # TODO: cf: check this later
                 'SPARK_JAVA_OPTS': '-Djava.io.tmpdir=/opt/spark/work-dir',
             },
