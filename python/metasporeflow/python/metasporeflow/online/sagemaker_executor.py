@@ -284,23 +284,34 @@ class SageMakerExecutor(object):
             self.sm_client.delete_endpoint(EndpointName=scene_name)
         except:
             print("the endpoint is not exist! or endpoint is creating")
-        configs = self.sm_client.list_endpoint_configs(
-            SortBy='CreationTime',
-            SortOrder='Ascending',
-            NameContains="{}-config".format(scene_name)
-        )
-        for item in configs.get('EndpointConfigs', []):
-            if item.get("EndpointConfigName"):
-                self.sm_client.delete_endpoint_config(EndpointConfigName=item.get("EndpointConfigName"))
-        models = self.sm_client.list_models(
-            SortBy='CreationTime',
-            SortOrder='Ascending',
-            NameContains="{}-model-".format(scene_name)
-        )
-        for item in models.get('Models', []):
-            if item.get("ModelName"):
-                print("delete model:", item.get("ModelName"))
-                self.sm_client.delete_model(ModelName=item.get("ModelName"))
+        next_token = ''
+        while next_token is not None:
+            configs = self.sm_client.list_endpoint_configs(
+                SortBy='CreationTime',
+                SortOrder='Ascending',
+                NameContains="{}-config".format(scene_name),
+                MaxResults=20,
+                NextToken=next_token,
+            )
+            for item in configs.get('EndpointConfigs', []):
+                if item.get("EndpointConfigName"):
+                    print("delete endpoint config:", item.get("EndpointConfigName"))
+                    self.sm_client.delete_endpoint_config(EndpointConfigName=item.get("EndpointConfigName"))
+            next_token = configs.get('NextToken')
+        next_token = ''
+        while next_token is not None:
+            models = self.sm_client.list_models(
+                SortBy='CreationTime',
+                SortOrder='Ascending',
+                NameContains="{}-model-".format(scene_name),
+                MaxResults=20,
+                NextToken=next_token,
+            )
+            for item in models.get('Models', []):
+                if item.get("ModelName"):
+                    print("delete model:", item.get("ModelName"))
+                    self.sm_client.delete_model(ModelName=item.get("ModelName"))
+            next_token = models.get('NextToken')
 
     def execute_status(self, **kwargs):
         scene_name = self.get_scene_name()
