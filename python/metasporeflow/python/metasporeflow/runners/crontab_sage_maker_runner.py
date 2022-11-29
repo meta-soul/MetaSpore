@@ -65,6 +65,15 @@ class CrontabSageMakerRunner(object):
         return config_dir
 
     @property
+    def _s3_model_dir(self):
+        import os
+        s3_work_dir = self._sage_maker_config.s3WorkDir
+        flow_dir = os.path.join(s3_work_dir, 'flow')
+        model_dir = os.path.join(flow_dir, 'scene', self._scene_name, 'model')
+        model_dir = os.path.join(model_dir, 'export', self._model_version)
+        return model_dir
+
+    @property
     def _logs_dir(self):
         import os
         logs_dir_path = os.path.join(self._scene_dir, 'logs')
@@ -284,13 +293,32 @@ class CrontabSageMakerRunner(object):
             time.sleep(1)
             counter += 1
 
+    def _get_model_paths(self):
+        import boto3
+        from urllib.parse import urlparse
+        s3 = boto3.client('s3', self._aws_region)
+        results = urlparse(self._s3_model_dir, allow_fragments=False)
+        bucket = results.netloc
+        prefix = results.path.strip('/') + '/'
+        model_paths = dict()
+        for obj in s3.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/').get('CommonPrefixes'):
+            dir_name = obj.get('Prefix')[len(prefix):].strip('/')
+            dir_url = 's3://%s/%s%s/' % (bucket, prefix, dir_name)
+            model_paths[dir_name] = dir_url
+        return model_paths
+
     def _update_online_service(self):
+        import pprint
         from metasporeflow.online.sagemaker_executor import SageMakerExecutor
+        print('models:')
+        model_paths = self._get_model_paths()
+        pprint.pprint(model_paths)
+        if len(model_paths) != 1:
+            # NOTE: only one NN model is supported for the moment
+            message = "expect one model; found %d" % (len(model_paths))
+            raise RuntimeError(message)
         executor = SageMakerExecutor(self._resources)
-        models = dict(
-            amazonfashion_widedeep='s3://dmetasoul-test-bucket/demo/demo_metaspore_flow/ecommerce/output/model/ctr/nn/widedeep/model_export/amazonfashion_widedeep/'
-        )
-        executor.execute_reload(models=models)
+        executor.execute_reload(models=model_paths)
 
     def _create_training_job(self):
         import boto3
