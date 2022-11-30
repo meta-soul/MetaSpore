@@ -301,10 +301,12 @@ class CrontabSageMakerRunner(object):
         bucket = results.netloc
         prefix = results.path.strip('/') + '/'
         model_paths = dict()
-        for obj in s3.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/').get('CommonPrefixes'):
-            dir_name = obj.get('Prefix')[len(prefix):].strip('/')
-            dir_url = 's3://%s/%s%s/' % (bucket, prefix, dir_name)
-            model_paths[dir_name] = dir_url
+        objects = s3.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/').get('CommonPrefixes')
+        if objects is not None:
+            for obj in objects:
+                dir_name = obj.get('Prefix')[len(prefix):].strip('/')
+                dir_url = 's3://%s/%s%s/' % (bucket, prefix, dir_name)
+                model_paths[dir_name] = dir_url
         return model_paths
 
     def _update_online_service(self):

@@ -36,7 +36,6 @@ class SageMakerExecutor(object):
         self._generator = OnlineGenerator(resource=self._online_resource)
         self.server_config = self._generator.gen_server_config()
         self.configure = self._online_resource.data
-        self.sagemaker_info = dictToObj(self.configure.sagemaker_info)
         self.region = self._get_aws_region()
         self.role = self._get_iam_role()
         self.sm_client = boto3.client("sagemaker", self.region)
@@ -152,11 +151,6 @@ class SageMakerExecutor(object):
         environment = dict()
         environment["CONSUL_ENABLE"] = "false"
         environment["SERVICE_PORT"] = "8080"
-        if self.sagemaker_info.options:
-            if "mongo_service" in self.sagemaker_info.options:
-                environment["MONGO_HOST"] = str(self.sagemaker_info.options["mongo_service"])
-            if "mongo_port" in self.sagemaker_info.options:
-                environment["MONGO_PORT"] = str(self.sagemaker_info.options["mongo_port"])
         container = {"Image": container_image, "ModelDataUrl": model_url, "Environment": environment}
         config = self._get_sage_maker_config()
         if config.securityGroups and config.subnets:

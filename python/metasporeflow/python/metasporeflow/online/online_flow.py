@@ -148,4 +148,3 @@ class OnlineFlow(object):
     scenes: Optional[list] = list()
     experiments: Optional[list] = list()
     layers: Optional[list] = list()
-    sagemaker_info: Optional[SageMakerInfo] = None
