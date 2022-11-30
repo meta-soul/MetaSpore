@@ -44,12 +44,15 @@ class SageMakerFlowExecutor(FlowExecutor):
         print('sagemaker flow down')
 
     async def execute_status(self):
+        import json
         print('sagemaker flow status:')
         print('-------------------------------')
-        return {
+        status = {
             "online": self.online_executor.execute_status(),
             "offline": self.offline_executor.execute_status(),
         }
+        print(json.dumps(status, separators=(',', ': '), indent=4))
+        return status
 
     async def execute_reload(self):
         print('-------------------------------')

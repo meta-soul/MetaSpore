@@ -36,12 +36,50 @@ class OfflineSageMakerScheduler(Scheduler):
         self._clear_flow_config()
         self._clear_config()
 
+    def get_status(self):
+        self._set_aws_region()
+        recent_training_jobs = self._get_training_jobs()
+        if recent_training_jobs:
+            last_training_job_name = recent_training_jobs[0]['name']
+            last_training_job_status = self._get_training_job_status(last_training_job_name)
+            last_training_job_url = self._get_training_job_url(last_training_job_name)
+        else:
+            last_training_job_name = None
+            last_training_job_status = None
+            last_training_job_url = None
+        if not self._installed_in_crontab():
+            status = 'DOWN'
+        elif last_training_job_status is None:
+            status = 'UP'
+        elif last_training_job_status == 'InProgress':
+            status = 'TRAINING'
+        elif last_training_job_status == 'Failed':
+            status = 'FAIL'
+        else:
+            assert last_training_job_status in ('Completed', 'Stopping', 'Stopped')
+            status = 'UP'
+        info = {
+            'status': status,
+            'last_training_job_name': last_training_job_name,
+            'last_training_job_status': last_training_job_status,
+            'last_training_job_url': last_training_job_url,
+            'recent_training_jobs': recent_training_jobs,
+        }
+        return info
+
     @property
     def _scene_name(self):
         from metasporeflow.flows.metaspore_flow import MetaSporeFlow
         flow_resource = self._resources.find_by_type(MetaSporeFlow)
         scene_name = flow_resource.name
         return scene_name
+
+    @property
+    def _training_job_name_prefix(self):
+        import re
+        scene_name = re.sub('[^A-Za-z0-9]', '-', self._scene_name)
+        name_prefix = '%s-' % scene_name
+        return name_prefix
 
     @property
     def _sage_maker_config(self):
@@ -205,6 +243,15 @@ class OfflineSageMakerScheduler(Scheduler):
         new_spec = text + '\n'
         return new_spec
 
+    def _installed_in_crontab(self):
+        old_spec = self._get_old_crontab_spec()
+        lines = old_spec.splitlines()
+        command = self._crontab_command
+        for line in lines:
+            if line.endswith(command):
+                return True
+        return False
+
     def _update_crontab(self, crontab_spec):
         args = ['crontab', '-']
         subprocess.run(args, input=crontab_spec.encode('utf-8'), check=True)
@@ -229,3 +276,56 @@ class OfflineSageMakerScheduler(Scheduler):
         assert args and args[-1] == '--redirect-stdio'
         args.pop() # pop --redirect-stdio
         subprocess.check_call(args)
+
+    def _get_training_jobs(self):
+        import boto3
+        training_jobs = []
+        max_training_jobs = 10
+        sagemaker_client = boto3.client('sagemaker')
+        response = sagemaker_client.list_training_jobs(
+            SortBy='CreationTime',
+            SortOrder='Descending',
+            NameContains=self._training_job_name_prefix,
+            MaxResults=10,
+        )
+        for summary in response['TrainingJobSummaries']:
+            job_name = summary['TrainingJobName']
+            job_status = summary['TrainingJobStatus']
+            training_job = dict(name=job_name, status=job_status)
+            training_jobs.append(training_job)
+        next_token = response.get('NextToken')
+        while len(training_jobs) < max_training_jobs and next_token is not None:
+            response = sagemaker_client.list_training_jobs(
+                SortBy='CreationTime',
+                SortOrder='Descending',
+                NameContains=self._training_job_name_prefix,
+                MaxResults=10,
+                NextToken=next_token,
+            )
+            for summary in response['TrainingJobSummaries']:
+                job_name = summary['TrainingJobName']
+                job_status = summary['TrainingJobStatus']
+                training_job = dict(name=job_name, status=job_status)
+                training_jobs.append(training_job)
+                if len(training_jobs) >= max_training_jobs:
+                    break
+            next_token = response.get('NextToken')
+        return training_jobs
+
+    def _get_training_job_status(self, job_name):
+        import boto3
+        import botocore
+        sagemaker_client = boto3.client('sagemaker')
+        try:
+            response = sagemaker_client.describe_training_job(TrainingJobName=job_name)
+        except botocore.exceptions.ClientError as ex:
+            message = "training job %r not found" % job_name
+            raise RuntimeError(message) from ex
+        status = response['TrainingJobStatus']
+        return status
+
+    def _get_training_job_url(self, job_name):
+        url = 'https://%s.console.amazonaws.cn' % self._aws_region
+        url += '/sagemaker/home?region=%s' % self._aws_region
+        url += '#/jobs/%s' % job_name
+        return url

@@ -36,10 +36,18 @@ class SageMakerOfflineFlowExecutor():
         self._schedulers.stop()
 
     def execute_status(self):
-        print('offline status is not implemented yet')
+        schedulers = self._schedulers._get_schedulers()
+        if len(schedulers) != 1:
+            message = "expect one scheduler; found %d" % (len(schedulers))
+            raise RuntimeError(message)
+        schedulers = tuple(schedulers.values())
+        scheduler = schedulers[0]
+        status = scheduler.get_status()
+        return status
 
     def execute_reload(self):
-        print('offline reload is not implemented yet')
+        message = 'offline reload is not implemented yet'
+        raise NotImplementedError(message)
 
     def _get_tasks(self, tasks_conf) -> Dict[str, Task]:
         from .task_manager import TaskManager

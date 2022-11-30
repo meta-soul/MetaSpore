@@ -334,8 +334,8 @@ class SageMakerExecutor(object):
             configs = self.sm_client.list_endpoint_configs(
                 SortBy='CreationTime',
                 SortOrder='Ascending',
-                NameContains="{}-config".format(endpoint_name),
-                MaxResults=20,
+                NameContains="{}-config-".format(endpoint_name),
+                MaxResults=10,
                 NextToken=next_token,
             )
             for item in configs.get('EndpointConfigs', []):
@@ -349,7 +349,7 @@ class SageMakerExecutor(object):
                 SortBy='CreationTime',
                 SortOrder='Ascending',
                 NameContains="{}-model-".format(endpoint_name),
-                MaxResults=20,
+                MaxResults=10,
                 NextToken=next_token,
             )
             for item in models.get('Models', []):
