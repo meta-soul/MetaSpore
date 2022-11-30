@@ -46,7 +46,7 @@ class SageMakerOfflineFlowExecutor():
         return status
 
     def execute_reload(self):
-        message = 'offline reload is not implemented yet'
+        message = 'offline reload is not implemented'
         raise NotImplementedError(message)
 
     def _get_tasks(self, tasks_conf) -> Dict[str, Task]:
