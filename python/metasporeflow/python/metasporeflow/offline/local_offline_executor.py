@@ -49,7 +49,7 @@ class LocalOfflineFlowExecutor():
 
     def _init_local_container(self):
         if not self._is_local_offline_container_active():
-            volume = "%s/volumes:%s" % (os.getcwd(),
+            volume = "%s/volumes:%s/volumes" % (self.shared_volume_in_container,
                                         self.shared_volume_in_container)
             create_container_cmd = ['docker', 'run', '--volume', volume, '--network=host', '-itd',
                                     '--name', self.offline_local_container_name, self.offline_local_image]
