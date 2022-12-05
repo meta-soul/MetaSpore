@@ -45,7 +45,7 @@ def serve():
 
 async def _start_recommend_service(service_port, consul_enable, init_model_info=model_info_file,
                                    init_config=config_path):
-    recommend_base_cmd = "java -Xmx2048M -Xms2048M -Xmn768M -XX:MaxMetaspaceSize=256M -XX:MetaspaceSize=256M -jar " \
+    recommend_base_cmd = "java -Xmx25g -jar " \
                          "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
                          "--init_model_info={}".format(init_config, init_model_info)
     print("recommend_base_cmd:", recommend_base_cmd)

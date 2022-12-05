@@ -44,11 +44,12 @@ ENV LC_ALL=en_US.UTF-8
 ENV TZ=Asia/Shanghai
 RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install -y tzdata && apt-get clean
 
-RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-certificates && apt-get clean
+RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-certificates openjdk-11-jre-headless && apt-get clean
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
-RUN python -m easy_install install pip
-RUN python -m pip install aiohttp protobuf grpcio cattrs
+RUN python -m easy_install -i https://repo.huaweicloud.com/repository/pypi/simple/ install pip
+RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
+RUN python -m pip install aiohttp protobuf grpcio cattrs requests --no-cache-dir
 
 FROM ${SERVING_IMAGE} as serving_stage
 FROM ${RECOMMEND_IMAGE} as recommend_stage
@@ -58,8 +59,6 @@ RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2
     unzip awscliv2.zip && \
     ./aws/install && \
     rm -f awscliv2.zip
-RUN pip install requests
-RUN apt-get install --fix-missing -y openjdk-11-jdk
 COPY --from=serving_stage /opt/metaspore-serving/ /opt/metaspore-serving
 COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-service.jar
 
