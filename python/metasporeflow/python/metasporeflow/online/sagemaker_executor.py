@@ -124,7 +124,7 @@ class SageMakerExecutor(object):
         try:
             response = client.describe_endpoint(EndpointName=endpoint_name)
         except botocore.exceptions.ClientError as ex:
-            message = "training job %r not found" % job_name
+            message = "endpoint %r not found" % endpoint_name
             raise RuntimeError(message) from ex
         status = response['EndpointStatus']
         return status
@@ -183,6 +183,7 @@ class SageMakerExecutor(object):
             EndpointConfigName=endpoint_config_name,
             ProductionVariants=[
                 {
+                    # Default to ml.m5.4xlarge with 16 vCPUs and 64 GiB Memory.
                     "InstanceType": "ml.m5.4xlarge",
                     "InitialInstanceCount": 1,
                     "InitialVariantWeight": 1,

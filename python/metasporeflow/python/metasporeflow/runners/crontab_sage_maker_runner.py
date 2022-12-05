@@ -230,9 +230,10 @@ class CrontabSageMakerRunner(object):
             },
             # TODO: cf: check this later
             ResourceConfig={
-                'InstanceType': 'ml.m4.xlarge',
+                # Default to ml.m5.4xlarge with 16 vCPUs and 64 GiB Memory.
+                'InstanceType': 'ml.m5.4xlarge',
                 'InstanceCount': 1,
-                'VolumeSizeInGB': 2,
+                'VolumeSizeInGB': 20,
             },
             VpcConfig={
                 'SecurityGroupIds': security_groups,
@@ -240,8 +241,8 @@ class CrontabSageMakerRunner(object):
             },
             # TODO: cf: check this later
             StoppingCondition={
-                'MaxRuntimeInSeconds': 7200,
-                'MaxWaitTimeInSeconds': 7200,
+                'MaxRuntimeInSeconds': 72000,
+                'MaxWaitTimeInSeconds': 72000,
             },
             EnableNetworkIsolation=False,
             EnableInterContainerTrafficEncryption=False,
@@ -283,7 +284,7 @@ class CrontabSageMakerRunner(object):
         counter = 0
         while True:
             status = self._get_training_job_status(job_name)
-            if counter > 7200:
+            if counter > 72000:
                 message = 'fail to wait training job %r' % job_name
                 raise RuntimeError(message)
             if counter % 60 == 0:
