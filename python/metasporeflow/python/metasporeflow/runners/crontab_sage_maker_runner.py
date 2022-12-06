@@ -200,9 +200,8 @@ class CrontabSageMakerRunner(object):
         subnets = self._sage_maker_config.subnets
         s3_endpoint = self._sage_maker_config.s3Endpoint
         s3_work_dir = self._sage_maker_config.s3WorkDir
-        s3_config_dir = self._s3_config_dir
-        # TODO: cf: check this later
-        s3_output_path = 's3://dmetasoul-test-bucket/demo/sg-demo/ecommerce/output/model/ctr/nn/widedeep/model_export/amazonfashion_widedeep/'
+        s3_config_dir = self._s3_config_dir.rstrip('/') + '/'
+        s3_output_path = self._s3_model_dir.rstrip('/') + '/'
         channel_name = 'metaspore'
         metaspore_entrypoint = 'bash /opt/ml/input/data/%s/custom_entrypoint.sh' % channel_name
         job_config = dict(
@@ -228,9 +227,8 @@ class CrontabSageMakerRunner(object):
             OutputDataConfig={
                 'S3OutputPath': s3_output_path,
             },
-            # TODO: cf: check this later
             ResourceConfig={
-                # Default to ml.m5.4xlarge with 16 vCPUs and 64 GiB Memory.
+                # NOTE: Default to ml.m5.4xlarge with 16 vCPUs and 64 GiB Memory
                 'InstanceType': 'ml.m5.4xlarge',
                 'InstanceCount': 1,
                 'VolumeSizeInGB': 20,
@@ -239,8 +237,8 @@ class CrontabSageMakerRunner(object):
                 'SecurityGroupIds': security_groups,
                 'Subnets': subnets,
             },
-            # TODO: cf: check this later
             StoppingCondition={
+                # NOTE: Default to 20 hours
                 'MaxRuntimeInSeconds': 72000,
                 'MaxWaitTimeInSeconds': 72000,
             },
@@ -260,8 +258,8 @@ class CrontabSageMakerRunner(object):
                 # TODO: cf: check this later
                 'SPARK_JAVA_OPTS': '-Djava.io.tmpdir=/opt/spark/work-dir',
             },
-            # TODO: cf: check this later
             RetryStrategy={
+                # NOTE: MaximumRetryAttempts must be positive integer >= 1.
                 'MaximumRetryAttempts': 1
             }
         )
