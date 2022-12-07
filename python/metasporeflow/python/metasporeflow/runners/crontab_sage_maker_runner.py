@@ -251,7 +251,7 @@ class CrontabSageMakerRunner(object):
                 'METASPORE_FLOW_S3_WORK_DIR': s3_work_dir,
                 'METASPORE_FLOW_SCENE_NAME': self._scene_name,
                 # NOTE: only one NN model is supported for the moment
-                'METASPORE_FLOW_MODEL_NAME': 'amazonfashion_widedeep',
+                'METASPORE_FLOW_MODEL_NAME': 'widedeep',
                 'METASPORE_FLOW_MODEL_VERSION': self._model_version,
                 # NOTE: incremental training is not supported for the moment
                 'METASPORE_FLOW_LAST_MODEL_VERSION': '',
