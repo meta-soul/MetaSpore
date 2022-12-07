@@ -72,7 +72,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
     @Override
     public void addFunctions() {
         addFunction("genEmbedding", (fieldTableData, fieldAction, taskPool) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
+            Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not be empty");
             List<FeatureTable> featureTables = Lists.newArrayList();
             for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
                 for (Map.Entry<String, List<String>> entry : item.entrySet()) {
@@ -88,7 +88,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     }
                     FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
-                        log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        log.error("model input is empty! at fieldAction: {}, fieldTableData: {}", fieldAction, fieldTableData);
                         return true;
                     }
                     featureTables.add(featureTable);
@@ -124,7 +124,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     }
                     FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
-                        log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        log.error("model input is empty! at fieldAction: {}, fieldTableData {}", fieldAction, fieldTableData);
                         fieldTableData.addValueList(fieldAction.getNames().get(0), List.of());
                         return true;
                     }

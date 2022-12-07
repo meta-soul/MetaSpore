@@ -158,7 +158,7 @@ public class FeatureServiceManager implements AutoCloseable {
     @SuppressWarnings("unchecked")
     public <T> T getBean(String name, Class<?> cls, boolean hold, boolean ignoreCase) {
         if (hold && MapUtils.isNotEmpty(beanMap) && beanMap.containsKey(name)) {
-            log.info("load bean: {} from beanMap", name);
+            log.debug("load bean: {} from beanMap", name);
             return (T) beanMap.get(name);
         }
         Class<?> cla = null;
@@ -171,7 +171,7 @@ public class FeatureServiceManager implements AutoCloseable {
         }
         if (cla != null) {
             if (cls == null || cls.isAssignableFrom(cla)) {
-                log.info("load bean: {} from feature service", name);
+                log.debug("load bean: {} from feature service", name);
                 Object bean = cla.getConstructor().newInstance();
                 if (hold) {
                     this.beanMap.put(name, bean);

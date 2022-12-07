@@ -151,7 +151,7 @@ public class MongoDBSourceTableTask extends SourceTableTask {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> getDataByQuery(Query query) {
-        log.info("query: {}", query);
+        log.debug("query mongo table {}: {}", sourceTable.getTable(), query);
         if (query == null || query.getQueryObject().isEmpty() && query.getFieldsObject().isEmpty()) {
             return List.of();
         }

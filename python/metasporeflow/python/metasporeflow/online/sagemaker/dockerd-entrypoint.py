@@ -3,7 +3,6 @@ import os
 import shlex
 import subprocess
 import sys
-from subprocess import CalledProcessError
 import asyncio
 
 prefix = "/opt/ml/model/"
@@ -36,16 +35,15 @@ def process_model_data():
 
 def serve():
     config_name, model_info_file = process_model_data()
-    print("model_serving start!")
+    print("starting model serving")
     asyncio.run(_start_model_serving(50000, "/data/models"))
-    print("recommend service start!")
+    print("starting recommend service")
     asyncio.run(_start_recommend_service(8080, "false", model_info_file, config_name))
-    print("model handle start!")
 
 
 async def _start_recommend_service(service_port, consul_enable, init_model_info=model_info_file,
                                    init_config=config_path):
-    recommend_base_cmd = "java -Xmx25g -jar " \
+    recommend_base_cmd = "java -XX:MaxRAMPercentage=50 -jar " \
                          "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
                          "--init_model_info={}".format(init_config, init_model_info)
     print("recommend_base_cmd:", recommend_base_cmd)

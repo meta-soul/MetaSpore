@@ -49,16 +49,11 @@ RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
 RUN python -m easy_install -i https://repo.huaweicloud.com/repository/pypi/simple/ install pip
 RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
-RUN python -m pip install aiohttp protobuf grpcio cattrs requests --no-cache-dir
 
 FROM ${SERVING_IMAGE} as serving_stage
 FROM ${RECOMMEND_IMAGE} as recommend_stage
 
 FROM serving_base as sagemaker_release
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install && \
-    rm -f awscliv2.zip
 COPY --from=serving_stage /opt/metaspore-serving/ /opt/metaspore-serving
 COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-service.jar
 

@@ -277,7 +277,7 @@ public class RecommendService {
             timeRecorder.start(String.format("task_%s_total", task));
             List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
             List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
-            log.info("recommend result : {}", result);
+            log.debug("recommend result : {}", result);
             if (CollectionUtils.isEmpty(result)) {
                 timeRecorder.stop();
                 return ServiceResult.of(-1, "taskService execute fail!");
