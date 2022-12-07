@@ -183,8 +183,8 @@ class SageMakerExecutor(object):
             EndpointConfigName=endpoint_config_name,
             ProductionVariants=[
                 {
-                    # NOTE: Default to ml.m5.4xlarge with 16 vCPUs and 64 GiB Memory
-                    "InstanceType": "ml.m5.4xlarge",
+                    # NOTE: Default to ml.m5.2xlarge with 8 vCPUs and 32 GiB Memory
+                    "InstanceType": "ml.m5.2xlarge",
                     "InitialInstanceCount": 1,
                     "InitialVariantWeight": 1,
                     "ModelName": model_name,

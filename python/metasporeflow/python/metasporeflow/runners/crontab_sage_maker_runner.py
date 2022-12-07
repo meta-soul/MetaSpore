@@ -228,8 +228,8 @@ class CrontabSageMakerRunner(object):
                 'S3OutputPath': s3_output_path,
             },
             ResourceConfig={
-                # NOTE: Default to ml.m5.4xlarge with 16 vCPUs and 64 GiB Memory
-                'InstanceType': 'ml.m5.4xlarge',
+                # NOTE: Default to ml.m5.2xlarge with 8 vCPUs and 32 GiB Memory
+                'InstanceType': 'ml.m5.2xlarge',
                 'InstanceCount': 1,
                 'VolumeSizeInGB': 20,
             },
