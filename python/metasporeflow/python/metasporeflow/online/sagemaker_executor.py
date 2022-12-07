@@ -105,8 +105,8 @@ class SageMakerExecutor(object):
         return bucket, prefix
 
     def _get_container_image(self):
-        url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn'
-        url += '/dmetasoul-repo/metaspore-sagemaker-release:v1.0.2'
+        url = 'swr.cn-north-4.myhuaweicloud.com'
+        url += '/dmetasoul-repo/metaspore-sagemaker-release:v1.0.4'
         return url
 
     def _endpoint_exists(self, endpoint_name):
