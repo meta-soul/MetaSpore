@@ -193,7 +193,7 @@ class CrontabSageMakerRunner(object):
 
     def _create_training_job_config(self):
         # NOTE: Default offline training docker image
-        repo_url = 'swr.cn-north-4.myhuaweicloud.com/dmetasoul-repo'
+        repo_url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo'
         docker_image = '%s/metaspore-spark-training-release:v1.1.2-sagemaker-entrypoint' % repo_url
         role_arn = self._sage_maker_config.roleArn
         security_groups = self._sage_maker_config.securityGroups
