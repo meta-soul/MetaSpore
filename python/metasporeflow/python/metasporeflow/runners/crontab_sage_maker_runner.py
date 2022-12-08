@@ -265,10 +265,16 @@ class CrontabSageMakerRunner(object):
         )
         return job_config
 
+    def _get_boto3_client_config(self):
+        from botocore.config import Config
+        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
+        return config
+
     def _get_training_job_status(self, job_name):
         import boto3
         import botocore
-        client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        client = boto3.client('sagemaker', self._aws_region, config=config)
         try:
             response = client.describe_training_job(TrainingJobName=job_name)
         except botocore.exceptions.ClientError as ex:
@@ -289,13 +295,14 @@ class CrontabSageMakerRunner(object):
                 print('Wait training job %r ... [%s]' % (job_name, status))
             if status in ('Completed', 'Failed', 'Stopped'):
                 return status
-            time.sleep(1)
-            counter += 1
+            time.sleep(60)
+            counter += 60
 
     def _get_model_paths(self):
         import boto3
         from urllib.parse import urlparse
-        s3 = boto3.client('s3', self._aws_region)
+        config = self._get_boto3_client_config()
+        s3 = boto3.client('s3', self._aws_region, config=config)
         results = urlparse(self._s3_model_dir, allow_fragments=False)
         bucket = results.netloc
         prefix = results.path.strip('/') + '/'
@@ -324,7 +331,8 @@ class CrontabSageMakerRunner(object):
     def _create_training_job(self):
         import boto3
         job_config = self._create_training_job_config()
-        sagemaker_client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
         response = sagemaker_client.create_training_job(**job_config)
         print('response: %s' % response)
         status = self._wait_training_job(self._training_job_name)

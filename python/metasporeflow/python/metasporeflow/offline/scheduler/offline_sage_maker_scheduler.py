@@ -277,11 +277,17 @@ class OfflineSageMakerScheduler(Scheduler):
         args.pop() # pop --redirect-stdio
         subprocess.check_call(args)
 
+    def _get_boto3_client_config(self):
+        from botocore.config import Config
+        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
+        return config
+
     def _get_training_jobs(self):
         import boto3
         training_jobs = []
         max_training_jobs = 10
-        sagemaker_client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
         response = sagemaker_client.list_training_jobs(
             SortBy='CreationTime',
             SortOrder='Descending',
@@ -315,7 +321,8 @@ class OfflineSageMakerScheduler(Scheduler):
     def _get_training_job_status(self, job_name):
         import boto3
         import botocore
-        sagemaker_client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
         try:
             response = sagemaker_client.describe_training_job(TrainingJobName=job_name)
         except botocore.exceptions.ClientError as ex:

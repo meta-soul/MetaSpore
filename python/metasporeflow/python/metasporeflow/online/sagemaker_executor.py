@@ -38,9 +38,10 @@ class SageMakerExecutor(object):
         self.configure = self._online_resource.data
         self.region = self._get_aws_region()
         self.role = self._get_iam_role()
-        self.sm_client = boto3.client("sagemaker", self.region)
-        self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region)
-        self.account_id = boto3.client("sts", self.region).get_caller_identity()["Account"]
+        config = self._get_boto3_client_config()
+        self.sm_client = boto3.client("sagemaker", self.region, config=config)
+        self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region, config=config)
+        self.account_id = boto3.client("sts", self.region, config=config).get_caller_identity()["Account"]
         self.bucket, self.prefix = self._get_bucket_and_prefix()
 
     def _get_scene_name(self):
@@ -117,10 +118,16 @@ class SageMakerExecutor(object):
         except botocore.exceptions.ClientError:
             return False
 
+    def _get_boto3_client_config(self):
+        from botocore.config import Config
+        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
+        return config
+
     def _get_endpoint_status(self, endpoint_name):
         import boto3
         import botocore
-        client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        client = boto3.client('sagemaker', self.region, config=config)
         try:
             response = client.describe_endpoint(EndpointName=endpoint_name)
         except botocore.exceptions.ClientError as ex:
