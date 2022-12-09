@@ -41,6 +41,7 @@ class DataSource(object):
     table: str
     serviceName: str
     collection: str
+    max_reservation: int = 200
     columns: Optional[list] = None
 
 

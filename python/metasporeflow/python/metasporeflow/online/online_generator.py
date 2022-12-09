@@ -181,6 +181,7 @@ class OnlineGenerator(object):
             if self.item_key in field_item:
                 if self.item_key_type != field_item.get(self.item_key):
                     raise ValueError("item and summary item key type set error!")
+        self.summary_max_reservation = feature_info.summary.max_reservation
 
     def process_feature_sourceTable(self, feature_config):
         feature_info = self.configure.source
@@ -252,7 +253,7 @@ class OnlineGenerator(object):
         recommend_config.add_service(name=iteminfo_service_name,
                                      preTransforms=[TransformConfig(name="summary")],
                                      columns=iteminfo_columns,
-                                     tasks=[feature_iteminfo_name], options={"maxReservation": 200})
+                                     tasks=[feature_iteminfo_name], options={"maxReservation": self.summary_max_reservation})
         summary_select = ["source_table_summary.%s" % field for field in self.summary_fields]
         for field_item in iteminfo_columns:
             summary_select.extend(["%s.%s" % (iteminfo_service_name, field) for field in field_item.keys() if
