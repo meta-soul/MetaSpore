@@ -60,6 +60,8 @@ COPY --from=recommend_stage recommend-service-*-SNAPSHOT.jar /opt/recommend-serv
 COPY dockerd-entrypoint.py /usr/local/bin/dockerd-entrypoint.py
 RUN chmod +x /usr/local/bin/dockerd-entrypoint.py
 
+ENV OMP_NUM_THREADS=1
+
 ENTRYPOINT ["python", "/usr/local/bin/dockerd-entrypoint.py"]
 
 CMD ["serve"]

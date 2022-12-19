@@ -44,7 +44,7 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
     protected TaskServiceRegister serviceRegister;
     protected TaskFlowConfig taskFlowConfig;
     protected List<Chain> chains;
-    protected long timeout = 30000L;
+    protected long timeout = 3000L;
     protected TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     public void init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {

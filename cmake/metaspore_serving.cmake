@@ -76,7 +76,10 @@ else()
 endif()
 
 add_executable(metaspore-serving-bin ${CMAKE_CURRENT_SOURCE_DIR}/cpp/serving/main.cpp)
-target_link_libraries(metaspore-serving-bin PRIVATE metaspore-serving mimalloc-static)
+target_link_libraries(metaspore-serving-bin PRIVATE metaspore-serving)
+if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_link_libraries(metaspore-serving-bin PRIVATE mimalloc-static)
+endif()
 
 set_target_properties(metaspore-serving-bin PROPERTIES
         LINK_FLAGS "-Wl,-rpath,$ORIGIN/")

@@ -134,14 +134,17 @@ static void find_source_node(std::shared_ptr<FeatureComputeExecContext> &ctx,
                              cp::Declaration &decl) {
     if (decl.factory_name == "source") {
         auto source_option = std::static_pointer_cast<MSSourceNodeOptions>(decl.options);
-        ctx->name_source_map_.emplace(source_option->name, source_option);
+        // decl.options is a shared pointer, we need to make a deep copy
+        auto source_option_copied = std::make_shared<MSSourceNodeOptions>(*source_option);
+        decl.options = source_option_copied;
+        ctx->name_source_map_.emplace(source_option->name, source_option_copied);
     }
     for (auto &input : decl.inputs) {
         find_source_node(ctx, arrow::util::get<cp::Declaration>(input));
     }
 }
 
-result<std::shared_ptr<FeatureComputeExecContext>> FeatureComputeExec::start_plan() {
+result<std::shared_ptr<FeatureComputeExecContext>> FeatureComputeExec::start_plan() const {
     auto ctx = std::make_shared<FeatureComputeExecContext>();
     ctx->root_decl_ = std::make_shared<cp::Declaration>(*context_->root_decl_);
     find_source_node(ctx, *ctx->root_decl_);
@@ -150,7 +153,7 @@ result<std::shared_ptr<FeatureComputeExecContext>> FeatureComputeExec::start_pla
 
 status FeatureComputeExec::set_input_schema(std::shared_ptr<FeatureComputeExecContext> &ctx,
                                             const std::string &source_name,
-                                            std::shared_ptr<arrow::Schema> schema) {
+                                            std::shared_ptr<arrow::Schema> schema) const {
     auto find = ctx->name_source_map_.find(source_name);
     if (find == ctx->name_source_map_.end()) {
         return absl::NotFoundError(
@@ -168,7 +171,7 @@ status FeatureComputeExec::set_input_schema(std::shared_ptr<FeatureComputeExecCo
 
 status FeatureComputeExec::feed_input(std::shared_ptr<FeatureComputeExecContext> &ctx,
                                       const std::string &source_name,
-                                      std::shared_ptr<arrow::RecordBatch> batch) {
+                                      std::shared_ptr<arrow::RecordBatch> batch) const {
     auto source = ctx->name_gen_map_.find(source_name);
     if (source == ctx->name_gen_map_.end()) {
         return absl::NotFoundError(
@@ -181,13 +184,14 @@ status FeatureComputeExec::feed_input(std::shared_ptr<FeatureComputeExecContext>
 }
 
 awaitable_result<std::shared_ptr<arrow::RecordBatch>>
-FeatureComputeExec::execute(std::shared_ptr<FeatureComputeExecContext> &ctx) {
+FeatureComputeExec::execute(std::shared_ptr<FeatureComputeExecContext> &ctx) const {
     finish_join(ctx->root_node_);
     cp::ExecBatch exec_batch = co_await ctx->channel_.async_receive(boost::asio::use_awaitable);
     ASSIGN_RESULT_OR_CO_RETURN_NOT_OK(
         auto rb_result, exec_batch.ToRecordBatch(ctx->root_before_sink_node_->output_schema()));
     co_return rb_result;
 }
+
 struct SinkConsumer : public cp::SinkNodeConsumer {
 
     SinkConsumer(std::shared_ptr<arrow::Schema> schema, channel_type &ch, arrow::Future<> fut)
@@ -209,10 +213,10 @@ struct SinkConsumer : public cp::SinkNodeConsumer {
     arrow::Future<> fut_;
 };
 
-status FeatureComputeExec::build_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) {
+status FeatureComputeExec::build_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) const {
     ASSIGN_RESULT_OR_RETURN_NOT_OK(auto plan, cp::ExecPlan::Make());
     // create sink reader
-    ASSIGN_RESULT_OR_RETURN_NOT_OK(auto root_result, context_->root_decl_->AddToPlan(plan.get()));
+    ASSIGN_RESULT_OR_RETURN_NOT_OK(auto root_result, ctx->root_decl_->AddToPlan(plan.get()));
     ctx->root_before_sink_node_ = root_result;
     ASSIGN_RESULT_OR_RETURN_NOT_OK(
         auto sink_result,
@@ -230,7 +234,7 @@ status FeatureComputeExec::build_plan(std::shared_ptr<FeatureComputeExecContext>
     return absl::OkStatus();
 }
 
-status FeatureComputeExec::finish_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) {
+status FeatureComputeExec::finish_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) const {
     for (auto &[name, queue] : ctx->name_gen_map_) {
         // to trigger arrow source node finish its async future loop
         queue.producer().Push(arrow::IterationTraits<arrow::util::optional<cp::ExecBatch>>::End());
@@ -245,7 +249,7 @@ status FeatureComputeExec::finish_plan(std::shared_ptr<FeatureComputeExecContext
     return ArrowStatusToAbsl::arrow_status_to_absl(plan->finished().status());
 }
 
-void FeatureComputeExec::finish_join(arrow::compute::ExecNode *node) {
+void FeatureComputeExec::finish_join(arrow::compute::ExecNode *node) const {
     for (auto input : node->inputs()) {
         if (input->label() == "join_node"s) {
             for (auto recurse_input : input->inputs()) {

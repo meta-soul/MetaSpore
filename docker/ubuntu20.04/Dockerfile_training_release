@@ -44,9 +44,8 @@ RUN apt-get install -y python3.8 python3-setuptools ca-certificates maven vim su
 ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
-RUN python -m easy_install install -i https://repo.huaweicloud.com/repository/pypi/simple/ pip
+RUN python -m easy_install -i https://repo.huaweicloud.com/repository/pypi/simple/ install pip
 RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
-RUN python -m pip config set global.extra-index-url https://pypi.org/simple
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
     apt-get install -y tini libpam-modules krb5-user libnss3 procps && apt-get clean && \
@@ -56,7 +55,6 @@ RUN python -m pip install --upgrade pip setuptools wheel && \
     python -m pip install numpy && \
     python -m pip install torch==1.11.0+cpu torchvision==0.12.0+cpu torchaudio==0.11.0+cpu \
      -f https://download.pytorch.org/whl/cpu/torch_stable.html && \
-    python -m pip install awscli awscli-plugin-endpoint && \
     python -m pip install onnx onnxmltools onnxruntime xgboost lightgbm tabulate && \
     python -m pip install pymilvus faiss-cpu && \
     python -m pip install https://github.com/sllynn/spark-xgboost/releases/download/v0.9/spark_xgboost-0.90-py3-none-any.whl && \

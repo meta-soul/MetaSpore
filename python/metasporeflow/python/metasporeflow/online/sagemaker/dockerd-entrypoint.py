@@ -36,14 +36,14 @@ def process_model_data():
 def serve():
     config_name, model_info_file = process_model_data()
     print("starting model serving")
-    asyncio.run(_start_model_serving(50000, "/data/models"))
+    asyncio.run(_start_model_serving(50000, "/opt/ml/model/model"))
     print("starting recommend service")
     asyncio.run(_start_recommend_service(8080, "false", model_info_file, config_name))
 
 
 async def _start_recommend_service(service_port, consul_enable, init_model_info=model_info_file,
                                    init_config=config_path):
-    recommend_base_cmd = "java -XX:MaxRAMPercentage=50 -jar " \
+    recommend_base_cmd = "java -XX:MaxRAMPercentage=50 -Dlogging.level.com.dmetasoul.metaspore=INFO -jar " \
                          "/opt/recommend-service.jar  --init_config={} --init_config_format=yaml " \
                          "--init_model_info={}".format(init_config, init_model_info)
     print("recommend_base_cmd:", recommend_base_cmd)
@@ -58,7 +58,7 @@ async def _start_model_serving(grpc_listen_port, init_load_path):
         os.remove(init_load_path)
     if not os.path.exists(init_load_path):
         os.makedirs(init_load_path)
-    serving_cmd = "/opt/metaspore-serving/bin/metaspore-serving-bin -grpc_listen_port {} -init_load_path {}".format(
+    serving_cmd = "/opt/metaspore-serving/bin/metaspore-serving-bin -compute_thread_num 10 -ort_intraop_thread_num 1 -ort_interop_thread_num 1 -grpc_listen_port {} -init_load_path {}".format(
         grpc_listen_port, init_load_path)
     subprocess.Popen(serving_cmd, shell=True)
 

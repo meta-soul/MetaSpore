@@ -45,6 +45,7 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 用于注册各种任务的实例；随配置动态更新
@@ -65,12 +66,9 @@ public class TaskServiceRegister {
      */
     @Autowired
     private SpringBeanUtil springBeanUtil;
-    @Autowired
-    private ExecutorService sourcePool;
-    @Autowired
-    private ExecutorService workFlowPool;
-    @Autowired
-    private ExecutorService taskPool;
+    private ExecutorService sourcePool = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() * 2);
+    private ExecutorService workFlowPool = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() * 2);
+    private ExecutorService taskPool = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() * 2);
 
     private FeatureServiceManager featureServiceManager;
     /**

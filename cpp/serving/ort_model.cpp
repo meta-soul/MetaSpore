@@ -48,6 +48,8 @@ class OrtModelContext {
         session_options_.SetExecutionMode(ExecutionMode::ORT_PARALLEL);
         session_options_.SetInterOpNumThreads(FLAGS_ort_interop_thread_num);
         session_options_.SetIntraOpNumThreads(FLAGS_ort_intraop_thread_num);
+        session_options_.DisableCpuMemArena();
+        session_options_.DisableMemPattern();
     }
     Ort::RunOptions run_options_;
     Ort::SessionOptions session_options_;

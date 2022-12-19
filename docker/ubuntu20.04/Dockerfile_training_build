@@ -18,10 +18,8 @@ FROM ${DEV_IMAGE} as build_training
 
 COPY . /opt/metaspore-src
 
-RUN --mount=type=cache,target=/opt/vcpkg_installed \
-    cmake -B /opt/metaspore-build-release -S /opt/metaspore-src \
+RUN cmake -B /opt/metaspore-build-release -S /opt/metaspore-src \
     -DCMAKE_PREFIX_PATH=/opt/vcpkg_installed/x64-linux \
     -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DENABLE_TESTS=OFF -DBUILD_SERVING_BIN=OFF -DBUILD_TRAIN_PKG=ON
-RUN --mount=type=cache,target=/opt/vcpkg_installed \
-    cmake --build /opt/metaspore-build-release --target python_wheel -- -j8
+RUN cmake --build /opt/metaspore-build-release --target python_wheel -- -j8

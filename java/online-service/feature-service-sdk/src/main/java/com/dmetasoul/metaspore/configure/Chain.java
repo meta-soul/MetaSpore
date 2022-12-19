@@ -20,7 +20,7 @@ public class Chain {
 
     private boolean isAny;
 
-    private Long timeOut = 30000L;
+    private Long timeOut = 3000L;
 
     private TimeUnit timeOutUnit = TimeUnit.MILLISECONDS;
 
