@@ -192,9 +192,9 @@ class CrontabSageMakerRunner(object):
         sys.stderr.flush()
 
     def _create_training_job_config(self):
+        # NOTE: Default offline training docker image
         repo_url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo'
-        # TODO: cf: check this later
-        docker_image = '%s/metaspore-spark-training-release:v1.1.1-sagemaker-entrypoint' % repo_url
+        docker_image = '%s/metaspore-spark-training-release:v1.1.2-sagemaker-entrypoint' % repo_url
         role_arn = self._sage_maker_config.roleArn
         security_groups = self._sage_maker_config.securityGroups
         subnets = self._sage_maker_config.subnets
@@ -251,7 +251,7 @@ class CrontabSageMakerRunner(object):
                 'METASPORE_FLOW_S3_WORK_DIR': s3_work_dir,
                 'METASPORE_FLOW_SCENE_NAME': self._scene_name,
                 # NOTE: only one NN model is supported for the moment
-                'METASPORE_FLOW_MODEL_NAME': 'amazonfashion_widedeep',
+                'METASPORE_FLOW_MODEL_NAME': 'widedeep',
                 'METASPORE_FLOW_MODEL_VERSION': self._model_version,
                 # NOTE: incremental training is not supported for the moment
                 'METASPORE_FLOW_LAST_MODEL_VERSION': '',
@@ -265,10 +265,16 @@ class CrontabSageMakerRunner(object):
         )
         return job_config
 
+    def _get_boto3_client_config(self):
+        from botocore.config import Config
+        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
+        return config
+
     def _get_training_job_status(self, job_name):
         import boto3
         import botocore
-        client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        client = boto3.client('sagemaker', self._aws_region, config=config)
         try:
             response = client.describe_training_job(TrainingJobName=job_name)
         except botocore.exceptions.ClientError as ex:
@@ -289,13 +295,14 @@ class CrontabSageMakerRunner(object):
                 print('Wait training job %r ... [%s]' % (job_name, status))
             if status in ('Completed', 'Failed', 'Stopped'):
                 return status
-            time.sleep(1)
-            counter += 1
+            time.sleep(60)
+            counter += 60
 
     def _get_model_paths(self):
         import boto3
         from urllib.parse import urlparse
-        s3 = boto3.client('s3', self._aws_region)
+        config = self._get_boto3_client_config()
+        s3 = boto3.client('s3', self._aws_region, config=config)
         results = urlparse(self._s3_model_dir, allow_fragments=False)
         bucket = results.netloc
         prefix = results.path.strip('/') + '/'
@@ -324,7 +331,8 @@ class CrontabSageMakerRunner(object):
     def _create_training_job(self):
         import boto3
         job_config = self._create_training_job_config()
-        sagemaker_client = boto3.client('sagemaker')
+        config = self._get_boto3_client_config()
+        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
         response = sagemaker_client.create_training_job(**job_config)
         print('response: %s' % response)
         status = self._wait_training_job(self._training_job_name)

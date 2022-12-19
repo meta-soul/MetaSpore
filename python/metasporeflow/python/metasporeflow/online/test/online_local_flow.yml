@@ -69,6 +69,7 @@ spec:
         - image: str
         - url: str
         - price: str
+      max_reservation: 1
     request:
       - user_id: str
       - item_id: str
