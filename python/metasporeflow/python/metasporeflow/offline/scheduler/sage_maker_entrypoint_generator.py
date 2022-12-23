@@ -14,11 +14,6 @@
 # limitations under the License.
 #
 
-from attrs import frozen
-from typing import Any
-from typing import Optional
-from typing import List
-from typing import Dict
 
 class SageMakerEntrypointGenerator(object):
     def __init__(self, dag_tasks):

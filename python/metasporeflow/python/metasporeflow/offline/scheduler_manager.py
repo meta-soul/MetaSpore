@@ -15,14 +15,15 @@
 #
 
 import subprocess
-from typing import Dict
-from ..resources.resource import Resource
-from .scheduler.scheduler_type import SchedulerType
-from .scheduler.scheduler import Scheduler
+from typing import Dict, Tuple
+
 from ..flows.metaspore_offline_flow import OfflineScheduler
+from ..resources.resource import Resource
 from .scheduler.offline_crontab_scheduler import OfflineCrontabScheduler
 from .scheduler.offline_k8s_cronjob_scheduler import OfflineK8sCronjobScheduler
 from .scheduler.offline_sage_maker_scheduler import OfflineSageMakerScheduler
+from .scheduler.scheduler import Scheduler
+from .scheduler.scheduler_type import SchedulerType
 
 _SCHEDULER_TYPES = {
     'OfflineCrontabScheduler': OfflineCrontabScheduler,

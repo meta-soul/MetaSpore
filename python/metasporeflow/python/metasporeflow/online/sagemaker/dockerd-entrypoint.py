@@ -1,9 +1,9 @@
+import asyncio
 import json
 import os
 import shlex
 import subprocess
 import sys
-import asyncio
 
 prefix = "/opt/ml/model/"
 config_name = "recommend-config.yaml"

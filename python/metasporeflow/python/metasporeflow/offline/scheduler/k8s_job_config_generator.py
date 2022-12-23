@@ -14,11 +14,10 @@
 # limitations under the License.
 #
 
+from typing import Any, Dict, List, Optional
+
 from attrs import frozen
-from typing import Any
-from typing import Optional
-from typing import List
-from typing import Dict
+
 
 @frozen
 class JobTemplateMetadata:

@@ -14,8 +14,10 @@
 # limitations under the License.
 #
 
-from attrs import frozen
 from typing import Any
+
+from attrs import frozen
+
 
 @frozen
 class Resource:

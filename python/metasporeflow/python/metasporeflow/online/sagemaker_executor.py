@@ -1,18 +1,15 @@
+import datetime
 import decimal
 import json
-
-from metasporeflow.online.common import dictToObj
+import os
+import re
+import shutil
+import tarfile
+import tempfile
 
 import boto3
-import datetime
-import time
-import re
-import os
-import shutil
-import tempfile
-import tarfile
-
 from metasporeflow.online.online_generator import OnlineGenerator
+
 
 class DateEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -46,6 +43,7 @@ class SageMakerExecutor(object):
 
     def _get_scene_name(self):
         import re
+
         from metasporeflow.flows.metaspore_flow import MetaSporeFlow
         flow_resource = self._resources.find_by_type(MetaSporeFlow)
         scene_name = flow_resource.name

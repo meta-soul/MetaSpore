@@ -15,12 +15,10 @@
 #
 
 import re
+from typing import Any, Dict, Literal, Optional, Tuple
+
 from attrs import frozen
-from typing import Any
-from typing import Dict
-from typing import Literal
-from typing import Optional
-from typing import Tuple
+
 
 class ResourceLoader(object):
     _IDENTIFIER = '[A-Za-z_][A-Za-z0-9_]*'
@@ -172,8 +170,8 @@ class ResourceLoader(object):
                         data=resource.spec)
 
     def load_into(self, path, resource_manager):
-        import os
         import collections
+        import os
         loaded = set()
         queue = collections.deque()
         queue.append(os.path.normpath(path))

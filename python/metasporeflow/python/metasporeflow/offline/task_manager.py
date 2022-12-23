@@ -15,8 +15,9 @@
 #
 
 from typing import Dict
-from .task.task import Task
+
 from .task.offline_python_task import OfflinePythonTask
+from .task.task import Task
 
 _TASK_TYPES = {'OfflinePythonTask': OfflinePythonTask}
 

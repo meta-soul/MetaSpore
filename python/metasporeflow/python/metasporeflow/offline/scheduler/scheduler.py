@@ -18,7 +18,6 @@ from abc import ABC, abstractmethod
 from typing import Dict, List
 
 import networkx as nx
-
 from metasporeflow.offline.task.task import Task
 
 

@@ -14,10 +14,11 @@
 # limitations under the License.
 #
 import json
-
-import requests
 import time
 import traceback
+
+import requests
+
 
 def notifyRecommendService(host, port):
     print("notify recommend service %s:%s" % (host, port))

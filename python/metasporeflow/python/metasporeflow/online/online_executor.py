@@ -14,16 +14,17 @@
 # limitations under the License.
 #
 
-import random
+import os
 import subprocess
 import time
-import os
 
-from metasporeflow.online.check_service import notifyRecommendService, healthRecommendService, tryRecommendService
-from metasporeflow.online.cloud_consul import putServiceConfig, Consul
+from metasporeflow.online.check_service import (healthRecommendService,
+                                                notifyRecommendService,
+                                                tryRecommendService)
+from metasporeflow.online.cloud_consul import Consul, putServiceConfig
+from metasporeflow.online.common import DumpToYaml
 from metasporeflow.online.online_flow import OnlineFlow
 from metasporeflow.online.online_generator import OnlineGenerator
-from metasporeflow.online.common import DumpToYaml
 
 
 def run_cmd(command):

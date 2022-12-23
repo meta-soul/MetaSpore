@@ -14,13 +14,15 @@
 # limitations under the License.
 #
 
-from typing import Dict, Tuple
-import subprocess
 import os
+import subprocess
 import time
-from metasporeflow.flows.metaspore_offline_flow import OfflineScheduler, OfflineTask
+from typing import Dict, Tuple
+
+from metasporeflow.flows.metaspore_offline_flow import OfflineTask
 from metasporeflow.offline.task.task import Task
 from metasporeflow.resources.resource import Resource
+
 
 class LocalOfflineFlowExecutor():
     def __init__(self, resources):

@@ -15,9 +15,10 @@
 #
 
 import subprocess
-from .scheduler import Scheduler
+
 from .sage_maker_entrypoint_generator import SageMakerEntrypointGenerator
-from ..utils.file_util import FileUtil
+from .scheduler import Scheduler
+
 
 class OfflineSageMakerScheduler(Scheduler):
     def __init__(self, resources, scheduler_conf, tasks):

@@ -15,9 +15,10 @@
 #
 
 import subprocess
-from .scheduler import Scheduler
+
 from .k8s_job_config_generator import K8sJobConfigGenerator
-from ..utils.file_util import FileUtil
+from .scheduler import Scheduler
+
 
 class OfflineK8sCronjobScheduler(Scheduler):
     def __init__(self, resources, scheduler_conf, tasks):

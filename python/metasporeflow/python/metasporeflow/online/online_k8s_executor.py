@@ -3,8 +3,10 @@ import subprocess
 import time
 from string import Template
 
-from metasporeflow.online.check_service import notifyRecommendService, healthRecommendService, tryRecommendService
-from metasporeflow.online.cloud_consul import putServiceConfig, Consul, putConfigByKey
+from metasporeflow.online.check_service import (healthRecommendService,
+                                                tryRecommendService)
+from metasporeflow.online.cloud_consul import (Consul, putConfigByKey,
+                                               putServiceConfig)
 from metasporeflow.online.online_generator import OnlineGenerator
 
 
@@ -203,22 +205,26 @@ class OnlineK8sExecutor(object):
                 print("%s k8s service delete fail!" % service_name)
 
     def k8s_consul(self, data, command):
-        from metasporeflow.online.k8s_template.consul_template import template, default
+        from metasporeflow.online.k8s_template.consul_template import (
+            default, template)
         self.k8s_service("consul-server", command, template, data, default)
 
     def k8s_recommend(self, data, command):
-        from metasporeflow.online.k8s_template.recommend_template import template, default
+        from metasporeflow.online.k8s_template.recommend_template import (
+            default, template)
         self.k8s_service("recommend-service", command, template, data, default)
 
     def k8s_model(self, data, command):
-        from metasporeflow.online.k8s_template.model_template import template, default
+        from metasporeflow.online.k8s_template.model_template import (default,
+                                                                      template)
         self.k8s_service("model-serving", command, template, data, default)
 
 
 if __name__ == '__main__':
+    import asyncio
+
     from metasporeflow.flows.flow_loader import FlowLoader
     from metasporeflow.online.online_flow import OnlineFlow
-    import asyncio
 
     flow_loader = FlowLoader()
     with open('test/online_local_flow.yml') as input:

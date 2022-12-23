@@ -15,11 +15,9 @@
 #
 
 import os
-from .cloud_consul import putServiceConfig
-from .common import DumpToYaml, dictToObj, setDefault, S
+from .common import DumpToYaml, dictToObj, setDefault
 from .compose_config import OnlineDockerCompose
-from .online_flow import OnlineFlow, ServiceInfo, DataSource, FeatureInfo, CFModelInfo, RankModelInfo, DockerInfo, \
-    RandomModelInfo, CrossFeature
+from .online_flow import OnlineFlow, DockerInfo
 from .service_config import get_source_option, Source, Condition, FieldAction, \
     FeatureConfig, RecommendConfig, TransformConfig, Chain, ExperimentItem, OnlineServiceConfig
 

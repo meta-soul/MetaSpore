@@ -16,7 +16,6 @@
 from metasporeflow.online.online_executor import OnlineLocalExecutor
 from metasporeflow.offline.local_offline_executor import LocalOfflineFlowExecutor
 from .flow_executor import FlowExecutor
-import asyncio
 
 class LocalFlowExecutor(FlowExecutor):
     def __init__(self, resources):

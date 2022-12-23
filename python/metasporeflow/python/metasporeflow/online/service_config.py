@@ -14,12 +14,11 @@
 # limitations under the License.
 #
 
-from attrs import define
-from attrs import field
 from typing import Literal
 
+from attrs import define, field
+
 from .common import BaseDefaultConfig, dictToObj
-from urllib.parse import quote_plus
 
 
 def get_source_option(online_config, name, collection):

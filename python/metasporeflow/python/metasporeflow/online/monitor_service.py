@@ -16,11 +16,9 @@
 
 import requests
 import time
-import traceback
 import hashlib
 import base64
 import hmac
-import argparse
 import tornado
 from apscheduler.schedulers.tornado import TornadoScheduler
 
@@ -72,7 +70,6 @@ def push(url, secret, msg_title, msg_body, msg_href='', msg_at=''):
   return r.json()
 
 def restart_service(path):
-    from metasporeflow.resources.resource_manager import ResourceManager
     from metasporeflow.resources.resource_loader import ResourceLoader
     from metasporeflow.online.online_executor import OnlineLocalExecutor
     print("restart service load config from %s" % (path))
