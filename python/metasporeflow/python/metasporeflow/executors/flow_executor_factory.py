@@ -33,8 +33,8 @@ class FlowExecutorFactory(object):
     
     @staticmethod
     def init_flow(scene_name: str, scheduler_mode: str):
-        from ..config.template_engine import get_scene_instance, SchedulerMode
-        from ..config.scheduler_operator import local_operaor, sagemaker_operaor
+        from ..config_yamls.template_engine import get_scene_instance, SchedulerMode
+        from ..config_yamls.scheduler_operator import local_operaor, sagemaker_operaor
         scene_context = get_scene_instance(scene_name, scheduler_mode)
         if scheduler_mode== SchedulerMode.LOCALMODE:
             local_operaor(scene_context)
