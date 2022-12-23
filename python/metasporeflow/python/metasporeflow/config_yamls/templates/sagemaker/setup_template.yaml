@@ -1,0 +1,68 @@
+apiVersion: metaspore/v1
+kind: TrainingJob
+metadata:
+  name: Setup
+  category: Setup
+
+spec:
+  logging:
+    loglevel: debug
+
+  init_spark:
+    session_conf:
+      app_name: 'Ecommerce Setup'
+      local: {{local | default(True)}}
+      worker_count: {{worker_count | default(8)}}
+      worker_cpu: {{worker_cpu | default(1)}}
+      server_count: {{server_count | default(8)}}
+      server_cpu: {{server_cpu | default(1)}}
+      batch_size: {{batch_size | default(256)}}
+      worker_memory: {{worker_memory | default('1G')}}
+      server_memory: {{server_memeory | default('1G')}}
+      coordinator_memory: {{coordinator_memory | default('16G')}}
+    extended_conf:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+      spark.default.parallelism: '16'
+      spark.sql.shuffle.partitions: '16'
+      spark.hadoop.fs.s3a.committer.name: 'directory'
+      spark.hadoop.fs.s3a.committer.threads: '16'
+      spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version": '2'
+      spark.hadoop.fs.s3a.committer.staging.conflict-mode: 'append'
+      spark.hadoop.fs.s3a.threads.max: '32'
+      spark.hadoop.fs.s3a.connection.maximum: '32'
+      spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a: 'org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory'
+      
+
+  load_dataset:
+    format: jdbc
+    driver: com.mysql.jdbc.Driver
+    host: {{db_host | default("localhost")}}
+    port: {{db_port | default("3306")}}
+    database: {{db_name | default("metaspore_offline_flow")}}
+    user_table:
+      name: {{db_user_tbl | default("user")}}
+      user_id_column_name: {{user_id_column_name | default("user_id")}}
+    item_table:
+      name: {{db_item_tbl | default("item")}}
+      item_id_column_name: {{item_id_column_name | default("item_id")}}
+      price_column_name: {{price_column_name | default("price")}}
+      title_column_name: {{title_column_name | default("title")}}
+      brand_column_name: {{brand_column_name | default("brand")}}
+      category_column_name: {{category_column_name | default("category")}}
+      url_column_name: {{url_column_name | default("url")}}
+      description_column_name: {{description_column_name | default("description")}}
+    interaction_table: 
+      name: {{db_iteraction_tbl | default("interaction")}}
+      user_id_column_name: {{interaction_user_id_column_name | default("user_id")}}
+      item_id_column_name: {{interaction_item_id_column_name | default("item_id")}}
+      timestamp_column_name: {{interaction_timestamp_column_name | default("timestamp")}}
+    user: {{db_username | default("root")}}
+    password: {{db_password | default("test_mysql_123456")}}
+
+  save_dataset:
+    user_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/raw/@{METASPORE_FLOW_MODEL_VERSION}/amazon_fashion_user.parquet'
+    item_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/raw/@{METASPORE_FLOW_MODEL_VERSION}/amazon_fashion_item.parquet'
+    interaction_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/raw/@{METASPORE_FLOW_MODEL_VERSION}/amazon_fashion_interaction.parquet'

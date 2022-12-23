@@ -1,0 +1,13 @@
+apiVersion: metaspore/v1
+kind: MetaSporeFlow
+metadata:
+    name: {{metaspore_flow_name}}
+    uses:
+      - {{working_dir | default(".")}}/online_flow.yml
+      - {{working_dir | default(".")}}/offline_flow.yml
+      - {{working_dir | default(".")}}/crontab_scheduler.yml
+      - {{working_dir | default(".")}}/sync_data.yml
+      - {{working_dir | default(".")}}/join_data.yml
+      - {{working_dir | default(".")}}/sage_maker_config.yml
+spec:
+    deployMode: SageMaker

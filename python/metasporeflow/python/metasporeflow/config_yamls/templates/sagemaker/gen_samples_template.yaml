@@ -1,0 +1,128 @@
+apiVersion: metaspore/v1
+kind: TrainingJob
+metadata:
+  name: SampleGeneration
+  category: Dataset/SampleGeneration
+
+spec:
+  logging:
+    loglevel: {{loglevel | default('debug')}}
+
+  init_spark:
+    session_conf:
+      app_name: 'Ecommerce Samples'
+      local: {{local | default(True)}}
+      worker_count: {{worker_count | default(8)}}
+      worker_cpu: {{worker_cpu | default(1)}}
+      server_count: {{server_count | default(8)}}
+      server_cpu: {{server_cpu | default(1)}}
+      batch_size: {{batch_size | default(256)}}
+      worker_memory: {{worker_memory | default('1G')}}
+      server_memory: {{server_memeory | default('1G')}}
+      coordinator_memory: {{coordinator_memory | default('16G')}}
+    extended_conf:
+      spark.network.timeout: '500'
+      spark.ui.showConsoleProgress: 'true'
+      spark.kubernetes.executor.deleteOnTermination: 'true'
+      spark.hadoop.fs.s3a.aws.credentials.provider: com.amazonaws.auth.DefaultAWSCredentialsProviderChain
+      spark.default.parallelism: {{spark_default_parallelism | default('"16"')}}
+      spark.sql.shuffle.partitions: {{spark_sql_shuffle_partitions | default('"16"')}}
+      park.hadoop.fs.s3a.committer.name: 'directory'
+      spark.hadoop.fs.s3a.committer.threads: '16'
+      spark.hadoop.mapreduce.fileoutputcommitter.algorithm.version": '2'
+      spark.hadoop.fs.s3a.committer.staging.conflict-mode: 'append'
+      spark.hadoop.fs.s3a.threads.max: '32'
+      spark.hadoop.fs.s3a.connection.maximum: '32'
+      spark.hadoop.mapreduce.outputcommitter.factory.scheme.s3a: 'org.apache.hadoop.fs.s3a.commit.S3ACommitterFactory'
+
+  load_dataset: 
+    user_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/raw/@{METASPORE_FLOW_MODEL_VERSION}/amazon_fashion_user.parquet'
+    item_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/raw/@{METASPORE_FLOW_MODEL_VERSION}/amazon_fashion_item.parquet'
+    interaction_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/raw/@{METASPORE_FLOW_MODEL_VERSION}/amazon_fashion_interaction.parquet'
+    fmt: {{fmt | default('parquet')}}
+
+  join_dataset:
+    join_on: 
+      user_key: {{user_key}}
+      item_key: {{item_key}}
+      timestamp: {{timestamp_key}}
+    user_bhv_seq:
+      max_len: {{max_len | default(10)}}
+    negative_sample:
+      sample_ratio: {{sample_ratio | default(3)}}
+
+  gen_feature:
+    reserve_only_cate_cols: True
+
+  gen_sample:
+    - model_type: ctr_nn
+      split_test: 0.15
+      shuffle: True
+      fmt: parquet
+      train_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/ctr/nn/@{METASPORE_FLOW_MODEL_VERSION}/train.parquet'
+      test_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/ctr/nn/@{METASPORE_FLOW_MODEL_VERSION}/test.parquet'
+    
+    - model_type: match_icf
+      split_test: 0.15
+      shuffle: True
+      fmt: parquet
+      train_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/match/icf/@{METASPORE_FLOW_MODEL_VERSION}/train.parquet'
+      test_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/match/icf/@{METASPORE_FLOW_MODEL_VERSION}/test.parquet'
+
+    # not use for now
+    - model_type: ctr_gbm
+      split_test: 0.15
+      use_shuffle: True
+      fmt: parquet
+      combine_schema:
+        user_cols: [user_id]
+        item_cols: [item_id, category]
+        combine_cols: []
+      train_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/ctr/gbm/@{METASPORE_FLOW_MODEL_VERSION}/train.parquet'
+      test_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/ctr/gbm/@{METASPORE_FLOW_MODEL_VERSION}/test.parquet'
+
+    # not use for now
+    - model_type: match_nn
+      split_test: 0.15
+      shuffle: True
+      fmt: parquet
+      train_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/match/nn/@{METASPORE_FLOW_MODEL_VERSION}/train.parquet'
+      test_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/match/nn/@{METASPORE_FLOW_MODEL_VERSION}/test.parquet'
+      item_path: '@{METASPORE_FLOW_S3_WORK_DIR}/flow/scene/@{METASPORE_FLOW_SCENE_NAME}/data/match/nn/@{METASPORE_FLOW_MODEL_VERSION}/item.parquet'
+
+  dump_nn_feature: 
+    mongodb:
+      uri: {{mongodb_uri}}
+      database: {{mongodb_db}}
+      write_mode: overwrite
+      index_fields: []
+      index_unique: False
+    tables:
+      - feature_column: {{user_feature_columns}}
+        mongo_collection: {{user_feature_collection}}
+        index_fields: [user_id]
+        drop_duplicates_by: [user_id]
+      - feature_column: {{item_feature_columns}}
+        mongo_collection: {{item_feature_collection}} 
+        index_fields: [item_id] 
+        drop_duplicates_by: [item_id]
+      - feature_column: {{item_summary_columns}}
+        mongo_collection: {{item_summary_collection}} 
+        index_fields: [item_id]
+        drop_duplicates_by: [item_id]
+
+  # not use for now
+  dump_lgb_feaure:
+    mongodb:
+      uri: {{mongodb_uri}}
+      database: {{mongodb_db}}
+      write_mode: overwrite
+      index_fields: []
+      index_unique: False
+    tables:
+      - feature_column: user_cols
+        mongo_collection: amazonfashion_user_lgb_feature
+        index_fields: [user_id]
+      - feature_column: item_cols
+        mongo_collection: amazonfashion_item_lgb_feature
+        index_fields: [item_id]
