@@ -1,19 +1,3 @@
-#
-# Copyright 2022 DMetaSoul
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
 class FlowExecutorFactory(object):
     def __init__(self, resources):
         self._resources = resources
@@ -33,13 +17,8 @@ class FlowExecutorFactory(object):
     
     @staticmethod
     def init_flow(scene_name: str, scheduler_mode: str):
-        from ..config_yamls.template_engine import get_scene_instance, SchedulerMode
-        from ..config_yamls.scheduler_operator import local_operaor, sagemaker_operaor
-        scene_context = get_scene_instance(scene_name, scheduler_mode)
-        if scheduler_mode== SchedulerMode.LOCALMODE:
-            local_operaor(scene_context)
-        elif scheduler_mode== SchedulerMode.SAGEMAKERMODE:
-            sagemaker_operaor(scene_context)
+        from ..config_yamls.generate_flow import generate_flow
+        generate_flow(scene_name, scheduler_mode)
 
     def create_flow_executor(self):
         from .local_flow_executor import LocalFlowExecutor
