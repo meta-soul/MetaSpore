@@ -20,10 +20,13 @@ class Flow:
         command_parser = subparsers.add_parser('flow', help='metaspore flow management')
         command_parser.set_defaults(command_executor=cls._execute_flow)
         subcommand_parsers = command_parser.add_subparsers(dest='subcommand_name')
-        init_parser = subcommand_parsers.add_parser('init', help='init metaspore flow')
+        init_parser = subcommand_parsers.add_parser('init', help='init metaspore flow yaml')
         init_parser.set_defaults(subcommand_executor=cls._init_flow)
         init_parser.add_argument("--scene_name", type=str, help="input scene name")
         init_parser.add_argument("--scheduler_mode", type=str, default="Local", help="input scheduler model: Local, K8sCluster, SageMaker")
+        generate_parser = subcommand_parsers.add_parser('create', help='create metaspore flow')
+        generate_parser.set_defaults(subcommand_executor=cls._generate_flow)
+        generate_parser.add_argument("--values", type=str, help="input init scene yaml path")
         up_parser = subcommand_parsers.add_parser('up', help='start metaspore flow')
         up_parser.set_defaults(subcommand_executor=cls._execute_flow_up)
         down_parser = subcommand_parsers.add_parser('down', help='stop metaspore flow')
@@ -42,6 +45,12 @@ class Flow:
         from metasporeflow.executors.flow_executor_factory import \
             FlowExecutorFactory
         FlowExecutorFactory.init_flow(args.scene_name, args.scheduler_mode)
+        
+    @staticmethod
+    def _generate_flow(args):
+        from metasporeflow.executors.flow_executor_factory import \
+            FlowExecutorFactory
+        FlowExecutorFactory.generate_flow(args.values)
 
     @classmethod
     def _execute_flow_up(cls, args):

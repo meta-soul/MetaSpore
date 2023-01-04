@@ -17,8 +17,13 @@ class FlowExecutorFactory(object):
     
     @staticmethod
     def init_flow(scene_name: str, scheduler_mode: str):
-        from ..config_yamls.generate_flow import generate_flow
-        generate_flow(scene_name, scheduler_mode)
+        from ..scene.metaspore_scene import init_flow
+        init_flow(scene_name, scheduler_mode)
+
+    @staticmethod
+    def generate_flow(values: str):
+        from ..scene.metaspore_scene import generate_flow
+        generate_flow(values)
 
     def create_flow_executor(self):
         from .local_flow_executor import LocalFlowExecutor
