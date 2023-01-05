@@ -15,7 +15,8 @@
 #
 
 from attrs import frozen
-from typing import Tuple
+from typing import Tuple, Optional
+
 
 @frozen
 class SageMakerConfig:
@@ -24,3 +25,10 @@ class SageMakerConfig:
     subnets: Tuple[str, ...]
     s3Endpoint: str
     s3WorkDir: str
+    enableTracking: Optional[bool] = False
+    trackingDbUri: Optional[str] = None
+    trackingDbDatabase: Optional[str] = 'tracking'
+    trackingDbTable: Optional[str] = 'tracking'
+    trackingLogBufferTimeoutMs: Optional[int] = 1000
+    trackingLogBufferMaxBytes: Optional[int] = 262144
+    trackingLogBufferMaxItems: Optional[int] = 10000

@@ -11,7 +11,9 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+import sys
 
+print(sys.path)
 from metasporeflow.tracking.tracking import Tracking
 import boto3
 import time
@@ -42,7 +44,11 @@ class TrackingAws(Tracking):
         self._init_tracking_params()
 
     async def execute_up(self):
-        self._create_function()
+        if self._metasporeflow_tracking_enable:
+            print('[enableTracking] is True, creating tracking function')
+            self._create_function()
+        else:
+            print('[enableTracking] is False, skip create tracking function')
 
     def _get_sage_maker_config(self):
         from metasporeflow.flows.sage_maker_config import SageMakerConfig
@@ -50,22 +56,36 @@ class TrackingAws(Tracking):
         sage_maker_config = sage_maker_resource.data
         return sage_maker_config
 
+    @property
+    def _aws_region(self):
+        import re
+        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
+        sage_maker_config = self._sage_maker_config
+        s3_endpoint = sage_maker_config.s3Endpoint
+        match = re.match(pattern, s3_endpoint)
+        if match is None:
+            message = 'invalid s3 endpoint %r' % s3_endpoint
+            raise RuntimeError(message)
+        aws_region = match.group(1)
+        return aws_region
+
     def _init_tracking_params(self):
-        self._function_name = self._sage_maker_config.tracking_function_name
-        self._image_uri = self._sage_maker_config.tracking_image_uri
-        self._ima_role = self._sage_maker_config.tracking_ima_role
+        self._function_name = 'tracking'
+        self._image_uri = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo/tracking-log-extension-function:latest'
+        self._ima_role = self._sage_maker_config.roleArn
         self._security_group_ids = self._sage_maker_config.securityGroups
         self._subnet_ids = self._sage_maker_config.subnets
         self._s3_bucket_name = self._sage_maker_config.s3WorkDir + '/tracking_log'
-        self._metasporeflow_tracking_db_enable = self._sage_maker_config.metasporeflow_tracking_db_enable
-        self._metasporeflow_tracking_db_type = self._sage_maker_config.metasporeflow_tracking_db_type
-        self._metasporeflow_tracking_db_uri = self._sage_maker_config.metasporeflow_tracking_db_uri
-        self._metasporeflow_tracking_db_database = self._sage_maker_config.metasporeflow_tracking_db_database
-        self._metasporeflow_tracking_db_table = self._sage_maker_config.metasporeflow_tracking_db_table
-        self._metasporeflow_tracking_log_buffer_timeout_ms = self._sage_maker_config.metasporeflow_tracking_log_buffer_timeout_ms
-        self._metasporeflow_tracking_log_buffer_max_bytes = self._sage_maker_config.metasporeflow_tracking_log_buffer_max_bytes
-        self._metasporeflow_tracking_log_buffer_max_items = self._sage_maker_config.metasporeflow_tracking_log_buffer_max_items
-        self._region_name = os.environ['AWS_DEFAULT_REGION']
+        self._metasporeflow_tracking_enable = self._sage_maker_config.enableTracking
+        self._metasporeflow_tracking_db_enable = 'True'
+        self._metasporeflow_tracking_db_type = 'mongodb'
+        self._metasporeflow_tracking_db_uri = self._sage_maker_config.trackingDbUri
+        self._metasporeflow_tracking_db_database = self._sage_maker_config.trackingDbDatabase
+        self._metasporeflow_tracking_db_table = self._sage_maker_config.trackingDbTable
+        self._metasporeflow_tracking_log_buffer_timeout_ms = str(self._sage_maker_config.trackingLogBufferTimeoutMs)
+        self._metasporeflow_tracking_log_buffer_max_bytes = str(self._sage_maker_config.trackingLogBufferMaxBytes)
+        self._metasporeflow_tracking_log_buffer_max_items = str(self._sage_maker_config.trackingLogBufferMaxItems)
+        self._region_name = self._aws_region
         self._iam_resource = boto3.resource('iam', region_name=self._region_name)
         self._lambda_client = boto3.client('lambda', region_name=self._region_name)
 
@@ -117,3 +137,18 @@ class TrackingAws(Tracking):
         else:
             msg = 'An error occurred creating/updating function {}: {}'.format(self._function_name, response)
             raise Exception(msg)
+
+
+if __name__ == '__main__':
+    print('Starting Tracking AWS')
+    from metasporeflow.flows.flow_loader import FlowLoader
+    from metasporeflow.flows.sage_maker_config import SageMakerConfig
+
+    flow_loader = FlowLoader()
+    flow_loader._file_name = 'metasporeflow/tracking/test/metaspore-flow.yml'
+    resources = flow_loader.load()
+    sagemaker_config = resources.find_by_type(SageMakerConfig)
+    print(type(sagemaker_config))
+    print(sagemaker_config)
+    tracking = TrackingAws(resources)
+    tracking._create_function()

@@ -1,0 +1,8 @@
+apiVersion: metaspore/v1
+kind: MetaSporeFlow
+metadata:
+  name: demo_metaspore_flow
+  uses:
+    - ./sagemaker_config.yml
+spec:
+  sharedVolumeInContainer: '/opt/volumes'
