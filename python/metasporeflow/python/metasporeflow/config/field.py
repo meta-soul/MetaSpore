@@ -21,7 +21,11 @@ from .types import format_type
 from .convert import convert_value
 from .validate import validate_value
 
+METASPOREFLOW_CONFIG_METADATA = '__METASPOREFLOW_CONFIG_METADATA'
+
 def transform_field(cls, field):
+    if field.metadata.get(METASPOREFLOW_CONFIG_METADATA):
+        return field
     field_type = field.type
     if not is_type(field_type):
         message = "field %r of %r " % (field.name, cls.__qualname__)
@@ -29,6 +33,7 @@ def transform_field(cls, field):
         raise TypeError(message)
     assert field.converter is None
     assert field.validator is None
+    assert not field.metadata
     def validate_field(inst, attr, value):
         try:
             validate_value(value, attr.type)
@@ -49,10 +54,12 @@ def transform_field(cls, field):
             message += "must be %s; " % format_type(field.type)
             message += "%r is invalid" % (field_default,)
             raise TypeError(message)
+    field_metadata = {METASPOREFLOW_CONFIG_METADATA: True}
     return field.evolve(type=field_type,
                         default=field_default,
                         converter=convert_field,
-                        validator=validate_field)
+                        validator=validate_field,
+                        metadata=field_metadata)
 
 def transform_fields(cls, fields):
     fields = tuple(transform_field(cls, field) for field in fields)

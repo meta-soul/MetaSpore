@@ -14,45 +14,47 @@
 # limitations under the License.
 #
 
-from attrs import frozen
-from typing import Tuple, Dict, Optional
+from ..config import config
+from ..config import Optional
+from ..config import List
+from ..config import Dict
 
-@frozen
+@config
 class OfflineLocalFlow:
     offlineLocalImage: str
     offlineLocalContainerName: str
 
-@frozen
+@config
 class OfflineScheduler:
     cronExpr: str
-    dag: Dict[str, Tuple[str,...]]
+    dag: Dict[str, List[str]]
 
-@frozen
+@config
 class OfflineCrontabScheduler(OfflineScheduler):
     pass
 
-@frozen
+@config
 class SharedConfigVolume:
     name: str
     configmap: str
     mountPath: str
 
-@frozen
+@config
 class OfflineK8sCronjobScheduler(OfflineScheduler):
     namespace: str
     serviceAccountName: str
     containerImage: str
     sharedConfigVolume: Optional[SharedConfigVolume] = None
 
-@frozen
+@config
 class OfflineSageMakerScheduler(OfflineScheduler):
     configDir: Optional[str] = None
 
-@frozen
+@config
 class OfflineTask:
     scriptPath: str
     configPath: str
 
-@frozen
+@config
 class OfflinePythonTask(OfflineTask):
     pass

@@ -15,7 +15,6 @@
 #
 
 import attrs
-import json
 import types
 
 from typing import Optional
@@ -25,16 +24,11 @@ from .decorator import config
 from .structure import unstructure
 from .types import is_config_type
 from .types import type_name
-
-class Encoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, types.MappingProxyType):
-            return dict(obj)
-        return super().default(self, obj)
+from .json import dump_json
 
 def dump_field_default(v):
     value = unstructure(v)
-    data = json.dumps(value, separators=(',', ':'), cls=Encoder)
+    data = dump_json(value)
     return data
 
 @config

@@ -14,13 +14,14 @@
 # limitations under the License.
 #
 
-from ..config import config
-from ..config import List
+import yaml
+import types
 
-@config
-class SageMakerConfig:
-    roleArn: str
-    securityGroups: List[str]
-    subnets: List[str]
-    s3Endpoint: str
-    s3WorkDir: str
+class Dumper(yaml.Dumper):
+    pass
+
+Dumper.add_representer(types.MappingProxyType, Dumper.represent_dict)
+
+def dump_yaml(data):
+    string = yaml.dump_all(data, Dumper=Dumper, sort_keys=False)
+    return string

@@ -19,6 +19,7 @@ dependencies = [
     "networkx~=2.8.6",
     "python-consul2~=0.1.5",
     "ruamel.yaml~=0.17.21",
+    "cloudpickle~=2.1.0",
     "requests~=2.22.0",
     "botocore==1.24.21",
     "boto3==1.21.21",

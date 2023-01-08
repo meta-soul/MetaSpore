@@ -14,10 +14,10 @@
 # limitations under the License.
 #
 
-from attrs import frozen
-from typing import Optional
+from ..config import config
+from ..config import Optional
 
-@frozen
+@config
 class MetaSporeFlow:
     sharedVolumeInContainer: Optional[str] = None
     deployMode: Optional[str] = None

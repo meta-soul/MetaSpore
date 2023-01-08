@@ -19,7 +19,6 @@ from attr import define
 
 S = ruamel.yaml.scalarstring.DoubleQuotedScalarString
 
-
 def Object2Dict(obj):
     return {name: getattr(obj, name) for name in dir(obj)
             if not name.startswith("__") and getattr(obj, name) is not None and not callable(getattr(obj, name))}
@@ -52,9 +51,10 @@ class BaseDefaultConfig(BaseConfig):
 
 
 def DumpToYaml(obj):
+    from ..config.yaml import dump_yaml
     if isinstance(obj, BaseConfig):
-        return ruamel.yaml.round_trip_dump(obj.to_dict(), width=160)
-    return ruamel.yaml.round_trip_dump(Object2Dict(obj), width=160)
+        return dump_yaml(obj.to_dict())
+    return dump_yaml(Object2Dict(obj))
 
 
 class Dict(dict):
@@ -75,7 +75,8 @@ def setDefault(data, key, value):
 
 
 def dictToObj(obj):
-    if not isinstance(obj, dict):
+    import collections.abc
+    if not isinstance(obj, collections.abc.Mapping):
         return obj
     data = Dict()
     for k, v in obj.items():

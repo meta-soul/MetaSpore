@@ -140,25 +140,25 @@ class ResourceLoader(object):
         raise RuntimeError(message) from last_ex
 
     def _load_resource(self, path):
-        import cattrs
+        from ..config import structure
         text = self._get_text(path)
         raw_resource, wrapper_type = self._load_raw_resource(path, text)
         context = self._create_context(raw_resource, self._context)
         source = self._load_yaml(path, text, context)
         try:
-            resource = cattrs.structure(source, wrapper_type)
+            resource = structure(source, wrapper_type)
             return resource
         except Exception as ex:
             message = "fail to load %r as resource" % (path,)
             raise RuntimeError(message) from ex
 
     def load_resource(self, text):
-        import cattrs
+        from ..config import structure
         raw_resource, wrapper_type = self._load_raw_resource(None, text)
         context = self._create_context(raw_resource, self._context)
         source = self._load_yaml(None, text, context)
         try:
-            resource = cattrs.structure(source, wrapper_type)
+            resource = structure(source, wrapper_type)
             return resource
         except Exception as ex:
             message = "fail to load text: %s as resource" % (text,)

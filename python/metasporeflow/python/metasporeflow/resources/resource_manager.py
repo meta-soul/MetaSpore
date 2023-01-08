@@ -40,7 +40,7 @@ class ResourceManager(object):
 
     def save(self, file_path):
         import io
-        import pickle
+        import cloudpickle as pickle
         clone = ResourceManager()
         clone._name_to_resource = self._name_to_resource.copy()
         clone._type_to_resources = self._type_to_resources.copy()
@@ -92,12 +92,12 @@ class ResourceManager(object):
 
     def __str__(self):
         import cattrs
-        import yaml
+        from ..config.yaml import dump_yaml
         data = []
         for name in self._name_to_resource:
             r = self._name_to_resource[name]
             resource = cattrs.unstructure(r.data)
             data.append({'name': r.name, 'path': r.path, 'kind': r.kind, 'data': resource})
         data = cattrs.unstructure(data)
-        string = yaml.dump(data, sort_keys=False)
+        string = dump_yaml(data)
         return string.rstrip()

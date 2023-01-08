@@ -14,13 +14,15 @@
 # limitations under the License.
 #
 
-from ..config import config
-from ..config import List
+import json
+import types
 
-@config
-class SageMakerConfig:
-    roleArn: str
-    securityGroups: List[str]
-    subnets: List[str]
-    s3Endpoint: str
-    s3WorkDir: str
+class Encoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, types.MappingProxyType):
+            return dict(obj)
+        return super().default(self, obj)
+
+def dump_json(data):
+    string = json.dumps(data, separators=(',', ':'), cls=Encoder)
+    return string
