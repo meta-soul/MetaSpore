@@ -41,18 +41,21 @@ def is_optional_type(t):
 
 def is_list_type(t):
     return (isinstance(t, typing._GenericAlias) and
+            isinstance(t.__origin__, type) and
             issubclass(t.__origin__, list) and
             len(t.__args__) == 1 and
             is_type(t.__args__[0]))
 
 def is_set_type(t):
     return (isinstance(t, typing._GenericAlias) and
+            isinstance(t.__origin__, type) and
             issubclass(t.__origin__, set) and
             len(t.__args__) == 1 and
             is_type(t.__args__[0]))
 
 def is_dict_type(t):
     return (isinstance(t, typing._GenericAlias) and
+            isinstance(t.__origin__, type) and
             issubclass(t.__origin__, dict) and
             len(t.__args__) == 2 and
             is_type(t.__args__[0]) and
