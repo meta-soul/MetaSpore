@@ -69,13 +69,19 @@ class TrackingAws(Tracking):
         aws_region = match.group(1)
         return aws_region
 
+    def _get_bucket_name(self, url):
+        from urllib.parse import urlparse
+        results = urlparse(url, allow_fragments=False)
+        bucket = results.netloc
+        return bucket
+
     def _init_tracking_params(self):
         self._function_name = 'tracking'
         self._image_uri = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo/tracking-log-extension-function:latest'
         self._ima_role = self._sage_maker_config.roleArn
         self._security_group_ids = self._sage_maker_config.securityGroups
         self._subnet_ids = self._sage_maker_config.subnets
-        self._s3_bucket_name = self._sage_maker_config.s3WorkDir + '/tracking_log'
+        self._s3_bucket_name = self._get_bucket_name(self._sage_maker_config.s3WorkDir)
         self._metasporeflow_tracking_enable = self._sage_maker_config.enableTracking
         self._metasporeflow_tracking_db_enable = 'True'
         self._metasporeflow_tracking_db_type = 'mongodb'
@@ -138,8 +144,38 @@ class TrackingAws(Tracking):
             msg = 'An error occurred creating/updating function {}: {}'.format(self._function_name, response)
             raise Exception(msg)
 
+    def _update_function_code(self):
+        response = self._lambda_client.update_function_code(
+            FunctionName=self._function_name,
+            ImageUri=self._image_uri,
+            Publish=True
+        )
+        if response['ResponseMetadata']['HTTPStatusCode'] in [200, 201]:
+            print('OK --> Updated AWS Lambda function {}'.format(self._function_name))
+            retries = 45
+            while retries > 0:
+                response = self._lambda_client.get_function(
+                    FunctionName=self._function_name
+                )
+                state = response['Configuration']['State']
+                if state == 'Pending':
+                    time.sleep(5)
+                    print(
+                        'Function is being deployed... (status: {})'.format(response['Configuration']['State']))
+                    retries -= 1
+                    if retries == 0:
+                        raise Exception('Function not deployed: {}'.format(response))
+                elif state == 'Active':
+                    break
+
 
 if __name__ == '__main__':
+    args = sys.argv[1:]
+    if len(args) != 1:
+        raise RuntimeError('Invalid number of arguments')
+    operation = args[0]
+    print('Config file: {}'.format(operation))
+
     print('Starting Tracking AWS')
     from metasporeflow.flows.flow_loader import FlowLoader
     from metasporeflow.flows.sage_maker_config import SageMakerConfig
@@ -151,4 +187,8 @@ if __name__ == '__main__':
     print(type(sagemaker_config))
     print(sagemaker_config)
     tracking = TrackingAws(resources)
-    tracking._create_function()
+
+    if operation == 'create':
+        tracking._create_function()
+    elif operation == 'update':
+        tracking._update_function_code()
