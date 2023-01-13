@@ -20,6 +20,7 @@ from .types import ufloat
 from .types import pfloat
 
 from typing import Optional
+from typing import Union
 from typing import List
 from typing import Set
 from typing import Dict

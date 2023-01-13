@@ -20,6 +20,7 @@ from .types import is_primitive_type
 from .types import is_config_type
 from .types import is_enum_type
 from .types import is_optional_type
+from .types import is_union_type
 from .types import is_list_type
 from .types import is_set_type
 from .types import is_dict_type
@@ -35,6 +36,8 @@ def convert_value(v, t):
         if v is None:
             return None
         return convert_value(v, t.__args__[0])
+    if is_union_type(t):
+        return v
     if is_list_type(t):
         return tuple(convert_value(item, t.__args__[0]) for item in v)
     if is_set_type(t):

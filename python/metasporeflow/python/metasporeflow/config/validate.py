@@ -24,6 +24,7 @@ from .types import pfloat
 from .types import is_config_type
 from .types import is_enum_type
 from .types import is_optional_type
+from .types import is_union_type
 from .types import is_list_type
 from .types import is_set_type
 from .types import is_dict_type
@@ -54,6 +55,10 @@ def validate_value(v, t):
             return
         validate_value(v, t.__args__[0])
         return
+    elif is_union_type(t):
+        for a in t.__args__:
+            if isinstance(v, a):
+                return
     elif is_list_type(t):
         if isinstance(v, collections.abc.Sequence):
             for item in v:

@@ -39,6 +39,12 @@ def is_optional_type(t):
             is_type(t.__args__[0]) and
             t.__args__[1] is type(None))
 
+def is_union_type(t):
+    return (isinstance(t, typing._GenericAlias) and
+            t.__origin__ is typing.Union and
+            len(t.__args__) >= 2 and
+            all(is_config_type(a) for a in t.__args__))
+
 def is_list_type(t):
     return (isinstance(t, typing._GenericAlias) and
             isinstance(t.__origin__, type) and
@@ -66,6 +72,7 @@ def is_type(t):
             is_config_type(t) or
             is_enum_type(t) or
             is_optional_type(t) or
+            is_union_type(t) or
             is_list_type(t) or
             is_set_type(t) or
             is_dict_type(t))
@@ -98,6 +105,16 @@ def format_type(t):
         string = format_type(t.__args__[0])
         string += ' or None'
         return string
+    if is_union_type(t):
+        string = ''
+        for i, arg in enumerate(t.__args__):
+            if i > 0:
+                if i == len(t.__args__) - 1:
+                    string += ' or '
+                else:
+                    string += ', '
+            string += format_type(arg)
+        return string
     if is_list_type(t):
         string = format_type(t.__args__[0])
         string = 'list of ' + string
@@ -129,6 +146,8 @@ def type_name(t):
         return string
     if is_optional_type(t):
         return 'Optional[' + type_name(t.__args__[0]) + ']'
+    if is_union_type(t):
+        return 'Union[' + ', '.join(type_name(a) for a in t.__args__) + ']'
     if is_list_type(t):
         return 'List[' + type_name(t.__args__[0]) + ']'
     if is_set_type(t):
