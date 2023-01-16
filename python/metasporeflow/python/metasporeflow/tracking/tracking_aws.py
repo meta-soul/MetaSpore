@@ -23,7 +23,7 @@ import os
 class TrackingAws(Tracking):
     def __init__(self, resources):
         super(TrackingAws, self).__init__(resources)
-        self._sage_maker_config = self._get_sage_maker_config()
+        self._sage_maker_config, self._aws_tracking_config = self._get_sage_maker_config()
         self._function_name = None
         self._image_uri = None
         self._ima_role = None
@@ -38,6 +38,7 @@ class TrackingAws(Tracking):
         self._metasporeflow_tracking_log_buffer_timeout_ms = None
         self._metasporeflow_tracking_log_buffer_max_bytes = None
         self._metasporeflow_tracking_log_buffer_max_items = None
+        self._metasporeflow_tracking_recent_user_bhv_item_seq_limit = None
         self._region_name = None
         self._iam_resource = None
         self._lambda_client = None
@@ -54,7 +55,10 @@ class TrackingAws(Tracking):
         from metasporeflow.flows.sage_maker_config import SageMakerConfig
         sage_maker_resource = self._resources.find_by_type(SageMakerConfig)
         sage_maker_config = sage_maker_resource.data
-        return sage_maker_config
+        from metasporeflow.flows.aws_tracking_config import AwsTrackingConfig
+        aws_tracking_resource = self._resources.find_by_type(AwsTrackingConfig)
+        aws_tracking_config = aws_tracking_resource.data
+        return sage_maker_config, aws_tracking_config
 
     @property
     def _aws_region(self):
@@ -82,15 +86,17 @@ class TrackingAws(Tracking):
         self._security_group_ids = self._sage_maker_config.securityGroups
         self._subnet_ids = self._sage_maker_config.subnets
         self._s3_bucket_name = self._get_bucket_name(self._sage_maker_config.s3WorkDir)
-        self._metasporeflow_tracking_enable = self._sage_maker_config.enableTracking
+        self._metasporeflow_tracking_enable = self._aws_tracking_config.enableTracking
         self._metasporeflow_tracking_db_enable = 'True'
         self._metasporeflow_tracking_db_type = 'mongodb'
-        self._metasporeflow_tracking_db_uri = self._sage_maker_config.trackingDbUri
-        self._metasporeflow_tracking_db_database = self._sage_maker_config.trackingDbDatabase
-        self._metasporeflow_tracking_db_table = self._sage_maker_config.trackingDbTable
-        self._metasporeflow_tracking_log_buffer_timeout_ms = str(self._sage_maker_config.trackingLogBufferTimeoutMs)
-        self._metasporeflow_tracking_log_buffer_max_bytes = str(self._sage_maker_config.trackingLogBufferMaxBytes)
-        self._metasporeflow_tracking_log_buffer_max_items = str(self._sage_maker_config.trackingLogBufferMaxItems)
+        self._metasporeflow_tracking_db_uri = self._aws_tracking_config.trackingDbUri
+        self._metasporeflow_tracking_db_database = self._aws_tracking_config.trackingDbDatabase
+        self._metasporeflow_tracking_db_table = self._aws_tracking_config.trackingDbTable
+        self._metasporeflow_tracking_log_buffer_timeout_ms = str(self._aws_tracking_config.trackingLogBufferTimeoutMs)
+        self._metasporeflow_tracking_log_buffer_max_bytes = str(self._aws_tracking_config.trackingLogBufferMaxBytes)
+        self._metasporeflow_tracking_log_buffer_max_items = str(self._aws_tracking_config.trackingLogBufferMaxItems)
+        self._metasporeflow_tracking_recent_user_bhv_item_seq_limit = str(
+            self._aws_tracking_config.trackingRecentUserBhvItemSeqLimit)
         self._region_name = self._aws_region
         self._iam_resource = boto3.resource('iam', region_name=self._region_name)
         self._lambda_client = boto3.client('lambda', region_name=self._region_name)
@@ -116,7 +122,8 @@ class TrackingAws(Tracking):
                     'METASPOREFLOW_TRACKING_DB_TABLE': self._metasporeflow_tracking_db_table,
                     'METASPOREFLOW_TRACKING_LOG_BUFFER_TIMEOUT_MS': self._metasporeflow_tracking_log_buffer_timeout_ms,
                     'METASPOREFLOW_TRACKING_LOG_BUFFER_MAX_BYTES': self._metasporeflow_tracking_log_buffer_max_bytes,
-                    'METASPOREFLOW_TRACKING_LOG_BUFFER_MAX_ITEMS': self._metasporeflow_tracking_log_buffer_max_items
+                    'METASPOREFLOW_TRACKING_LOG_BUFFER_MAX_ITEMS': self._metasporeflow_tracking_log_buffer_max_items,
+                    'METASPOREFLOW_TRACKING_RECENT_USER_BHV_ITEM_SEQ_LIMIT': self._metasporeflow_tracking_recent_user_bhv_item_seq_limit
                 }
             }
         )
@@ -178,14 +185,10 @@ if __name__ == '__main__':
 
     print('Starting Tracking AWS')
     from metasporeflow.flows.flow_loader import FlowLoader
-    from metasporeflow.flows.sage_maker_config import SageMakerConfig
 
     flow_loader = FlowLoader()
     flow_loader._file_name = 'metasporeflow/tracking/test/metaspore-flow.yml'
     resources = flow_loader.load()
-    sagemaker_config = resources.find_by_type(SageMakerConfig)
-    print(type(sagemaker_config))
-    print(sagemaker_config)
     tracking = TrackingAws(resources)
 
     if operation == 'create':

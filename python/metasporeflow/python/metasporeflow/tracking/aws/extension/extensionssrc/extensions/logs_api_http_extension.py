@@ -93,11 +93,40 @@ class LogsAPIHTTPExtension():
             upsert=True
         )
 
+    def _pull_and_push_list_to_mongodb(self, user_id, items_bhv):
+        from pymongo import UpdateOne
+        operations = [
+            UpdateOne({"_id": user_id},
+                      {"$pull": {"recent_user_bhv_item_seq": {"$in": items_bhv}}}, upsert=True),
+            UpdateOne({"_id": user_id},
+                      {"$push": {"recent_user_bhv_item_seq": {"$each": items_bhv, "$slice": int(
+                          os.environ['METASPOREFLOW_TRACKING_RECENT_USER_BHV_ITEM_SEQ_LIMIT'])}}}, upsert=True)
+        ]
+        self._mongo_client[os.environ['METASPOREFLOW_TRACKING_DB_TABLE']].bulk_write(operations, ordered=True)
+
     def _parse_rfc3339(self, datetime_str: str) -> datetime:
         try:
             return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%f%z")
         except ValueError:
             return datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S%z")
+
+    def _generate_tracking_user_bhv(self, batch):
+        tracking_user_bhv = {}
+        for item in batch:
+            record_str = item['record']
+            record = json.loads(record_str)
+            user_id = record['user_id']
+            item_id = record['item_id']
+            user_items = tracking_user_bhv.get(user_id, [])
+            if item_id in user_items:
+                user_items.remove(item_id)
+            user_items.append(item_id)
+            tracking_user_bhv[user_id] = user_items
+        return tracking_user_bhv
+
+    def _save_tracking_u2i_to_mongodb(self, tracking_user_bhv):
+        for user_id, items_bhv in tracking_user_bhv.items():
+            self._pull_and_push_list_to_mongodb(user_id, items_bhv)
 
     def run_forever(self):
         # Configuring S3 Connection
@@ -115,14 +144,8 @@ class LogsAPIHTTPExtension():
                 try:
                     # Save to S3
                     s3.Bucket(s3_bucket).put_object(Key=s3_filename, Body=str(batch))
-                    # Save to MongoDB
-                    for item in range(len(batch)):
-                        record_str = batch[item]['record']
-                        record = json.loads(record_str)
-                        user_id = record['user_id']
-                        item_id = record['item_id']
-                        time = batch[item]['time']
-                        self._update_tracking_user_bhv_to_mongodb(user_id, item_id, time)
+                    # Save u2i to mongodb
+                    self._save_tracking_u2i_to_mongodb(self._generate_tracking_user_bhv(batch))
                 except Exception as e:
                     raise Exception(f"Error sending log to S3 {e}") from e
 

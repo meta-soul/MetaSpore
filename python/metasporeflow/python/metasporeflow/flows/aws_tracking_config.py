@@ -19,9 +19,12 @@ from typing import Tuple, Optional
 
 
 @frozen
-class SageMakerConfig:
-    roleArn: str
-    securityGroups: Tuple[str, ...]
-    subnets: Tuple[str, ...]
-    s3Endpoint: str
-    s3WorkDir: str
+class AwsTrackingConfig:
+    enableTracking: Optional[bool] = False
+    trackingDbUri: Optional[str] = None
+    trackingDbDatabase: Optional[str] = 'tracking'
+    trackingDbTable: Optional[str] = 'tracking'
+    trackingLogBufferTimeoutMs: Optional[int] = 1000
+    trackingLogBufferMaxBytes: Optional[int] = 262144
+    trackingLogBufferMaxItems: Optional[int] = 10000
+    trackingRecentUserBhvItemSeqLimit: Optional[int] = 100
