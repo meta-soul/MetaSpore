@@ -96,10 +96,10 @@ class LogsAPIHTTPExtension():
     def _pull_and_push_list_to_mongodb(self, user_id, items_bhv):
         from pymongo import UpdateOne
         operations = [
-            UpdateOne({"_id": user_id},
-                      {"$pull": {"recent_user_bhv_item_seq": {"$in": items_bhv}}}, upsert=True),
-            UpdateOne({"_id": user_id},
-                      {"$push": {"recent_user_bhv_item_seq": {"$each": items_bhv, "$slice": int(
+            UpdateOne({"user_id": user_id},
+                      {"$pull": {"user_bhv_item_seq": {"$in": items_bhv}}}, upsert=True),
+            UpdateOne({"user_id": user_id},
+                      {"$push": {"user_bhv_item_seq": {"$each": items_bhv, "$slice": int(
                           os.environ['METASPOREFLOW_TRACKING_RECENT_USER_BHV_ITEM_SEQ_LIMIT'])}}}, upsert=True)
         ]
         self._mongo_client[os.environ['METASPOREFLOW_TRACKING_DB_TABLE']].bulk_write(operations, ordered=True)
