@@ -14,6 +14,7 @@
 # limitations under the License.
 #
 
+import types
 import ruamel.yaml
 from attr import define
 
@@ -49,12 +50,15 @@ class BaseDefaultConfig(BaseConfig):
             if item.name not in kwargs:
                 self.__setattr__(item.name, item.default)
 
+class Dumper(ruamel.yaml.dumper.RoundTripDumper):
+    pass
+
+Dumper.add_representer(types.MappingProxyType, Dumper.represent_dict)
 
 def DumpToYaml(obj):
-    from ..config.yaml import dump_yaml
     if isinstance(obj, BaseConfig):
-        return dump_yaml(obj.to_dict())
-    return dump_yaml(Object2Dict(obj))
+        return ruamel.yaml.round_trip_dump(obj.to_dict(), Dumper=Dumper, width=160)
+    return ruamel.yaml.round_trip_dump(Object2Dict(obj), Dumper=Dumper, width=160)
 
 
 class Dict(dict):
