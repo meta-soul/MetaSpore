@@ -15,8 +15,7 @@
 #
 
 from attrs import frozen
-from typing import Tuple, Optional
-
+from typing import Tuple
 
 @frozen
 class SageMakerConfig:
