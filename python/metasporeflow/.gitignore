@@ -2,3 +2,4 @@ __pycache__/
 /*.whl
 /build/
 /python/.idea/
+/python/metasporeflow/tracking/test/
