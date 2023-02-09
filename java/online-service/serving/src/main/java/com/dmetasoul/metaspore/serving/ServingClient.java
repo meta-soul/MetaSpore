@@ -16,12 +16,14 @@
 
 package com.dmetasoul.metaspore.serving;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class ServingClient {
     public static Map<String, ArrowTensor> predictBlocking(PredictGrpc.PredictBlockingStub client,
                                                            String modelName,
@@ -64,5 +66,23 @@ public class ServingClient {
             }
             sink.next(map);
         });
+    }
+
+    public static Boolean loadModel(LoadGrpc.LoadBlockingStub client,
+                                    String modelName,
+                                    String version,
+                                    String dirPath) {
+        LoadRequest.Builder builder = LoadRequest.newBuilder();
+        builder.setModelName(modelName);
+        builder.setVersion(version);
+        builder.setDirPath(dirPath);
+        try {
+            LoadReply reply = client.load(builder.build());
+            log.warn("notify load model: {}, version: {}, reply: {}", modelName, version, reply.getMsg());
+        } catch (Exception ex) {
+            log.warn("notify load model: {}, version: {} fail!", modelName, version);
+            return false;
+        }
+        return true;
     }
 }

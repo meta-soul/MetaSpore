@@ -43,10 +43,18 @@ class LocalFlowExecutor(FlowExecutor):
 
     async def execute_status(self):
         print(self._resources)
-        self.online_executor.execute_status()
         print('local flow status')
+        return {
+            "online": self.online_executor.execute_status(),
+            "offline": None,
+        }
 
     async def execute_reload(self):
         print(self._resources)
         self.online_executor.execute_reload()
         print('local flow reload')
+
+    @staticmethod
+    async def execute_update(resource):
+        print(resource)
+        return OnlineLocalExecutor.execute_update(resource)

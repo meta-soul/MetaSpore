@@ -18,9 +18,14 @@ package com.dmetasoul.metaspore.common;
 
 
 import com.google.common.collect.Maps;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.StopWatch;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -48,5 +53,27 @@ public class Utils {
     public static double getFinalRetrievalScore(Double originalScore, Double maxScore, int algoLevel) {
         double EPSILON = 0.001;
         return originalScore / (maxScore + EPSILON) + algoLevel;
+    }
+
+    @SneakyThrows
+    public static String runCmd(String cmd, File dir) {
+        StringBuilder result = new StringBuilder();
+        Process process = Runtime.getRuntime().exec(cmd, null, dir);
+        try (BufferedReader bufrIn = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+             BufferedReader bufrError = new BufferedReader(new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8))) {
+            process.waitFor();
+            String line;
+            while ((line = bufrIn.readLine()) != null) {
+                result.append(line).append('\n');
+            }
+            while ((line = bufrError.readLine()) != null) {
+                result.append(line).append('\n');
+            }
+        } finally {
+            if (process != null) {
+                process.destroy();
+            }
+        }
+        return result.toString();
     }
 }

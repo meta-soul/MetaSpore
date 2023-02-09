@@ -45,25 +45,25 @@ class FeatureComputeExec {
 
     status add_projection(std::vector<arrow::compute::Expression> expressions);
 
-    result<std::shared_ptr<FeatureComputeExecContext>> start_plan();
+    result<std::shared_ptr<FeatureComputeExecContext>> start_plan() const;
 
     status set_input_schema(std::shared_ptr<FeatureComputeExecContext> &ctx,
-                            const std::string &source_name, std::shared_ptr<arrow::Schema> schema);
+                            const std::string &source_name, std::shared_ptr<arrow::Schema> schema) const;
 
-    status build_plan(std::shared_ptr<FeatureComputeExecContext> &ctx);
+    status build_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) const;
 
     status feed_input(std::shared_ptr<FeatureComputeExecContext> &ctx,
-                      const std::string &source_name, std::shared_ptr<arrow::RecordBatch> batch);
+                      const std::string &source_name, std::shared_ptr<arrow::RecordBatch> batch) const;
 
     awaitable_result<std::shared_ptr<arrow::RecordBatch>>
-    execute(std::shared_ptr<FeatureComputeExecContext> &ctx);
+    execute(std::shared_ptr<FeatureComputeExecContext> &ctx) const;
 
-    status finish_plan(std::shared_ptr<FeatureComputeExecContext> &ctx);
+    status finish_plan(std::shared_ptr<FeatureComputeExecContext> &ctx) const;
 
     std::vector<std::string> get_input_names() const;
 
   protected:
-    void finish_join(arrow::compute::ExecNode *node);
+    void finish_join(arrow::compute::ExecNode *node) const;
 
   private:
     std::unique_ptr<FeatureComputeContext> context_;

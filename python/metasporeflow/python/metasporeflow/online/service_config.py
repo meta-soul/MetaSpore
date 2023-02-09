@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 from attrs import define
 from attrs import field
 from typing import Literal
@@ -123,7 +124,7 @@ class Feature(BaseDefaultConfig):
         super().__init__(**kwargs)
 
     def to_dict(self):
-        from_tables = self.dict_data.pop("depend")
+        from_tables = self.dict_data.pop("depend", [])
         self.dict_data["from"] = from_tables
         if self.condition:
             self.dict_data["condition"] = [x.to_dict() for x in self.condition]

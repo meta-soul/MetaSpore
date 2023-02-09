@@ -19,6 +19,7 @@ import com.dmetasoul.metaspore.annotation.FeatureAnnotation;
 import com.dmetasoul.metaspore.common.CommonUtils;
 import com.dmetasoul.metaspore.configure.FieldInfo;
 import com.dmetasoul.metaspore.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.relyservice.ModelServingService;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -51,37 +52,27 @@ public class AlgoInferenceTask extends AlgoTransformTask {
     protected int targetIndex;
     protected int maxReservation;
     protected String algoName;
-    protected ManagedChannel channel;
     protected PredictGrpc.PredictBlockingStub client;
 
     public boolean initTask() {
         modelName = getOptionOrDefault("modelName", DEFAULT_MODEL_NAME);
         targetKey = getOptionOrDefault("targetKey", TARGET_KEY);
         targetIndex = getOptionOrDefault("targetIndex", TARGET_INDEX);
-        channel = initManagedChannel(algoTransform.getOptions());
-        client = PredictGrpc.newBlockingStub(channel);
+        ModelServingService modelServingService = serviceManager.getRelyServiceOrSet(
+                ModelServingService.genKey(algoTransform.getOptions()),
+                ModelServingService.class,
+                algoTransform.getOptions());
+        client = PredictGrpc.newBlockingStub(modelServingService.getChannel());
         maxReservation = getOptionOrDefault("maxReservation", DEFAULT_MAX_RESERVATION);
         algoName = getOptionOrDefault("algo-name", "two_tower");
         return true;
-    }
-
-    public ManagedChannel initManagedChannel(Map<String, Object> option) {
-        String host = CommonUtils.getField(option, "host", "127.0.0.1");
-        int port = CommonUtils.getField(option, "port", 50000, Integer.class);
-        NegotiationType negotiationType = NegotiationType.valueOf(Strings.toRootUpperCase((String) option.getOrDefault("negotiationType", "plaintext")));
-        NettyChannelBuilder channelBuilder = NettyChannelBuilder.forAddress(host, port)
-                .keepAliveWithoutCalls((Boolean) option.getOrDefault("enableKeepAliveWithoutCalls", false))
-                .negotiationType(negotiationType)
-                .keepAliveTime((Long) option.getOrDefault("keepAliveTime", 300L), TimeUnit.SECONDS)
-                .keepAliveTimeout((Long) option.getOrDefault("keepAliveTimeout", 10L), TimeUnit.SECONDS);
-        return channelBuilder.build();
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void addFunctions() {
         addFunction("genEmbedding", (fieldTableData, fieldAction, taskPool) -> {
-            Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not empty");
+            Assert.isTrue(CollectionUtils.isNotEmpty(fieldAction.getAlgoColumns()), "AlgoColumns must not be empty");
             List<FeatureTable> featureTables = Lists.newArrayList();
             for (Map<String, List<String>> item : fieldAction.getAlgoColumns()) {
                 for (Map.Entry<String, List<String>> entry : item.entrySet()) {
@@ -97,7 +88,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     }
                     FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
-                        log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        log.error("model input is empty! at fieldAction: {}, fieldTableData: {}", fieldAction, fieldTableData);
                         return true;
                     }
                     featureTables.add(featureTable);
@@ -133,7 +124,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
                     }
                     FeatureTable featureTable = convFeatureTable(entry.getKey(), columns, fieldTableData);
                     if (featureTable.getRowCount() == 0) {
-                        log.error("model input is empty! at fieldAction: {}", fieldAction);
+                        log.error("model input is empty! at fieldAction: {}, fieldTableData {}", fieldAction, fieldTableData);
                         fieldTableData.addValueList(fieldAction.getNames().get(0), List.of());
                         return true;
                     }
@@ -186,13 +177,6 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             }
             return true;
         });
-    }
-
-    @SneakyThrows
-    @Override
-    public void close() {
-        if (channel == null || channel.isShutdown()) return;
-        channel.shutdown().awaitTermination(1, TimeUnit.SECONDS);
     }
 
     protected ArrowTensor predict(List<FeatureTable> featureTables, ArrowAllocator allocator,

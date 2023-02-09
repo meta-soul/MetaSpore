@@ -3,5 +3,5 @@
 ## Build
 
 ```bash
-python -m pip wheel .
+python3 -m pip wheel .
 ```

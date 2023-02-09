@@ -51,7 +51,7 @@ class EuclideanModel(pyspark.ml.base.Model):
 
     def _get_value_expr(self):
         string = "array_join(transform(%s, " % self.value_column_name
-        string += "t -> concat(t._1, '%s', t._2)" % self._format_delimiter(self.item_score_delimiter)
+        string += "t -> concat(t.item_id, '%s', t.score)" % self._format_delimiter(self.item_score_delimiter)
         string += "), '%s') " % self._format_delimiter(self.item_score_pair_delimiter)
         string += "AS %s" % self.value_column_name
         return string
@@ -151,7 +151,7 @@ class EuclideanEstimator(pyspark.ml.base.Estimator):
                             .over(w))\
                             .filter(f'rn <= %d' % self.max_recommendation_count)\
                             .groupby('item_id_i')\
-                            .agg(F.collect_list(F.struct(F.col('item_id_j').alias('_1'), F.col('euclidean_sim').alias('_2'))).alias(self.value_column_name))\
+                            .agg(F.collect_list(F.struct(F.col('item_id_j').alias('item_id'), F.col('euclidean_sim').alias('score'))).alias(self.value_column_name))\
                             .withColumnRenamed('item_id_i', self.key_column_name)
         
         if self.debug:

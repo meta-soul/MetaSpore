@@ -24,7 +24,6 @@ import com.dmetasoul.metaspore.dataservice.AlgoTransformTask;
 import com.dmetasoul.metaspore.dataservice.DataService;
 import com.dmetasoul.metaspore.dataservice.FeatureTask;
 import com.dmetasoul.metaspore.dataservice.SourceTableTask;
-import com.dmetasoul.metaspore.functions.Function;
 import com.dmetasoul.metaspore.datasource.DataSource;
 import com.dmetasoul.metaspore.recommend.Experiment;
 import com.dmetasoul.metaspore.recommend.Layer;
@@ -46,6 +45,7 @@ import javax.annotation.PreDestroy;
 import java.util.Map;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 用于注册各种任务的实例；随配置动态更新
@@ -66,12 +66,9 @@ public class TaskServiceRegister {
      */
     @Autowired
     private SpringBeanUtil springBeanUtil;
-    @Autowired
-    private ExecutorService sourcePool;
-    @Autowired
-    private ExecutorService workFlowPool;
-    @Autowired
-    private ExecutorService taskPool;
+    private ExecutorService sourcePool = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() * 2);
+    private ExecutorService workFlowPool = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() * 2);
+    private ExecutorService taskPool = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors() * 2);
 
     private FeatureServiceManager featureServiceManager;
     /**
@@ -90,6 +87,8 @@ public class TaskServiceRegister {
      * 用于注册保存各种Service，每次更新配置，类似于dataServices
      */
     private Map<String, Service> recommendServices;
+
+    private long timestamp;
 
     /**
      * 每次refresh配置，重新注册生成所有的服务任务bean实例
@@ -143,6 +142,11 @@ public class TaskServiceRegister {
         layerMap.forEach((name, service) -> service.close());
         sceneMap.forEach((name, service) -> service.close());
         featureServiceManager.close();
+        log.info("refresh destroy bean!");
+    }
+
+    public <T> T getRelyService(String name, Class<?> cls) {
+        return featureServiceManager.getRelyService(name, cls);
     }
 
     @SuppressWarnings("unchecked")

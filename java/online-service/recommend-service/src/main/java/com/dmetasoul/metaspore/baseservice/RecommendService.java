@@ -1,25 +1,10 @@
-//
-// Copyright 2022 DMetaSoul
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-package com.dmetasoul.metaspore.controll;
+package com.dmetasoul.metaspore.baseservice;
 
-import com.dmetasoul.metaspore.baseservice.TaskServiceRegister;
-import com.dmetasoul.metaspore.common.CommonUtils;
-import com.dmetasoul.metaspore.common.Utils;
+import com.dmetasoul.metaspore.actuator.PullContextRefresher;
+import com.dmetasoul.metaspore.common.*;
 import com.dmetasoul.metaspore.configure.AlgoTransform;
 import com.dmetasoul.metaspore.configure.RecommendConfig;
+import com.dmetasoul.metaspore.configure.ServiceConfig;
 import com.dmetasoul.metaspore.configure.TaskFlowConfig;
 import com.dmetasoul.metaspore.data.DataContext;
 import com.dmetasoul.metaspore.data.DataResult;
@@ -27,55 +12,177 @@ import com.dmetasoul.metaspore.data.ServiceRequest;
 import com.dmetasoul.metaspore.data.ServiceResult;
 import com.dmetasoul.metaspore.dataservice.DataService;
 import com.dmetasoul.metaspore.enums.DataTypeEnum;
+import com.dmetasoul.metaspore.recommend.Experiment;
 import com.dmetasoul.metaspore.recommend.Layer;
 import com.dmetasoul.metaspore.recommend.Scene;
 import com.dmetasoul.metaspore.recommend.Service;
-import com.dmetasoul.metaspore.recommend.Experiment;
+import com.dmetasoul.metaspore.relyservice.ModelServingService;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.json.GsonJsonParser;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.util.*;
 
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
-/**
- * 用于实现restfull接口
- * Created by @author qinyy907 in 14:24 22/07/15.
- */
 @Slf4j
-@RestController
-@RequestMapping("/service")
-public class ServiceController {
+@Data
+@Component
+public class RecommendService {
+    private static final String INIT_MODEL_INFO = "init_model_info";
+    private static final String INIT_CONFIG = "init_config";
+    private static final String INIT_CONFIG_FORMAT = "init_config_format";
 
+    public static final String SPRING_CONFIG_NAME = "recommend-config";
+    public static final String MODEL_DATA_PATH;
+
+    static {
+        String osName = System.getProperty("os.name").toLowerCase();
+        if (osName.contains("windows")) {
+            MODEL_DATA_PATH = Path.of(System.getProperty("user.dir"), "/data/models").toString();
+        } else {
+            MODEL_DATA_PATH = "/data/models";
+        }
+    }
+    @Autowired
+    public ApplicationArguments applicationArgs;
     @Autowired
     public TaskFlowConfig taskFlowConfig;
 
     @Autowired
     public TaskServiceRegister taskServiceRegister;
 
-    /**
-     * 用于实现restfull接口 /service/get/{task}
-     *
-     * @param task 需要调用的任务名称，需要在配置中事先定义好，不可为空
-     * @param req  需要传递给任务task的请求参数
-     * @return ServiceResult 包含状态码，错误信息以及数据结果
-     * Created by @author qinyy907 in 14:24 22/07/15.
-     */
+    @Autowired
+    private PullContextRefresher pullContextRefresher;
+
+    @Autowired
+    private ServiceConfig serviceConfig;
+
+
+    public String getArgSingleValue(ApplicationArguments applicationArgs, String key, String defaultValue) {
+        if (applicationArgs.containsOption(key)) {
+            List<String> list = applicationArgs.getOptionValues(key);
+            if (CollectionUtils.isNotEmpty(list)) {
+                String value = applicationArgs.getOptionValues(key).get(0);
+                if (StringUtils.isNotEmpty(value)) {
+                    log.info("read args: {}, value:{} form argument!", key, list);
+		            return value;
+		        }
+            }
+        }
+        String value = System.getProperty(key);
+        if (StringUtils.isNotEmpty(value)) {
+            log.info("read args: {} form env!", key);
+            return value;
+        }
+        return defaultValue;
+    }
+
+    @PostConstruct
+    public void initService() {
+        String initModelInfos = getArgSingleValue(applicationArgs, INIT_MODEL_INFO, serviceConfig.getInitModelInfo());
+        String initConfig = getArgSingleValue(applicationArgs, INIT_CONFIG, serviceConfig.getInitConfig());
+        String initConfigFormat = getArgSingleValue(applicationArgs, INIT_CONFIG_FORMAT, serviceConfig.getInitConfigFormat());
+        if (StringUtils.isNotEmpty(initModelInfos)) {
+            try {
+                String content = FileUtils.readFile(initModelInfos, Charset.defaultCharset());
+                List<Object> modelInfos = new GsonJsonParser().parseList(content);
+                notifyToLoadModel(modelInfos);
+            } catch (Exception ex) {
+                log.error("initModelInfos :{} parser fail format is list json or load model fail!", initModelInfos);
+            }
+        }
+        if (StringUtils.isNotEmpty(initConfig) && StringUtils.isNotEmpty(initConfigFormat)) {
+            try {
+                String content = FileUtils.readFile(initConfig, Charset.defaultCharset());
+                updateConfig(SPRING_CONFIG_NAME, content, initConfigFormat);
+            } catch (IOException ex) {
+                log.error("initConfig read fail! path:{}", initConfig);
+            }
+        }
+    }
+
+    public Set<String> updateConfig(String configName, String config, String configFormat) {
+        ServicePropertySource.Format format = null;
+        if (configFormat.equalsIgnoreCase("yaml") || configFormat.equalsIgnoreCase("yml")) {
+            format = ServicePropertySource.Format.YAML;
+        } else if (configFormat.equalsIgnoreCase("properties") || configFormat.equalsIgnoreCase("prop")) {
+            format = ServicePropertySource.Format.PROPERTIES;
+        } else {
+            return null;
+        }
+        return this.pullContextRefresher.updateConfig(configName, config, format);
+    }
+
+    public Map<String, Boolean> notifyToLoadModel(List<Object> modelInfos) {
+        Map<String, Boolean> modelLoadStatus = Maps.newHashMap();
+        if (CollectionUtils.isEmpty(modelInfos)) {
+            return modelLoadStatus;
+        }
+        for (Object data : modelInfos) {
+            @SuppressWarnings("unchecked") Map<String, Object> info = (Map<String, Object>)data;
+            String modelName = CommonUtils.getField(info, "modelName");
+            String version = CommonUtils.getField(info, "version");
+            String dirPath = CommonUtils.getField(info, "dirPath");
+            if (StringUtils.isEmpty(modelName)) {
+                continue;
+            }
+            if (StringUtils.isEmpty(version) || StringUtils.isEmpty(dirPath)) {
+                modelLoadStatus.put(modelName, false);
+            }
+            String servingName = CommonUtils.getField(info, "servingName");
+            if (StringUtils.isEmpty(servingName)) {
+                servingName = ModelServingService.genKey(info);
+            } else {
+                String[] parts = servingName.split(":");
+                if (parts.length == 2) {
+                    String host = parts[0];
+                    if (host.startsWith(ModelServingService.KEY_PREFEX)) {
+                        info.put("host", host.substring(ModelServingService.KEY_PREFEX.length()));
+                    } else {
+                        info.put("host", host);
+                    }
+                    if (NumberUtils.isDigits(parts[1])) {
+                        info.put("port", NumberUtils.createInteger(parts[1]));
+                    }
+                }
+            }
+            if (dirPath.startsWith("s3://")) {
+                String localDir = CommonUtils.getField(info, "localDir", MODEL_DATA_PATH);
+                if (StringUtils.isEmpty(localDir)) localDir = MODEL_DATA_PATH;
+                // to do aws sdk download later
+                // dirPath = S3Client.downloadModel(modelName, version, dirPath, localDir);
+                dirPath = S3Client.downloadModelByShell(modelName, version, dirPath, localDir);
+                info.put("localDirPath", dirPath);
+            }
+            ModelServingService modelServingService = taskServiceRegister.getFeatureServiceManager().getRelyServiceOrSet(
+                    servingName,
+                    ModelServingService.class,
+                    info);
+            if (!modelServingService.LoadModel(modelName, version, dirPath)) {
+                modelLoadStatus.put(modelName, false);
+            }
+            modelLoadStatus.put(modelName, true);
+        }
+        return modelLoadStatus;
+    }
+
     @SuppressWarnings("unchecked")
-    @RequestMapping(value = "/get/{task}", method = POST, produces = "application/json")
-    public ServiceResult getDataServiceResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
+    public ServiceResult getDataServiceResult(String task, Map<String, Object> req) {
         DataService taskService = taskServiceRegister.getDataService(task);
         if (taskService == null) {
             return ServiceResult.of(-1, "taskService is not exist!");
@@ -163,15 +270,14 @@ public class ServiceController {
         return result;
     }
 
-    @SneakyThrows
-    @RequestMapping(value = "/recommend/{task}", method = POST, produces = "application/json")
-    public ServiceResult getRecommendResult(@PathVariable String task, @RequestBody Map<String, Object> req) {
+
+    public ServiceResult getRecommendResult(String task, Map<String, Object> req) {
         try (DataContext context = new DataContext(req)) {
             StopWatch timeRecorder = new StopWatch(UUID.randomUUID().toString());
             timeRecorder.start(String.format("task_%s_total", task));
             List<String> preTasks = CommonUtils.getField(req, "preTasks", List.of());
             List<DataResult> result = executeTasks(executeTasks(List.of(), preTasks, context), List.of(task), context);
-            log.info("recommend result : {}", result);
+            log.debug("recommend result : {}", result);
             if (CollectionUtils.isEmpty(result)) {
                 timeRecorder.stop();
                 return ServiceResult.of(-1, "taskService execute fail!");
@@ -187,18 +293,7 @@ public class ServiceController {
         }
     }
 
-    /**
-     * 用于实现restfull接口 /service/recommend/{scene}/{id}
-     * req 设置debug字段输出各个阶段的输出结果
-     *
-     * @param scene 需要推荐的场景名称，需要在配置中事先定义好，不可为空
-     * @param id    需要被推荐用户的id，比如user id，不可为空
-     * @param req   需要传递给推荐任务的请求参数，可为空
-     * @return ServiceResult 包含状态码，错误信息以及数据结果
-     * Created by @author qinyy907 in 14:24 22/07/15.
-     */
-    @RequestMapping(value = "/recommend/{scene}/{id}", method = POST, produces = "application/json")
-    public ServiceResult recommend(@PathVariable String scene, @PathVariable String id, @RequestBody Map<String, Object> req) {
+    public ServiceResult recommend(String scene, String id, Map<String, Object> req) {
         Scene sceneService = taskServiceRegister.getScene(scene);
         if (sceneService == null) {
             return ServiceResult.of(-1, String.format("scene:%s is not support!", scene));
@@ -217,9 +312,7 @@ public class ServiceController {
         }
     }
 
-    // add cache later
-    @RequestMapping(value = "/itemSummary/{item_key}/{id}", method = POST, produces = "application/json")
-    public ServiceResult itemSummary(@PathVariable String item_key, @PathVariable String id, @RequestBody Map<String, Object> req) {
+    public ServiceResult itemSummary(String item_key, String id, Map<String, Object> req) {
         DataService taskService = taskServiceRegister.getDataService("feature_item_summary");
         if (taskService == null) {
             return ServiceResult.of(-1, "itemSummary is not support in configure!");

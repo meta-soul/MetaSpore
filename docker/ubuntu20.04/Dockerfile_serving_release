@@ -44,9 +44,8 @@ RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install 
 RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-certificates && apt-get clean
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
-RUN python -m easy_install install pip
+RUN python -m easy_install -i https://repo.huaweicloud.com/repository/pypi/simple/ install pip
 RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
-RUN python -m pip config set global.extra-index-url https://pypi.org/simple
 RUN python -m pip install 'grpcio[protobuf]==1.47.2' pyarrow==7.0.0 numpy --no-cache-dir
 
 FROM ${BUILD_IMAGE} as build_stage

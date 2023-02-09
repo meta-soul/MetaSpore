@@ -21,6 +21,10 @@ add_custom_command(
     DEPENDS Python::Interpreter)
 add_custom_target(install_wheel DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/install_wheel.stamp)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/get_python_wheel_name.cmake)
+get_python_wheel_name(wheel_file_name)
+message("Python wheel name for test " ${wheel_file_name})
+
 set(python_files
     pyproject.toml
     setup.py
@@ -116,9 +120,10 @@ set(python_files
     python/ps/__init__.py
     python/ps/job.py
 )
-add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name}
+add_custom_command(OUTPUT ${wheel_file_name}
                    COMMAND env _METASPORE_SO=${PROJECT_BINARY_DIR}/_metaspore.so
                            ${Python_EXECUTABLE} -m pip wheel ${PROJECT_SOURCE_DIR}
                    MAIN_DEPENDENCY setup.py
+                   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                    DEPENDS metaspore_shared ${python_files} install_wheel)
-add_custom_target(python_wheel ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${wheel_file_name})
+add_custom_target(python_wheel ALL DEPENDS ${wheel_file_name})

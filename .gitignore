@@ -13,7 +13,7 @@
 .ipynb_checkpoints/
 __pycache__
 python.zip
-/metaspore.egg-info/
+*.egg-info/
 /wheelhouse/
 *.iml
 /java/recommend-service/.idea/

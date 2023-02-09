@@ -32,7 +32,7 @@ public class Service extends Transform implements BaseService {
     protected List<DataService> tasks;
     protected TaskServiceRegister serviceRegister;
     protected RecommendConfig.Service serviceConfig;
-    protected long timeout = 30000L;
+    protected long timeout = 3000L;
     protected TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     public boolean init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {

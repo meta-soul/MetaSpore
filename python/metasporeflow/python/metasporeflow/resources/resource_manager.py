@@ -38,6 +38,23 @@ class ResourceManager(object):
         self._name_to_resource = types.MappingProxyType(self._name_to_resource)
         self._type_to_resources = types.MappingProxyType({k: tuple(v) for k, v in self._type_to_resources.items()})
 
+    def save(self, file_path):
+        import io
+        import pickle
+        clone = ResourceManager()
+        clone._name_to_resource = self._name_to_resource.copy()
+        clone._type_to_resources = self._type_to_resources.copy()
+        with io.open(file_path, 'wb') as fout:
+            pickle.dump(clone, fout)
+
+    @classmethod
+    def load(cls, file_path):
+        import io
+        import pickle
+        with io.open(file_path, 'rb') as fin:
+            inst = pickle.load(fin)
+            return inst
+
     def try_find_by_name(self, name):
         if name not in self._name_to_resource:
             return None

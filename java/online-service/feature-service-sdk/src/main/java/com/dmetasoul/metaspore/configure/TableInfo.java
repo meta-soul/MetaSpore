@@ -67,10 +67,19 @@ public class TableInfo {
                 DataTypeEnum typeEnum = DataTypes.getDataType(key);
                 Validate.notNull(typeEnum, "config columns type must be support, type：" + info);
                 Validate.isTrue(typeEnum.needChildren(), "column info type config wrong!");
-                Validate.isInstanceOf(Map.class, entry.getValue(), "struct children is map");
                 List<Field> children = Lists.newArrayList();
-                for (Map.Entry<String, Object> entryItem : ((Map<String, Object>) entry.getValue()).entrySet()) {
-                    children.add(getField(entryItem.getKey(), entryItem.getValue()));
+                if (entry.getValue() instanceof Map) {
+                    for (Map.Entry<String, Object> entryItem : ((Map<String, Object>) entry.getValue()).entrySet()) {
+                        children.add(getField(entryItem.getKey(), entryItem.getValue()));
+                    }
+                } else if (entry.getValue() instanceof List) {
+                    Validate.isTrue(((List<?>)entry.getValue()).size() > 0, "struct column is not empty");
+                    Validate.isInstanceOf(Map.class, ((List<?>)entry.getValue()).get(0), "struct children column info is map");
+                    for (Map<String, Object> item : (List<Map<String, Object>>) entry.getValue()) {
+                        for (Map.Entry<String, Object> entryItem : item.entrySet()) {
+                            children.add(getField(entryItem.getKey(), entryItem.getValue()));
+                        }
+                    }
                 }
                 if (CollectionUtils.isEmpty(typeEnum.getChildFields())) {
                     return new Field(name, typeEnum.getType(), children);

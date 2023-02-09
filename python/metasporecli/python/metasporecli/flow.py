@@ -60,8 +60,9 @@ class Flow:
     @classmethod
     def _get_flow_executor(cls, args):
         from metasporeflow.flows.flow_loader import FlowLoader
-        from metasporeflow.executors.local_flow_executor import LocalFlowExecutor
+        from metasporeflow.executors.flow_executor_factory import FlowExecutorFactory
         flow_loader = FlowLoader()
         resources = flow_loader.load()
-        flow_executor = LocalFlowExecutor(resources)
+        flow_executor_factory = FlowExecutorFactory(resources)
+        flow_executor = flow_executor_factory.create_flow_executor()
         return flow_executor

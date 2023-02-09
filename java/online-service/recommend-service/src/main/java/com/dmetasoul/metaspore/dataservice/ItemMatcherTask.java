@@ -15,10 +15,11 @@
 //
 package com.dmetasoul.metaspore.dataservice;
 
-import com.dmetasoul.metaspore.common.Utils;
-import com.dmetasoul.metaspore.configure.FieldInfo;
 import com.dmetasoul.metaspore.annotation.ServiceAnnotation;
 import com.dmetasoul.metaspore.common.CommonUtils;
+import com.dmetasoul.metaspore.common.ConvTools;
+import com.dmetasoul.metaspore.common.Utils;
+import com.dmetasoul.metaspore.configure.FieldInfo;
 import com.dmetasoul.metaspore.data.TableData;
 import com.dmetasoul.metaspore.enums.DataTypeEnum;
 import com.google.common.collect.Lists;
@@ -30,7 +31,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.springframework.util.Assert;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Slf4j
@@ -87,8 +91,14 @@ public class ItemMatcherTask extends AlgoTransformTask {
                         } else {
                             map = CommonUtils.getObjectToMap(data);
                         }
-                        recallItem.add((String) map.get(itemField.getName()));
-                        recallWeight.add((Double) map.get(scoreField.getName()));
+                        recallItem.add(ConvTools.parseString(map.get(itemField.getName())));
+                        recallWeight.add(ConvTools.parseDouble(map.get(scoreField.getName())));
+                        if (log.isDebugEnabled()) {
+                            if (ConvTools.parseDouble(map.get(scoreField.getName())) == null) {
+                                log.debug("scoreField field: {}, itemfield: {}, field: {}, struct:{}", scoreField, itemField, children, field);
+                                log.debug("scoreField has null: {}, value: {}, data: {}", scoreField.getName(), map.get(scoreField.getName()), data);
+                            }
+                        }
                     }
                     if (input.size() > 2) {
                         userProfile = input.get(2);
@@ -106,7 +116,11 @@ public class ItemMatcherTask extends AlgoTransformTask {
                 }
                 for (int j = 0; j < recallItem.size(); ++j) {
                     String itemId = recallItem.get(j);
-                    Double itemScore = CommonUtils.get(recallWeight, j, 1.0) * userProfileWeight;
+                    Double weight = CommonUtils.get(recallWeight, j, 1.0);
+                    if (weight == null) {
+                        weight = 1.0;
+                    }
+                    Double itemScore = weight * userProfileWeight;
                     if (!itemToItemScore.containsKey(itemId) || itemScore > itemToItemScore.get(itemId)) {
                         itemToItemScore.put(itemId, itemScore);
                     }

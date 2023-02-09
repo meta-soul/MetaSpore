@@ -44,7 +44,7 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
     protected TaskServiceRegister serviceRegister;
     protected TaskFlowConfig taskFlowConfig;
     protected List<Chain> chains;
-    protected long timeout = 30000L;
+    protected long timeout = 3000L;
     protected TimeUnit timeUnit = TimeUnit.MILLISECONDS;
 
     public void init(String name, TaskFlowConfig taskFlowConfig, TaskServiceRegister serviceRegister) {
@@ -73,15 +73,9 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
                 for (String taskName : chain.getThen()) {
                     Service service = serviceMap.get(taskName);
                     Assert.notNull(service, "no found the service in then at : " + taskName);
-                    future = future.thenApplyAsync(dataResult -> {
-                        try {
-                            return service.execute(dataResult, context).get(timeout, timeUnit);
-                        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                            if (CollectionUtils.isNotEmpty(dataResult)) {
-                                dataResult.forEach(DataResult::close);
-                            }
-                            throw new RuntimeException(e);
-                        }
+                    future = future.thenComposeAsync(dataResult -> {
+                        log.debug("executing service {}", taskName);
+                        return service.execute(dataResult, context);
                     }, taskPool);
                 }
             }
@@ -90,15 +84,9 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
                 for (String taskName : chain.getWhen()) {
                     Service service = serviceMap.get(taskName);
                     Assert.notNull(service, "no found the service in when at : " + taskName);
-                    whenList.add(future.thenApplyAsync(dataResult -> {
-                        try {
-                            return service.execute(dataResult, context).get(timeout, timeUnit);
-                        } catch (InterruptedException | TimeoutException | ExecutionException e) {
-                            if (CollectionUtils.isNotEmpty(dataResult)) {
-                                dataResult.forEach(DataResult::close);
-                            }
-                            throw new RuntimeException(e);
-                        }
+                    whenList.add(future.thenComposeAsync(dataResult -> {
+                        log.debug("executing service {}", taskName);
+                        return service.execute(dataResult, context);
                     }, taskPool));
                 }
                 CompletableFuture<?> resultFuture;
@@ -112,6 +100,8 @@ public abstract class TaskFlow<Service extends BaseService> extends Transform {
                     List<DataResult> result = Lists.newArrayList();
                     for (CompletableFuture<List<DataResult>> subFuture : whenList) {
                         try {
+                            // for now all subfuture should have finished
+                            // use get to fetch result
                             result.addAll(subFuture.get(timeout, timeUnit));
                         } catch (InterruptedException | ExecutionException | TimeoutException e) {
                             throw new RuntimeException(e);

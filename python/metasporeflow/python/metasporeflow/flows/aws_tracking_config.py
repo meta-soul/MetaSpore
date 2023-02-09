@@ -15,27 +15,16 @@
 #
 
 from attrs import frozen
-from typing import Tuple, Dict
+from typing import Tuple, Optional
+
 
 @frozen
-class OfflineLocalFlow:
-    offlineLocalImage: str
-    offlineLocalContainerName: str
-
-@frozen
-class OfflineScheduler:
-    cronExpr: str
-    dag: Dict[str, Tuple[str,...]]
-
-@frozen
-class OfflineCrontabScheduler(OfflineScheduler):
-    pass
-
-@frozen
-class OfflineTask:
-    scriptPath: str
-    configPath: str
-
-@frozen
-class OfflinePythonTask(OfflineTask):
-    pass
+class AwsTrackingConfig:
+    enableTracking: Optional[bool] = False
+    trackingDbUri: Optional[str] = None
+    trackingDbDatabase: Optional[str] = 'tracking'
+    trackingDbTable: Optional[str] = 'tracking'
+    trackingLogBufferTimeoutMs: Optional[int] = 1000
+    trackingLogBufferMaxBytes: Optional[int] = 262144
+    trackingLogBufferMaxItems: Optional[int] = 10000
+    trackingRecentUserBhvItemSeqLimit: Optional[int] = 100

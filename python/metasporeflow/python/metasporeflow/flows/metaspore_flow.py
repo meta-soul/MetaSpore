@@ -15,7 +15,9 @@
 #
 
 from attrs import frozen
+from typing import Optional
 
 @frozen
 class MetaSporeFlow:
-    sharedVolumeInContainer: str
+    sharedVolumeInContainer: Optional[str] = None
+    deployMode: Optional[str] = None

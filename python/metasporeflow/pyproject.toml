@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metasporeflow"
-version = "0.1.3"
+version = "0.2.0"
 authors = [
   { name="DMetaSoul", email="opensource@dmetasoul.com" },
 ]
@@ -20,6 +20,8 @@ dependencies = [
     "python-consul2~=0.1.5",
     "ruamel.yaml~=0.17.21",
     "requests~=2.22.0",
+    "botocore==1.24.21",
+    "boto3==1.21.21",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",

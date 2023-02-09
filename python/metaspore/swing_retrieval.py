@@ -62,7 +62,7 @@ class SwingModel(pyspark.ml.base.Model):
 
     def _get_value_expr(self):
         string = "array_join(transform(%s, " % self.value_column_name
-        string += "t -> concat(t._1, '%s', t._2)" % self._format_delimiter(self.item_score_delimiter)
+        string += "t -> concat(t.item_id, '%s', t.score)" % self._format_delimiter(self.item_score_delimiter)
         string += "), '%s') " % self._format_delimiter(self.item_score_pair_delimiter)
         string += "AS %s" % self.value_column_name
         return string

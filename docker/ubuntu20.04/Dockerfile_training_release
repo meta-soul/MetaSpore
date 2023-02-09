@@ -30,8 +30,8 @@ RUN echo "deb http://repo.huaweicloud.com/ubuntu/ focal-backports main restricte
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security main restricted" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security universe" >>/etc/apt/sources.list
 RUN echo "deb http://repo.huaweicloud.com/ubuntu focal-security multiverse" >>/etc/apt/sources.list
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y locales
+RUN apt-get update && apt-get upgrade -y && apt-get clean
+RUN apt-get install -y locales && apt-get clean
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && \
     locale-gen
 ENV LANG=en_US.UTF-8
@@ -39,25 +39,22 @@ ENV LANGUAGE=en_US.UTF-8
 ENV LC_CTYPE=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 ENV TZ=Asia/Shanghai
-RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install -y tzdata
-RUN apt-get install -y python3.8 python3-setuptools ca-certificates maven vim sudo curl wget git libgomp1
-RUN apt-get install -y cron zip
+RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install -y tzdata && apt-get clean
+RUN apt-get install -y python3.8 python3-setuptools ca-certificates maven vim sudo curl wget git libgomp1 cron zip && apt-get clean
 ENV JAVA_HOME=/usr
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
-RUN python -m easy_install install pip
+RUN python -m easy_install -i https://repo.huaweicloud.com/repository/pypi/simple/ install pip
 RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
-RUN python -m pip config set global.extra-index-url https://pypi.org/simple
 
 RUN apt-get install -y pkg-config uuid-dev libpulse-dev && \
-    apt-get install -y tini libpam-modules krb5-user libnss3 procps && \
+    apt-get install -y tini libpam-modules krb5-user libnss3 procps && apt-get clean && \
     echo "auth required pam_wheel.so use_uid" >> /etc/pam.d/su
 
 RUN python -m pip install --upgrade pip setuptools wheel && \
     python -m pip install numpy && \
     python -m pip install torch==1.11.0+cpu torchvision==0.12.0+cpu torchaudio==0.11.0+cpu \
      -f https://download.pytorch.org/whl/cpu/torch_stable.html && \
-    python -m pip install awscli awscli-plugin-endpoint && \
     python -m pip install onnx onnxmltools onnxruntime xgboost lightgbm tabulate && \
     python -m pip install pymilvus faiss-cpu && \
     python -m pip install https://github.com/sllynn/spark-xgboost/releases/download/v0.9/spark_xgboost-0.90-py3-none-any.whl && \
@@ -91,7 +88,7 @@ ENV MAVEN_OPTS=
 FROM metaspore_${METASPORE_RELEASE}_install as spark-pyspark-install
 ARG SPARK_FILE="https://dmetasoul-bucket.obs.cn-southwest-2.myhuaweicloud.com/releases/spark/pyspark-3.1.2.265f9ad4ee-py2.py3-none-any.whl"
 ARG SYNAPSEML_VERSION="0.10.1"
-RUN python -m pip install ${SPARK_FILE}
+RUN python -m pip install ${SPARK_FILE} && pip cache purge
 ENV SPARK_HOME /usr/local/lib/python3.8/dist-packages/pyspark
 RUN mkdir -p /opt/spark/conf
 ENV SPARK_CONF_DIR /opt/spark/conf
