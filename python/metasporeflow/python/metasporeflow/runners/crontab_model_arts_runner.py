@@ -106,6 +106,14 @@ class CrontabModelArtsRunner(object):
         return config_dir
 
     @property
+    def _s3_dummy_input_dir(self):
+        import os
+        s3_work_dir = self._s3_work_dir
+        flow_dir = os.path.join(s3_work_dir, 'flow')
+        dummy_input_dir = os.path.join(flow_dir, 'scene', self._scene_name, 'dummy', 'input')
+        return dummy_input_dir
+
+    @property
     def _s3_model_dir(self):
         import os
         s3_work_dir = self._s3_work_dir
@@ -370,6 +378,14 @@ class CrontabModelArtsRunner(object):
                              )
         return estimator
 
+    def _create_dummy_input_data(self):
+        from modelarts.train_params import InputData
+        s3_dummy_input_dir = self._s3_dummy_input_dir.rstrip('/') + '/'
+        obs_dummy_input_dir = s3_dummy_input_dir.replace('s3://', 'obs://')
+        input_data_name = 'data_url'
+        input_data = InputData(obs_path=obs_dummy_input_dir, name=input_data_name)
+        return input_data
+
     # TODO: cf: check this later
     def _get_training_job_status(self, job_name):
         import boto3
@@ -436,10 +452,8 @@ class CrontabModelArtsRunner(object):
     def _create_training_job(self):
         session = self._get_model_arts_session()
         estimator = self._create_model_arts_estimator(session)
-
-        from modelarts.train_params import InputData
-        job_instance = estimator.fit(inputs=[InputData(obs_path="obs://dmetasoul-resource-bucket/codingfun2022/testing/modelarts/hello/input/", name="data_url")],
-                                     job_name=self._training_job_name)
+        input_data = self._create_dummy_input_data()
+        job_instance = estimator.fit(inputs=[input_data], job_name=self._training_job_name)
         return
 
         import boto3

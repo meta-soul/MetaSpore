@@ -25,6 +25,7 @@ class OfflineModelArtsScheduler(Scheduler):
 
     def publish(self):
         self._set_obs_ak_sk()
+        self._generate_dummy_input()
         self._upload_config()
         self._save_flow_config()
         self._install_crontab()
@@ -35,6 +36,7 @@ class OfflineModelArtsScheduler(Scheduler):
         self._uninstall_crontab()
         self._clear_flow_config()
         self._clear_config()
+        self._clear_dummy_input()
 
     def get_status(self):
         self._set_obs_ak_sk()
@@ -168,6 +170,15 @@ class OfflineModelArtsScheduler(Scheduler):
         config_path = os.path.join(scene_dir, 'metaspore-flow.dat')
         return config_path
 
+    @property
+    def _s3_dummy_input_dir_path(self):
+        import os
+        scene_name = self._scene_name
+        s3_work_dir = self._s3_work_dir
+        flow_dir = os.path.join(s3_work_dir, 'flow')
+        dummy_input_dir = os.path.join(flow_dir, 'scene', scene_name, 'dummy', 'input')
+        return dummy_input_dir
+
     def _ensure_trailing_slash(self, path):
         if path.endswith('/'):
             return path
@@ -190,6 +201,13 @@ class OfflineModelArtsScheduler(Scheduler):
         args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
         subprocess.run(args, input=text.encode('utf-8'), check=True)
 
+    def _generate_dummy_input(self):
+        import os
+        s3_path = os.path.join(self._s3_dummy_input_dir_path, '.notempty')
+        print('Generate dummy input to %s ...' % s3_path)
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
+        subprocess.run(args, input=b'', check=True)
+
     def _upload_config(self):
         import subprocess
         local_path = self._ensure_trailing_slash(self._local_config_dir_path)
@@ -202,6 +220,12 @@ class OfflineModelArtsScheduler(Scheduler):
     def _clear_config(self):
         s3_path = self._ensure_trailing_slash(self._s3_config_dir_path)
         print('Clear algorithm config %s ...' % s3_path)
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'rm', '--recursive', s3_path]
+        subprocess.check_call(args)
+
+    def _clear_dummy_input(self):
+        s3_path = self._ensure_trailing_slash(self._s3_dummy_input_dir_path)
+        print('Clear dummy input %s ...' % s3_path)
         args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'rm', '--recursive', s3_path]
         subprocess.check_call(args)
 
