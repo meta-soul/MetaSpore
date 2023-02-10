@@ -26,3 +26,4 @@ class ModelArtsConfig:
     secretAccessKey: str
     obsEndpoint: str
     obsWorkDir: str
+    projectId: str

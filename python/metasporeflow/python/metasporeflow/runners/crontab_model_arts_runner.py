@@ -45,21 +45,38 @@ class CrontabModelArtsRunner(object):
         return config_path
 
     @property
-    def _aws_region(self):
+    def _s3_endpoint(self):
+        model_arts_config = self._model_arts_config
+        obs_endpoint = model_arts_config.obsEndpoint
+        if obs_endpoint.startswith('http://') or obs_endpoint.startswith('https://'):
+            s3_endpoint = obs_endpoint
+        else:
+            s3_endpoint = 'http://' + obs_endpoint
+        return s3_endpoint
+
+    @property
+    def _s3_work_dir(self):
+        model_arts_config = self._model_arts_config
+        obs_work_dir = model_arts_config.obsWorkDir
+        s3_work_dir = obs_work_dir.replace('obs://', 's3://')
+        return s3_work_dir
+
+    @property
+    def _huaiwei_cloud_region(self):
         import re
-        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
-        s3_endpoint = self._sage_maker_config.s3Endpoint
+        pattern = r'https?://obs\.([A-Za-z0-9\-]+?)\.myhuaweicloud\.com$'
+        s3_endpoint = self._s3_endpoint
         match = re.match(pattern, s3_endpoint)
         if match is None:
             message = 'invalid s3 endpoint %r' % s3_endpoint
             raise RuntimeError(message)
-        aws_region = match.group(1)
-        return aws_region
+        hwc_region = match.group(1)
+        return hwc_region
 
     @property
     def _s3_config_dir(self):
         import os
-        s3_work_dir = self._sage_maker_config.s3WorkDir
+        s3_work_dir = self._s3_work_dir
         flow_dir = os.path.join(s3_work_dir, 'flow')
         config_dir = os.path.join(flow_dir, 'scene', self._scene_name, 'config')
         return config_dir
@@ -67,7 +84,7 @@ class CrontabModelArtsRunner(object):
     @property
     def _s3_model_dir(self):
         import os
-        s3_work_dir = self._sage_maker_config.s3WorkDir
+        s3_work_dir = self._s3_work_dir
         flow_dir = os.path.join(s3_work_dir, 'flow')
         model_dir = os.path.join(flow_dir, 'scene', self._scene_name, 'model')
         model_dir = os.path.join(model_dir, 'export', self._model_version)
@@ -186,13 +203,15 @@ class CrontabModelArtsRunner(object):
         sys.stdout.flush()
         sys.stderr.flush()
 
+    # TODO: cf: check this later
     def _create_training_job_config(self):
         # NOTE: Default offline training docker image
-        repo_url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo'
-        docker_image = '%s/metaspore-spark-training-release:v1.1.2-sagemaker-entrypoint' % repo_url
-        role_arn = self._sage_maker_config.roleArn
-        security_groups = self._sage_maker_config.securityGroups
-        subnets = self._sage_maker_config.subnets
+        # TODO: cf: check this later
+        docker_image = 'dmetasoul-repo/metaspore-modelarts-training:v0.2-test'
+        # TODO: cf: check this later
+        #role_arn = self._sage_maker_config.roleArn
+        #security_groups = self._sage_maker_config.securityGroups
+        #subnets = self._sage_maker_config.subnets
         s3_endpoint = self._sage_maker_config.s3Endpoint
         s3_work_dir = self._sage_maker_config.s3WorkDir
         s3_config_dir = self._s3_config_dir.rstrip('/') + '/'
@@ -260,11 +279,13 @@ class CrontabModelArtsRunner(object):
         )
         return job_config
 
+    # TODO: cf: check this later
     def _get_boto3_client_config(self):
         from botocore.config import Config
         config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
         return config
 
+    # TODO: cf: check this later
     def _get_training_job_status(self, job_name):
         import boto3
         import botocore
@@ -278,6 +299,7 @@ class CrontabModelArtsRunner(object):
         status = response['TrainingJobStatus']
         return status
 
+    # TODO: cf: check this later
     def _wait_training_job(self, job_name):
         import time
         counter = 0
@@ -293,6 +315,7 @@ class CrontabModelArtsRunner(object):
             time.sleep(60)
             counter += 60
 
+    # TODO: cf: check this later
     def _get_model_paths(self):
         import boto3
         from urllib.parse import urlparse
@@ -310,6 +333,7 @@ class CrontabModelArtsRunner(object):
                 model_paths[dir_name] = dir_url
         return model_paths
 
+    # TODO: cf: check this later
     def _update_online_service(self):
         import pprint
         from metasporeflow.online.sagemaker_executor import SageMakerExecutor
@@ -323,8 +347,13 @@ class CrontabModelArtsRunner(object):
         executor = SageMakerExecutor(self._resources)
         executor.execute_reload(models=model_paths)
 
+    # TODO: cf: check this later
     def _create_training_job(self):
         import boto3
+
+        print(self._huaiwei_cloud_region)
+        return
+
         job_config = self._create_training_job_config()
         config = self._get_boto3_client_config()
         sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
