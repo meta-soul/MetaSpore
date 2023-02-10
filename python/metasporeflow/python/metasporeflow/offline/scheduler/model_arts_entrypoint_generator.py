@@ -35,4 +35,6 @@ class ModelArtsEntrypointGenerator(object):
             string += '\n%s' % task.execute
         string += '\n\necho "MetaSpore Offline Flow done"'
         string += '\n'
+        # TODO: cf: check this later
+        string = 'print("Hello, ModelArts!")\n'
         return string

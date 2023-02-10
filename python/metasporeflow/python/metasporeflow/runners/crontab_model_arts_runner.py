@@ -109,6 +109,15 @@ class CrontabModelArtsRunner(object):
         return model_dir
 
     @property
+    def _s3_logs_dir(self):
+        import os
+        s3_work_dir = self._s3_work_dir
+        flow_dir = os.path.join(s3_work_dir, 'flow')
+        logs_dir = os.path.join(flow_dir, 'scene', self._scene_name, 'logs')
+        logs_dir = os.path.join(logs_dir, self._model_version)
+        return logs_dir
+
+    @property
     def _logs_dir(self):
         import os
         logs_dir_path = os.path.join(self._scene_dir, 'logs')
@@ -311,6 +320,52 @@ class CrontabModelArtsRunner(object):
                           region_name=self._huawei_cloud_region)
         return session
 
+    def _create_model_arts_estimator(self, session):
+        import os
+        from modelarts.train_params import TrainingFiles
+        from modelarts.train_params import OutputData
+        from modelarts.estimatorV2 import Estimator
+        s3_config_dir = self._s3_config_dir.rstrip('/') + '/'
+        s3_output_path = self._s3_model_dir.rstrip('/') + '/'
+        s3_logs_dir = self._s3_logs_dir.rstrip('/') + '/'
+        obs_config_dir = s3_config_dir.replace('s3://', 'obs://')
+        obs_output_path = s3_output_path.replace('s3://', 'obs://')
+        obs_logs_dir = s3_logs_dir.replace('s3://', 'obs://')
+        # ModelArts boot file (entrypoint) must be named '*.py'.
+        training_boot_file = 'custom_entrypoint.py'
+        output_data_name = 'output_dir'
+        # TODO: cf: check this later
+        user_image_url = 'dmetasoul-repo/metaspore-modelarts-training:v0.2-test'
+        user_command = 'sh %s' % training_boot_file
+        # TODO: cf: check this later
+        train_instance_type = 'modelarts.p3.large.public.free'
+        train_instance_count = 1
+        training_files = TrainingFiles(code_dir=obs_config_dir, boot_file=training_boot_file)
+        output_data = OutputData(obs_path=obs_output_path, name=output_data_name)
+        env_variables = dict(PYTHONUNBUFFERED='1',
+                             AWS_ENDPOINT=self._s3_endpoint,
+                             AWS_ACCESS_KEY_ID=self._access_key_id,
+                             AWS_SECRET_ACCESS_KEY=self._secret_access_key
+                            )
+        local_code_dir = '/home/ma-user/modelarts/user-job-dir'
+        working_dir = '%s/%s' % (local_code_dir, os.path.basename(s3_config_dir.rstrip('/')))
+        job_description = 'This is MetaSpore training job %s.' % self._training_job_name
+        estimator = Estimator(session=session,
+                              training_files=training_files,
+                              outputs=[output_data],
+                              parameters=[],
+                              user_image_url=user_image_url,
+                              user_command=user_command,
+                              train_instance_type=train_instance_type,
+                              train_instance_count=train_instance_count,
+                              log_url=obs_logs_dir,
+                              env_variables=env_variables,
+                              local_code_dir=local_code_dir,
+                              working_dir=working_dir,
+                              job_description=job_description,
+                             )
+        return estimator
+
     # TODO: cf: check this later
     def _get_training_job_status(self, job_name):
         import boto3
@@ -375,20 +430,15 @@ class CrontabModelArtsRunner(object):
 
     # TODO: cf: check this later
     def _create_training_job(self):
-        import boto3
-
-        print(self._huawei_cloud_region)
-
         session = self._get_model_arts_session()
+        estimator = self._create_model_arts_estimator(session)
 
-        from modelarts.dataset import Dataset
-        print(Dataset.list_datasets(session))
-
-        obs = session.get_obs_client()
-        print(obs.listBuckets())
-
+        from modelarts.train_params import InputData
+        job_instance = estimator.fit(inputs=[InputData(obs_path="obs://dmetasoul-resource-bucket/codingfun2022/testing/modelarts/hello/input/", name="data_url")],
+                                     job_name=self._training_job_name)
         return
 
+        import boto3
         job_config = self._create_training_job_config()
         config = self._get_boto3_client_config()
         sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
