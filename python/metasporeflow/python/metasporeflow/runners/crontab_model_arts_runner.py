@@ -62,7 +62,7 @@ class CrontabModelArtsRunner(object):
         return s3_work_dir
 
     @property
-    def _huaiwei_cloud_region(self):
+    def _huawei_cloud_region(self):
         import re
         pattern = r'https?://obs\.([A-Za-z0-9\-]+?)\.myhuaweicloud\.com$'
         s3_endpoint = self._s3_endpoint
@@ -72,6 +72,24 @@ class CrontabModelArtsRunner(object):
             raise RuntimeError(message)
         hwc_region = match.group(1)
         return hwc_region
+
+    @property
+    def _model_arts_project_id(self):
+        model_arts_config = self._model_arts_config
+        project_id = model_arts_config.projectId
+        return project_id
+
+    @property
+    def _access_key_id(self):
+        model_arts_config = self._model_arts_config
+        access_key_id = model_arts_config.accessKeyId
+        return access_key_id
+
+    @property
+    def _secret_access_key(self):
+        model_arts_config = self._model_arts_config
+        secret_access_key = model_arts_config.secretAccessKey
+        return secret_access_key
 
     @property
     def _s3_config_dir(self):
@@ -285,6 +303,14 @@ class CrontabModelArtsRunner(object):
         config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
         return config
 
+    def _get_model_arts_session(self):
+        from modelarts.session import Session
+        session = Session(access_key=self._access_key_id,
+                          secret_key=self._secret_access_key,
+                          project_id=self._model_arts_project_id,
+                          region_name=self._huawei_cloud_region)
+        return session
+
     # TODO: cf: check this later
     def _get_training_job_status(self, job_name):
         import boto3
@@ -351,7 +377,16 @@ class CrontabModelArtsRunner(object):
     def _create_training_job(self):
         import boto3
 
-        print(self._huaiwei_cloud_region)
+        print(self._huawei_cloud_region)
+
+        session = self._get_model_arts_session()
+
+        from modelarts.dataset import Dataset
+        print(Dataset.list_datasets(session))
+
+        obs = session.get_obs_client()
+        print(obs.listBuckets())
+
         return
 
         job_config = self._create_training_job_config()
