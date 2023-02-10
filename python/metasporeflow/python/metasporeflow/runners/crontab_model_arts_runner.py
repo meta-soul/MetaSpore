@@ -357,7 +357,14 @@ class CrontabModelArtsRunner(object):
         env_variables = dict(PYTHONUNBUFFERED='1',
                              AWS_ENDPOINT=self._s3_endpoint,
                              AWS_ACCESS_KEY_ID=self._access_key_id,
-                             AWS_SECRET_ACCESS_KEY=self._secret_access_key
+                             AWS_SECRET_ACCESS_KEY=self._secret_access_key,
+                             METASPORE_FLOW_S3_WORK_DIR=self._s3_work_dir,
+                             METASPORE_FLOW_SCENE_NAME=self._scene_name,
+                             # NOTE: only one NN model is supported for the moment
+                             METASPORE_FLOW_MODEL_NAME='widedeep',
+                             METASPORE_FLOW_MODEL_VERSION=self._model_version,
+                             # NOTE: incremental training is not supported for the moment
+                             METASPORE_FLOW_LAST_MODEL_VERSION='',
                             )
         local_code_dir = '/home/ma-user/modelarts/user-job-dir'
         working_dir = '%s/%s' % (local_code_dir, os.path.basename(s3_config_dir.rstrip('/')))
