@@ -36,5 +36,7 @@ class ModelArtsEntrypointGenerator(object):
         string += '\n\necho "MetaSpore Offline Flow done"'
         string += '\n'
         # TODO: cf: check this later
-        string = 'print("Hello, ModelArts!")\n'
+        string = "print('Hello, ModelArts!')\n"
+        string += "\n\nimport subprocess\n"
+        string += "\nsubprocess.check_call(['spark-submit', '--master', 'local[2]', 'tutorial.py'])\n"
         return string
