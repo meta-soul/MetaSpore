@@ -14,11 +14,13 @@
 # limitations under the License.
 #
 
-from enum import Enum
+from attrs import frozen
+from typing import Tuple
 
-
-class SchedulerType(Enum):
-    OfflineCrontabScheduler = "OfflineCrontabScheduler"
-    OfflineK8sCronjobScheduler = "OfflineK8sCronjobScheduler"
-    OfflineSageMakerScheduler = "OfflineSageMakerScheduler"
-    OfflineModelArtsScheduler = "OfflineModelArtsScheduler"
+@frozen
+class ModelArtsConfig:
+    #roleArn: str
+    #securityGroups: Tuple[str, ...]
+    #subnets: Tuple[str, ...]
+    obsEndpoint: str
+    obsWorkDir: str

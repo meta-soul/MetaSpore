@@ -29,24 +29,28 @@ class FlowLoader(object):
         from metasporeflow.online.online_flow import OnlineFlow
         from .metaspore_flow import MetaSporeFlow
         from .sage_maker_config import SageMakerConfig
+        from .model_arts_config import ModelArtsConfig
         from .aws_tracking_config import AwsTrackingConfig
         from metasporeflow.flows.metaspore_offline_flow import \
             OfflineScheduler, \
             OfflineCrontabScheduler, \
             OfflineK8sCronjobScheduler, \
             OfflineSageMakerScheduler, \
+            OfflineModelArtsScheduler, \
             OfflineTask, \
             OfflinePythonTask, \
             OfflineLocalFlow
         resource_types = (
             MetaSporeFlow,
             SageMakerConfig,
+            ModelArtsConfig,
             AwsTrackingConfig,
             OnlineFlow,
             OfflineScheduler,
             OfflineCrontabScheduler,
             OfflineK8sCronjobScheduler,
             OfflineSageMakerScheduler,
+            OfflineModelArtsScheduler,
             OfflineTask,
             OfflinePythonTask,
             OfflineLocalFlow,

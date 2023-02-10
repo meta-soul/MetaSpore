@@ -49,6 +49,10 @@ class OfflineSageMakerScheduler(OfflineScheduler):
     configDir: Optional[str] = None
 
 @frozen
+class OfflineModelArtsScheduler(OfflineScheduler):
+    configDir: Optional[str] = None
+
+@frozen
 class OfflineTask:
     scriptPath: str
     configPath: str

@@ -23,11 +23,13 @@ from ..flows.metaspore_offline_flow import OfflineScheduler
 from .scheduler.offline_crontab_scheduler import OfflineCrontabScheduler
 from .scheduler.offline_k8s_cronjob_scheduler import OfflineK8sCronjobScheduler
 from .scheduler.offline_sage_maker_scheduler import OfflineSageMakerScheduler
+from .scheduler.offline_model_arts_scheduler import OfflineModelArtsScheduler
 
 _SCHEDULER_TYPES = {
     'OfflineCrontabScheduler': OfflineCrontabScheduler,
     'OfflineK8sCronjobScheduler': OfflineK8sCronjobScheduler,
     'OfflineSageMakerScheduler': OfflineSageMakerScheduler,
+    'OfflineModelArtsScheduler': OfflineModelArtsScheduler,
 }
 
 class SchedulerManager:
@@ -62,6 +64,9 @@ class SchedulerManager:
                     self._resources, scheduler_conf, self._tasks)
             elif scheduler_type == SchedulerType.OfflineSageMakerScheduler.value:
                 scheduler = OfflineSageMakerScheduler(
+                    self._resources, scheduler_conf, self._tasks)
+            elif scheduler_type == SchedulerType.OfflineModelArtsScheduler.value:
+                scheduler = OfflineModelArtsScheduler(
                     self._resources, scheduler_conf, self._tasks)
             else:
                 message = f"Invalid scheduler type: {scheduler_type}"
