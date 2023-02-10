@@ -38,5 +38,6 @@ class ModelArtsEntrypointGenerator(object):
         # TODO: cf: check this later
         string = "print('Hello, ModelArts!')\n"
         string += "\n\nimport subprocess\n"
-        string += "\nsubprocess.check_call(['spark-submit', '--master', 'local[2]', 'tutorial.py'])\n"
+        #string += "\nsubprocess.check_call(['spark-submit', '--master', 'local[2]', 'tutorial.py'])\n"
+        string += "\nsubprocess.check_call(['spark-submit', '--master', 'local[2]', 'test_read_mysql.py'])\n"
         return string
