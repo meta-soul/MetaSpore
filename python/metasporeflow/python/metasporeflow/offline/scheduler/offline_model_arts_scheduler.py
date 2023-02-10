@@ -16,7 +16,7 @@
 
 import subprocess
 from .scheduler import Scheduler
-from .sage_maker_entrypoint_generator import SageMakerEntrypointGenerator
+from .model_arts_entrypoint_generator import ModelArtsEntrypointGenerator
 from ..utils.file_util import FileUtil
 
 class OfflineModelArtsScheduler(Scheduler):
@@ -91,13 +91,13 @@ class OfflineModelArtsScheduler(Scheduler):
     @property
     def _s3_access_key_id(self):
         model_arts_config = self._model_arts_config
-        access_key_id = model_arts_config.obsAccessKeyId
+        access_key_id = model_arts_config.accessKeyId
         return access_key_id
 
     @property
     def _s3_secret_access_key(self):
         model_arts_config = self._model_arts_config
-        secret_access_key = model_arts_config.obsSecretAccessKey
+        secret_access_key = model_arts_config.secretAccessKey
         return secret_access_key
 
     @property
@@ -125,7 +125,7 @@ class OfflineModelArtsScheduler(Scheduler):
     @property
     def _crontab_command(self):
         import sys
-        module_name = 'metasporeflow.runners.crontab_sage_maker_runner'
+        module_name = 'metasporeflow.runners.crontab_model_arts_runner'
         scene_name = self._scene_name
         python = sys.executable
         crontab_command = '%s -m %s --scene %s --redirect-stdio' % (python, module_name, scene_name)
@@ -182,10 +182,10 @@ class OfflineModelArtsScheduler(Scheduler):
     def _generate_entrypoint(self, s3_config_dir_path):
         import os
         import subprocess
-        generator = SageMakerEntrypointGenerator(self._dag_tasks)
+        generator = ModelArtsEntrypointGenerator(self._dag_tasks)
         text = generator.generate_entrypoint()
         s3_path = os.path.join(s3_config_dir_path, 'custom_entrypoint.sh')
-        print('Generate SageMaker entrypoint to %s ...' % s3_path)
+        print('Generate ModelArts entrypoint to %s ...' % s3_path)
         args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
         subprocess.run(args, input=text.encode('utf-8'), check=True)
 
@@ -271,8 +271,7 @@ class OfflineModelArtsScheduler(Scheduler):
         old_spec = self._get_old_crontab_spec()
         new_spec = self._make_new_crontab_spec(old_spec)
         print('Install crontab entry %r ...' % self._crontab_entry)
-        # TODO: cf: check this later
-        #self._update_crontab(new_spec)
+        self._update_crontab(new_spec)
 
     def _uninstall_crontab(self):
         old_spec = self._get_old_crontab_spec()
@@ -287,14 +286,15 @@ class OfflineModelArtsScheduler(Scheduler):
         args = shlex.split(command)
         assert args and args[-1] == '--redirect-stdio'
         args.pop() # pop --redirect-stdio
-        # TODO: cf: check this later
-        #subprocess.check_call(args)
+        subprocess.check_call(args)
 
+    # TODO: cf: check this later
     def _get_boto3_client_config(self):
         from botocore.config import Config
         config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
         return config
 
+    # TODO: cf: check this later
     def _get_training_jobs(self):
         import boto3
         training_jobs = []
@@ -331,6 +331,7 @@ class OfflineModelArtsScheduler(Scheduler):
             next_token = response.get('NextToken')
         return training_jobs
 
+    # TODO: cf: check this later
     def _get_training_job_status(self, job_name):
         import boto3
         import botocore
@@ -344,6 +345,7 @@ class OfflineModelArtsScheduler(Scheduler):
         status = response['TrainingJobStatus']
         return status
 
+    # TODO: cf: check this later
     def _get_training_job_url(self, job_name):
         url = 'https://%s.console.amazonaws.cn' % self._aws_region
         url += '/sagemaker/home?region=%s' % self._aws_region
