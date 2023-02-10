@@ -27,3 +27,4 @@ class ModelArtsConfig:
     obsEndpoint: str
     obsWorkDir: str
     projectId: str
+    resourcePoolId: str

@@ -80,6 +80,12 @@ class CrontabModelArtsRunner(object):
         return project_id
 
     @property
+    def _resource_pool_id(self):
+        model_arts_config = self._model_arts_config
+        resource_pool_id = model_arts_config.resourcePoolId
+        return resource_pool_id
+
+    @property
     def _access_key_id(self):
         model_arts_config = self._model_arts_config
         access_key_id = model_arts_config.accessKeyId
@@ -336,9 +342,7 @@ class CrontabModelArtsRunner(object):
         output_data_name = 'output_dir'
         # TODO: cf: check this later
         user_image_url = 'dmetasoul-repo/metaspore-modelarts-training:v0.2-test'
-        user_command = 'sh %s' % training_boot_file
-        # TODO: cf: check this later
-        train_instance_type = 'modelarts.p3.large.public.free'
+        user_command = 'python %s' % training_boot_file
         train_instance_count = 1
         training_files = TrainingFiles(code_dir=obs_config_dir, boot_file=training_boot_file)
         output_data = OutputData(obs_path=obs_output_path, name=output_data_name)
@@ -356,13 +360,13 @@ class CrontabModelArtsRunner(object):
                               parameters=[],
                               user_image_url=user_image_url,
                               user_command=user_command,
-                              train_instance_type=train_instance_type,
                               train_instance_count=train_instance_count,
                               log_url=obs_logs_dir,
                               env_variables=env_variables,
                               local_code_dir=local_code_dir,
                               working_dir=working_dir,
                               job_description=job_description,
+                              pool_id=self._resource_pool_id,
                              )
         return estimator
 
