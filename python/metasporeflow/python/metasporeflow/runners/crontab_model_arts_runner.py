@@ -453,7 +453,10 @@ class CrontabModelArtsRunner(object):
         session = self._get_model_arts_session()
         estimator = self._create_model_arts_estimator(session)
         input_data = self._create_dummy_input_data()
-        job_instance = estimator.fit(inputs=[input_data], job_name=self._training_job_name)
+        job_instance = estimator.fit(inputs=[input_data],
+                                     job_name=self._training_job_name,
+                                     wait=True,
+                                     show_log=True)
         return
 
         import boto3
