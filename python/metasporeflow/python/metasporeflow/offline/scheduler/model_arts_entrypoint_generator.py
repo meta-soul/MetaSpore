@@ -25,19 +25,14 @@ class ModelArtsEntrypointGenerator(object):
         self._dag_tasks = dag_tasks
 
     def generate_entrypoint(self):
-        string = '#!/bin/bash'
-        string += '\n\nset -ex'
-        string += '\n\ncd $(dirname ${BASH_SOURCE[0]})'
-        string += '\necho "PWD: ${PWD}"'
-        string += '\n\necho "MetaSpore Offline Flow begin ..."'
-        string += '\n'
+        string = "import os"
+        string += "\nimport shlex"
+        string += "\nimport subprocess"
+        string += "\n\nprint('PWD: %s' % os.getcwd())"
+        string += "\n\nprint('MetaSpore Offline Flow begin ...')"
+        string += "\n"
         for task in self._dag_tasks:
-            string += '\n%s' % task.execute
-        string += '\n\necho "MetaSpore Offline Flow done"'
-        string += '\n'
-        # TODO: cf: check this later
-        string = "print('Hello, ModelArts!')\n"
-        string += "\n\nimport subprocess\n"
-        #string += "\nsubprocess.check_call(['spark-submit', '--master', 'local[2]', 'tutorial.py'])\n"
-        string += "\nsubprocess.check_call(['spark-submit', '--master', 'local[2]', 'test_read_mysql.py'])\n"
+            string += "\nsubprocess.check_call(shlex.split(%r))" % task.execute
+        string += "\n\nprint('MetaSpore Offline Flow done')"
+        string += "\n"
         return string
