@@ -22,5 +22,7 @@ class ModelArtsConfig:
     #roleArn: str
     #securityGroups: Tuple[str, ...]
     #subnets: Tuple[str, ...]
+    obsAccessKeyId: str
+    obsSecretAccessKey: str
     obsEndpoint: str
     obsWorkDir: str

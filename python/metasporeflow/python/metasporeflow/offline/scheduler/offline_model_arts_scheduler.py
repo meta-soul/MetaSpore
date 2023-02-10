@@ -24,20 +24,20 @@ class OfflineModelArtsScheduler(Scheduler):
         super().__init__(resources, scheduler_conf, tasks)
 
     def publish(self):
-        self._set_aws_region()
+        self._set_obs_ak_sk()
         self._upload_config()
         self._save_flow_config()
         self._install_crontab()
         self._run_job_once()
 
     def destroy(self):
-        self._set_aws_region()
+        self._set_obs_ak_sk()
         self._uninstall_crontab()
         self._clear_flow_config()
         self._clear_config()
 
     def get_status(self):
-        self._set_aws_region()
+        self._set_obs_ak_sk()
         recent_training_jobs = self._get_training_jobs()
         if recent_training_jobs:
             last_training_job_name = recent_training_jobs[0]['name']
@@ -82,29 +82,39 @@ class OfflineModelArtsScheduler(Scheduler):
         return name_prefix
 
     @property
-    def _sage_maker_config(self):
-        from metasporeflow.flows.sage_maker_config import SageMakerConfig
-        sage_maker_resource = self._resources.find_by_type(SageMakerConfig)
-        sage_maker_config = sage_maker_resource.data
-        return sage_maker_config
+    def _model_arts_config(self):
+        from metasporeflow.flows.model_arts_config import ModelArtsConfig
+        model_arts_resource = self._resources.find_by_type(ModelArtsConfig)
+        model_arts_config = model_arts_resource.data
+        return model_arts_config
 
     @property
-    def _aws_region(self):
-        import re
-        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
-        sage_maker_config = self._sage_maker_config
-        s3_endpoint = sage_maker_config.s3Endpoint
-        match = re.match(pattern, s3_endpoint)
-        if match is None:
-            message = 'invalid s3 endpoint %r' % s3_endpoint
-            raise RuntimeError(message)
-        aws_region = match.group(1)
-        return aws_region
+    def _s3_access_key_id(self):
+        model_arts_config = self._model_arts_config
+        access_key_id = model_arts_config.obsAccessKeyId
+        return access_key_id
+
+    @property
+    def _s3_secret_access_key(self):
+        model_arts_config = self._model_arts_config
+        secret_access_key = model_arts_config.obsSecretAccessKey
+        return secret_access_key
+
+    @property
+    def _s3_endpoint(self):
+        model_arts_config = self._model_arts_config
+        obs_endpoint = model_arts_config.obsEndpoint
+        if obs_endpoint.startswith('http://') or obs_endpoint.startswith('https://'):
+            s3_endpoint = obs_endpoint
+        else:
+            s3_endpoint = 'http://' + obs_endpoint
+        return s3_endpoint
 
     @property
     def _s3_work_dir(self):
-        sage_maker_config = self._sage_maker_config
-        s3_work_dir = sage_maker_config.s3WorkDir
+        model_arts_config = self._model_arts_config
+        obs_work_dir = model_arts_config.obsWorkDir
+        s3_work_dir = obs_work_dir.replace('obs://', 's3://')
         return s3_work_dir
 
     @property
@@ -164,9 +174,10 @@ class OfflineModelArtsScheduler(Scheduler):
         else:
             return path + '/'
 
-    def _set_aws_region(self):
+    def _set_obs_ak_sk(self):
         import os
-        os.environ['AWS_DEFAULT_REGION'] = self._aws_region
+        os.environ['AWS_ACCESS_KEY_ID'] = self._s3_access_key_id
+        os.environ['AWS_SECRET_ACCESS_KEY'] = self._s3_secret_access_key
 
     def _generate_entrypoint(self, s3_config_dir_path):
         import os
@@ -175,7 +186,7 @@ class OfflineModelArtsScheduler(Scheduler):
         text = generator.generate_entrypoint()
         s3_path = os.path.join(s3_config_dir_path, 'custom_entrypoint.sh')
         print('Generate SageMaker entrypoint to %s ...' % s3_path)
-        args = ['aws', 's3', 'cp', '-', s3_path]
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
         subprocess.run(args, input=text.encode('utf-8'), check=True)
 
     def _upload_config(self):
@@ -183,14 +194,14 @@ class OfflineModelArtsScheduler(Scheduler):
         local_path = self._ensure_trailing_slash(self._local_config_dir_path)
         s3_path = self._ensure_trailing_slash(self._s3_config_dir_path)
         print('Upload algorithm config to %s ...' % s3_path)
-        args = ['aws', 's3', 'sync', '--delete', local_path, s3_path]
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'sync', '--delete', local_path, s3_path]
         subprocess.check_call(args)
         self._generate_entrypoint(s3_path)
 
     def _clear_config(self):
         s3_path = self._ensure_trailing_slash(self._s3_config_dir_path)
         print('Clear algorithm config %s ...' % s3_path)
-        args = ['aws', 's3', 'rm', '--recursive', s3_path]
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'rm', '--recursive', s3_path]
         subprocess.check_call(args)
 
     def _save_flow_config(self):
