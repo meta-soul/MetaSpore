@@ -244,88 +244,6 @@ class CrontabModelArtsRunner(object):
         sys.stdout.flush()
         sys.stderr.flush()
 
-    # TODO: cf: check this later
-    def _create_training_job_config(self):
-        # NOTE: Default offline training docker image
-        # TODO: cf: check this later
-        docker_image = 'dmetasoul-repo/metaspore-modelarts-training:v0.2-test'
-        # TODO: cf: check this later
-        #role_arn = self._sage_maker_config.roleArn
-        #security_groups = self._sage_maker_config.securityGroups
-        #subnets = self._sage_maker_config.subnets
-        s3_endpoint = self._sage_maker_config.s3Endpoint
-        s3_work_dir = self._sage_maker_config.s3WorkDir
-        s3_config_dir = self._s3_config_dir.rstrip('/') + '/'
-        s3_output_path = self._s3_model_dir.rstrip('/') + '/'
-        channel_name = 'metaspore'
-        metaspore_entrypoint = 'bash /opt/ml/input/data/%s/custom_entrypoint.sh' % channel_name
-        job_config = dict(
-            TrainingJobName=self._training_job_name,
-            AlgorithmSpecification={
-                'TrainingImage': docker_image,
-                'TrainingInputMode': 'Pipe',
-            },
-            RoleArn=role_arn,
-            InputDataConfig=[
-                {
-                    'ChannelName': channel_name,
-                    'DataSource': {
-                        'S3DataSource': {
-                            'S3DataDistributionType': 'FullyReplicated',
-                            'S3DataType': 'S3Prefix',
-                            'S3Uri': s3_config_dir,
-                        },
-                    },
-                    'InputMode': 'File',
-                },
-            ],
-            OutputDataConfig={
-                'S3OutputPath': s3_output_path,
-            },
-            ResourceConfig={
-                # NOTE: Default to ml.m5.2xlarge with 8 vCPUs and 32 GiB Memory
-                'InstanceType': 'ml.m5.2xlarge',
-                'InstanceCount': 1,
-                'VolumeSizeInGB': 20,
-            },
-            VpcConfig={
-                'SecurityGroupIds': security_groups,
-                'Subnets': subnets,
-            },
-            StoppingCondition={
-                # NOTE: Default to 20 hours
-                'MaxRuntimeInSeconds': 72000,
-                'MaxWaitTimeInSeconds': 72000,
-            },
-            EnableNetworkIsolation=False,
-            EnableInterContainerTrafficEncryption=False,
-            EnableManagedSpotTraining=False,
-            Environment={
-                'AWS_ENDPOINT': s3_endpoint,
-                'METASPORE_ENTRYPOINT': metaspore_entrypoint,
-                'METASPORE_FLOW_S3_WORK_DIR': s3_work_dir,
-                'METASPORE_FLOW_SCENE_NAME': self._scene_name,
-                # NOTE: only one NN model is supported for the moment
-                'METASPORE_FLOW_MODEL_NAME': 'widedeep',
-                'METASPORE_FLOW_MODEL_VERSION': self._model_version,
-                # NOTE: incremental training is not supported for the moment
-                'METASPORE_FLOW_LAST_MODEL_VERSION': '',
-                # TODO: cf: check this later
-                'SPARK_JAVA_OPTS': '-Djava.io.tmpdir=/opt/spark/work-dir',
-            },
-            RetryStrategy={
-                # NOTE: MaximumRetryAttempts must be positive integer >= 1.
-                'MaximumRetryAttempts': 1
-            }
-        )
-        return job_config
-
-    # TODO: cf: check this later
-    def _get_boto3_client_config(self):
-        from botocore.config import Config
-        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
-        return config
-
     def _get_model_arts_session(self):
         from modelarts.session import Session
         session = Session(access_key=self._access_key_id,
@@ -393,69 +311,34 @@ class CrontabModelArtsRunner(object):
         input_data = InputData(obs_path=obs_dummy_input_dir, name=input_data_name)
         return input_data
 
-    # TODO: cf: check this later
-    def _get_training_job_status(self, job_name):
-        import boto3
-        import botocore
-        config = self._get_boto3_client_config()
-        client = boto3.client('sagemaker', self._aws_region, config=config)
-        try:
-            response = client.describe_training_job(TrainingJobName=job_name)
-        except botocore.exceptions.ClientError as ex:
-            message = "training job %r not found" % job_name
-            raise RuntimeError(message) from ex
-        status = response['TrainingJobStatus']
-        return status
-
-    # TODO: cf: check this later
-    def _wait_training_job(self, job_name):
-        import time
-        counter = 0
-        while True:
-            status = self._get_training_job_status(job_name)
-            if counter > 72000:
-                message = 'fail to wait training job %r' % job_name
-                raise RuntimeError(message)
-            if counter % 60 == 0:
-                print('Wait training job %r ... [%s]' % (job_name, status))
-            if status in ('Completed', 'Failed', 'Stopped'):
-                return status
-            time.sleep(60)
-            counter += 60
-
-    # TODO: cf: check this later
-    def _get_model_paths(self):
-        import boto3
+    def _get_model_paths(self, obs):
         from urllib.parse import urlparse
-        config = self._get_boto3_client_config()
-        s3 = boto3.client('s3', self._aws_region, config=config)
         results = urlparse(self._s3_model_dir, allow_fragments=False)
         bucket = results.netloc
         prefix = results.path.strip('/') + '/'
         model_paths = dict()
-        objects = s3.list_objects_v2(Bucket=bucket, Prefix=prefix, Delimiter='/').get('CommonPrefixes')
+        objects = obs.listObjects(bucketName=bucket, prefix=prefix, delimiter='/').body.commonPrefixs
         if objects is not None:
             for obj in objects:
-                dir_name = obj.get('Prefix')[len(prefix):].strip('/')
+                dir_name = obj.prefix[len(prefix):].strip('/')
                 dir_url = 's3://%s/%s%s/' % (bucket, prefix, dir_name)
                 model_paths[dir_name] = dir_url
         return model_paths
 
-    # TODO: cf: check this later
-    def _update_online_service(self):
+    def _update_online_service(self, session):
         import pprint
-        from metasporeflow.online.sagemaker_executor import SageMakerExecutor
+        from metasporeflow.online.model_arts_online_flow_executor import ModelArtsOnlineFlowExecutor
+        obs = session.get_obs_client()
+        model_paths = self._get_model_paths(obs)
         print('models:')
-        model_paths = self._get_model_paths()
         pprint.pprint(model_paths)
         if len(model_paths) != 1:
             # NOTE: only one NN model is supported for the moment
             message = "expect one model; found %d" % (len(model_paths))
             raise RuntimeError(message)
-        executor = SageMakerExecutor(self._resources)
+        executor = ModelArtsOnlineFlowExecutor(self._resources)
         executor.execute_reload(models=model_paths)
 
-    # TODO: cf: check this later
     def _create_training_job(self):
         session = self._get_model_arts_session()
         estimator = self._create_model_arts_estimator(session)
@@ -464,18 +347,12 @@ class CrontabModelArtsRunner(object):
                                      job_name=self._training_job_name,
                                      wait=True,
                                      show_log=True)
-        return
-
-        import boto3
-        job_config = self._create_training_job_config()
-        config = self._get_boto3_client_config()
-        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
-        response = sagemaker_client.create_training_job(**job_config)
-        print('response: %s' % response)
-        status = self._wait_training_job(self._training_job_name)
+        job_info = job_instance.get_job_info()
+        print('job_info: %s' % job_info)
+        status = job_info['status']['phase']
         print('status: %s' % status)
         if status == 'Completed':
-            self._update_online_service()
+            self._update_online_service(session)
 
     def run(self):
         self._parse_args()
