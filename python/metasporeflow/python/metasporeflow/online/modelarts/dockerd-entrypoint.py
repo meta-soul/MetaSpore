@@ -51,7 +51,7 @@ def download_file():
     s = urlparse(obs_model_url, allow_fragments=False)
     bucket_name = s.netloc
     url_path = s.path
-    obs_model_path = url_path if url_path[0] != "/" else url_path[1:]
+    obs_model_path = url_path.lstrip("/")
     local_model_path = prefix + url_path.split("/")[-1]
     obs_client = ObsClient(
         access_key_id=access_key_id,
@@ -91,8 +91,6 @@ def print_dir():
 def prepare_model_data():
     local_model_path = download_file()
     unzip_model_file(local_model_path)
-    print_dir()
-
 
 def serve():
     prepare_model_data()

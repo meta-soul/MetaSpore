@@ -1,18 +1,21 @@
 import decimal
 import json
 
-from metasporeflow.online.common import dictToObj
 
 import boto3
 import datetime
-import time
 import re
 import os
 import shutil
 import tempfile
 import tarfile
-
+from obs import ObsClient
+from modelarts.session import Session
+from modelarts.model import Predictor
+from modelarts.model import Model
+from modelarts.config.model_config import ServiceConfig
 from metasporeflow.online.online_generator import OnlineGenerator
+
 
 class DateEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -28,9 +31,6 @@ class DateEncoder(json.JSONEncoder):
 
 class ModelArtsOnlineFlowExecutor(object):
     def __init__(self, resources):
-        # TODO
-        return
-
         from metasporeflow.online.online_flow import OnlineFlow
         self.now_time = datetime.datetime.now()
         self.model_version = datetime.datetime.strftime(self.now_time, "%Y%m%d-%H%M%S")
@@ -39,16 +39,28 @@ class ModelArtsOnlineFlowExecutor(object):
         self._generator = OnlineGenerator(resource=self._online_resource)
         self.server_config = self._generator.gen_server_config()
         self.configure = self._online_resource.data
-        self.region = self._get_aws_region()
-        self.role = self._get_iam_role()
-        config = self._get_boto3_client_config()
-        self.sm_client = boto3.client("sagemaker", self.region, config=config)
-        self.runtime_sm_client = boto3.client("runtime.sagemaker", self.region, config=config)
-        self.account_id = boto3.client("sts", self.region, config=config).get_caller_identity()["Account"]
+        self.region = self._get_obs_region()
         self.bucket, self.prefix = self._get_bucket_and_prefix()
+        self.scene_name = self._get_scene_name()
+        self.session = self._get_modelarts_session()
+        self.service_weight = "100"
+        self.service_instance_count = 1
+        self.service_specification = "modelarts.vm.cpu.2u"
+        self.service_infer_type = "real-time"
+
+    @property
+    def _obs_access_key_id(self):
+        model_arts_config = self._get_model_arts_config()
+        access_key_id = model_arts_config.accessKeyId
+        return access_key_id
+
+    @property
+    def _obs_secret_access_key(self):
+        model_arts_config = self._get_model_arts_config()
+        secret_access_key = model_arts_config.secretAccessKey
+        return secret_access_key
 
     def _get_scene_name(self):
-        import re
         from metasporeflow.flows.metaspore_flow import MetaSporeFlow
         flow_resource = self._resources.find_by_type(MetaSporeFlow)
         scene_name = flow_resource.name
@@ -59,46 +71,50 @@ class ModelArtsOnlineFlowExecutor(object):
         endpoint_name = re.sub('[^A-Za-z0-9]', '-', scene_name)
         return endpoint_name
 
-    def _get_sage_maker_config(self):
-        from metasporeflow.flows.sage_maker_config import SageMakerConfig
-        resource = self._resources.find_by_type(SageMakerConfig)
-        config = resource.data
-        return config
+    def _get_model_arts_config(self):
+        from metasporeflow.flows.model_arts_config import ModelArtsConfig
+        model_arts_resource = self._resources.find_by_type(ModelArtsConfig)
+        model_arts_config = model_arts_resource.data
+        return model_arts_config
 
     def _get_iam_role(self):
         config = self._get_sage_maker_config()
         role = config.roleArn
         return role
 
-    def _get_s3_endpoint(self):
-        config = self._get_sage_maker_config()
-        s3_endpoint = config.s3Endpoint
-        return s3_endpoint
+    def _get_obs_endpoint(self):
+        config = self._get_model_arts_config()
+        obs_endpoint = config.obsEndpoint
+        return obs_endpoint
 
-    def _get_s3_work_dir(self):
-        config = self._get_sage_maker_config()
-        s3_work_dir = config.s3WorkDir
-        return s3_work_dir
+    def _get_obs_work_dir(self):
+        config = self._get_model_arts_config()
+        obs_work_dir = config.obsWorkDir
+        return obs_work_dir
 
     def _get_serving_dir(self):
-        s3_work_dir = self._get_s3_work_dir()
+        obs_work_dir = self._get_obs_work_dir()
         scene_name = self._get_scene_name()
-        flow_dir = os.path.join(s3_work_dir, 'flow')
+        flow_dir = os.path.join(obs_work_dir, 'flow')
         scene_dir = os.path.join(flow_dir, 'scene', scene_name)
         model_dir = os.path.join(scene_dir, 'model')
         serving_dir = os.path.join(model_dir, 'serving')
         return serving_dir
 
-    def _get_aws_region(self):
+    def _get_obs_region(self):
         import re
-        pattern = r's3\.([A-Za-z0-9\-]+?)\.amazonaws\.com(\.cn)?$'
-        s3_endpoint = self._get_s3_endpoint()
-        match = re.match(pattern, s3_endpoint)
+        pattern = r'obs\.([A-Za-z0-9\-]+?)\.myhuaweicloud\.com(\.cn)?$'
+        obs_endpoint = self._get_obs_endpoint()
+        match = re.match(pattern, obs_endpoint)
         if match is None:
-            message = 'invalid s3 endpoint %r' % s3_endpoint
+            message = 'invalid obs endpoint %r' % obs_endpoint
             raise RuntimeError(message)
-        aws_region = match.group(1)
-        return aws_region
+        obs_region = match.group(1)
+        return obs_region
+
+    def _get_modelarts_endpoint(self):
+        region = self.region
+        return 'modelarts.' + region + '.myhuaweicloud.com'
 
     def _get_bucket_and_prefix(self):
         from urllib.parse import urlparse
@@ -109,8 +125,8 @@ class ModelArtsOnlineFlowExecutor(object):
         return bucket, prefix
 
     def _get_container_image(self):
-        url = '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn'
-        url += '/dmetasoul-repo/metaspore-sagemaker-release:v1.0.6'
+        url = 'swr.cn-north-4.myhuaweicloud.com'
+        url += '/dmetasoul-repo/metaspore-modelarts-release:v1.0.6'
         return url
 
     def _endpoint_exists(self, endpoint_name):
@@ -154,58 +170,56 @@ class ModelArtsOnlineFlowExecutor(object):
             time.sleep(1)
             counter += 1
 
-    def create_model(self, endpoint_name, key):
-        model_name = "{}-model-{}".format(endpoint_name, self.model_version)
-        model_url = "s3://{}/{}".format(self.bucket, key)
-        container_image = self._get_container_image()
-        environment = dict()
-        environment["CONSUL_ENABLE"] = "false"
-        environment["SERVICE_PORT"] = "8080"
-        container = {"Image": container_image, "ModelDataUrl": model_url, "Environment": environment}
-        config = self._get_sage_maker_config()
-        if config.securityGroups and config.subnets:
-            vpc_config = {
-                'SecurityGroupIds': config.securityGroups,
-                'Subnets': config.subnets,
-            }
-            create_model_response = self.sm_client.create_model(
-                ModelName=model_name,
-                ExecutionRoleArn=self.role,
-                Containers=[container],
-                VpcConfig=vpc_config
-            )
-        else:
-            create_model_response = self.sm_client.create_model(
-                ModelName=model_name,
-                ExecutionRoleArn=self.role,
-                Containers=[container],
-            )
-        print("model resp:", create_model_response)
-        print("Model Arn: " + create_model_response["ModelArn"])
-        resp = self.sm_client.describe_model(ModelName=model_name)
-        print("model: {} resp: ".format(model_name) + json.dumps(resp, cls=DateEncoder))
-        print("model_url=", model_url)
-        return self.create_endpoint_config(endpoint_name, model_name)
+    def _get_modelarts_session(self):
+        model_arts_config = self._get_model_arts_config()
+        session = Session(access_key=self._obs_access_key_id,
+                          secret_key=self._obs_secret_access_key,
+                          project_id=model_arts_config.projectId,
+                          region_name=self.region)
+        return session
 
-    def create_endpoint_config(self, endpoint_name, model_name):
-        endpoint_config_name = "{}-config-{}".format(endpoint_name, self.model_version)
-        create_endpoint_config_response = self.sm_client.create_endpoint_config(
-            EndpointConfigName=endpoint_config_name,
-            ProductionVariants=[
-                {
-                    # NOTE: Default to ml.m5.2xlarge with 8 vCPUs and 32 GiB Memory
-                    "InstanceType": "ml.m5.2xlarge",
-                    "InitialInstanceCount": 1,
-                    "InitialVariantWeight": 1,
-                    "ModelName": model_name,
-                    "VariantName": "variant-name-1",
-                }
-            ],
-        )
-        print("Endpoint config Arn: " + create_endpoint_config_response["EndpointConfigArn"])
-        resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config_name)
-        print("endpoint config: {} resp: ".format(endpoint_config_name) + json.dumps(resp, cls=DateEncoder))
-        return endpoint_config_name
+    def _generate_model_location(self, model_url):
+        print("model_url: " + model_url)
+        from urllib.parse import urlparse
+        results = urlparse(model_url, allow_fragments=False)
+        path_list = results.path.strip("/").split("/")
+        path_list.pop(-1)
+        path_list.insert(0, results.netloc)
+        location = "/{}/".format("/".join(path_list))
+        return location
+
+    def create_model(self, key):
+        model_url = "obs://{}/{}".format(self.bucket, key)
+        model_location = self._generate_model_location(model_url)
+        print("model_location: " + model_location)
+        container_image = self._get_container_image()
+        initial_config = dict(protocol="https", port="8080")
+        model_arts_config = self._get_model_arts_config()
+        envs = {
+            "AWS_ACCESS_KEY_ID": self._obs_access_key_id,
+            "AWS_SECRET_ACCESS_KEY": self._obs_secret_access_key,
+            "OBS_ENDPOINT": self._get_obs_endpoint(),
+            "MODELARTS_ENDPOINT": self._get_modelarts_endpoint(),
+            "OBS_MODEL_URL": model_url,
+            "CONSUL_ENABLE": "false"
+        }
+        model_instance = Model(
+            self.session,
+            model_name=self.scene_name,
+            runtime=container_image,
+            source_location_type="OBS_SOURCE",
+            source_location=model_location,
+            model_type="Custom",
+            initial_config=initial_config)
+        model_id = model_instance.model_id
+        configs = [
+            ServiceConfig(model_id=model_id, weight=self.service_weight, specification=self.service_specification, instance_count=self.service_instance_count, envs=envs)]
+        predictor_instance = model_instance.deploy_predictor(service_name=self.scene_name,
+                                                             infer_type=self.service_infer_type,
+                                                             pool_name=model_arts_config.resourcePoolId,
+                                                             configs=configs)
+        predictor_info = predictor_instance.get_service_info()
+        print("service access_address. please save it for inference: " + str(predictor_info["access_address"]))
 
     def create_endpoint(self, endpoint_name, endpoint_config_name):
         create_endpoint_response = self.sm_client.create_endpoint(
@@ -262,11 +276,24 @@ class ModelArtsOnlineFlowExecutor(object):
     def add_model_to_s3(self, endpoint_name, model_paths):
         temp_dir = tempfile.mkdtemp()
         try:
-            s3 = boto3.resource('s3', self.region)
+            obs_client = ObsClient(
+                access_key_id=self._obs_access_key_id,
+                secret_access_key=self._obs_secret_access_key,
+                server=self._get_obs_endpoint(),
+            )
+
             model = self.process_model_info(endpoint_name, model_paths, temp_dir)
             key = os.path.join(self.prefix, os.path.basename(model))
             with open(model, "rb") as file_obj:
-                s3.Bucket(self.bucket).Object(key).upload_fileobj(file_obj)
+                try:
+                    resp = obs_client.putObject(self.bucket, key, file_obj)
+                    if resp.status < 300:
+                        print("requestId: {}. url: {}".format(resp.requestId, resp.body.url))
+                    else:
+                        print("errorCode: {}. errorMessage: {}".format(resp.errorCode, resp.errorMessage))
+                except:
+                    import traceback
+                    print(traceback.format_exc())
             return key
         finally:
             shutil.rmtree(temp_dir)
@@ -293,6 +320,8 @@ class ModelArtsOnlineFlowExecutor(object):
                     continue
                 bucket = model_prefix[len("s3://"):idx]
                 model_prefix = model_prefix[idx + 1:]
+
+            print("bucket: {} model_prefix: {} model_path: {}".format(bucket, model_prefix, model_path))
             self.download_directory(bucket, model_prefix, model_path)
             model_info = dict(
                 modelName=model_name,
@@ -317,154 +346,131 @@ class ModelArtsOnlineFlowExecutor(object):
     def download_directory(self, bucket_name, path, local_path):
         if not os.path.isdir(local_path):
             os.mkdir(local_path)
-        s3 = boto3.resource('s3', self.region)
-        bucket = s3.Bucket(bucket_name)
-        for obj in bucket.objects.filter(Prefix=path):
+        obs_client = ObsClient(
+            access_key_id=self._obs_access_key_id,
+            secret_access_key=self._obs_secret_access_key,
+            server=self._get_obs_endpoint(),
+        )
+        obs_objects = obs_client.listObjects(bucketName=bucket_name, prefix=path)
+        for obj in obs_objects.body["contents"]:
             local_file = os.path.join(local_path, obj.key[len(path):].lstrip("/"))
             if not os.path.isdir(os.path.dirname(local_file)):
                 os.makedirs(os.path.dirname(local_file))
             key = obj.key
             print(f'Downloading {key}')
-            bucket.download_file(key, local_file)
+            try:
+                resp = obs_client.getObject(bucket_name, key, downloadPath=local_file)
+                if resp.status < 300:
+                    print("requestId: {}. url: {}".format(resp.requestId, resp.body.url))
+                else:
+                    print("errorCode: {}. errorMessage: {}".format(resp.errorCode, resp.errorMessage))
+            except:
+                import traceback
+                print(traceback.format_exc())
+
+    def _get_model_ids(self, model_name):
+        model_list = Model.get_model_list(self.session,
+                                          model_status="published",
+                                          model_name=model_name,
+                                          order="desc")
+        models_ids = [model["model_id"] for model in model_list["models"]]
+        return models_ids
+
+    def _get_service_ids(self, service_name):
+        predictor_list = Predictor.get_service_list(
+            self.session,
+            service_name=service_name,
+            order="asc",
+            offset="0",
+            infer_type=self.service_infer_type)
+        services_ids = [service["service_id"] for service in predictor_list["services"]]
+        return services_ids
 
     def execute_up(self, **kwargs):
         model_paths = kwargs.get("models", {})
         endpoint_name = self._get_endpoint_name()
+        print("_get_scene_name: {}".format(self._get_scene_name()))
         model_data_path = self.add_model_to_s3(endpoint_name, model_paths)
-        endpoint_config = self.create_model(endpoint_name, model_data_path)
-        self.create_or_update_endpoint(endpoint_name, endpoint_config)
+        self.create_model(model_data_path)
 
     def execute_down(self, **kwargs):
-        endpoint_name = self._get_endpoint_name()
-        try:
-            self.sm_client.delete_endpoint(EndpointName=endpoint_name)
-        except:
-            print("the endpoint is not exist! or endpoint is creating")
-        next_token = ''
-        while next_token is not None:
-            configs = self.sm_client.list_endpoint_configs(
-                SortBy='CreationTime',
-                SortOrder='Ascending',
-                NameContains="{}-config-".format(endpoint_name),
-                MaxResults=10,
-                NextToken=next_token,
-            )
-            for item in configs.get('EndpointConfigs', []):
-                if item.get("EndpointConfigName"):
-                    print("delete endpoint config:", item.get("EndpointConfigName"))
-                    self.sm_client.delete_endpoint_config(EndpointConfigName=item.get("EndpointConfigName"))
-            next_token = configs.get('NextToken')
-        next_token = ''
-        while next_token is not None:
-            models = self.sm_client.list_models(
-                SortBy='CreationTime',
-                SortOrder='Ascending',
-                NameContains="{}-model-".format(endpoint_name),
-                MaxResults=10,
-                NextToken=next_token,
-            )
-            for item in models.get('Models', []):
-                if item.get("ModelName"):
-                    print("delete model:", item.get("ModelName"))
-                    self.sm_client.delete_model(ModelName=item.get("ModelName"))
-            next_token = models.get('NextToken')
+        import time
+        scene_name = self.scene_name
+        models_ids = self._get_model_ids(scene_name)
+        services_ids = self._get_service_ids(scene_name)
+        print("models_ids: {}. services_ids: {}.".format(models_ids, services_ids))
+        if len(models_ids) != 0 and len(services_ids) != 0:
+            for model_id in models_ids:
+                # deleting service
+                for service_id in services_ids:
+                    try:
+                        service = Predictor(self.session, service_id=service_id)
+                        print("stoppping service...\n service_name: {}. service_id: {}.".format(scene_name, service_id))
+                        service_config = service.update_service_config(description="description",
+                                                                       status="stopped",
+                                                                       configs=[ServiceConfig(model_id=model_id,
+                                                                                              weight=self.service_weight,
+                                                                                              instance_count=self.service_instance_count,
+                                                                                              specification=self.service_specification)])
+                        print(service_config)
+                        count = 0
+                        while True:
+                            service_info = service.get_service_info()
+                            status = service_info["status"]
+                            print("service status: {}.".format(status))
+                            if status == "stopped":
+                                print("deleting service...\n service_name: {}. service_id: {}.".format(scene_name, service_id))
+                                service.delete_service()
+                                break
+                            else:
+                                count += 1
+                                time.sleep(5)
+                                if count > 60:
+                                    print("service status is not stopped.")
+                    except Exception as e:
+                        print(e)
+        if len(models_ids) != 0:
+            # deleting model
+            print("deleting model...\n model_name: {}.".format(scene_name))
+            for model_id in models_ids:
+                model_instance = Model(self.session, model_id=model_id)
+                model_instance.delete_model()
 
     def execute_status(self, **kwargs):
-        endpoint_name = self._get_endpoint_name()
-        info = {"status": "DOWN"}
-        try:
-            resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
-            info["endpoint_url"] = "https://{}.console.amazonaws.cn/sagemaker/home?region={}#/endpoints/{}".format(
-                self.region, self.region, endpoint_name)
-            info["endpoint_status"] = resp["EndpointStatus"]
-            if info["endpoint_status"] == "InService" or info["endpoint_status"] == 'Updating':
-                info["status"] = "UP"
-        except:
-            info["endpoint_status"] = "NOT_EXIST"
-            print("the endpoint is not exist! or endpoint is creating")
-        if info.get('status', "DOWN") != "UP":
-            info["msg"] = "endpoint {} is not InService!".format(endpoint_name)
-            return info
-        try:
-            configs = self.sm_client.list_endpoint_configs(
-                SortBy='CreationTime',
-                SortOrder='Descending',
-                NameContains="{}-config-".format(endpoint_name)
-            )
-            info["endpoint_config_list"] = list()
-            for item in configs.get('EndpointConfigs', []):
-                if item.get("EndpointConfigName"):
-                    info["endpoint_config_list"].append(item.get("EndpointConfigName"))
-            models = self.sm_client.list_models(
-                SortBy='CreationTime',
-                SortOrder='Descending',
-                NameContains="{}-model-".format(endpoint_name)
-            )
-            info["model_list"] = list()
-            for item in models.get('Models', []):
-                if item.get("ModelName"):
-                    info["model_list"].append(item.get("ModelName"))
-        except:
-            print("the model and endpoint config list fail!")
-        return info
+        service_name = self.scene_name
+        infos = []
+        predictor_list = Predictor.get_service_list(
+            self.session, service_name=service_name, order="asc", offset="0", infer_type=self.service_infer_type)
+        if predictor_list["count"] > 0:
+            infos = [service["status"] for service in predictor_list["services"]]
+        else:
+            print("No service found: {}.".format(service_name))
+        print("scene name: {}. service status: {}".format(service_name, str(infos)))
+        return str(infos)
 
     def execute_reload(self, **kwargs):
-        endpoint_name = self._get_endpoint_name()
+        import time
+        print("_get_scene_name: {}".format(self._get_scene_name()))
+        count = 0
+        while True:
+            models_ids = self._get_model_ids(self.scene_name)
+            if len(models_ids) != 0:
+                self.execute_down()
+                time.sleep(5)
+                count += 1
+                if count > 60:
+                    print("execute_down timeout.")
+                    break
+            else:
+                break
         model_paths = kwargs.get("models", {})
+        endpoint_name = self._get_endpoint_name()
         model_data_path = self.add_model_to_s3(endpoint_name, model_paths)
-        endpoint_config = self.create_model(endpoint_name, model_data_path)
-        self.create_or_update_endpoint(endpoint_name, endpoint_config)
+        self.create_model(model_data_path)
 
     def execute_update(self):
         message = "execute_update is not supported by SageMaker"
         raise RuntimeError(message)
-
-        endpoint_name = self._get_endpoint_name()
-        resp = self.sm_client.describe_endpoint(EndpointName=endpoint_name)
-        if resp["EndpointStatus"] != "InService":
-            return False, "endpoint: {} is not up!".format(endpoint_name)
-        endpoint_config = resp["EndpointConfigName"]
-        config_resp = self.sm_client.describe_endpoint_config(EndpointConfigName=endpoint_config)
-        products = config_resp['ProductionVariants']
-        if not products:
-            return False, "endpoint: {} model info describe fail!".format(endpoint_name)
-        model_name = products[0].get("ModelName")
-        if not model_name:
-            return False, "endpoint: {} get model_name is empty fail!".format(endpoint_name)
-        model_resp = self.sm_client.describe_model(ModelName=model_name)
-        print("model_resp:", model_resp)
-        model_data_url = model_resp.get('PrimaryContainer', {}).get("ModelDataUrl")
-        if not model_data_url:
-            if not model_resp.get('Containers', []):
-                return False, "endpoint: {} get model_data_url is empty no Containers fail!".format(endpoint_name)
-            model_data_url = model_resp.get('Containers', [])[0].get("ModelDataUrl")
-            if not model_data_url:
-                return False, "endpoint: {} get model_data_url is empty fail!".format(endpoint_name)
-        data_file = self.download_file(model_data_url, "update_data")
-        config_file = "recommend-config.yaml"
-        model_info_file = "model-infos.json"
-        with tarfile.open(data_file, "r:gz") as tar:
-            if os.path.exists(model_info_file):
-                os.remove(model_info_file)
-            if os.path.exists("model"):
-                shutil.rmtree("model")
-            tar.extractall(".")
-        with open(config_file, "w") as file:
-            file.write(self.server_config)
-        with tarfile.open(data_file, "w:gz") as tar:
-            tar.add(config_file)
-            if os.path.exists("model"):
-                tar.add("model")
-            if os.path.exists(model_info_file):
-                tar.add(model_info_file)
-        new_data_url = os.path.join(self.prefix, os.path.basename(data_file))
-        print("new_data_url:", new_data_url)
-        s3 = boto3.resource('s3', self.region)
-        with open(data_file, "rb") as file_obj:
-            s3.Bucket(self.bucket).Object(new_data_url).upload_fileobj(file_obj)
-        endpoint_config = self.create_model(endpoint_name, new_data_url)
-        self.create_or_update_endpoint(endpoint_name, endpoint_config)
-        return True, "update config successfully!"
 
     def download_file(self, file_path, local_path):
         if os.path.isfile(local_path):
@@ -487,29 +493,34 @@ class ModelArtsOnlineFlowExecutor(object):
         bucket.download_file(file_prefix, local_file)
         return local_file
 
+
 if __name__ == "__main__":
     from metasporeflow.flows.flow_loader import FlowLoader
     from metasporeflow.online.online_flow import OnlineFlow
+    from metasporeflow.flows.model_arts_config import ModelArtsConfig
 
     flow_loader = FlowLoader()
-    #flow_loader._file_name = 'metaspore-flow.yml'
+    flow_loader._file_name = 'metasporeflow/online/test/metaspore-flow.yml'
     resources = flow_loader.load()
-    #online_flow = resources.find_by_type(OnlineFlow)
+    resource = resources.find_by_type(ModelArtsConfig)
+    modelarts_config = resource.data
+    executor = ModelArtsOnlineFlowExecutor(resources)
+    # # print(executor.execute_update())
+    executor.execute_down()
+    # executor.execute_up(models={
+    #                     "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
+    # executor.execute_reload(models={
+    #                         "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
+    # print(executor.execute_status())
+    # # executor.execute_down()
 
-    executor = SageMakerExecutor(resources)
-    #print(executor.execute_update())
-    #executor.execute_down()
-    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    #executor.execute_reload(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    print(executor.execute_status())
-    #executor.execute_down()
+    # # executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    # # with open("recommend-config.yaml") as config_file:
+    # #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
+    # #    print(res)
 
-    #executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
-    #with open("recommend-config.yaml") as config_file:
-    #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
-    #    print(res)
-
-    endpoint_name = executor._get_endpoint_name()
-    res = executor.invoke_endpoint(endpoint_name, {"operator": "recommend", "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
-    print(res)
-    #executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
+    # endpoint_name = executor._get_endpoint_name()
+    # res = executor.invoke_endpoint(endpoint_name, {"operator": "recommend",
+    #                                                "request": {"user_id": "A1P62PK6QVH8LV", "scene": "guess-you-like"}})
+    # print(res)
+    # # executor.process_model_info("guess-you-like", {"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
