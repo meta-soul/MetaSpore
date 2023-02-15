@@ -409,6 +409,10 @@ class ModelArtsOnlineFlowExecutor(object):
         return info
 
     def execute_reload(self, **kwargs):
+        # TODO
+        print('\033[38;5;196mModelArtsOnlineFlowExecutor.execute_reload is not implemented.\033[m')
+        return
+
         endpoint_name = self._get_endpoint_name()
         model_paths = kwargs.get("models", {})
         model_data_path = self.add_model_to_s3(endpoint_name, model_paths)
