@@ -2,7 +2,6 @@ import decimal
 import json
 
 
-import boto3
 import datetime
 import re
 import os
@@ -137,24 +136,6 @@ class ModelArtsOnlineFlowExecutor(object):
         except botocore.exceptions.ClientError:
             return False
 
-    def _get_boto3_client_config(self):
-        from botocore.config import Config
-        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
-        return config
-
-    def _get_endpoint_status(self, endpoint_name):
-        import boto3
-        import botocore
-        config = self._get_boto3_client_config()
-        client = boto3.client('sagemaker', self.region, config=config)
-        try:
-            response = client.describe_endpoint(EndpointName=endpoint_name)
-        except botocore.exceptions.ClientError as ex:
-            message = "endpoint %r not found" % endpoint_name
-            raise RuntimeError(message) from ex
-        status = response['EndpointStatus']
-        return status
-
     def _wait_endpoint(self, endpoint_name):
         import time
         counter = 0
@@ -179,7 +160,6 @@ class ModelArtsOnlineFlowExecutor(object):
         return session
 
     def _generate_model_location(self, model_url):
-        print("model_url: " + model_url)
         from urllib.parse import urlparse
         results = urlparse(model_url, allow_fragments=False)
         path_list = results.path.strip("/").split("/")
@@ -191,7 +171,6 @@ class ModelArtsOnlineFlowExecutor(object):
     def create_model(self, key):
         model_url = "obs://{}/{}".format(self.bucket, key)
         model_location = self._generate_model_location(model_url)
-        print("model_location: " + model_location)
         container_image = self._get_container_image()
         initial_config = dict(protocol="https", port="8080")
         model_arts_config = self._get_model_arts_config()
@@ -321,7 +300,6 @@ class ModelArtsOnlineFlowExecutor(object):
                 bucket = model_prefix[len("s3://"):idx]
                 model_prefix = model_prefix[idx + 1:]
 
-            print("bucket: {} model_prefix: {} model_path: {}".format(bucket, model_prefix, model_path))
             self.download_directory(bucket, model_prefix, model_path)
             model_info = dict(
                 modelName=model_name,
@@ -361,7 +339,7 @@ class ModelArtsOnlineFlowExecutor(object):
             try:
                 resp = obs_client.getObject(bucket_name, key, downloadPath=local_file)
                 if resp.status < 300:
-                    print("requestId: {}. url: {}".format(resp.requestId, resp.body.url))
+                    print("Downloading obs requestId: {}. key: {}".format(resp.requestId, key))
                 else:
                     print("errorCode: {}. errorMessage: {}".format(resp.errorCode, resp.errorMessage))
             except:
@@ -472,27 +450,6 @@ class ModelArtsOnlineFlowExecutor(object):
         message = "execute_update is not supported by SageMaker"
         raise RuntimeError(message)
 
-    def download_file(self, file_path, local_path):
-        if os.path.isfile(local_path):
-            os.remove(local_path)
-        if not os.path.exists(local_path):
-            os.mkdir(local_path)
-        s3 = boto3.resource('s3', self.region)
-        if not file_path.startswith("s3://"):
-            print("file path: {} is not s3 path!".format(file_path))
-            return
-        idx = file_path.find("/", len("s3://"))
-        if idx == -1:
-            print("file path: {} is error!".format(file_path))
-            return
-        bucket_name = file_path[len("s3://"):idx]
-        file_prefix = file_path[idx + 1:]
-        bucket = s3.Bucket(bucket_name)
-        local_file = os.path.join(local_path, os.path.basename(file_prefix))
-        print(f'Downloading {file_prefix}')
-        bucket.download_file(file_prefix, local_file)
-        return local_file
-
 
 if __name__ == "__main__":
     from metasporeflow.flows.flow_loader import FlowLoader
@@ -506,12 +463,12 @@ if __name__ == "__main__":
     modelarts_config = resource.data
     executor = ModelArtsOnlineFlowExecutor(resources)
     # # print(executor.execute_update())
-    executor.execute_down()
+    # executor.execute_down()
     # executor.execute_up(models={
     #                     "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
     # executor.execute_reload(models={
     #                         "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
-    # print(executor.execute_status())
+    print(executor.execute_status())
     # # executor.execute_down()
 
     # # executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
