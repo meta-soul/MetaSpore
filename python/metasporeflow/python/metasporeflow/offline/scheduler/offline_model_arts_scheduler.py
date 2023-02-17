@@ -37,6 +37,7 @@ class OfflineModelArtsScheduler(Scheduler):
         self._uninstall_crontab()
         self._clear_flow_config()
         self._clear_config()
+        self._clear_dummy_serving()
         self._clear_dummy_input()
 
     def get_status(self):
@@ -244,6 +245,13 @@ class OfflineModelArtsScheduler(Scheduler):
         s3_path = self._ensure_trailing_slash(self._s3_dummy_input_dir_path)
         print('Clear dummy input %s ...' % s3_path)
         args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'rm', '--recursive', s3_path]
+        subprocess.check_call(args)
+
+    def _clear_dummy_serving(self):
+        import os
+        s3_path = os.path.join(self._s3_serving_dir_path, '.notempty')
+        print('Clear dummy file %s ...' % s3_path)
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'rm', s3_path]
         subprocess.check_call(args)
 
     def _save_flow_config(self):
