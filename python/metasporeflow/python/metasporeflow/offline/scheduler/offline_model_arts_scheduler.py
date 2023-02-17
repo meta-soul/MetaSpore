@@ -26,6 +26,7 @@ class OfflineModelArtsScheduler(Scheduler):
     def publish(self):
         self._set_obs_ak_sk()
         self._generate_dummy_input()
+        self._generate_dummy_serving()
         self._upload_config()
         self._save_flow_config()
         self._install_crontab()
@@ -179,6 +180,15 @@ class OfflineModelArtsScheduler(Scheduler):
         dummy_input_dir = os.path.join(flow_dir, 'scene', scene_name, 'dummy', 'input')
         return dummy_input_dir
 
+    @property
+    def _s3_serving_dir_path(self):
+        import os
+        scene_name = self._scene_name
+        s3_work_dir = self._s3_work_dir
+        flow_dir = os.path.join(s3_work_dir, 'flow')
+        serving_dir = os.path.join(flow_dir, 'scene', scene_name, 'model', 'serving')
+        return serving_dir
+
     def _ensure_trailing_slash(self, path):
         if path.endswith('/'):
             return path
@@ -205,6 +215,13 @@ class OfflineModelArtsScheduler(Scheduler):
         import os
         s3_path = os.path.join(self._s3_dummy_input_dir_path, '.notempty')
         print('Generate dummy input to %s ...' % s3_path)
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
+        subprocess.run(args, input=b'', check=True)
+
+    def _generate_dummy_serving(self):
+        import os
+        s3_path = os.path.join(self._s3_serving_dir_path, '.notempty')
+        print('Generate dummy file to %s ...' % s3_path)
         args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
         subprocess.run(args, input=b'', check=True)
 
