@@ -405,10 +405,23 @@ class ModelArtsOnlineFlowExecutor(object):
                                 time.sleep(5)
                                 if count > 60:
                                     print("service status is not stopped.")
+                                    break
                     except Exception as e:
                         print(e)
+        # deleting model
+        count = 0
+        while True:
+            services_ids = self._get_service_ids(scene_name)
+            if len(services_ids) == 0:
+                print("services is deleted.")
+                break
+            else:
+                time.sleep(5)
+                count += 1
+                if count > 60:
+                    print("services is not deleted.")
+                    break
         if len(models_ids) != 0:
-            # deleting model
             print("deleting model...\n model_name: {}.".format(scene_name))
             for model_id in models_ids:
                 model_instance = Model(self.session, model_id=model_id)
@@ -465,12 +478,11 @@ if __name__ == "__main__":
     # # print(executor.execute_update())
     # executor.execute_down()
     # executor.execute_up(models={
-    #                     "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
+    #                     "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230217-1534/widedeep"})
     # executor.execute_reload(models={
     #                         "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
-    print(executor.execute_status())
-    # # executor.execute_down()
-
+    # print(executor.execute_status())
+    executor.execute_down()
     # # executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     # # with open("recommend-config.yaml") as config_file:
     # #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
