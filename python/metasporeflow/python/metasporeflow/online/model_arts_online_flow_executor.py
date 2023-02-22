@@ -429,15 +429,25 @@ class ModelArtsOnlineFlowExecutor(object):
 
     def execute_status(self, **kwargs):
         service_name = self.scene_name
-        infos = []
+        status_infos = []
         predictor_list = Predictor.get_service_list(
             self.session, service_name=service_name, order="asc", offset="0", infer_type=self.service_infer_type)
         if predictor_list["count"] > 0:
-            infos = [service["status"] for service in predictor_list["services"]]
+            for service in predictor_list["services"]:
+                status_info = {}
+                service_id = service["service_id"]
+                service_instance = Predictor(self.session, service_id=service_id)
+                service_info = service_instance.get_service_info()
+                status = service_info["status"]
+                access_address = service_info["access_address"]
+                status_info["service_name"] = service_name
+                status_info["status"] = status
+                status_info["access_address"] = access_address
+                status_info["service_id"] = service_id
+                status_infos.append(status_info)
         else:
             print("No service found: {}.".format(service_name))
-        print("scene name: {}. service status: {}".format(service_name, str(infos)))
-        return str(infos)
+        return str(status_infos)
 
     def execute_reload(self, **kwargs):
         import time
@@ -481,8 +491,8 @@ if __name__ == "__main__":
     #                     "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230217-1534/widedeep"})
     # executor.execute_reload(models={
     #                         "amazonfashion_widedeep": "s3://dmetasoul-resource-bucket/demo/workdir/flow/scene/bigdata_flow_modelarts_test/model/export/20230210-1909/widedeep"})
-    # print(executor.execute_status())
-    executor.execute_down()
+    print(executor.execute_status())
+    # executor.execute_down()
     # # executor.execute_up(models={"amazonfashion_widedeep": "s3://dmetasoul-test-bucket/qinyy/test-model-watched/amazonfashion_widedeep"})
     # # with open("recommend-config.yaml") as config_file:
     # #    res = executor.invoke_endpoint("guess-you-like", {"operator": "updateconfig", "config": config_file.read()})
