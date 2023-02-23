@@ -465,9 +465,19 @@ class EmbeddingOperator(torch.nn.Module):
         self._data.requires_grad = self.training and self.requires_grad
 
     @torch.jit.unused
-    def _combine_to_indices_and_offsets(self, minibatch, feature_offset):
+    def _create_pyarrow_batch(self, minibatch):
         import pyarrow as pa
-        batch = pa.RecordBatch.from_pandas(minibatch)
+        schema = pa.Schema.from_pandas(minibatch)
+        names = schema.names
+        types = [t if t != pa.null() else pa.string() for t in schema.types]
+        fields = [pa.field(n, t) for n, t in zip(names, types)]
+        schema = pa.schema(fields)
+        batch = pa.RecordBatch.from_pandas(minibatch, schema)
+        return batch
+
+    @torch.jit.unused
+    def _combine_to_indices_and_offsets(self, minibatch, feature_offset):
+        batch = self._create_pyarrow_batch(minibatch)
         indices, offsets = self._feature_extractor.extract(batch)
         if not feature_offset:
             offsets = offsets[::self.feature_count]
