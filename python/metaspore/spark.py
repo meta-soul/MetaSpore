@@ -87,6 +87,7 @@ class SessionBuilder(object):
         builder.config('spark.executor.memory', executor_memory)
         builder.config('spark.executor.instances', str(self._get_executor_count()))
         num_threads = max(self.worker_cpu, self.server_cpu)
+        builder.config('spark.cores.max', str(num_threads * self._get_executor_count()))
         builder.config('spark.executor.cores', str(num_threads))
         builder.config('spark.task.cpus', str(num_threads))
         builder.config('spark.kubernetes.executor.request.cores', str(num_threads))
