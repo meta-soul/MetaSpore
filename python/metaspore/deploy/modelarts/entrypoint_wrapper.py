@@ -243,10 +243,12 @@ class ModelArtsEntrypointWrapper(object):
             if self._is_master:
                 self._start_barrier()
                 self._start_master()
+                self._start_worker()
                 self._wait_cluster()
                 self._config_env()
                 self._submit_job()
                 self._notify_barrier()
+                self._wait_barrier()
                 self._wait_cleanup()
             else:
                 self._start_worker()
