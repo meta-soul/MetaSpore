@@ -470,7 +470,7 @@ class ModelArtsOnlineFlowExecutor(object):
         self.create_model(model_data_path)
 
     def execute_update(self):
-        message = "execute_update is not supported by SageMaker"
+        message = "execute_update is not supported by ModelArts"
         raise RuntimeError(message)
 
 
