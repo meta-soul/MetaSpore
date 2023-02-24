@@ -70,12 +70,22 @@ class SessionBuilder(object):
             return False  # Other type (?)
 
     def _config_spark_master(self, builder):
+        import os
         if self.local:
             master = 'local[%d]' % self._get_executor_count()
             builder.master(master)
         else:
-            if self.spark_master is not None:
-                builder.master(self.spark_master)
+            spark_master = self.spark_master
+            if spark_master is None:
+                spark_master = os.environ.get('METASPORE_SPARK_MASTER')
+            if spark_master is not None:
+                builder.master(spark_master)
+
+    def _config_driver_host(self, builder):
+        import os
+        driver_host = os.environ.get('METASPORE_SPARK_DRIVER_HOST')
+        if driver_host is not None:
+            builder.config('spark.driver.host', driver_host)
 
     def _config_batch_size(self, builder):
         builder.config('spark.sql.execution.arrow.maxRecordsPerBatch', str(self.batch_size))
@@ -136,6 +146,7 @@ class SessionBuilder(object):
         builder = pyspark.sql.SparkSession.builder
         self._config_app_name(builder)
         self._config_spark_master(builder)
+        self._config_driver_host(builder)
         self._config_batch_size(builder)
         self._config_resources(builder)
         self._add_extra_configs(builder)
