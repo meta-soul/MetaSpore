@@ -24,7 +24,17 @@ class ModelArtsEntrypointGenerator(object):
     def __init__(self, dag_tasks):
         self._dag_tasks = dag_tasks
 
-    def generate_entrypoint(self):
+    def generate_custom_entrypoint(self):
+        string = "import os"
+        string += "\nimport sys"
+        string += "\nimport subprocess"
+        string += "\n\nargs = sys.executable, '-m', 'metaspore.deploy.modelarts.entrypoint_wrapper', '--'"
+        string += "\nargs += sys.executable, os.path.join(os.path.dirname(__file__), 'flow_entrypoint.py')"
+        string += "\nsubprocess.check_call(args)"
+        string += "\n"
+        return string
+
+    def generate_flow_entrypoint(self):
         string = "import os"
         string += "\nimport shlex"
         string += "\nimport subprocess"

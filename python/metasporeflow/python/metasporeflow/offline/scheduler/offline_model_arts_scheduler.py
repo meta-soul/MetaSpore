@@ -205,10 +205,16 @@ class OfflineModelArtsScheduler(Scheduler):
         import os
         import subprocess
         generator = ModelArtsEntrypointGenerator(self._dag_tasks)
-        text = generator.generate_entrypoint()
+        text = generator.generate_custom_entrypoint()
         # ModelArts boot file (entrypoint) must be named '*.py'.
         s3_path = os.path.join(s3_config_dir_path, 'custom_entrypoint.py')
-        print('Generate ModelArts entrypoint to %s ...' % s3_path)
+        print('Generate ModelArts custom entrypoint to %s ...' % s3_path)
+        args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
+        subprocess.run(args, input=text.encode('utf-8'), check=True)
+        text = generator.generate_flow_entrypoint()
+        # ModelArts boot file (entrypoint) must be named '*.py'.
+        s3_path = os.path.join(s3_config_dir_path, 'flow_entrypoint.py')
+        print('Generate ModelArts flow entrypoint to %s ...' % s3_path)
         args = ['aws', '--endpoint-url', self._s3_endpoint, 's3', 'cp', '-', s3_path]
         subprocess.run(args, input=text.encode('utf-8'), check=True)
 
