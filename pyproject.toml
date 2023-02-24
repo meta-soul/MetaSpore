@@ -54,6 +54,7 @@ dependencies = [
     'faiss-cpu~=1.7.2',
     'pymilvus~=2.1.1',
     'pymongo~=4.2.0',
+    'fastapi[all]~=0.92.0',
 ]
 
 [project.urls]
