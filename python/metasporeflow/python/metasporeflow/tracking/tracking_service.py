@@ -14,7 +14,7 @@ class Tracking:
     def run(self):
         app = web.Application()
         app.router.add_route('POST', '/tracking', self.handleRequest)
-        web.run_app(app, port=50000)
+        web.run_app(app, port=50001)
 
 if __name__ == '__main__':
     tracking = Tracking()

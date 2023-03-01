@@ -1,5 +1,6 @@
 def get_log_handler():
     import logging.handlers as handlers
+    # from concurrent_log_handler import ConcurrentRotatingFileHandler
     logHandler = handlers.TimedRotatingFileHandler('tracking.log', when='S', interval=5, backupCount=5)
     return logHandler
 
