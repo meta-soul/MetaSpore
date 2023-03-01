@@ -45,8 +45,8 @@ class OfflineModelArtsScheduler(Scheduler):
         recent_training_jobs = self._get_training_jobs()
         if recent_training_jobs:
             last_training_job_name = recent_training_jobs[0]['name']
-            last_training_job_status = self._get_training_job_status(last_training_job_name)
-            last_training_job_url = self._get_training_job_url(last_training_job_name)
+            last_training_job_status = recent_training_jobs[0]['status']
+            last_training_job_url = self._get_training_job_url(recent_training_jobs[0]['job_id'])
         else:
             last_training_job_name = None
             last_training_job_status = None
@@ -55,13 +55,15 @@ class OfflineModelArtsScheduler(Scheduler):
             status = 'DOWN'
         elif last_training_job_status is None:
             status = 'UP'
-        elif last_training_job_status == 'InProgress':
+        elif last_training_job_status in ('Creating', 'Pending', 'Running'):
             status = 'TRAINING'
         elif last_training_job_status == 'Failed':
             status = 'FAIL'
         else:
-            assert last_training_job_status in ('Completed', 'Stopping', 'Stopped')
+            assert last_training_job_status in ('Completed', 'Terminating', 'Terminated', 'Abnormal')
             status = 'UP'
+        for item in recent_training_jobs:
+            item.pop('job_id')
         info = {
             'status': status,
             'last_training_job_name': last_training_job_name,
@@ -120,6 +122,24 @@ class OfflineModelArtsScheduler(Scheduler):
         obs_work_dir = model_arts_config.obsWorkDir
         s3_work_dir = obs_work_dir.replace('obs://', 's3://')
         return s3_work_dir
+
+    @property
+    def _huawei_cloud_region(self):
+        import re
+        pattern = r'https?://obs\.([A-Za-z0-9\-]+?)\.myhuaweicloud\.com$'
+        s3_endpoint = self._s3_endpoint
+        match = re.match(pattern, s3_endpoint)
+        if match is None:
+            message = 'invalid s3 endpoint %r' % s3_endpoint
+            raise RuntimeError(message)
+        hwc_region = match.group(1)
+        return hwc_region
+
+    @property
+    def _model_arts_project_id(self):
+        model_arts_config = self._model_arts_config
+        project_id = model_arts_config.projectId
+        return project_id
 
     @property
     def _crontab_expr(self):
@@ -344,66 +364,34 @@ class OfflineModelArtsScheduler(Scheduler):
         args.pop() # pop --redirect-stdio
         subprocess.check_call(args)
 
-    # TODO: cf: check this later
-    def _get_boto3_client_config(self):
-        from botocore.config import Config
-        config = Config(connect_timeout=5, read_timeout=60, retries={'max_attempts': 20})
-        return config
+    def _get_model_arts_session(self):
+        from modelarts.session import Session
+        session = Session(access_key=self._s3_access_key_id,
+                          secret_key=self._s3_secret_access_key,
+                          project_id=self._model_arts_project_id,
+                          region_name=self._huawei_cloud_region)
+        return session
 
-    # TODO: cf: check this later
     def _get_training_jobs(self):
-        import boto3
+        from modelarts.estimatorV2 import Estimator
         training_jobs = []
         max_training_jobs = 10
-        config = self._get_boto3_client_config()
-        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
-        response = sagemaker_client.list_training_jobs(
-            SortBy='CreationTime',
-            SortOrder='Descending',
-            NameContains=self._training_job_name_prefix,
-            MaxResults=10,
-        )
-        for summary in response['TrainingJobSummaries']:
-            job_name = summary['TrainingJobName']
-            job_status = summary['TrainingJobStatus']
-            training_job = dict(name=job_name, status=job_status)
+        session = self._get_model_arts_session()
+        job_list = Estimator.get_job_list(session=session, limit=max_training_jobs)
+        for item in job_list['items']:
+            job_id = item['metadata']['id']
+            job_name = item['metadata']['name']
+            job_status = item['status']['phase']
+            training_job = dict(job_id=job_id, name=job_name, status=job_status)
             training_jobs.append(training_job)
-        next_token = response.get('NextToken')
-        while len(training_jobs) < max_training_jobs and next_token is not None:
-            response = sagemaker_client.list_training_jobs(
-                SortBy='CreationTime',
-                SortOrder='Descending',
-                NameContains=self._training_job_name_prefix,
-                MaxResults=10,
-                NextToken=next_token,
-            )
-            for summary in response['TrainingJobSummaries']:
-                job_name = summary['TrainingJobName']
-                job_status = summary['TrainingJobStatus']
-                training_job = dict(name=job_name, status=job_status)
-                training_jobs.append(training_job)
-                if len(training_jobs) >= max_training_jobs:
-                    break
-            next_token = response.get('NextToken')
         return training_jobs
 
-    # TODO: cf: check this later
-    def _get_training_job_status(self, job_name):
-        import boto3
-        import botocore
-        config = self._get_boto3_client_config()
-        sagemaker_client = boto3.client('sagemaker', self._aws_region, config=config)
-        try:
-            response = sagemaker_client.describe_training_job(TrainingJobName=job_name)
-        except botocore.exceptions.ClientError as ex:
-            message = "training job %r not found" % job_name
-            raise RuntimeError(message) from ex
-        status = response['TrainingJobStatus']
-        return status
-
-    # TODO: cf: check this later
-    def _get_training_job_url(self, job_name):
-        url = 'https://%s.console.amazonaws.cn' % self._aws_region
-        url += '/sagemaker/home?region=%s' % self._aws_region
-        url += '#/jobs/%s' % job_name
+    def _get_training_job_url(self, job_id):
+        locale = 'en-us'
+        if self._huawei_cloud_region.startswith('cn-'):
+            locale = 'zh-cn'
+        url = 'https://console.huaweicloud.com/modelarts/'
+        url += '?locale=%s' % locale
+        url += '&region=%s' % self._huawei_cloud_region
+        url += '#/training/detail/%s' % job_id
         return url
