@@ -19,9 +19,6 @@ from typing import Tuple
 
 @frozen
 class ModelArtsConfig:
-    #roleArn: str
-    #securityGroups: Tuple[str, ...]
-    #subnets: Tuple[str, ...]
     accessKeyId: str
     secretAccessKey: str
     obsEndpoint: str
