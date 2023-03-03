@@ -17,7 +17,6 @@ print(sys.path)
 from metasporeflow.tracking.tracking import Tracking
 import boto3
 import time
-import os
 
 
 class TrackingAws(Tracking):

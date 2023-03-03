@@ -1,14 +1,14 @@
 import time
-from metasporeflow.tracking.upload_type import UploadType
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from metasporeflow.tracking.uploader.local_uploader import LocalUploader
-from metasporeflow.tracking.uploader.obs_uploader import OBSUploader
-from metasporeflow.tracking.uploader.s3_uploader import S3Uploader
+from uploader.local_uploader import LocalUploader
+from uploader.obs_uploader import OBSUploader
+from uploader.s3_uploader import S3Uploader
+from uploader.upload_type import UploadType
 import os
 
 
-class Watcher:
+class LogWatcher:
     def __init__(self, path):
         self.observer = Observer()
         self.path = path
@@ -55,5 +55,5 @@ class Watcher:
 if __name__ == '__main__':
     path = os.getcwd()
     print(path)
-    w = Watcher(path)
+    w = LogWatcher(path)
     w.run()

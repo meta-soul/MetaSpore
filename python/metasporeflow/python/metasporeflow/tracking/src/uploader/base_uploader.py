@@ -1,4 +1,4 @@
-from metasporeflow.tracking.upload_type import UploadType
+from .upload_type import UploadType
 
 
 class BaseUploader(object):
@@ -19,9 +19,9 @@ class BaseUploader(object):
         import os
         upload_type = os.environ.get("UPLOAD_TYPE", "LOCAL")
         upload_path = os.environ.get("UPLOAD_PATH")
-        access_key = os.environ.get("AWS_ACCESS_KEY_ID")
-        secret_key = os.environ.get("AWS_SECRET_ACCESS_KEY")
-        endpoint = os.environ.get("AWS_ENDPOINT")
+        access_key = os.environ.get("ACCESS_KEY_ID")
+        secret_key = os.environ.get("SECRET_ACCESS_KEY")
+        endpoint = os.environ.get("ENDPOINT")
 
         if upload_type not in UploadType.__members__:
             raise Exception("Unsupported upload type: %s" % self.upload_type)
