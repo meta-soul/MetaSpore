@@ -24,5 +24,4 @@ class S3Uploader(BaseUploader):
         import os
         os.environ["AWS_ACCESS_KEY_ID"] = self.access_key
         os.environ["AWS_SECRET_ACCESS_KEY"] = self.secret_key
-        os.environ["AWS_REGION"] = self.region
-        os.environ["AWS_ENDPOINT"] = self.endpoint
+        os.environ["AWS_DEFAULT_REGION"] = self.region
