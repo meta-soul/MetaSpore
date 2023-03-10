@@ -21,11 +21,14 @@ from typing import Tuple, Optional
 @frozen
 class K8sTrackingConfig:
     enableTracking: Optional[bool] = False
+    namespace: Optional[str] = "default"
+    prort: Optional[int] = 50001
+    domain: Optional[str] = None
     uploadType: Optional[str] = None
     uploadPath: Optional[str] = None
     accessKeyId: Optional[str] = None
     secretAccessKey: Optional[str] = None
     endpoint: Optional[str] = None
     uploadWhen: Optional[str] = "S"
-    uploadInterval: Optional[str] = 5
+    uploadInterval: Optional[int] = 5
     uploadBackupCount: Optional[int] = 5

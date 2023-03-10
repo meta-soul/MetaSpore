@@ -1,0 +1,8 @@
+apiVersion: metaspore/v1
+kind: MetaSporeFlow
+metadata:
+  name: tracking_flow_test
+  uses:
+    - ./k8s_tracking_config.yml
+spec:
+  sharedVolumeInContainer: '/opt/volumes'

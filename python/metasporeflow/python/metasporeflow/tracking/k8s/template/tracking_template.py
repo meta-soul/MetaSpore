@@ -1,15 +1,9 @@
 default = {
-  "port": 50001,
-  "name": "tracking-k8s-service",
-  "image": '132825542956.dkr.ecr.cn-northwest-1.amazonaws.com.cn/dmetasoul-repo/tracking-service-test:latest',
-  # "consul_port": 8500,
-  # "consul_service": "consul-k8s-service",
-  # "model_port": 50000,
-  # "model_service": "model-k8s-service",
-  # "mongo_port": 27017,
-  # "mongo_service": "127.0.0.1",
-  'domain': "tracking.dmetasoul.com",
-  'namespace': "default",
+    "port": 50001,
+    "name": "tracking-k8s-service",
+    "image": 'swr.cn-southwest-2.myhuaweicloud.com/dmetasoul-repo/tracking-service-test:v1.0.4',
+    'domain': "tracking.dmetasoul.com",
+    'namespace': "default",
 }
 template = '''
 apiVersion: v1
@@ -54,7 +48,7 @@ metadata:
   name: tracking
   namespace: ${namespace}
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: tracking
@@ -76,9 +70,24 @@ spec:
         - containerPort: ${port}
           name: http
         env:
-        - name: SERVICE_PORT
+        - name: PORT
           value: "${port}"
-        command: ["python","entrypoint.py"]
+        - name: UPLOAD_TYPE
+          value: "${uploadType}"
+        - name: UPLOAD_PATH
+          value: "${uploadPath}"
+        - name: ACCESS_KEY_ID
+          value: "${accessKeyId}"
+        - name: SECRET_ACCESS_KEY
+          value: "${secretAccessKey}"
+        - name: ENDPOINT
+          value: "${endpoint}"
+        - name: UPLOAD_WHEN
+          value: "${uploadWhen}"
+        - name: UPLOAD_INTERVAL
+          value: "${uploadInterval}"
+        - name: UPLOAD_BACKUP_COUNT
+          value: "${uploadBackupCount}"
         readinessProbe:
           httpGet:
             path: /actuator/pullConfig

@@ -33,27 +33,31 @@ class LogWatcher:
                 ignore_directories=True,
                 case_sensitive=False,
             )
-            self.upload_type = os.environ.get("UPLOAD_TYPE", "LOCAL")
+
 
         def on_any_event(self, event):
+            upload_type = os.environ.get("UPLOAD_TYPE", "LOCAL")
+            print("Upload type: {}".format(upload_type))
+
             if event.event_type == "moved":
                 print("[{}] noticed: [{}] on: [{}] ".format(
                     time.asctime(), event.event_type, event.dest_path))
                 src_path = event.dest_path
-                if self.upload_type == UploadType.LOCAL.value:
+                if upload_type == UploadType.LOCAL.value:
                     uploader = LocalUploader(src_path)
-                elif self.upload_type == UploadType.OBS.value:
+                elif upload_type == UploadType.OBS.value:
                     uploader = OBSUploader(src_path)
-                elif self.upload_type == UploadType.S3.value:
+                elif upload_type == UploadType.S3.value:
                     uploader = S3Uploader(src_path)
                 else:
-                    raise Exception("Unsupported upload type: %s" % self.upload_type)
+                    raise Exception("Unsupported upload type: %s" % upload_type)
 
                 uploader.upload()
 
 
 if __name__ == '__main__':
+    print("Upload type: {}".format(os.environ.get("UPLOAD_TYPE")))
     path = os.getcwd()
-    print(path)
+    print("LogWatcher listen path : {}".format(path))
     w = LogWatcher(path)
     w.run()

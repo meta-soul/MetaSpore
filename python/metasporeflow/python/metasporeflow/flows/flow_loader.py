@@ -31,6 +31,7 @@ class FlowLoader(object):
         from .sage_maker_config import SageMakerConfig
         from .model_arts_config import ModelArtsConfig
         from .aws_tracking_config import AwsTrackingConfig
+        from .k8s_tracking_config import K8sTrackingConfig
         from metasporeflow.flows.metaspore_offline_flow import \
             OfflineScheduler, \
             OfflineCrontabScheduler, \
@@ -45,6 +46,7 @@ class FlowLoader(object):
             SageMakerConfig,
             ModelArtsConfig,
             AwsTrackingConfig,
+            K8sTrackingConfig,
             OnlineFlow,
             OfflineScheduler,
             OfflineCrontabScheduler,

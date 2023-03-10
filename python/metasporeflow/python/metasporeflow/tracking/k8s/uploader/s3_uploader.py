@@ -4,7 +4,6 @@ from .base_uploader import BaseUploader
 class S3Uploader(BaseUploader):
     def __init__(self, src_path):
         super(S3Uploader, self).__init__(src_path)
-        self._set_S3_env()
 
     def upload(self):
         import subprocess
