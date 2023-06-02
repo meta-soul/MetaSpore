@@ -94,7 +94,7 @@ awaitable_status OrtModel::load(std::string dir_path) {
                     fmt::format("model.onnx doesn't exist under {}", dir_path));
             }
             if (GpuHelper::is_gpu_available()) {
-                spdlog::info("Use cuda:0");
+                spdlog::info("Use cuda: true");
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-result"
                 OrtSessionOptionsAppendExecutionProvider_CUDA(context_->session_options_, 0);
