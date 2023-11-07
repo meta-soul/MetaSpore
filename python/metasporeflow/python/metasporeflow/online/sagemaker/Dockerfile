@@ -44,11 +44,11 @@ ENV LC_ALL=en_US.UTF-8
 ENV TZ=Asia/Shanghai
 RUN ln -svf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && apt-get install -y tzdata && apt-get clean
 
-RUN apt-get install --fix-missing -y python3 python3-setuptools python3-venv ca-certificates openjdk-11-jre-headless && apt-get clean
+RUN apt-get install --fix-missing -y python3 python3-venv python3-pip python-is-python3 ca-certificates openjdk-11-jre-headless && apt-get clean
 
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 30
-RUN python -m easy_install -i https://repo.huaweicloud.com/repository/pypi/simple/ install pip
-RUN python -m pip config set global.index-url https://repo.huaweicloud.com/repository/pypi/simple/
+RUN python -m pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple/
+RUN python -m pip config set globa.extra-index-url "https://pypi.tuna.tsinghua.edu.cn/simple/ https://pypi.org/simple/"
 
 FROM ${SERVING_IMAGE} as serving_stage
 FROM ${RECOMMEND_IMAGE} as recommend_stage
