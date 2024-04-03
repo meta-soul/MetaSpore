@@ -18,18 +18,18 @@ def download_dataset():
     import glob
     import subprocess
     GLOB_PATTERN = 'data/**/*.csv'
-    NUM_FILES = 24 + 24
+    NUM_FILES = 2
     if len(glob.glob(GLOB_PATTERN)) == NUM_FILES:
         print('MetaSpore demo dataset already downloaded')
         return
     string = "rm -rf data && "
     string += "mkdir -p data/train && "
     string += "cd data/train && "
-    string += "curl -L -O https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/train/day_{$(seq -s ',' 0 23)}_0.001_train.csv && "
+    string += "curl -L -O https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/train/day_0_0.001_train.csv && "
     string += "cd ../.. && "
     string += "mkdir -p data/test && "
     string += "cd data/test && "
-    string += "curl -L -O https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/test/day_{$(seq -s ',' 0 23)}_0.001_test.csv && "
+    string += "curl -L -O https://ks3-cn-beijing.ksyuncs.com/dmetasoul-bucket/demo/test/day_0_0.001_test.csv && "
     string += "cd ../.. && "
     string += "echo OK: criteo"
     args = string,

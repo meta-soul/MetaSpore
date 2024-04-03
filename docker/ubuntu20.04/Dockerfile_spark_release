@@ -16,7 +16,7 @@
 ARG RELEASE_IMAGE
 
 FROM ${RELEASE_IMAGE}
-ARG SPARK_VERSION="3.2.1"
+ARG SPARK_VERSION="3.3.2"
 
 RUN apt-get update && apt-get upgrade -y && apt-get clean && pip cache purge
 RUN useradd --create-home --user-group --no-log-init --shell /bin/bash spark

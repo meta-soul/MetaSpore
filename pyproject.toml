@@ -20,7 +20,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "metaspore"
-version = "1.1.0"
+version = "1.2.0"
 description = "Metaspore: A Unified End-to-end Machine Intelligence Platform"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -34,26 +34,23 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence"
 ]
 dependencies = [
-    'numpy~=1.23.2',
-    'pandas~=1.4.3',
+    'numpy',
+    'pandas',
     'findspark~=2.0.1',
     'cloudpickle~=2.1.0',
-    'nest-asyncio~=1.5.5',
-    'attrs~=22.1.0',
-    'cattrs~=22.1.0',
-    'PyYAML~=5.4.1',
+    'nest-asyncio~=1.6.0',
+    'attrs~=23.2.0',
+    'cattrs~=23.2.3',
+    'PyYAML',
     'tabulate~=0.8.10',
     'pyarrow==7.0.0',
-    'botocore==1.24.21',
-    'boto3==1.21.21',
-    'awscli==1.22.76',
-    'awscli-plugin-endpoint~=0.4',
-    'fsspec[s3]~=2022.7.1',
-    's3fs~=2022.7.1',
-    'python-consul~=1.1.0',
-    'faiss-cpu~=1.7.2',
-    'pymilvus~=2.1.1',
-    'pymongo~=4.2.0',
+    'botocore',
+    'boto3',
+    'awscli',
+    'awscli-plugin-endpoint',
+    'fsspec[s3]',
+    's3fs',
+    'requests'
 ]
 
 [project.urls]
@@ -64,7 +61,7 @@ where = ["python"]
 include = ["metaspore*", "ps"]
 
 [tool.cibuildwheel]
-manylinux-x86_64-image = "dmetasoul/py-wheel-env-manylinux2014:v1.1.0"
+manylinux-x86_64-image = "dmetasoul/py-wheel-env-manylinux2014:v1.2.0"
 build = "*-manylinux_x86_64"
 skip = ["cp36-*", "cp37-*", "cp311-*", "cp312-*", "pp*"]
 
