@@ -99,12 +99,15 @@ class SessionBuilder(object):
             os.environ[name] = value
         else:
             value = ''
-            os.environ.unsetenv(name)
+            os.unsetenv(name)
         builder.config('spark.executorEnv.%s' % (name,), value)
         builder.config('spark.yarn.appMasterEnv.%s' % (name,), value)
 
     def _add_extra_configs(self, builder):
         builder.config('spark.python.worker.reuse', 'true')
+        builder.config('spark.python.use.daemon', 'true')
+        builder.config('spark.python.worker.faulthandler.enabled', 'true')
+        builder.config('spark.sql.execution.pyspark.udf.simplifiedTraceback.enabled', 'false')
         builder.config('spark.dynamicAllocation.enabled', 'false')
         builder.config('spark.shuffle.service.enabled', 'false')
         builder.config('spark.sql.execution.arrow.pyspark.enabled', 'true')

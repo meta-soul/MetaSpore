@@ -17,3 +17,5 @@ python.zip
 /wheelhouse/
 *.iml
 /java/recommend-service/.idea/
+.venv
+tutorials/output
