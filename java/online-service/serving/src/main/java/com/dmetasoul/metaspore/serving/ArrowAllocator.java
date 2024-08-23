@@ -25,16 +25,11 @@ import java.util.List;
 
 public class ArrowAllocator implements AutoCloseable {
     private static final RootAllocator allocator = new RootAllocator();
-    private final BufferAllocator alloc;
+    private BufferAllocator alloc;
     private List<ArrowBuf> buffers;
 
-    public ArrowAllocator(long limit) {
-        this.alloc = new RootAllocator(limit);
-        this.buffers = Lists.newArrayList();
-    }
-
-    public ArrowAllocator(BufferAllocator alloc) {
-        this.alloc = alloc;
+    public ArrowAllocator(String name, long limit) {
+        this.alloc = allocator.newChildAllocator(name, 0, limit);
         this.buffers = Lists.newArrayList();
     }
 
@@ -51,11 +46,6 @@ public class ArrowAllocator implements AutoCloseable {
         }
     }
 
-    @Deprecated
-    public static RootAllocator getAllocator() {
-        return ArrowAllocator.allocator;
-    }
-
     @Override
     public void close() {
         if (alloc != null) {
@@ -65,9 +55,10 @@ public class ArrowAllocator implements AutoCloseable {
                     item.close();
                 });
                 buffers.clear();
+                buffers = null;
             }
-            allocator.getChildAllocators().forEach(BufferAllocator::close);
-            allocator.close();
+            alloc.close();
+            alloc = null;
         }
     }
 }

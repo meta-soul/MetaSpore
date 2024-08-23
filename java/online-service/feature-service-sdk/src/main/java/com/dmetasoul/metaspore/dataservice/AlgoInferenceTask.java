@@ -23,22 +23,15 @@ import com.dmetasoul.metaspore.relyservice.ModelServingService;
 import com.dmetasoul.metaspore.serving.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import io.grpc.ManagedChannel;
-import io.grpc.netty.shaded.io.grpc.netty.NegotiationType;
-import io.grpc.netty.shaded.io.grpc.netty.NettyChannelBuilder;
-import lombok.Data;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.util.Assert;
 
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @FeatureAnnotation("AlgoInference")
@@ -96,7 +89,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             }
             String targetName = CommonUtils.getField(fieldAction.getOptions(), "targetKey", targetKey);
             String model = CommonUtils.getField(fieldAction.getOptions(), "modelName", modelName);
-            try (ArrowAllocator allocator = new ArrowAllocator(Integer.MAX_VALUE)) {
+            try (ArrowAllocator allocator = new ArrowAllocator("AlgoInfer", Integer.MAX_VALUE)) {
                 ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
                 List<Object> res = Lists.newArrayList();
                 res.addAll(getFromTensor(arrowTensor));
@@ -134,7 +127,7 @@ public class AlgoInferenceTask extends AlgoTransformTask {
             String targetName = CommonUtils.getField(fieldAction.getOptions(), "targetKey", targetKey);
             int index = CommonUtils.getField(fieldAction.getOptions(), "targetIndex", targetIndex);
             String model = CommonUtils.getField(fieldAction.getOptions(), "modelName", modelName);
-            try (ArrowAllocator allocator = new ArrowAllocator(Integer.MAX_VALUE)) {
+            try (ArrowAllocator allocator = new ArrowAllocator("AlgoInfer", Integer.MAX_VALUE)) {
                 ArrowTensor arrowTensor = predict(featureTables, allocator, model, targetName);
                 List<Object> res = Lists.newArrayList();
                 res.addAll(getFromTensor(arrowTensor, index));

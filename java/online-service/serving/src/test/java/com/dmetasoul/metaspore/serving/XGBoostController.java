@@ -23,7 +23,8 @@ public class XGBoostController {
         for (int i = 0; i < 10; ++i) {
             userFields.add(Field.nullablePrimitive("field_" + i, new ArrowType.FloatingPoint(FloatingPointPrecision.SINGLE)));
         }
-        FeatureTable userTable = new FeatureTable("input", userFields, ArrowAllocator.getAllocator());
+        ArrowAllocator allocator = new ArrowAllocator("predict", Long.MAX_VALUE);
+        FeatureTable userTable = new FeatureTable("input", userFields, allocator);
         userTable.setFloat(0, 0.6558618f, userTable.getVector(0));
         userTable.setFloat(0, 0.13005558f, userTable.getVector(1));
         userTable.setFloat(0, 0.03510657f, userTable.getVector(2));
@@ -37,7 +38,7 @@ public class XGBoostController {
 
         // predict and get result tensor
         Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, "xgboost_model",
-                List.of(userTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
+                List.of(userTable), allocator, Collections.emptyMap());
         Map<String, Object> toJson = new TreeMap<>();
         for (Map.Entry<String, ArrowTensor> entry : result.entrySet()) {
             ArrowTensor tensor = result.get(entry.getKey());

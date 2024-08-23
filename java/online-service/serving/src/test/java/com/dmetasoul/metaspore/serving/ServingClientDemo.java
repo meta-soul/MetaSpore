@@ -29,7 +29,8 @@ public class ServingClientDemo {
                 , new Field("history_ids",
                         FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.nullable("item", new ArrowType.Utf8())))
         );
-        FeatureTable userTable = new FeatureTable("user", userFields, ArrowAllocator.getAllocator());
+        ArrowAllocator allocator = new ArrowAllocator("predict", Long.MAX_VALUE);
+        FeatureTable userTable = new FeatureTable("user", userFields, allocator);
 
         // fill user features
         for (int i = 0; i < 2; ++i) {
@@ -47,7 +48,7 @@ public class ServingClientDemo {
                 , Field.nullable("item_type", ArrowType.Utf8.INSTANCE) // pass string directly for categorical feature
         );
         // fill item features
-        FeatureTable itemTable = new FeatureTable("item", itemFields, ArrowAllocator.getAllocator());
+        FeatureTable itemTable = new FeatureTable("item", itemFields, allocator);
         for (int i = 0; i < 4; ++i) {
             itemTable.setString(i, "item_id_" + i, itemTable.getVector(0));
             itemTable.setString(i, "user_id_" + i % 2, itemTable.getVector(1));
@@ -57,7 +58,7 @@ public class ServingClientDemo {
 
         // predict and get result tensor
         Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, "movielens_wide_and_deep",
-                Arrays.asList(userTable, itemTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
+                Arrays.asList(userTable, itemTable), allocator, Collections.emptyMap());
         ArrowTensor.FloatTensorAccessor score = result.get("score").getFloatData();
         return "";
     }

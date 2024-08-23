@@ -30,25 +30,30 @@ import java.nio.charset.StandardCharsets;
 
 public class FeatureTable implements AutoCloseable {
 
-    public FeatureTable(String name, Iterable<Field> fields, BufferAllocator allocator) {
+    public FeatureTable(String name, Iterable<Field> fields, ArrowAllocator allocator) {
         this.name = name;
-        this.allocator = new ArrowAllocator(allocator);
+        this.allocator = allocator;
         Schema schema = new Schema(fields);
         root = VectorSchemaRoot.create(schema, this.allocator.getAlloc());
     }
 
     public FeatureTable(String name, Iterable<Field> fields) {
         this.name = name;
-        this.allocator = new ArrowAllocator(Integer.MAX_VALUE);
+        this.allocator = new ArrowAllocator(name, Integer.MAX_VALUE);
+        this.shouldCloseAllocator = true;
         Schema schema = new Schema(fields);
         root = VectorSchemaRoot.create(schema, allocator.getAlloc());
     }
 
     @Override
     public void close() {
-        if (root != null && allocator != null) {
+        if (root != null) {
             root.clear();
+            root.close();
+        }
+        if (allocator != null && shouldCloseAllocator) {
             allocator.close();
+            allocator = null;
         }
     }
 
@@ -233,4 +238,5 @@ public class FeatureTable implements AutoCloseable {
     private VectorSchemaRoot root;
     private ArrowAllocator allocator;
     private String name;
+    private boolean shouldCloseAllocator = false;
 }
