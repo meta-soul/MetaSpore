@@ -38,8 +38,9 @@ public class WDLController {
                     FieldType.nullable(ArrowType.List.INSTANCE), List.of(Field.nullable("item", new ArrowType.Utf8()))));
         }
 
-        FeatureTable lrLayerTable = new FeatureTable("lr_layer", tableFields, ArrowAllocator.getAllocator());
-        FeatureTable sparseLayerTable = new FeatureTable("_sparse", tableFields, ArrowAllocator.getAllocator());
+        ArrowAllocator allocator = new ArrowAllocator("predict", Long.MAX_VALUE);
+        FeatureTable lrLayerTable = new FeatureTable("lr_layer", tableFields, allocator);
+        FeatureTable sparseLayerTable = new FeatureTable("_sparse", tableFields, allocator);
 
         // first line from criteo dataset day_0_0.001_test.csv
         String line = "4\t41\t4\t4\t\t2\t0\t90\t5\t2\t\t1068\t4\ta5ba1c3d\tb292f1dd\ta3c8e366\t386c49ee\t664ff944\t6fcd6dcb\t2f0d9894\t7875e132\t54fc547f\tac062eaf\t750506a2\t5c4adbfa\tbf78d0d4\t\t4f36b1c8\t\t\tb8170bba\t9512c20b\t080347b3\t8e01df1e\t607fc1a8\t\t407e8c65\t337b81aa\t6c730e3e";
@@ -59,7 +60,7 @@ public class WDLController {
         // predict and get result tensor
         String modelName = "wide_and_deep";
         Map<String, ArrowTensor> result = ServingClient.predictBlocking(client, modelName,
-                List.of(lrLayerTable, sparseLayerTable), new ArrowAllocator(ArrowAllocator.getAllocator()), Collections.emptyMap());
+                List.of(lrLayerTable, sparseLayerTable), allocator, Collections.emptyMap());
 
         // parse the result tensor
         Map<String, Object> toJson = new TreeMap<>();
