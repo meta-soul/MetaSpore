@@ -3,6 +3,7 @@ spring:
     consul:
       host: ${CONSUL_HOST:localhost}
       port: ${CONSUL_PORT:8500}
+      acl-token: ${CONSUL_TOKEN:}
       config:
         enabled: ${CONSUL_ENABLE:true}
         prefix: ${CONSUL_PREFIX:config}
