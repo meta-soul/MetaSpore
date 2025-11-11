@@ -102,9 +102,13 @@ public class S3Client {
 
     @SneakyThrows
     public static String downloadModelByShell(String model, String version, String s3Path, String localPath) {
+        // Security fix for GHSL-2025-035: Validate S3 path and use ProcessBuilder to prevent command injection
+        if (!s3Path.matches("^s3://[a-zA-Z0-9./_~%:-]+$")) {
+            throw new IllegalArgumentException("Invalid S3 path format");
+        }
         Path target = Path.of(localPath, model, version);
-        String cmd = String.format("aws s3 sync --delete %s %s", s3Path, target);
-        Utils.runCmd(cmd, null);
+        ProcessBuilder pb = new ProcessBuilder("aws", "s3", "sync", "--delete", s3Path, target.toString());
+        pb.start().waitFor();
         return target.toString();
     }
 
