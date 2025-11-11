@@ -1,5 +1,9 @@
 version: '3.5'
 
+# SECURITY: Set CONSUL_INITIAL_MANAGEMENT_TOKEN environment variable to a random UUID before deployment
+# Example: export CONSUL_INITIAL_MANAGEMENT_TOKEN=$(uuidgen)
+# The default value below is for development only and should be changed in production
+
 services:
   server:
     container_name: recommend-service
@@ -12,6 +16,7 @@ services:
     command: java -jar recommend-service-1.0-SNAPSHOT.jar
     environment:
       CONSUL_HOST: consul
+      CONSUL_TOKEN: ${CONSUL_INITIAL_MANAGEMENT_TOKEN:-CHANGE-ME-IN-PRODUCTION}
     ports:
       - "8080:8080"
     depends_on:
@@ -21,9 +26,9 @@ services:
     container_name: consul-service
     restart: on-failure
     image: consul:1.13.1
-    environment:
-      CONSUL_LOCAL_CONFIG: "{\"skip_leave_on_interrupt\": true}"
-    command: consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui
+    command: consul agent -server -bootstrap-expect 1 -data-dir=/consul/data -bind=127.0.0.1 -client=0.0.0.0 -ui -hcl="skip_leave_on_interrupt = true" -hcl="acl { enabled = true default_policy = \"deny\" enable_token_persistence = true tokens { initial_management = \"${CONSUL_INITIAL_MANAGEMENT_TOKEN:-CHANGE-ME-IN-PRODUCTION}\" } }"
+    volumes:
+      - consul-data:/consul/data
     ports:
       - "8500:8500"
       - "8600:8600"
@@ -105,6 +110,9 @@ services:
     depends_on:
       - "etcd"
       - "minio"
+
+volumes:
+  consul-data:
 
 networks:
   default:
